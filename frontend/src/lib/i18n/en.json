@@ -1,6 +1,6 @@
 {
   "general": {
-    "app_name": "Real Estate Auction Platform",
+    "app_name": "Auction Platform",
     "slogan": "Discover Your Perfect Property",
     "loading": "Loading...",
     "error": "An error occurred",
@@ -29,7 +29,8 @@
     "not_found": "Page not found",
     "language": "Language",
     "dark_mode": "Dark Mode",
-    "light_mode": "Light Mode"
+    "light_mode": "Light Mode",
+    "retry": "Try Again"
   },
   
   "navigation": {
@@ -137,13 +138,59 @@
     "property_condition": "Property Condition",
     "floor_number": "Floor Number",
     "facing_direction": "Facing Direction",
+    
+    "meta_description": "Browse our diverse collection of properties available for auction or direct purchase",
+    "all_properties": "All Properties",
+    "browse_description": "Explore our curated selection of premium real estate opportunities",
+    "in": "in",
+    "properties_in": "Properties in",
+    
+    "features_heading": "Why Choose Our Platform",
+    "feature": {
+      "search_title": "Advanced Search",
+      "search_description": "Find your perfect property with our powerful search tools",
+      "compare_title": "Compare Properties",
+      "compare_description": "Compare multiple properties side by side to make informed decisions",
+      "auction_title": "Transparent Bidding",
+      "auction_description": "Participate in fair and transparent property auctions"
+    },
+    
+    "search_tips_heading": "Search Tips",
+    "search_by_area": "Search by Area",
+    "search_by_area_description": "Find properties in specific neighborhoods or districts",
+    "save_searches": "Save Your Searches",
+    "save_searches_description": "Save your search criteria to receive updates on new listings",
+    "notifications": "Get Notified",
+    "notifications_description": "Receive alerts when new properties match your preferences",
+    
+    "inquiry_about": "Inquiry about",
+    "related_auctions": "Related Auctions",
+    "view_auction": "View Auction",
+    "similar_properties": "Similar Properties",
+    "contact_owner": "Contact Owner",
+    "message_sent": "Message Sent Successfully",
+    "owner_will_respond": "The owner will respond to your inquiry soon",
+    "login_to_contact": "Please log in to contact the property owner",
+    "own_property": "This is your property",
+    "message_subject": "Message Subject",
+    "subject_placeholder": "e.g., Inquiry about property location",
+    "your_message": "Your Message",
+    "message_placeholder": "Write your questions or comments about this property...",
+    "your_phone": "Your Phone Number (optional)",
+    "phone_placeholder": "e.g., +123 456 7890",
+    "send_message": "Send Message",
+    
     "types": {
       "apartment": "Apartment",
       "villa": "Villa",
       "land": "Land",
       "commercial": "Commercial",
       "industrial": "Industrial",
-      "mixed_use": "Mixed Use"
+      "mixed_use": "Mixed Use",
+      "building": "Building",
+      "farm": "Farm",
+      "office": "Office",
+      "retail": "Retail"
     },
     "status": {
       "available": "Available",
@@ -151,7 +198,33 @@
       "rented": "Rented",
       "under_contract": "Under Contract",
       "pending": "Pending"
-    }
+    },
+    "delete": {
+      "title": "Delete Property",
+      "subtitle": "Please review the information and confirm deletion",
+      "property_details": "Property Information",
+      "warning": "Warning",
+      "warning_message": "This action may have irreversible consequences:",
+      "warning_data": "All property data will be removed from the system",
+      "warning_documents": "Associated documents and files will become inaccessible",
+      "warning_restore": "You may not be able to restore this property after deletion",
+      "confirmation": "Confirmation Required",
+      "confirm_message": "To confirm deletion, please type the property number {property_number} below:",
+      "checkbox": "I understand that this action cannot be reversed",
+      "confirm_button": "Delete Property",
+      "deleting": "Deleting Property...",
+      "success": "Property has been successfully deleted",
+      "error": "An error occurred while deleting the property",
+      "confirm_error": "Please check confirmation text and checkbox",
+      "unauthorized": "You don't have permission to delete this property",
+      "cannot_delete": "This property cannot be deleted",
+      "constraint_status": "Property with status '{status}' cannot be deleted. Only draft or inactive properties can be deleted.",
+      "constraint_auction": "Cannot delete property with active auctions",
+      "soft_delete_warning": "This property will be marked as unpublished rather than permanently deleted"
+    },
+    "property_number": "Property Number",
+    "view_details": "View Property Details"
+
   },
   
   "auth": {
@@ -251,7 +324,8 @@
     "monthly": "Monthly",
     "yearly": "Yearly",
     "export": "Export",
-    "import": "Import"
+    "import": "Import",
+    "manage_properties": "Manage Properties"
   },
   
   "system_messages": {
@@ -275,6 +349,167 @@
     "no_internet": "No internet connection. Please check your connection and try again.",
     "session_expired": "Your session has expired. Please login again.",
     "unauthorized": "Unauthorized. Please login to access this page.",
-    "not_found": "The page you're looking for doesn't exist."
+    "not_found": "The page you're looking for doesn't exist.",
+    "required_fields": "Please fill in all required fields.",
+    "message_sent": "Your message has been sent successfully."
+  }
+
+  "documents": {
+    "document": "Document",
+    "documents": "Documents",
+    "no_documents": "No documents available",
+    "no_documents_found": "No documents found",
+    "error_loading": "Error loading documents",
+    "document_type": "Document Type",
+    "verification_status": "Status",
+    "status": "Status",
+    "uploaded": "Uploaded",
+    "by": "by",
+    "expired": "Expired",
+    "document_number": "Document Number",
+    "untitled": "Untitled Document",
+    "preview": "Preview",
+    "download": "Download",
+    "download_started": "Download started",
+    "download_unavailable": "Download unavailable",
+    "refresh": "Refresh Documents",
+    "refresh_error": "Failed to refresh documents",
+    "upload": "Upload Document",
+    "uploading": "Uploading...",
+    "upload_first": "Upload Your First Document",
+    "upload_success": "Document uploaded successfully",
+    "upload_error": "Failed to upload document",
+    "document_title": "Document Title",
+    "title_placeholder": "Enter document title",
+    "description": "Description",
+    "description_placeholder": "Enter additional details about this document",
+    "expiry_date": "Expiry Date",
+    "expiry_date_helper": "Leave blank if document doesn't expire",
+    "upload_files": "Upload Files",
+    "drag_drop": "Drag and drop files here, or click to select files",
+    "select_files": "Select Files",
+    "allowed_types": "Allowed file types",
+    "max_size": "Maximum file size",
+    "add_more_files": "Add more files",
+    "filters": "Filters",
+    "search_placeholder": "Search documents...",
+    "select_type": "Select document type",
+    "select_status": "Select status",
+    "confirm_delete": "Confirm Delete",
+    "delete_warning": "Are you sure you want to delete",
+    "this_document": "this document",
+    "delete_permanent": "This action cannot be undone.",
+    "delete_success": "Document deleted successfully",
+    "delete_error": "Failed to delete document",
+    "document_preview": "Document Preview",
+    "preview_unavailable": "Preview is not available for this document",
+    "upload_document": "Upload Document",
+    "error_title_required": "Document title is required",
+    "error_type_required": "Document type is required",
+    "error_file_required": "Please select a file to upload",
+    "error_file_type": "File type not allowed: {filename}",
+    "error_file_size": "File too large: {filename}. Maximum size is {maxSize}MB",
+    "sort": {
+      "upload_date": "Upload Date",
+      "document_type": "Document Type",
+      "verification_status": "Verification Status"
+    },
+    "types": {
+      "title_deed": "Title Deed",
+      "floor_plan": "Floor Plan",
+      "ownership_cert": "Ownership Certificate",
+      "survey": "Survey Report",
+      "building_permit": "Building Permit",
+      "tax_document": "Tax Document",
+      "appraisal": "Appraisal",
+      "inspection": "Inspection Report",
+      "other": "Other Document"
+    },
+    "status": {
+      "unverified": "Unverified",
+      "pending": "Pending Review",
+      "verified": "Verified",
+      "rejected": "Rejected"
+    }
+  },
+"documents": {
+  "document": "Document",
+  "documents": "Documents",
+  "no_documents": "No documents available",
+  "no_documents_found": "No documents found",
+  "error_loading": "Error loading documents",
+  "document_type": "Document Type",
+  "verification_status": "Status",
+  "status": "Status",
+  "uploaded": "Uploaded",
+  "by": "by",
+  "expired": "Expired",
+  "document_number": "Document Number",
+  "untitled": "Untitled Document",
+  "preview": "Preview",
+  "download": "Download",
+  "download_started": "Download started",
+  "download_unavailable": "Download unavailable",
+  "refresh": "Refresh Documents",
+  "refresh_error": "Failed to refresh documents",
+  "upload": "Upload Document",
+  "uploading": "Uploading...",
+  "upload_first": "Upload Your First Document",
+  "upload_success": "Document uploaded successfully",
+  "upload_error": "Failed to upload document",
+  "document_title": "Document Title",
+  "title_placeholder": "Enter document title",
+  "description": "Description",
+  "description_placeholder": "Enter additional details about this document",
+  "expiry_date": "Expiry Date",
+  "expiry_date_helper": "Leave blank if document doesn't expire",
+  "upload_files": "Upload Files",
+  "drag_drop": "Drag and drop files here, or click to select files",
+  "select_files": "Select Files",
+  "allowed_types": "Allowed file types",
+  "max_size": "Maximum file size",
+  "add_more_files": "Add more files",
+  "filters": "Filters",
+  "search_placeholder": "Search documents...",
+  "select_type": "Select document type",
+  "select_status": "Select status",
+  "confirm_delete": "Confirm Delete",
+  "delete_warning": "Are you sure you want to delete",
+  "this_document": "this document",
+  "delete_permanent": "This action cannot be undone.",
+  "delete_success": "Document deleted successfully",
+  "delete_error": "Failed to delete document",
+  "document_preview": "Document Preview",
+  "preview_unavailable": "Preview is not available for this document",
+  "upload_document": "Upload Document",
+  "error_title_required": "Document title is required",
+  "error_type_required": "Document type is required",
+  "error_file_required": "Please select a file to upload",
+  "error_file_type": "File type not allowed: {filename}",
+  "error_file_size": "File too large: {filename}. Maximum size is {maxSize}MB",
+  "sort": {
+    "upload_date": "Upload Date",
+    "document_type": "Document Type",
+    "verification_status": "Verification Status"
+  },
+  "types": {
+    "title_deed": "Title Deed",
+    "floor_plan": "Floor Plan",
+    "ownership_cert": "Ownership Certificate",
+    "survey": "Survey Report",
+    "building_permit": "Building Permit",
+    "tax_document": "Tax Document",
+    "appraisal": "Appraisal",
+    "inspection": "Inspection Report",
+    "other": "Other Document"
+  },
+  "status": {
+    "unverified": "Unverified",
+    "pending": "Pending Review",
+    "verified": "Verified",
+    "rejected": "Rejected"
   }
 }
+
+}
+

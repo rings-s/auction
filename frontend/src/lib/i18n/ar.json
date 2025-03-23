@@ -29,7 +29,8 @@
     "not_found": "الصفحة غير موجودة",
     "language": "اللغة",
     "dark_mode": "الوضع الداكن",
-    "light_mode": "الوضع الفاتح"
+    "light_mode": "الوضع الفاتح",
+    "retry": "المحاولة مرة أخرى"
   },
   
   "navigation": {
@@ -137,13 +138,59 @@
     "property_condition": "حالة العقار",
     "floor_number": "رقم الطابق",
     "facing_direction": "اتجاه الواجهة",
+    
+    "meta_description": "تصفح مجموعتنا المتنوعة من العقارات المتاحة للمزاد أو الشراء المباشر",
+    "all_properties": "جميع العقارات",
+    "browse_description": "استكشف مجموعتنا المختارة من فرص العقارات المميزة",
+    "in": "في",
+    "properties_in": "العقارات في",
+    
+    "features_heading": "لماذا تختار منصتنا",
+    "feature": {
+      "search_title": "بحث متقدم",
+      "search_description": "ابحث عن عقارك المثالي باستخدام أدوات البحث القوية",
+      "compare_title": "مقارنة العقارات",
+      "compare_description": "قارن بين عدة عقارات جنبًا إلى جنب لاتخاذ قرارات مستنيرة",
+      "auction_title": "مزايدة شفافة",
+      "auction_description": "شارك في مزادات عقارية عادلة وشفافة"
+    },
+    
+    "search_tips_heading": "نصائح البحث",
+    "search_by_area": "البحث حسب المنطقة",
+    "search_by_area_description": "ابحث عن العقارات في أحياء أو مناطق محددة",
+    "save_searches": "حفظ عمليات البحث",
+    "save_searches_description": "احفظ معايير البحث الخاصة بك لتلقي تحديثات حول القوائم الجديدة",
+    "notifications": "الحصول على الإشعارات",
+    "notifications_description": "تلقي تنبيهات عندما تتطابق العقارات الجديدة مع تفضيلاتك",
+    
+    "inquiry_about": "استفسار حول",
+    "related_auctions": "المزادات ذات الصلة",
+    "view_auction": "عرض المزاد",
+    "similar_properties": "عقارات مشابهة",
+    "contact_owner": "التواصل مع المالك",
+    "message_sent": "تم إرسال الرسالة بنجاح",
+    "owner_will_respond": "سيرد المالك على استفسارك قريبًا",
+    "login_to_contact": "الرجاء تسجيل الدخول للتواصل مع مالك العقار",
+    "own_property": "هذا العقار مملوك لك",
+    "message_subject": "موضوع الرسالة",
+    "subject_placeholder": "مثال: استفسار حول موقع العقار",
+    "your_message": "رسالتك",
+    "message_placeholder": "اكتب أسئلتك أو تعليقاتك حول هذا العقار...",
+    "your_phone": "رقم هاتفك (اختياري)",
+    "phone_placeholder": "مثال: +123 456 7890",
+    "send_message": "إرسال الرسالة",
+    
     "types": {
       "apartment": "شقة",
       "villa": "فيلا",
       "land": "أرض",
       "commercial": "تجاري",
       "industrial": "صناعي",
-      "mixed_use": "متعدد الاستخدامات"
+      "mixed_use": "متعدد الاستخدامات",
+      "building": "مبنى",
+      "farm": "مزرعة",
+      "office": "مكتب",
+      "retail": "محل تجاري"
     },
     "status": {
       "available": "متاح",
@@ -151,7 +198,34 @@
       "rented": "مؤجر",
       "under_contract": "تحت التعاقد",
       "pending": "قيد الانتظار"
-    }
+    },
+    
+"delete": {
+  "title": "حذف العقار",
+  "subtitle": "يرجى مراجعة المعلومات وتأكيد الحذف",
+  "property_details": "معلومات العقار",
+  "warning": "تحذير",
+  "warning_message": "قد يكون لهذا الإجراء عواقب لا رجعة فيها:",
+  "warning_data": "ستتم إزالة جميع بيانات العقار من النظام",
+  "warning_documents": "لن يمكن الوصول إلى المستندات والملفات المرتبطة",
+  "warning_restore": "قد لا تتمكن من استعادة هذا العقار بعد الحذف",
+  "confirmation": "التأكيد مطلوب",
+  "confirm_message": "لتأكيد الحذف، يرجى كتابة رقم العقار {property_number} أدناه:",
+  "checkbox": "أفهم أن هذا الإجراء لا يمكن التراجع عنه",
+  "confirm_button": "حذف العقار",
+  "deleting": "جاري حذف العقار...",
+  "success": "تم حذف العقار بنجاح",
+  "error": "حدث خطأ أثناء حذف العقار",
+  "confirm_error": "يرجى التحقق من نص التأكيد ومربع الاختيار",
+  "unauthorized": "ليس لديك إذن لحذف هذا العقار",
+  "cannot_delete": "لا يمكن حذف هذا العقار",
+  "constraint_status": "لا يمكن حذف العقار بحالة '{status}'. يمكن حذف العقارات بحالة مسودة أو غير نشطة فقط.",
+  "constraint_auction": "لا يمكن حذف العقار مع وجود مزادات نشطة",
+  "soft_delete_warning": "سيتم وضع علامة على هذا العقار على أنه غير منشور بدلاً من حذفه نهائيًا"
+},
+"property_number": "رقم العقار",
+"view_details": "عرض تفاصيل العقار",
+
   },
   
   "auth": {
@@ -251,7 +325,8 @@
     "monthly": "شهري",
     "yearly": "سنوي",
     "export": "تصدير",
-    "import": "استيراد"
+    "import": "استيراد",
+    "manage_properties": "إدارة العقارات"
   },
   
   "system_messages": {
@@ -275,6 +350,89 @@
     "no_internet": "لا يوجد اتصال بالإنترنت. يرجى التحقق من الاتصال والمحاولة مرة أخرى.",
     "session_expired": "انتهت جلستك. يرجى تسجيل الدخول مرة أخرى.",
     "unauthorized": "غير مصرح. يرجى تسجيل الدخول للوصول إلى هذه الصفحة.",
-    "not_found": "الصفحة التي تبحث عنها غير موجودة."
+    "not_found": "الصفحة التي تبحث عنها غير موجودة.",
+    "required_fields": "يرجى ملء جميع الحقول المطلوبة.",
+    "message_sent": "تم إرسال رسالتك بنجاح."
+  },
+ 
+
+// Arabic translations
+"documents": {
+  "document": "مستند",
+  "documents": "المستندات",
+  "no_documents": "لا توجد مستندات متاحة",
+  "no_documents_found": "لم يتم العثور على مستندات",
+  "error_loading": "خطأ في تحميل المستندات",
+  "document_type": "نوع المستند",
+  "verification_status": "الحالة",
+  "status": "الحالة",
+  "uploaded": "تم الرفع",
+  "by": "بواسطة",
+  "expired": "منتهي الصلاحية",
+  "document_number": "رقم المستند",
+  "untitled": "مستند بدون عنوان",
+  "preview": "معاينة",
+  "download": "تنزيل",
+  "download_started": "بدأ التنزيل",
+  "download_unavailable": "التنزيل غير متاح",
+  "refresh": "تحديث المستندات",
+  "refresh_error": "فشل تحديث المستندات",
+  "upload": "رفع مستند",
+  "uploading": "جاري الرفع...",
+  "upload_first": "رفع أول مستند",
+  "upload_success": "تم رفع المستند بنجاح",
+  "upload_error": "فشل في رفع المستند",
+  "document_title": "عنوان المستند",
+  "title_placeholder": "أدخل عنوان المستند",
+  "description": "الوصف",
+  "description_placeholder": "أدخل تفاصيل إضافية حول هذا المستند",
+  "expiry_date": "تاريخ انتهاء الصلاحية",
+  "expiry_date_helper": "اتركه فارغًا إذا كان المستند لا تنتهي صلاحيته",
+  "upload_files": "رفع الملفات",
+  "drag_drop": "اسحب وأفلت الملفات هنا، أو انقر لاختيار الملفات",
+  "select_files": "اختيار الملفات",
+  "allowed_types": "أنواع الملفات المسموح بها",
+  "max_size": "الحد الأقصى لحجم الملف",
+  "add_more_files": "إضافة المزيد من الملفات",
+  "filters": "التصفية",
+  "search_placeholder": "البحث في المستندات...",
+  "select_type": "اختر نوع المستند",
+  "select_status": "اختر الحالة",
+  "confirm_delete": "تأكيد الحذف",
+  "delete_warning": "هل أنت متأكد من رغبتك في حذف",
+  "this_document": "هذا المستند",
+  "delete_permanent": "لا يمكن التراجع عن هذا الإجراء.",
+  "delete_success": "تم حذف المستند بنجاح",
+  "delete_error": "فشل في حذف المستند",
+  "document_preview": "معاينة المستند",
+  "preview_unavailable": "المعاينة غير متاحة لهذا المستند",
+  "upload_document": "رفع مستند",
+  "error_title_required": "عنوان المستند مطلوب",
+  "error_type_required": "نوع المستند مطلوب",
+  "error_file_required": "الرجاء اختيار ملف للرفع",
+  "error_file_type": "نوع الملف غير مسموح به: {filename}",
+  "error_file_size": "حجم الملف كبير جدًا: {filename}. الحد الأقصى هو {maxSize} ميجابايت",
+  "sort": {
+    "upload_date": "تاريخ الرفع",
+    "document_type": "نوع المستند",
+    "verification_status": "حالة التحقق"
+  },
+  "types": {
+    "title_deed": "صك ملكية",
+    "floor_plan": "مخطط الطابق",
+    "ownership_cert": "شهادة ملكية",
+    "survey": "تقرير المسح",
+    "building_permit": "رخصة بناء",
+    "tax_document": "وثيقة ضريبية",
+    "appraisal": "تقييم",
+    "inspection": "تقرير فحص",
+    "other": "مستند آخر"
+  },
+  "status": {
+    "unverified": "غير مُتحقق",
+    "pending": "قيد المراجعة",
+    "verified": "تم التحقق",
+    "rejected": "مرفوض"
   }
+}
 }

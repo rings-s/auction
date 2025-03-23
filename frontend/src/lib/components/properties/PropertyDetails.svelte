@@ -1,709 +1,742 @@
-<!-- src/lib/components/properties/PropertyDetails.svelte -->
+<!-- components/properties/PropertyDetails.svelte -->
 <script>
-    /**
-     * Property Details Component
-     * Comprehensive component that displays all property information
-     */
     import { onMount } from 'svelte';
-    import { fade } from 'svelte/transition';
-    import { t, isRTL, language } from '$lib/i18n';
-    import { formatCurrency, formatDate} from '$lib/utils/formatters';
-    import { api } from '$lib/services/api';
+    import { createEventDispatcher } from 'svelte';
+    import { fade, fly } from 'svelte/transition';
+    import { t, language } from '$lib/i18n';
+    import { formatCurrency, formatDate } from '$lib/utils/formatters';
+    import { isAuthenticated, currentUser } from '$lib/stores/auth';
     
-    import PropertyImages from './PropertyImages.svelte';
-    import PropertyFeatures from './PropertyFeatures.svelte';
-    import PropertyMap from './PropertyMap.svelte';
-    import Card from '$lib/components/ui/Card.svelte';
+    // UI Components
+    import Gallery from '$lib/components/ui/Gallery.svelte';
     import Button from '$lib/components/ui/Button.svelte';
+    import Card from '$lib/components/ui/Card.svelte';
     import Badge from '$lib/components/ui/Badge.svelte';
-    import Spinner from '$lib/components/ui/Spinner.svelte';
-    import Alert from '$lib/components/ui/Alert.svelte';
-    import Tabs from '$lib/components/ui/Tabs.svelte';
-    import TabItem from '$lib/components/ui/TabItem.svelte';
-    import Breadcrumb from '$lib/components/ui/Breadcrumb.svelte';
+    import PropertyMap from '$lib/components/properties/PropertyMap.svelte';
+    import PropertyFeatures from '$lib/components/properties/PropertyFeatures.svelte';
+    import DocumentsList from '$lib/components/documents/DocumentsList.svelte';
     
-    // Props - Property ID to load
-    export let propertyId = undefined;
-    export let property = null; // Direct property object can be passed instead of loading via ID
+    // Props
+    export let property;
     
-    // State
-    let loading = !property; // Only load if property is not directly provided
-    let error = null;
-    let relatedAuctions = [];
-    let recommendedProperties = [];
-    let activeTab = 'details'; // details, features, location, documents, auctions
+    // Local state
+    let activeTab = 'description';
+    let showShareModal = false;
+    let favoriteStatus = false;
+    let loadingFavorite = false;
+    let carouselOptions = {};
+    
+    // Event dispatcher
+    const dispatch = createEventDispatcher();
+    
+    // Determine if current user is the owner
+    $: isOwner = $isAuthenticated && $currentUser && property?.owner?.id === $currentUser.id;
+    
+    // Computed properties for RTL support
+    $: isRTL = $language === 'ar';
+    
+    // Update carousel options based on RTL status
+    $: carouselOptions = {
+      ...carouselOptions,
+      rtl: isRTL
+    };
+    
+    // Format property values
+    $: formattedPrice = property?.estimated_value 
+      ? formatCurrency(property.estimated_value) 
+      : null;
+    
+    $: formattedArea = property?.area 
+      ? `${property.area} ${$t('properties.property_area_unit')}` 
+      : null;
+    
+    // Property type translation
+    $: propertyType = property?.property_type 
+      ? $t(`properties.types.${property.property_type.toLowerCase()}`) 
+      : null;
+    
+    // Property status translation
+    $: propertyStatus = property?.status 
+      ? $t(`properties.status.${property.status.toLowerCase()}`) 
+      : null;
     
     // Tabs configuration
-    $: tabs = [
-      { id: 'details', label: $t('properties.property_details') },
+    const tabs = [
+      { id: 'description', label: $t('properties.property_description') },
       { id: 'features', label: $t('properties.property_features') },
       { id: 'location', label: $t('properties.property_location') },
-      ...(property?.documents?.length > 0 ? [{ id: 'documents', label: $t('properties.property_documents') }] : []),
-      ...(relatedAuctions?.length > 0 ? [{ id: 'auctions', label: $t('properties.property_auctions') }] : [])
+      { id: 'documents', label: $t('properties.property_documents') }
     ];
     
-    // Breadcrumb configuration
-    $: breadcrumbItems = [
-      { label: $t('navigation.home'), href: '/' },
-      { label: $t('navigation.properties'), href: '/properties' },
-      { label: property?.title || $t('properties.property_details'), active: true }
-    ];
-    
-    // Load property data
-    async function loadProperty() {
-      if (!propertyId || property) return;
+    // Toggle favorite status
+    async function toggleFavorite() {
+      if (!$isAuthenticated) {
+        // Redirect to login if not authenticated
+        window.location.href = `/auth/login?redirect=/properties/${property.id}`;
+        return;
+      }
       
-      loading = true;
-      error = null;
+      loadingFavorite = true;
       
       try {
-        // Fetch property details
-        const response = await api.get(`properties/${propertyId}/`, {
-          include_auctions: true,
-          include_documents: true
-        });
-        
-        if (response?.data?.property) {
-          property = response.data.property;
-          
-          // Extract related auctions if any
-          if (property.auctions && property.auctions.length > 0) {
-            relatedAuctions = property.auctions;
-          }
-          
-          // Load recommended properties
-          await loadRecommendedProperties();
-        } else {
-          throw new Error('Invalid response format');
-        }
+        // API call would go here
+        favoriteStatus = !favoriteStatus;
       } catch (err) {
-        console.error('Error fetching property details:', err);
-        error = err.message || $t('system_messages.error_occurred');
+        console.error('Error toggling favorite:', err);
       } finally {
-        loading = false;
+        loadingFavorite = false;
       }
     }
     
-    // Load recommended properties
-    async function loadRecommendedProperties() {
-      if (!property) return;
+    // Contact property owner
+    function contactOwner() {
+      dispatch('contactOwner');
+    }
+    
+    // Toggle share modal
+    function toggleShareModal() {
+      showShareModal = !showShareModal;
+    }
+    
+    // Copy link to clipboard
+    function copyLink() {
+      const url = window.location.href;
+      navigator.clipboard.writeText(url);
+      // Show success toast
+    }
+    
+    // Share on social media
+    function shareOnSocial(platform) {
+      const url = encodeURIComponent(window.location.href);
+      const title = encodeURIComponent(property.title);
       
-      try {
-        const response = await api.get('properties/', {
-          property_type: property.property_type,
-          city: property.city,
-          limit: 4,
-          exclude: property.id
-        });
-        
-        if (response?.data?.results) {
-          recommendedProperties = response.data.results.slice(0, 4);
-        }
-      } catch (err) {
-        console.error('Error fetching recommended properties:', err);
-        // Non-critical, don't show error
+      let shareUrl = '';
+      
+      switch (platform) {
+        case 'facebook':
+          shareUrl = `https://www.facebook.com/sharer/sharer.php?u=${url}`;
+          break;
+        case 'twitter':
+          shareUrl = `https://twitter.com/intent/tweet?url=${url}&text=${title}`;
+          break;
+        case 'whatsapp':
+          shareUrl = `https://wa.me/?text=${title}%20${url}`;
+          break;
+        case 'telegram':
+          shareUrl = `https://t.me/share/url?url=${url}&text=${title}`;
+          break;
+      }
+      
+      if (shareUrl) {
+        window.open(shareUrl, '_blank');
       }
     }
     
-    // Share property
-    function shareProperty() {
-      try {
-        if (navigator && navigator.share) {
-          navigator.share({
-            title: property ? property.title : '',
-            text: property ? `${property.title} - ${property.address || ''}, ${property.city || ''}` : '',
-            url: window.location.href
-          }).catch(err => {
-            console.error('Error sharing:', err);
-          });
-        } else if (navigator && navigator.clipboard) {
-          // Fallback: copy to clipboard
-          navigator.clipboard.writeText(window.location.href)
-            .then(() => {
-              alert($t('general.copied'));
-            })
-            .catch(err => {
-              console.error('Error copying link:', err);
-            });
-        } else {
-          // Ultra fallback: show URL to copy manually
-          prompt($t('general.copy_url'), window.location.href);
-        }
-      } catch (err) {
-        console.error('Share error:', err);
-      }
-    }
-    
-    // Initialize
     onMount(() => {
-      if (!property && propertyId) {
-        loadProperty();
-      } else if (property && property.auctions) {
-        // Extract related auctions from provided property data
-        relatedAuctions = property.auctions;
+      // Check if property is in favorites on mount
+      if ($isAuthenticated) {
+        // API call to check favorite status would go here
       }
     });
-    
-    // Dispatch event when tab changes
-    function handleTabChange(event) {
-      activeTab = event.detail.tabId;
-    }
   </script>
   
-  <div class="property-details">
-    <!-- Loading State -->
-    {#if loading}
-      <div class="my-16 flex justify-center">
-        <Spinner size="lg" text={$t('general.loading')} />
-      </div>
-    
-    <!-- Error State -->
-    {:else if error}
-      <div class="container mx-auto my-16 max-w-3xl px-4">
-        <Alert type="error" title={$t('general.error')} dismissible={false}>
-          <p>{error}</p>
-          <div class="mt-4">
-            <Button 
-              variant="primary"
-              onClick={loadProperty}
-            >
-              {$t('general.retry')}
-            </Button>
+  <div class="property-details-container" class:rtl={isRTL}>
+    <!-- Hero Section with Property Images -->
+    <section class="relative bg-neutral-100 dark:bg-neutral-900">
+      {#if property?.main_image_url || property?.images?.length > 0}
+        <Gallery 
+          images={property.images || [property.main_image_url]} 
+          options={carouselOptions}
+        />
+      {:else}
+        <div class="h-80 bg-neutral-200 dark:bg-neutral-800 flex items-center justify-center">
+          <span class="text-neutral-500 dark:text-neutral-400">
+            {$t('properties.no_images')}
+          </span>
+        </div>
+      {/if}
+      
+      <!-- Property Basic Info Overlay -->
+      <div class="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/70 to-transparent p-4 md:p-6">
+        <div class="container mx-auto">
+          <div class="flex flex-col md:flex-row items-start md:items-end justify-between">
+            <div>
+              <h1 class="text-2xl md:text-3xl lg:text-4xl font-bold text-white mb-2">
+                {property?.title}
+              </h1>
+              <p class="text-white/90 flex items-center space-x-2 text-sm md:text-base">
+                <span>{property?.address}</span>
+                {#if property?.city}
+                  <span class="mx-1">•</span>
+                  <span>{property?.city}</span>
+                {/if}
+                {#if property?.district}
+                  <span class="mx-1">•</span>
+                  <span>{property?.district}</span>
+                {/if}
+              </p>
+            </div>
+            
+            <div class="mt-4 md:mt-0">
+              {#if formattedPrice}
+                <div class="text-xl md:text-2xl font-bold text-white">
+                  {formattedPrice}
+                </div>
+              {/if}
+              
+              {#if propertyStatus}
+                <Badge 
+                  type={property?.status === 'available' ? 'success' : 
+                       property?.status === 'pending' ? 'warning' :
+                       property?.status === 'sold' ? 'error' : 'info'}
+                  size="lg"
+                  class="mt-2"
+                >
+                  {propertyStatus}
+                </Badge>
+              {/if}
+            </div>
           </div>
-        </Alert>
+        </div>
       </div>
+    </section>
     
-    <!-- Property Content -->
-    {:else if property}
-      <div class="property-content" in:fade={{ duration: 300 }}>
-        <!-- Breadcrumb -->
-        <div class="mb-6">
-          <Breadcrumb items={breadcrumbItems} />
-        </div>
-        
-        <!-- Property Images -->
-        <div class="mb-8">
-          <PropertyImages 
-            images={property.images || []} 
-            mainImageUrl={property.main_image_url} 
-            title={property.title}
-          />
-        </div>
-        
-        <!-- Main Content -->
-        <div class="grid grid-cols-1 gap-8 lg:grid-cols-3">
-          <!-- Main Content Area (Left) -->
-          <div class="lg:col-span-2">
-            <!-- Tab Navigation -->
-            <div class="mb-6">
-              <Tabs {tabs} activeTab={activeTab} on:change={handleTabChange} />
+    <!-- Main Content -->
+    <section class="container mx-auto px-4 py-8">
+      <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        <!-- Left Column: Property Details -->
+        <div class="lg:col-span-2">
+          <!-- Property Key Features -->
+          <Card class="mb-6" padding={true}>
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+              {#if propertyType}
+                <div class="text-center property-feature-item">
+                  <div class="feature-icon flex justify-center mb-2">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-primary" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                      <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
+                      <polyline points="9 22 9 12 15 12 15 22"></polyline>
+                    </svg>
+                  </div>
+                  <div class="property-info-label text-sm text-neutral-500 dark:text-neutral-400">
+                    {$t('properties.property_type')}
+                  </div>
+                  <div class="property-info-value font-medium mt-1">
+                    {propertyType}
+                  </div>
+                </div>
+              {/if}
+              
+              {#if property?.bedrooms}
+                <div class="text-center property-feature-item">
+                  <div class="feature-icon flex justify-center mb-2">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-primary" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                      <path d="M20 9v4a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V9a2 2 0 0 1 2-2h10"></path>
+                      <path d="M2 16v1a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-1"></path>
+                      <path d="M22 5V7a2 2 0 0 1-2 2h-7.2"></path>
+                    </svg>
+                  </div>
+                  <div class="property-info-label text-sm text-neutral-500 dark:text-neutral-400">
+                    {$t('properties.bedrooms')}
+                  </div>
+                  <div class="property-info-value font-medium mt-1">
+                    {property.bedrooms}
+                  </div>
+                </div>
+              {/if}
+              
+              {#if property?.bathrooms}
+                <div class="text-center property-feature-item">
+                  <div class="feature-icon flex justify-center mb-2">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-primary" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                      <path d="M9 6 6.5 3.5a1.5 1.5 0 0 0-1-.5C4.683 3 4 3.683 4 4.5V17a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-5"></path>
+                      <line x1="10" y1="12" x2="16" y2="12"></line>
+                    </svg>
+                  </div>
+                  <div class="property-info-label text-sm text-neutral-500 dark:text-neutral-400">
+                    {$t('properties.bathrooms')}
+                  </div>
+                  <div class="property-info-value font-medium mt-1">
+                    {property.bathrooms}
+                  </div>
+                </div>
+              {/if}
+              
+              {#if formattedArea}
+                <div class="text-center property-feature-item">
+                  <div class="feature-icon flex justify-center mb-2">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-primary" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                      <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+                      <line x1="9" y1="3" x2="9" y2="21"></line>
+                      <line x1="15" y1="3" x2="15" y2="21"></line>
+                      <line x1="3" y1="9" x2="21" y2="9"></line>
+                      <line x1="3" y1="15" x2="21" y2="15"></line>
+                    </svg>
+                  </div>
+                  <div class="property-info-label text-sm text-neutral-500 dark:text-neutral-400">
+                    {$t('properties.property_area')}
+                  </div>
+                  <div class="property-info-value font-medium mt-1">
+                    {formattedArea}
+                  </div>
+                </div>
+              {/if}
+            </div>
+          </Card>
+          
+          <!-- Property Tabs -->
+          <Card class="mb-6" padding={false}>
+            <!-- Tab Headers -->
+            <div class="tab-header flex overflow-x-auto border-b border-neutral-200 dark:border-neutral-700">
+              {#each tabs as tab}
+                <button
+                  class="px-4 py-3 text-sm font-medium transition whitespace-nowrap
+                        {activeTab === tab.id 
+                          ? 'text-primary border-b-2 border-primary'
+                          : 'text-neutral-600 dark:text-neutral-300 hover:text-primary'}"
+                  on:click={() => activeTab = tab.id}
+                >
+                  {tab.label}
+                </button>
+              {/each}
             </div>
             
             <!-- Tab Content -->
-            <Card padding={true} bordered={true}>
-              <TabItem id="details" active={activeTab === 'details'}>
-                <!-- Property Description -->
-                <div class="space-y-6">
-                  <div>
-                    <h2 class="mb-4 text-xl font-bold text-cosmos-text">{$t('properties.property_description')}</h2>
-                    <div class="prose prose-invert max-w-none text-cosmos-text">
-                      <p>{property.description || $t('properties.no_description')}</p>
+            <div class="p-4">
+              {#if activeTab === 'description'}
+                <div in:fade={{duration: 200}}>
+                  {#if property?.description}
+                    <div class="prose dark:prose-invert max-w-none">
+                      {@html property.description}
                     </div>
-                  </div>
-                  
-                  <!-- Key Details -->
-                  <div>
-                    <h3 class="mb-4 text-lg font-medium text-cosmos-text">{$t('properties.property_details')}</h3>
-                    <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-                      <!-- Property Type -->
-                      <div class="rounded-lg bg-cosmos-bg-light bg-opacity-20 p-4">
-                        <div class="flex items-center">
-                          <div class="mr-3 flex h-10 w-10 items-center justify-center rounded-full bg-primary bg-opacity-20">
-                            <svg class="h-5 w-5 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
-                            </svg>
-                          </div>
-                          <div>
-                            <p class="text-sm text-cosmos-text-muted">{$t('properties.property_type')}</p>
-                            <p class="font-medium text-cosmos-text">{property.property_type_display || $t(`properties.types.${property.property_type}`)}</p>
-                          </div>
-                        </div>
-                      </div>
-                      
-                      <!-- Property Area -->
-                      <div class="rounded-lg bg-cosmos-bg-light bg-opacity-20 p-4">
-                        <div class="flex items-center">
-                          <div class="mr-3 flex h-10 w-10 items-center justify-center rounded-full bg-primary bg-opacity-20">
-                            <svg class="h-5 w-5 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 5a1 1 0 011-1h14a1 1 0 011 1v2a1 1 0 01-1 1H5a1 1 0 01-1-1V5zM4 13a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H5a1 1 0 01-1-1v-6zM16 13a1 1 0 011-1h2a1 1 0 011 1v6a1 1 0 01-1 1h-2a1 1 0 01-1-1v-6z" />
-                            </svg>
-                          </div>
-                          <div>
-                            <p class="text-sm text-cosmos-text-muted">{$t('properties.property_area')}</p>
-                            <p class="font-medium text-cosmos-text">{property.area} m²</p>
-                          </div>
-                        </div>
-                      </div>
-                      
-                      {#if property.built_up_area}
-                        <!-- Built Up Area -->
-                        <div class="rounded-lg bg-cosmos-bg-light bg-opacity-20 p-4">
-                          <div class="flex items-center">
-                            <div class="mr-3 flex h-10 w-10 items-center justify-center rounded-full bg-primary bg-opacity-20">
-                              <svg class="h-5 w-5 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 21h7a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
-                              </svg>
-                            </div>
-                            <div>
-                              <p class="text-sm text-cosmos-text-muted">{$t('properties.built_up_area')}</p>
-                              <p class="font-medium text-cosmos-text">{property.built_up_area} m²</p>
-                            </div>
-                          </div>
-                        </div>
-                      {/if}
-                      
-                      {#if property.bedrooms > 0}
-                        <!-- Bedrooms -->
-                        <div class="rounded-lg bg-cosmos-bg-light bg-opacity-20 p-4">
-                          <div class="flex items-center">
-                            <div class="mr-3 flex h-10 w-10 items-center justify-center rounded-full bg-primary bg-opacity-20">
-                              <svg class="h-5 w-5 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
-                              </svg>
-                            </div>
-                            <div>
-                              <p class="text-sm text-cosmos-text-muted">{$t('properties.bedrooms')}</p>
-                              <p class="font-medium text-cosmos-text">{property.bedrooms}</p>
-                            </div>
-                          </div>
-                        </div>
-                      {/if}
-                      
-                      {#if property.bathrooms > 0}
-                        <!-- Bathrooms -->
-                        <div class="rounded-lg bg-cosmos-bg-light bg-opacity-20 p-4">
-                          <div class="flex items-center">
-                            <div class="mr-3 flex h-10 w-10 items-center justify-center rounded-full bg-primary bg-opacity-20">
-                              <svg class="h-5 w-5 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z" />
-                              </svg>
-                            </div>
-                            <div>
-                              <p class="text-sm text-cosmos-text-muted">{$t('properties.bathrooms')}</p>
-                              <p class="font-medium text-cosmos-text">{property.bathrooms}</p>
-                            </div>
-                          </div>
-                        </div>
-                      {/if}
-                      
-                      {#if property.year_built}
-                        <!-- Year Built -->
-                        <div class="rounded-lg bg-cosmos-bg-light bg-opacity-20 p-4">
-                          <div class="flex items-center">
-                            <div class="mr-3 flex h-10 w-10 items-center justify-center rounded-full bg-primary bg-opacity-20">
-                              <svg class="h-5 w-5 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                              </svg>
-                            </div>
-                            <div>
-                              <p class="text-sm text-cosmos-text-muted">{$t('properties.build_year')}</p>
-                              <p class="font-medium text-cosmos-text">{property.year_built}</p>
-                            </div>
-                          </div>
-                        </div>
-                      {/if}
-                      
-                      {#if property.condition}
-                        <!-- Condition -->
-                        <div class="rounded-lg bg-cosmos-bg-light bg-opacity-20 p-4">
-                          <div class="flex items-center">
-                            <div class="mr-3 flex h-10 w-10 items-center justify-center rounded-full bg-primary bg-opacity-20">
-                              <svg class="h-5 w-5 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                              </svg>
-                            </div>
-                            <div>
-                              <p class="text-sm text-cosmos-text-muted">{$t('properties.property_condition')}</p>
-                              <p class="font-medium text-cosmos-text">
-                                {property.condition_display || $t(`properties.condition.${property.condition}`)}
-                              </p>
-                            </div>
-                          </div>
-                        </div>
-                      {/if}
-                      
-                      {#if property.floor_number !== null && property.floor_number !== undefined}
-                        <!-- Floor Number -->
-                        <div class="rounded-lg bg-cosmos-bg-light bg-opacity-20 p-4">
-                          <div class="flex items-center">
-                            <div class="mr-3 flex h-10 w-10 items-center justify-center rounded-full bg-primary bg-opacity-20">
-                              <svg class="h-5 w-5 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 14l-7 7m0 0l-7-7m7 7V3" />
-                              </svg>
-                            </div>
-                            <div>
-                              <p class="text-sm text-cosmos-text-muted">{$t('properties.floor_number')}</p>
-                              <p class="font-medium text-cosmos-text">{property.floor_number}</p>
-                            </div>
-                          </div>
-                        </div>
-                      {/if}
-                    </div>
-                  </div>
-                </div>
-              </TabItem>
-              
-              <TabItem id="features" active={activeTab === 'features'}>
-                <!-- Property Features Tab -->
-                <PropertyFeatures 
-                  features={property.features || []} 
-                  amenities={property.amenities || []}
-                  outdoorSpaces={property.outdoor_spaces || {}}
-                  parking={property.parking || {}}
-                  buildingServices={property.building_services || {}}
-                  infrastructure={property.infrastructure || {}}
-                />
-              </TabItem>
-              
-              <TabItem id="location" active={activeTab === 'location'}>
-                <!-- Property Location Tab -->
-                <div class="space-y-6">
-                  <h2 class="text-xl font-bold text-cosmos-text">{$t('properties.property_location')}</h2>
-                  
-                  <!-- Address Information -->
-                  <div class="grid grid-cols-1 gap-4 rounded-lg bg-cosmos-bg-light bg-opacity-20 p-5 sm:grid-cols-2">
-                    <div>
-                      <p class="text-sm text-cosmos-text-muted">{$t('properties.property_address')}</p>
-                      <p class="font-medium text-cosmos-text">{property.address}</p>
-                    </div>
-                    
-                    <div>
-                      <p class="text-sm text-cosmos-text-muted">{$t('properties.property_district')}</p>
-                      <p class="font-medium text-cosmos-text">{property.district}</p>
-                    </div>
-                    
-                    <div>
-                      <p class="text-sm text-cosmos-text-muted">{$t('properties.property_city')}</p>
-                      <p class="font-medium text-cosmos-text">{property.city}</p>
-                    </div>
-                    
-                    <div>
-                      <p class="text-sm text-cosmos-text-muted">{$t('properties.property_country')}</p>
-                      <p class="font-medium text-cosmos-text">{property.country}</p>
-                    </div>
-                    
-                    {#if property.postal_code}
-                      <div>
-                        <p class="text-sm text-cosmos-text-muted">{$t('properties.property_postal_code')}</p>
-                        <p class="font-medium text-cosmos-text">{property.postal_code}</p>
-                      </div>
-                    {/if}
-                  </div>
-                  
-                  <!-- Map -->
-                  <div class="overflow-hidden rounded-lg">
-                    <div class="h-80 w-full">
-                      {#if property.latitude && property.longitude}
-                        <PropertyMap 
-                          latitude={property.latitude} 
-                          longitude={property.longitude}
-                          address={property.address}
-                          title={property.title}
-                        />
-                      {:else}
-                        <div class="flex h-full w-full items-center justify-center bg-cosmos-bg-light">
-                          <div class="text-center">
-                            <svg class="mx-auto mb-2 h-10 w-10 text-cosmos-text-muted" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.172 16.172a4 4 0 01.707-5.878M9.172 16.172a4 4 0 001.414-7.586l-1.414 1.414M9.172 16.172l-6.293 6.293M12 10l-3.293 3.293M13.828 13.828a4 4 0 01-5.656 0M9.172 17.172a4 4 0 01-5.656-5.656" />
-                            </svg>
-                            <p class="text-cosmos-text-muted">{$t('properties.no_location_data')}</p>
-                          </div>
-                        </div>
-                      {/if}
-                    </div>
-                  </div>
-                  
-                  <!-- Surrounding Information -->
-                  {#if property.surroundings && Object.keys(property.surroundings).length > 0}
-                    <div class="mt-6">
-                      <h3 class="mb-4 text-lg font-medium text-cosmos-text">{$t('properties.surroundings')}</h3>
-                      <div class="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
-                        {#each Object.entries(property.surroundings) as [key, value]}
-                          <div class="rounded-lg bg-cosmos-bg-light bg-opacity-20 p-3">
-                            <p class="text-sm text-cosmos-text-muted">{key}</p>
-                            <p class="font-medium text-cosmos-text">{value}</p>
-                          </div>
-                        {/each}
-                      </div>
-                    </div>
-                  {/if}
-                </div>
-              </TabItem>
-              
-              <TabItem id="documents" active={activeTab === 'documents'}>
-                <!-- Property Documents Tab -->
-                <div class="space-y-6">
-                  <h2 class="text-xl font-bold text-cosmos-text">{$t('properties.property_documents')}</h2>
-                  
-                  <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                    {#each property.documents || [] as document}
-                      <div class="overflow-hidden rounded-lg border border-cosmos-bg-light bg-cosmos-bg-light bg-opacity-20 transition hover:bg-cosmos-bg-light hover:bg-opacity-30">
-                        <div class="flex items-center p-4">
-                          <div class="mr-4 flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-lg bg-primary bg-opacity-10">
-                            <svg class="h-6 w-6 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                            </svg>
-                          </div>
-                          
-                          <div class="flex-grow">
-                            <h4 class="font-medium text-cosmos-text">{document.title}</h4>
-                            <p class="text-sm text-cosmos-text-muted">{document.document_type_display}</p>
-                          </div>
-                          
-                          {#if document.main_file_url}
-                            <a 
-                              href={document.main_file_url} 
-                              target="_blank" 
-                              rel="noopener noreferrer"
-                              class="flex h-8 w-8 items-center justify-center rounded-md bg-primary bg-opacity-20 text-primary transition hover:bg-primary hover:text-white"
-                              aria-label={$t('properties.download_document')}
-                            >
-                              <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
-                              </svg>
-                            </a>
-                          {/if}
-                        </div>
-                      </div>
-                    {/each}
-                  </div>
-                  
-                  {#if !property.documents || property.documents.length === 0}
-                    <div class="rounded-lg bg-cosmos-bg-light bg-opacity-20 p-6 text-center">
-                      <svg class="mx-auto mb-2 h-10 w-10 text-cosmos-text-muted" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                      </svg>
-                      <p class="text-cosmos-text-muted">{$t('general.no_data_available')}</p>
-                    </div>
-                  {/if}
-                </div>
-              </TabItem>
-              
-              <TabItem id="auctions" active={activeTab === 'auctions'}>
-                <!-- Property Auctions Tab -->
-                <div class="space-y-6">
-                  <h2 class="text-xl font-bold text-cosmos-text">{$t('properties.property_auctions')}</h2>
-                  
-                  <div class="space-y-4">
-                    {#each relatedAuctions as auction}
-                      <div class="overflow-hidden rounded-lg bg-cosmos-bg-light bg-opacity-20 transition hover:bg-cosmos-bg-light hover:bg-opacity-30">
-                        <a href={`/auctions/${auction.id}`} class="block p-4">
-                          <div class="flex flex-col justify-between space-y-4 sm:flex-row sm:items-center sm:space-y-0">
-                            <div>
-                              <h3 class="font-medium text-cosmos-text">{auction.title}</h3>
-                              <div class="mt-1 flex flex-wrap items-center gap-2">
-                                <Badge 
-                                  value={auction.status_display || $t(`auctions.status.${auction.status}`)}
-                                  variant={auction.status === 'active' ? 'success' : 
-                                          auction.status === 'pending' ? 'warning' : 
-                                          auction.status === 'extended' ? 'info' : 'error'}
-                                  size="sm"
-                                />
-                                <span class="text-xs text-cosmos-text-muted">
-                                  {$t('auctions.start_date')}: {formatDate(auction.start_date, {day: 'numeric', month: 'short', year: 'numeric'})}
-                                </span>
-                              </div>
-                            </div>
-                            
-                            <div class="text-right">
-                              <div class="text-xs text-cosmos-text-muted">{$t('auctions.current_bid')}</div>
-                              <div class="text-lg font-bold text-primary">{formatCurrency(auction.current_bid)}</div>
-                              
-                              {#if auction.bid_count > 0}
-                                <div class="mt-1 text-xs text-cosmos-text-muted">
-                                  {auction.bid_count} {auction.bid_count === 1 ? $t('auctions.bid') : $t('auctions.bids')}
-                                </div>
-                              {/if}
-                            </div>
-                          </div>
-                          
-                          {#if auction.time_remaining > 0}
-                            <div class="mt-4 flex items-center rounded-md bg-cosmos-bg-light bg-opacity-30 p-2">
-                              <svg class="mr-2 h-4 w-4 text-cosmos-text-muted" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                              </svg>
-                              <span class="text-sm text-cosmos-text-muted">
-                                {$t('auctions.ends_in')}: 
-                                {Math.floor(auction.time_remaining / 86400)} {$t('auctions.days')}, 
-                                {Math.floor((auction.time_remaining % 86400) / 3600)} {$t('auctions.hours')}
-                              </span>
-                            </div>
-                          {/if}
-                        </a>
-                      </div>
-                    {/each}
-                  </div>
-                  
-                  {#if relatedAuctions.length === 0}
-                    <div class="rounded-lg bg-cosmos-bg-light bg-opacity-20 p-6 text-center">
-                      <svg class="mx-auto mb-2 h-10 w-10 text-cosmos-text-muted" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                      </svg>
-                      <p class="text-cosmos-text-muted">{$t('properties.no_auctions')}</p>
-                    </div>
-                  {/if}
-                </div>
-              </TabItem>
-            </Card>
-          </div>
-          
-          <!-- Sidebar (Right Column) -->
-          <div>
-            <!-- Owner Information -->
-            <Card class="mb-6" title={$t('properties.property_owner')}>
-              {#if property && property.owner}
-                <div class="flex items-center">
-                  <div class="mr-4 h-14 w-14 overflow-hidden rounded-full bg-primary bg-opacity-20">
-                    {#if property.owner.avatar_url}
-                      <img 
-                        src={property.owner.avatar_url} 
-                        alt={property.owner.full_name || property.owner.email || $t('general.user')}
-                        class="h-full w-full object-cover"
-                      />
-                    {:else}
-                      <div class="flex h-full w-full items-center justify-center text-lg font-medium text-primary">
-                        {property.owner.full_name 
-                          ? property.owner.full_name.charAt(0).toUpperCase() 
-                          : (property.owner.email 
-                            ? property.owner.email.charAt(0).toUpperCase() 
-                            : 'U')}
-                      </div>
-                    {/if}
-                  </div>
-                  
-                  <div>
-                    <p class="font-medium text-cosmos-text">
-                      {property.owner.full_name || property.owner.email || $t('general.user')}
+                  {:else}
+                    <p class="text-neutral-500 dark:text-neutral-400">
+                      {$t('properties.no_description')}
                     </p>
-                    {#if property.owner.role}
-                      <p class="text-sm text-cosmos-text-muted">
-                        {$t(`auth.roles.${property.owner.role}`)}
-                      </p>
-                    {/if}
-                  </div>
-                </div>
-                
-                <div class="mt-4">
-                  <Button
-                    variant="primary"
-                    fullWidth={true}
-                    onClick={() => dispatch('contactOwner')}
-                  >
-                    <svg class="mr-2 h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
-                    </svg>
-                    {$t('properties.contact_owner')}
-                  </Button>
-                </div>
-              {:else}
-                <div class="rounded-lg bg-cosmos-bg-light bg-opacity-40 p-4 text-center">
-                  <p class="text-cosmos-text-muted">{$t('general.no_data_available')}</p>
+                  {/if}
                 </div>
               {/if}
-            </Card>
-            
-            <!-- Property Key Stats -->
-            <Card class="mb-6" title={$t('general.statistics')}>
-              <div class="grid grid-cols-2 gap-4">
-                {#if property && property.views_count !== undefined}
-                  <div class="rounded-lg bg-cosmos-bg-light bg-opacity-30 p-3 text-center">
-                    <div class="text-2xl font-bold text-primary">{property.views_count}</div>
-                    <div class="text-sm text-cosmos-text-muted">{$t('general.views')}</div>
-                  </div>
-                {/if}
-                
-                {#if property && property.created_at}
-                  <div class="rounded-lg bg-cosmos-bg-light bg-opacity-30 p-3 text-center">
-                    <div class="text-sm font-bold text-primary">
-                      {formatDate(property.created_at, {month: 'short', day: 'numeric', year: 'numeric'})}
+              
+              {#if activeTab === 'features'}
+                <div in:fade={{duration: 200}}>
+                  <PropertyFeatures property={property} />
+                </div>
+              {/if}
+              
+              {#if activeTab === 'location'}
+                <div in:fade={{duration: 200}}>
+                  {#if property?.location}
+                    <PropertyMap location={property.location} title={property.title} />
+                  {:else}
+                    <div class="flex flex-col items-center justify-center bg-neutral-100 dark:bg-neutral-800 p-8 rounded-lg">
+                      <svg xmlns="http://www.w3.org/2000/svg" class="h-12 w-12 text-neutral-400 mb-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M12 22s-8-4.5-8-11.8a8 8 0 0 1 16 0c0 7.3-8 11.8-8 11.8z" />
+                        <circle cx="12" cy="10" r="3" />
+                      </svg>
+                      <p class="text-neutral-500 text-center">
+                        {$t('properties.no_location')}
+                      </p>
                     </div>
-                    <div class="text-sm text-cosmos-text-muted">{$t('general.created_at')}</div>
-                  </div>
-                {/if}
-                
-                {#if property && property.price_per_sqm}
-                  <div class="rounded-lg bg-cosmos-bg-light bg-opacity-30 p-3 text-center">
-                    <div class="text-lg font-bold text-primary">{formatCurrency(property.price_per_sqm)}</div>
-                    <div class="text-sm text-cosmos-text-muted">{$t('general.per_sqm')}</div>
-                  </div>
-                {/if}
-                
-                {#if relatedAuctions && relatedAuctions.length > 0}
-                  <div class="rounded-lg bg-cosmos-bg-light bg-opacity-30 p-3 text-center">
-                    <div class="text-2xl font-bold text-primary">{relatedAuctions.length}</div>
-                    <div class="text-sm text-cosmos-text-muted">{$t('auctions.title')}</div>
-                  </div>
-                {/if}
-              </div>
-            </Card>
+                  {/if}
+                  
+                  {#if property?.address || property?.city || property?.district || property?.country}
+                    <div class="mt-4 space-y-2">
+                      {#if property?.address}
+                        <div class="flex items-start">
+                          <span class="text-neutral-500 dark:text-neutral-400 min-w-32">
+                            {$t('properties.property_address')}:
+                          </span>
+                          <span class="font-medium">
+                            {property.address}
+                          </span>
+                        </div>
+                      {/if}
+                      
+                      {#if property?.city}
+                        <div class="flex items-start">
+                          <span class="text-neutral-500 dark:text-neutral-400 min-w-32">
+                            {$t('properties.property_city')}:
+                          </span>
+                          <span class="font-medium">
+                            {property.city}
+                          </span>
+                        </div>
+                      {/if}
+                      
+                      {#if property?.district}
+                        <div class="flex items-start">
+                          <span class="text-neutral-500 dark:text-neutral-400 min-w-32">
+                            {$t('properties.property_district')}:
+                          </span>
+                          <span class="font-medium">
+                            {property.district}
+                          </span>
+                        </div>
+                      {/if}
+                      
+                      {#if property?.country}
+                        <div class="flex items-start">
+                          <span class="text-neutral-500 dark:text-neutral-400 min-w-32">
+                            {$t('properties.property_country')}:
+                          </span>
+                          <span class="font-medium">
+                            {property.country}
+                          </span>
+                        </div>
+                      {/if}
+                    </div>
+                  {/if}
+                </div>
+              {/if}
+              
+              {#if activeTab === 'documents'}
+                <div in:fade={{duration: 200}}>
+                  {#if property?.documents && property.documents.length > 0}
+                    <DocumentsList documents={property.documents} />
+                  {:else}
+                    <p class="text-neutral-500 dark:text-neutral-400">
+                      {$t('properties.no_documents')}
+                    </p>
+                  {/if}
+                </div>
+              {/if}
+            </div>
+          </Card>
+        </div>
+        
+        <!-- Right Column: Actions & Owner Info -->
+        <div>
+          <!-- Owner Information Card -->
+          <Card padding={true} class="mb-6">
+            <h3 class="text-lg font-semibold mb-4">{$t('properties.property_owner')}</h3>
             
-            <!-- Share and Similar Properties -->
-            <Card class="mb-6">
-              <div class="space-y-3">
-                <Button 
-                  variant="outline"
-                  fullWidth={true}
-                  onClick={shareProperty}
-                >
-                  <svg class="mr-2 h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" />
-                  </svg>
-                  {$t('properties.share_property')}
-                </Button>
-                
-                <a 
-                  href={`/search?property_type=${property.property_type}&city=${property.city}`} 
-                  class="flex w-full items-center justify-center rounded-lg border border-cosmos-text-muted py-3 font-medium text-cosmos-text-muted transition hover:border-cosmos-text hover:text-cosmos-text"
-                >
-                  <svg class="mr-2 h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                  </svg>
-                  {$t('properties.similar_properties')}
-                </a>
-              </div>
-            </Card>
-            
-            <!-- Mini Map Preview -->
-            {#if property.latitude && property.longitude}
-              <div class="mb-6 overflow-hidden rounded-xl">
-                <div class="h-40 w-full">
-                  <PropertyMap 
-                    latitude={property.latitude} 
-                    longitude={property.longitude}
-                    address={property.address}
-                    title={property.title}
-                    zoom={13}
-                    interactive={false}
+            {#if property?.owner}
+              <div class="flex items-center">
+                {#if property.owner.avatar_url}
+                  <img 
+                    src={property.owner.avatar_url} 
+                    alt={property.owner.full_name} 
+                    class="h-12 w-12 rounded-full object-cover mr-3"
                   />
+                {:else}
+                  <div class="h-12 w-12 rounded-full bg-primary text-white flex items-center justify-center text-xl font-medium mr-3">
+                    {property.owner.full_name ? property.owner.full_name[0].toUpperCase() : 'U'}
+                  </div>
+                {/if}
+                
+                <div>
+                  <div class="font-medium">{property.owner.full_name}</div>
+                  <div class="text-sm text-neutral-500 dark:text-neutral-400">
+                    {property.owner.email}
+                  </div>
                 </div>
               </div>
+              
+              <div class="mt-4 flex flex-col space-y-3">
+                <Button 
+                  variant="primary" 
+                  size="lg"
+                  class="w-full"
+                  on:click={contactOwner}
+                  disabled={isOwner}
+                >
+                  {#if isOwner}
+                    {$t('properties.own_property')}
+                  {:else}
+                    {$t('properties.contact_owner')}
+                  {/if}
+                </Button>
+              </div>
+            {:else}
+              <p class="text-neutral-500 dark:text-neutral-400">
+                {$t('properties.owner_info_unavailable')}
+              </p>
             {/if}
-          </div>
+          </Card>
+          
+          <!-- Property Actions Card -->
+          <Card padding={true} class="mb-6">
+            <h3 class="text-lg font-semibold mb-4">{$t('properties.actions')}</h3>
+            
+            <div class="flex flex-col space-y-3">
+              <Button 
+                variant="secondary"
+                size="lg"
+                class="w-full"
+                on:click={toggleFavorite}
+                loading={loadingFavorite}
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" viewBox="0 0 24 24" fill={favoriteStatus ? "currentColor" : "none"} stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z" />
+                </svg>
+                {favoriteStatus 
+                  ? $t('properties.remove_from_favorites') 
+                  : $t('properties.add_to_favorites')}
+              </Button>
+              
+              <Button 
+                variant="outline"
+                size="lg"
+                class="w-full"
+                on:click={toggleShareModal}
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8" />
+                  <polyline points="16 6 12 2 8 6" />
+                  <line x1="12" y1="2" x2="12" y2="15" />
+                </svg>
+                {$t('properties.share_property')}
+              </Button>
+            </div>
+          </Card>
+          
+          <!-- Property Details Card -->
+          <Card padding={true}>
+            <h3 class="text-lg font-semibold mb-4">{$t('properties.additional_details')}</h3>
+            
+            <div class="space-y-3">
+              {#if property?.property_number}
+                <div class="flex items-start justify-between">
+                  <span class="text-neutral-500 dark:text-neutral-400">
+                    {$t('properties.property_number')}:
+                  </span>
+                  <span class="font-medium text-right">
+                    {property.property_number}
+                  </span>
+                </div>
+              {/if}
+              
+              {#if property?.build_year}
+                <div class="flex items-start justify-between">
+                  <span class="text-neutral-500 dark:text-neutral-400">
+                    {$t('properties.build_year')}:
+                  </span>
+                  <span class="font-medium text-right">
+                    {property.build_year}
+                  </span>
+                </div>
+              {/if}
+              
+              {#if property?.floor_number}
+                <div class="flex items-start justify-between">
+                  <span class="text-neutral-500 dark:text-neutral-400">
+                    {$t('properties.floor_number')}:
+                  </span>
+                  <span class="font-medium text-right">
+                    {property.floor_number}
+                  </span>
+                </div>
+              {/if}
+              
+              {#if property?.facing_direction}
+                <div class="flex items-start justify-between">
+                  <span class="text-neutral-500 dark:text-neutral-400">
+                    {$t('properties.facing_direction')}:
+                  </span>
+                  <span class="font-medium text-right">
+                    {property.facing_direction}
+                  </span>
+                </div>
+              {/if}
+              
+              {#if property?.is_verified}
+                <div class="flex items-start justify-between">
+                  <span class="text-neutral-500 dark:text-neutral-400">
+                    {$t('properties.verified')}:
+                  </span>
+                  <span class="font-medium text-right text-green-600 dark:text-green-400 flex items-center">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-1" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                      <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" />
+                      <polyline points="22 4 12 14.01 9 11.01" />
+                    </svg>
+                    {$t('properties.verified_property')}
+                  </span>
+                </div>
+              {/if}
+              
+              {#if property?.created_at}
+                <div class="flex items-start justify-between">
+                  <span class="text-neutral-500 dark:text-neutral-400">
+                    {$t('properties.listed_on')}:
+                  </span>
+                  <span class="font-medium text-right">
+                    {formatDate(property.created_at)}
+                  </span>
+                </div>
+              {/if}
+            </div>
+          </Card>
         </div>
+      </div>
+    </section>
+    
+    <!-- Share Modal -->
+    {#if showShareModal}
+      <div 
+        class="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4"
+        transition:fade={{duration: 200}}
+        on:click|self={toggleShareModal}
+      >
+        <Card 
+          class="w-full max-w-md"
+          padding={true}
+          in:fly={{y: 20, duration: 300}}
+        >
+          <div class="flex items-center justify-between mb-4">
+            <h3 class="text-xl font-bold">{$t('properties.share_property')}</h3>
+            <button 
+              class="h-8 w-8 rounded-full flex items-center justify-center text-neutral-500 hover:bg-neutral-100 dark:hover:bg-neutral-800"
+              on:click={toggleShareModal}
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <line x1="18" y1="6" x2="6" y2="18"></line>
+                <line x1="6" y1="6" x2="18" y2="18"></line>
+              </svg>
+            </button>
+          </div>
+          
+          <p class="mb-4">{$t('properties.share_via')}:</p>
+          
+          <div class="grid grid-cols-4 gap-3 mb-6">
+            <!-- Social Media Buttons -->
+            <button 
+              class="flex flex-col items-center p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg hover:bg-blue-100 dark:hover:bg-blue-900/30 transition"
+              on:click={() => shareOnSocial('facebook')}
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-blue-600 dark:text-blue-400" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z" />
+              </svg>
+              <span class="text-xs mt-1 text-blue-600 dark:text-blue-400">Facebook</span>
+            </button>
+            
+            <button 
+              class="flex flex-col items-center p-3 bg-sky-50 dark:bg-sky-900/20 rounded-lg hover:bg-sky-100 dark:hover:bg-sky-900/30 transition"
+              on:click={() => shareOnSocial('twitter')}
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-sky-500 dark:text-sky-400" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M23.953 4.57a10 10 0 01-2.825.775 4.958 4.958 0 002.163-2.723c-.951.555-2.005.959-3.127 1.184a4.92 4.92 0 00-8.384 4.482C7.69 8.095 4.067 6.13 1.64 3.162a4.822 4.822 0 00-.666 2.475c0 1.71.87 3.213 2.188 4.096a4.904 4.904 0 01-2.228-.616v.06a4.923 4.923 0 003.946 4.827 4.996 4.996 0 01-2.212.085 4.936 4.936 0 004.604 3.417 9.867 9.867 0 01-6.102 2.105c-.39 0-.779-.023-1.17-.067a13.995 13.995 0 007.557 2.209c9.053 0 13.998-7.496 13.998-13.985 0-.21 0-.42-.015-.63A9.935 9.935 0 0024 4.59z" />
+              </svg>
+              <span class="text-xs mt-1 text-sky-500 dark:text-sky-400">Twitter</span>
+            </button>
+            
+            <button 
+              class="flex flex-col items-center p-3 bg-green-50 dark:bg-green-900/20 rounded-lg hover:bg-green-100 dark:hover:bg-green-900/30 transition"
+              on:click={() => shareOnSocial('whatsapp')}
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-green-600 dark:text-green-400" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z" />
+              </svg>
+              <span class="text-xs mt-1 text-green-600 dark:text-green-400">WhatsApp</span>
+            </button>
+            
+            <button 
+              class="flex flex-col items-center p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg hover:bg-blue-100 dark:hover:bg-blue-900/30 transition"
+              on:click={() => shareOnSocial('telegram')}
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-blue-500 dark:text-blue-400" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M11.944 0A12 12 0 0 0 0 12a12 12 0 0 0 12 12 12 12 0 0 0 12-12A12 12 0 0 0 12 0a12 12 0 0 0-.056 0zm4.962 7.224c.1-.002.321.023.465.14a.506.506 0 0 1 .171.325c.016.093.036.306.02.472-.18 1.898-.962 6.502-1.36 8.627-.168.9-.499 1.201-.82 1.23-.696.065-1.225-.46-1.9-.902-1.056-.693-1.653-1.124-2.678-1.8-1.185-.78-.417-1.21.258-1.91.177-.184 3.247-2.977 3.307-3.23.007-.032.014-.15-.056-.212s-.174-.041-.249-.024c-.106.024-1.793 1.14-5.061 3.345-.48.33-.913.49-1.302.48-.428-.008-1.252-.241-1.865-.44-.752-.245-1.349-.374-1.297-.789.027-.216.325-.437.893-.663 3.498-1.524 5.83-2.529 6.998-3.014 3.332-1.386 4.025-1.627 4.476-1.635z" />
+              </svg>
+              <span class="text-xs mt-1 text-blue-500 dark:text-blue-400">Telegram</span>
+            </button>
+          </div>
+          
+          <div class="mb-2">
+            <label class="block text-sm font-medium mb-2">{$t('properties.copy_link')}:</label>
+            <div class="flex">
+              <input 
+                type="text" 
+                value={browser ? window.location.href : ''}
+                readonly
+                class="flex-1 rounded-l-lg border border-neutral-300 dark:border-neutral-700 bg-white dark:bg-neutral-800 px-3 py-2 text-sm"
+              />
+              <button 
+                class="bg-primary hover:bg-primary-dark text-white rounded-r-lg px-4 flex items-center justify-center"
+                on:click={copyLink}
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+                  <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+                </svg>
+              </button>
+            </div>
+          </div>
+          
+          <div class="pt-4 border-t border-neutral-200 dark:border-neutral-700 flex justify-end">
+            <Button
+              variant="primary"
+              on:click={toggleShareModal}
+            >
+              {$t('general.close')}
+            </Button>
+          </div>
+        </Card>
       </div>
     {/if}
   </div>
   
   <style>
-    /* RTL adjustments */
-    :global([dir="rtl"]) .property-details svg:not(.no-flip) {
+    /* Base RTL styling */
+    .rtl {
+      direction: rtl;
+      text-align: right;
+    }
+    
+    /* RTL-specific styling for property features */
+    .rtl .feature-icon {
+      margin-right: 0;
+      margin-left: 0.5rem;
+    }
+    
+    /* RTL-specific styling for property details */
+    .rtl .tab-header {
+      flex-direction: row-reverse;
+    }
+    
+    /* RTL-specific styling for property actions */
+    .rtl svg.mr-2 {
+      margin-right: 0;
+      margin-left: 0.5rem;
+    }
+    
+    /* RTL-specific styling for property info */
+    .rtl .property-feature-item {
+      text-align: center;
+    }
+    
+    /* RTL-specific styling for carousel */
+    .rtl :global(.carousel-arrow-prev) {
+      left: auto;
+      right: 1rem;
+    }
+    
+    .rtl :global(.carousel-arrow-next) {
+      right: auto;
+      left: 1rem;
+    }
+    
+    /* RTL-specific styling for text fields */
+    .rtl input[type="text"] {
+      text-align: right;
+    }
+    
+    /* Fix spacing in RTL mode */
+    .rtl .mr-3 {
+      margin-right: 0;
+      margin-left: 0.75rem;
+    }
+    
+    /* Fix icon direction for RTL */
+    .rtl .icon-flip-rtl {
       transform: scaleX(-1);
     }
     
-    :global([dir="rtl"]) .property-details .mr-2,
-    :global([dir="rtl"]) .property-details .mr-3,
-    :global([dir="rtl"]) .property-details .mr-4 {
-      margin-right: 0;
-      margin-left: 0.5rem;
+    /* Fix form elements for RTL */
+    @media (min-width: 768px) {
+      .rtl .text-md-right {
+        text-align: left;
+      }
+      
+      .rtl .text-md-left {
+        text-align: right;
+      }
     }
   </style>
