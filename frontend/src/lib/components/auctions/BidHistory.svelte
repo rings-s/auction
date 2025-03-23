@@ -1,7 +1,7 @@
 <script>
     import { format, formatDistance } from 'date-fns';
     import { ar } from 'date-fns/locale';
-    import { formatCurrency } from '$lib/utils/format';
+    import { formatCurrency } from '$lib/utils/formatters';
     import { authStore } from '$lib/stores/auth';
     
     // Components

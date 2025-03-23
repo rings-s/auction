@@ -2,10 +2,11 @@
 import { browser } from '$app/environment';
 import { writable, get } from 'svelte/store';
 import { goto } from '$app/navigation';
+import { toast } from '$lib/stores/toast';
 
 /**
- * WebSocket service for real-time communication with the backend.
- * Handles connections to auction, bidding, chat, notifications, and dashboard.
+ * Enhanced WebSocket service for real-time communication with the backend.
+ * Provides robust connection management, error handling, and reconnection logic.
  */
 
 // Configuration
@@ -13,28 +14,46 @@ const WS_BASE_URL = browser ?
   (import.meta.env.VITE_WS_URL || `${window.location.protocol === 'https:' ? 'wss:' : 'ws:'}//${window.location.host}`) : 
   null;
 
-const RECONNECT_INTERVAL = 5000; // 5 seconds
-const MAX_RECONNECT_ATTEMPTS = 5;
-const PING_INTERVAL = 30000; // 30 seconds
+// Connection management constants
+const RECONNECT_INTERVAL = 3000; // 3 seconds initial reconnect time
+const MAX_RECONNECT_INTERVAL = 30000; // Maximum 30 seconds between reconnect attempts
+const MAX_RECONNECT_ATTEMPTS = 10;
+const PING_INTERVAL = 30000; // 30 seconds ping interval to keep connection alive
 
-// Store for active connections
+// Stores for active connections and their status
 export const connections = writable({});
-
-// Store for connection statuses
 export const connectionStatus = writable({});
 
 /**
- * Base WebSocket connection manager
+ * Base WebSocket connection manager with enhanced error handling
  */
 class WebSocketConnection {
   constructor(url, options = {}) {
     this.url = url;
-    this.options = options;
+    this.options = {
+      autoConnect: true,
+      autoReconnect: true,
+      pingInterval: PING_INTERVAL,
+      debug: false,
+      getToken: () => localStorage.getItem('accessToken'),
+      onOpen: null,
+      onClose: null,
+      onError: null,
+      onMessage: null,
+      onReconnect: null,
+      redirectOnAuthFailure: true,
+      ...options
+    };
+    
+    // Connection state
     this.socket = null;
     this.isConnecting = false;
     this.reconnectAttempts = 0;
     this.reconnectTimer = null;
     this.pingTimer = null;
+    this.reconnectInterval = RECONNECT_INTERVAL;
+    
+    // Message handlers and event registry
     this.messageHandlers = new Map();
     this.eventHandlers = {
       onOpen: [],
@@ -45,55 +64,84 @@ class WebSocketConnection {
       onReconnectFailed: []
     };
     
-    // Automatically connect if autoConnect is enabled
-    if (this.options.autoConnect !== false) {
+    // Pending messages queue for reconnection
+    this.pendingMessages = [];
+    
+    // Register initial handlers from options
+    if (this.options.onOpen) this.on('open', this.options.onOpen);
+    if (this.options.onClose) this.on('close', this.options.onClose);
+    if (this.options.onError) this.on('error', this.options.onError);
+    if (this.options.onMessage) this.on('message', this.options.onMessage);
+    if (this.options.onReconnect) this.on('reconnect', this.options.onReconnect);
+    
+    // Auto-connect if enabled
+    if (this.options.autoConnect) {
       this.connect();
     }
   }
   
   /**
-   * Connect to WebSocket
+   * Connect to WebSocket with enhanced error handling
    */
   connect() {
-    if (!browser) return;
+    if (!browser) return Promise.reject(new Error('WebSocket is only available in browser environment'));
+    
     if (this.socket && (this.socket.readyState === WebSocket.OPEN || this.socket.readyState === WebSocket.CONNECTING)) {
-      return;
+      return Promise.resolve(this.socket);
     }
     
-    this.isConnecting = true;
-    
-    try {
-      // Get authentication token
-      const token = this.options.getToken ? this.options.getToken() : localStorage.getItem('accessToken');
-      
-      // Build URL with authentication token
-      const wsUrl = new URL(this.url, WS_BASE_URL);
-      
-      // Add token as query parameter if provided
-      if (token) {
-        wsUrl.searchParams.append('token', token);
-      }
-      
-      // Create WebSocket
-      this.socket = new WebSocket(wsUrl.toString());
-      
-      // Setup event handlers
-      this.socket.onopen = (event) => this.handleOpen(event);
-      this.socket.onclose = (event) => this.handleClose(event);
-      this.socket.onerror = (event) => this.handleError(event);
-      this.socket.onmessage = (event) => this.handleMessage(event);
-      
-      // Update connection status
+    return new Promise((resolve, reject) => {
+      this.isConnecting = true;
       this.updateStatus('connecting');
-    } catch (error) {
-      console.error(`WebSocket connection error for ${this.url}:`, error);
-      this.updateStatus('error', error.message);
-      this.scheduleReconnect();
-    }
+      
+      const onOpenHandler = (event) => {
+        this.socket.removeEventListener('open', onOpenHandler);
+        resolve(this.socket);
+      };
+      
+      const onErrorHandler = (event) => {
+        this.socket.removeEventListener('error', onErrorHandler);
+        reject(new Error('Connection failed'));
+      };
+      
+      try {
+        // Get authentication token
+        const token = this.options.getToken();
+        
+        // Build URL with authentication token
+        const wsUrl = new URL(this.url, WS_BASE_URL);
+        
+        // Add token as query parameter if provided
+        if (token) {
+          wsUrl.searchParams.append('token', token);
+        }
+        
+        // Create WebSocket with proper error handling
+        this.socket = new WebSocket(wsUrl.toString());
+        this.socket.addEventListener('open', onOpenHandler);
+        this.socket.addEventListener('error', onErrorHandler);
+        
+        // Setup core event handlers
+        this.socket.onopen = (event) => this.handleOpen(event);
+        this.socket.onclose = (event) => this.handleClose(event);
+        this.socket.onerror = (event) => this.handleError(event);
+        this.socket.onmessage = (event) => this.handleMessage(event);
+        
+        if (this.options.debug) {
+          console.log(`Connecting to WebSocket: ${wsUrl.toString()}`);
+        }
+      } catch (error) {
+        this.isConnecting = false;
+        console.error(`WebSocket connection error for ${this.url}:`, error);
+        this.updateStatus('error', error.message);
+        this.scheduleReconnect();
+        reject(error);
+      }
+    });
   }
   
   /**
-   * Disconnect from WebSocket
+   * Disconnect from WebSocket with proper cleanup
    */
   disconnect() {
     this.clearTimers();
@@ -109,6 +157,11 @@ class WebSocketConnection {
     }
     
     this.updateStatus('disconnected');
+    
+    // Clear pending messages
+    this.pendingMessages = [];
+    
+    return Promise.resolve();
   }
   
   /**
@@ -117,48 +170,86 @@ class WebSocketConnection {
   handleOpen(event) {
     this.isConnecting = false;
     this.reconnectAttempts = 0;
+    this.reconnectInterval = RECONNECT_INTERVAL; // Reset reconnect interval
     this.updateStatus('connected');
+    
+    if (this.options.debug) {
+      console.log(`WebSocket connected: ${this.url}`);
+    }
     
     // Setup ping interval to keep connection alive
     this.setupPing();
     
+    // Process any pending messages
+    this.processPendingMessages();
+    
     // Call event handlers
-    this.eventHandlers.onOpen.forEach(handler => handler(event));
+    this.eventHandlers.onOpen.forEach(handler => {
+      try {
+        handler(event);
+      } catch (error) {
+        console.error('Error in onOpen handler:', error);
+      }
+    });
   }
   
   /**
-   * Handle WebSocket close event
+   * Handle WebSocket close event with improved reconnection logic
    */
   handleClose(event) {
     this.clearTimers();
     
-    // Update status based on close code
-    if (event.code === 1000) {
-      // Normal closure
-      this.updateStatus('disconnected');
+    const wasIntentional = event.code === 1000;
+    
+    // Determine close reason for better UX feedback
+    let closeReason = 'Connection closed';
+    if (event.reason) {
+      closeReason = event.reason;
     } else if (event.code === 1006) {
-      // Abnormal closure, attempt reconnect
-      this.updateStatus('disconnected', 'Connection lost');
-      if (this.options.autoReconnect !== false) {
-        this.scheduleReconnect();
-      }
+      closeReason = 'Connection lost unexpectedly';
+    } else if (event.code === 1001) {
+      closeReason = 'Server is going away';
+    } else if (event.code === 1011) {
+      closeReason = 'Server error';
+    } else if (event.code === 4003) {
+      closeReason = 'Authentication failed';
+    }
+    
+    if (this.options.debug) {
+      console.log(`WebSocket closed: ${this.url}, Code: ${event.code}, Reason: ${closeReason}`);
+    }
+    
+    // Update status based on close code
+    if (wasIntentional) {
+      // Normal closure
+      this.updateStatus('disconnected', 'Connection closed normally');
     } else if (event.code === 4003) {
       // Authentication failure
       this.updateStatus('auth_failed', 'Authentication failed');
       
       // Redirect to login if configured
-      if (this.options.redirectOnAuthFailure !== false) {
+      if (this.options.redirectOnAuthFailure) {
+        if (browser && typeof toast !== 'undefined') {
+          toast.error('Your session has expired. Please log in again.');
+        }
         goto('/auth/login');
       }
     } else {
-      this.updateStatus('error', `Closed with code ${event.code}: ${event.reason}`);
-      if (this.options.autoReconnect !== false) {
+      // Abnormal closure, attempt reconnect
+      this.updateStatus('disconnected', closeReason);
+      if (this.options.autoReconnect) {
         this.scheduleReconnect();
       }
     }
     
     // Call event handlers
-    this.eventHandlers.onClose.forEach(handler => handler(event));
+    this.eventHandlers.onClose.forEach(handler => {
+      try {
+        handler(event);
+      } catch (error) {
+        console.error('Error in onClose handler:', error);
+      }
+    });
   }
   
   /**
@@ -169,11 +260,17 @@ class WebSocketConnection {
     this.updateStatus('error', 'Connection error');
     
     // Call event handlers
-    this.eventHandlers.onError.forEach(handler => handler(event));
+    this.eventHandlers.onError.forEach(handler => {
+      try {
+        handler(event);
+      } catch (error) {
+        console.error('Error in onError handler:', error);
+      }
+    });
   }
   
   /**
-   * Handle WebSocket message event
+   * Handle WebSocket message event with improved parsing
    */
   handleMessage(event) {
     try {
@@ -181,15 +278,23 @@ class WebSocketConnection {
       
       // Handle ping/pong for keepalive
       if (data.type === 'pong') {
+        if (this.options.debug) {
+          console.log(`Received pong from server: ${this.url}`);
+        }
         return;
       }
       
       // Handle error messages
       if (data.type === 'error') {
-        console.error(`WebSocket error from server:`, data);
+        console.error(`WebSocket error from server (${this.url}):`, data);
+        
+        // Show toast notification if available
+        if (browser && typeof toast !== 'undefined') {
+          toast.error(data.message || 'An error occurred');
+        }
         
         // Update status
-        this.updateStatus('error', data.message);
+        this.updateStatus('error', data.message || 'Server error');
         
         // Check if client_id is provided and call specific handler
         if (data.client_id && this.messageHandlers.has(`error:${data.client_id}`)) {
@@ -200,52 +305,53 @@ class WebSocketConnection {
       
       // Call specific message type handlers
       if (data.type && this.messageHandlers.has(data.type)) {
-        this.messageHandlers.get(data.type)(data);
+        try {
+          this.messageHandlers.get(data.type)(data);
+        } catch (error) {
+          console.error(`Error in message handler for type '${data.type}':`, error);
+        }
       }
       
       // Call message event handlers
-      this.eventHandlers.onMessage.forEach(handler => handler(data));
+      this.eventHandlers.onMessage.forEach(handler => {
+        try {
+          handler(data);
+        } catch (error) {
+          console.error('Error in onMessage handler:', error);
+        }
+      });
     } catch (error) {
       console.error(`Error parsing WebSocket message:`, error, event.data);
     }
   }
   
   /**
-   * Send message to WebSocket
+   * Send message to WebSocket with improved queue handling
    */
   send(data) {
     if (!this.socket || this.socket.readyState !== WebSocket.OPEN) {
-      console.warn(`Cannot send message, WebSocket is not connected. Attempting to connect...`);
+      if (this.options.debug) {
+        console.warn(`Cannot send message, WebSocket is not connected. ${this.options.autoReconnect ? 'Queuing message.' : ''}`);
+      }
       
-      // Try to reconnect and queue the message
-      if (this.options.autoReconnect !== false) {
-        this.connect();
-        
-        // Wait for connection and retry sending
+      // Queue message if auto reconnect is enabled
+      if (this.options.autoReconnect) {
         return new Promise((resolve, reject) => {
-          const openHandler = () => {
-            this.off('open', openHandler);
-            this.off('error', errorHandler);
-            
-            // Try sending again after connection
-            resolve(this.send(data));
-          };
+          // Store the message for later sending
+          this.pendingMessages.push({
+            data,
+            resolve,
+            reject,
+            timestamp: Date.now()
+          });
           
-          const errorHandler = (event) => {
-            this.off('open', openHandler);
-            this.off('error', errorHandler);
-            reject(new Error('Failed to connect for sending message'));
-          };
-          
-          this.on('open', openHandler);
-          this.on('error', errorHandler);
-          
-          // Timeout if connection takes too long
-          setTimeout(() => {
-            this.off('open', openHandler);
-            this.off('error', errorHandler);
-            reject(new Error('Connection timeout while trying to send message'));
-          }, 5000);
+          // Try to reconnect
+          this.connect().catch(error => {
+            // Don't reject here, we'll try to send later
+            if (this.options.debug) {
+              console.warn(`Reconnect attempt failed, message queued: ${error.message}`);
+            }
+          });
         });
       }
       
@@ -253,9 +359,14 @@ class WebSocketConnection {
     }
     
     try {
-      // Convert data to JSON string
+      // Convert data to JSON string if needed
       const message = typeof data === 'string' ? data : JSON.stringify(data);
       this.socket.send(message);
+      
+      if (this.options.debug && data.type !== 'ping') {
+        console.log(`Sent WebSocket message: ${this.url}`, data);
+      }
+      
       return Promise.resolve();
     } catch (error) {
       console.error(`Error sending WebSocket message:`, error);
@@ -264,7 +375,40 @@ class WebSocketConnection {
   }
   
   /**
-   * Subscribe to message type
+   * Process any pending messages after reconnection
+   */
+  processPendingMessages() {
+    if (this.pendingMessages.length === 0) return;
+    
+    const now = Date.now();
+    const maxAge = 60000; // Don't send messages older than 1 minute
+    
+    // Process each pending message
+    [...this.pendingMessages].forEach((item, index) => {
+      // Skip old messages
+      if (now - item.timestamp > maxAge) {
+        item.reject(new Error('Message expired'));
+        this.pendingMessages.splice(index, 1);
+        return;
+      }
+      
+      // Try to send the message
+      this.send(item.data)
+        .then(() => {
+          item.resolve();
+          this.pendingMessages.splice(index, 1);
+        })
+        .catch(error => {
+          // Keep the message in the queue for next reconnect
+          if (this.options.debug) {
+            console.warn(`Failed to send queued message: ${error.message}`);
+          }
+        });
+    });
+  }
+  
+  /**
+   * Subscribe to a specific message type
    */
   onMessage(type, callback) {
     if (typeof callback !== 'function') {
@@ -280,7 +424,7 @@ class WebSocketConnection {
   }
   
   /**
-   * Subscribe to events
+   * Subscribe to events (open, close, error, message, reconnect)
    */
   on(event, callback) {
     const eventType = `on${event.charAt(0).toUpperCase()}${event.slice(1)}`;
@@ -314,15 +458,25 @@ class WebSocketConnection {
   updateStatus(status, message = null) {
     connectionStatus.update(current => ({
       ...current,
-      [this.url]: { status, message, timestamp: new Date().toISOString() }
+      [this.url]: { 
+        status, 
+        message, 
+        timestamp: new Date().toISOString(),
+        reconnectAttempts: this.reconnectAttempts
+      }
     }));
+    
+    // Log status change if debugging
+    if (this.options.debug) {
+      console.log(`WebSocket status changed: ${this.url} - ${status}${message ? ` (${message})` : ''}`);
+    }
   }
   
   /**
-   * Schedule reconnection
+   * Schedule reconnection with exponential backoff
    */
   scheduleReconnect() {
-    if (this.options.autoReconnect === false || this.reconnectTimer) {
+    if (!this.options.autoReconnect || this.reconnectTimer) {
       return;
     }
     
@@ -332,24 +486,51 @@ class WebSocketConnection {
       this.updateStatus('reconnect_failed', `Failed after ${MAX_RECONNECT_ATTEMPTS} attempts`);
       
       // Call reconnect failed handlers
-      this.eventHandlers.onReconnectFailed.forEach(handler => handler());
+      this.eventHandlers.onReconnectFailed.forEach(handler => {
+        try {
+          handler();
+        } catch (error) {
+          console.error('Error in onReconnectFailed handler:', error);
+        }
+      });
       return;
     }
     
-    // Exponential backoff
-    const delay = Math.min(RECONNECT_INTERVAL * Math.pow(1.5, this.reconnectAttempts - 1), 60000);
+    // Exponential backoff with jitter
+    const jitter = Math.random() * 0.3 + 0.85; // Random factor between 0.85 and 1.15
+    this.reconnectInterval = Math.min(
+      this.reconnectInterval * 1.5 * jitter,
+      MAX_RECONNECT_INTERVAL
+    );
+    
+    const delay = this.reconnectInterval;
     
     this.updateStatus('reconnecting', `Attempt ${this.reconnectAttempts} of ${MAX_RECONNECT_ATTEMPTS}`);
+    
+    if (this.options.debug) {
+      console.log(`Scheduling reconnect in ${Math.round(delay)}ms, attempt ${this.reconnectAttempts} of ${MAX_RECONNECT_ATTEMPTS}`);
+    }
     
     // Schedule reconnect
     this.reconnectTimer = setTimeout(() => {
       this.reconnectTimer = null;
       
       // Call reconnect handlers
-      this.eventHandlers.onReconnect.forEach(handler => handler(this.reconnectAttempts));
+      this.eventHandlers.onReconnect.forEach(handler => {
+        try {
+          handler(this.reconnectAttempts);
+        } catch (error) {
+          console.error('Error in onReconnect handler:', error);
+        }
+      });
       
       // Attempt reconnection
-      this.connect();
+      this.connect().catch(error => {
+        if (this.options.debug) {
+          console.warn(`Reconnect attempt ${this.reconnectAttempts} failed: ${error.message}`);
+        }
+        // scheduleReconnect will be called by handleClose
+      });
     }, delay);
   }
   
@@ -359,13 +540,22 @@ class WebSocketConnection {
   setupPing() {
     this.clearTimers();
     
+    // Skip if ping is disabled
+    if (!this.options.pingInterval) return;
+    
     this.pingTimer = setInterval(() => {
       if (this.socket && this.socket.readyState === WebSocket.OPEN) {
         this.send({ type: 'ping' }).catch(error => {
-          console.warn('Failed to send ping:', error);
+          if (this.options.debug) {
+            console.warn('Failed to send ping:', error);
+          }
         });
       }
-    }, PING_INTERVAL);
+    }, this.options.pingInterval);
+    
+    if (this.options.debug) {
+      console.log(`Ping timer set up: ${this.options.pingInterval}ms`);
+    }
   }
   
   /**
@@ -382,10 +572,25 @@ class WebSocketConnection {
       this.pingTimer = null;
     }
   }
+  
+  /**
+   * Get current connection status
+   */
+  getStatus() {
+    const currentStatus = get(connectionStatus)[this.url];
+    return currentStatus || { status: 'unknown' };
+  }
+  
+  /**
+   * Check if connection is open
+   */
+  isConnected() {
+    return this.socket && this.socket.readyState === WebSocket.OPEN;
+  }
 }
 
 /**
- * Create a WebSocket connection with connection management
+ * Create a WebSocket connection
  * @param {string} path - WebSocket path (without base URL)
  * @param {Object} options - Connection options
  * @returns {WebSocketConnection} WebSocket connection instance
@@ -415,22 +620,33 @@ export function createWebSocket(path, options = {}) {
  * Auction WebSocket service
  */
 export class AuctionService {
-  constructor(auctionId) {
+  constructor(auctionId, options = {}) {
     this.auctionId = auctionId;
     this.path = `ws/auctions/${auctionId}/updates/`;
+    this.options = {
+      debug: false,
+      ...options
+    };
+    
     this.socket = createWebSocket(this.path, {
-      autoReconnect: true
+      autoReconnect: true,
+      ...options
     });
     
-    // Initialize handlers
-    this.handlers = {};
+    // Initialize callback registry
+    this._callbacks = new Set();
   }
   
   /**
    * Subscribe to auction updates
+   * @param {Function} callback - Handler for all auction-related events
+   * @returns {Function} Unsubscribe function
    */
   subscribe(callback) {
     if (!this.socket) return () => {};
+    
+    // Keep track of the callback for reconnection handling
+    this._callbacks.add(callback);
     
     // Subscribe to all auction-related messages
     const handlers = [
@@ -447,11 +663,15 @@ export class AuctionService {
     // Return unsubscribe function
     return () => {
       handlers.forEach(unsubscribe => unsubscribe && unsubscribe());
+      this._callbacks.delete(callback);
     };
   }
   
   /**
    * Subscribe to specific update type
+   * @param {string} updateType - Update type to subscribe to
+   * @param {Function} callback - Event handler
+   * @returns {Function} Unsubscribe function
    */
   on(updateType, callback) {
     if (!this.socket) return () => {};
@@ -460,6 +680,7 @@ export class AuctionService {
   
   /**
    * Get current auction state
+   * @returns {Promise} Promise resolving when request is sent
    */
   getState() {
     if (!this.socket) return Promise.reject(new Error('WebSocket not available'));
@@ -470,7 +691,8 @@ export class AuctionService {
   }
   
   /**
-   * Watch auction
+   * Watch auction (add to user's watched auctions)
+   * @returns {Promise} Promise resolving when request is sent
    */
   watch() {
     if (!this.socket) return Promise.reject(new Error('WebSocket not available'));
@@ -481,7 +703,8 @@ export class AuctionService {
   }
   
   /**
-   * Unwatch auction
+   * Unwatch auction (remove from user's watched auctions)
+   * @returns {Promise} Promise resolving when request is sent
    */
   unwatch() {
     if (!this.socket) return Promise.reject(new Error('WebSocket not available'));
@@ -492,7 +715,8 @@ export class AuctionService {
   }
   
   /**
-   * Check if user is watching auction
+   * Check if user is watching this auction
+   * @returns {Promise} Promise resolving when request is sent
    */
   getWatchStatus() {
     if (!this.socket) return Promise.reject(new Error('WebSocket not available'));
@@ -503,7 +727,7 @@ export class AuctionService {
   }
   
   /**
-   * Close auction connection
+   * Close auction connection and cleanup
    */
   close() {
     if (this.socket) {
@@ -514,7 +738,18 @@ export class AuctionService {
         const { [this.path]: _, ...rest } = current;
         return rest;
       });
+      
+      // Clear callback registry
+      this._callbacks.clear();
     }
+  }
+  
+  /**
+   * Get connection status
+   * @returns {Object} Current connection status
+   */
+  getStatus() {
+    return this.socket ? this.socket.getStatus() : { status: 'disconnected' };
   }
 }
 
@@ -522,22 +757,36 @@ export class AuctionService {
  * Bidding WebSocket service
  */
 export class BiddingService {
-  constructor(auctionId) {
+  constructor(auctionId, options = {}) {
     this.auctionId = auctionId;
     this.path = `ws/auctions/${auctionId}/bids/`;
+    this.options = {
+      debug: false,
+      ...options
+    };
+    
     this.socket = createWebSocket(this.path, {
-      autoReconnect: true
+      autoReconnect: true,
+      ...options
     });
     
     // Generate unique client ID for this instance
-    this.clientId = `bid_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+    this.clientId = `bid_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
+    
+    // Initialize callback registry
+    this._callbacks = new Set();
   }
   
   /**
    * Subscribe to bidding updates
+   * @param {Function} callback - Handler for all bidding-related events
+   * @returns {Function} Unsubscribe function
    */
   subscribe(callback) {
     if (!this.socket) return () => {};
+    
+    // Keep track of the callback for reconnection handling
+    this._callbacks.add(callback);
     
     // Subscribe to all bidding-related messages
     const handlers = [
@@ -552,11 +801,15 @@ export class BiddingService {
     // Return unsubscribe function
     return () => {
       handlers.forEach(unsubscribe => unsubscribe && unsubscribe());
+      this._callbacks.delete(callback);
     };
   }
   
   /**
    * Subscribe to specific update type
+   * @param {string} updateType - Update type to subscribe to
+   * @param {Function} callback - Event handler
+   * @returns {Function} Unsubscribe function
    */
   on(updateType, callback) {
     if (!this.socket) return () => {};
@@ -564,7 +817,11 @@ export class BiddingService {
   }
   
   /**
-   * Place a bid
+   * Place a bid with improved error handling
+   * @param {number} amount - Bid amount
+   * @param {number|null} autoBidLimit - Maximum auto-bid amount (optional)
+   * @param {string|null} userId - User ID (will be taken from localStorage if not provided)
+   * @returns {Promise} Promise resolving with bid data when bid is placed
    */
   placeBid(amount, autoBidLimit = null, userId = null) {
     if (!this.socket) return Promise.reject(new Error('WebSocket not available'));
@@ -580,7 +837,12 @@ export class BiddingService {
     }
     
     if (!userId) {
-      return Promise.reject(new Error('User ID is required'));
+      return Promise.reject(new Error('User ID is required to place a bid'));
+    }
+    
+    // Validate bid amount
+    if (!amount || isNaN(parseFloat(amount))) {
+      return Promise.reject(new Error('Valid bid amount is required'));
     }
     
     return new Promise((resolve, reject) => {
@@ -627,6 +889,8 @@ export class BiddingService {
   
   /**
    * Get recent bids
+   * @param {number} limit - Number of bids to retrieve
+   * @returns {Promise} Promise resolving when request is sent
    */
   getRecentBids(limit = 10) {
     if (!this.socket) return Promise.reject(new Error('WebSocket not available'));
@@ -639,6 +903,9 @@ export class BiddingService {
   
   /**
    * Get complete bid history with pagination
+   * @param {number} page - Page number (1-based)
+   * @param {number} pageSize - Number of bids per page
+   * @returns {Promise} Promise resolving when request is sent
    */
   getBidHistory(page = 1, pageSize = 20) {
     if (!this.socket) return Promise.reject(new Error('WebSocket not available'));
@@ -651,7 +918,7 @@ export class BiddingService {
   }
   
   /**
-   * Close bidding connection
+   * Close bidding connection and cleanup
    */
   close() {
     if (this.socket) {
@@ -662,7 +929,18 @@ export class BiddingService {
         const { [this.path]: _, ...rest } = current;
         return rest;
       });
+      
+      // Clear callback registry
+      this._callbacks.clear();
     }
+  }
+  
+  /**
+   * Get connection status
+   * @returns {Object} Current connection status
+   */
+  getStatus() {
+    return this.socket ? this.socket.getStatus() : { status: 'disconnected' };
   }
 }
 
@@ -670,22 +948,36 @@ export class BiddingService {
  * Chat WebSocket service
  */
 export class ChatService {
-  constructor(roomName) {
+  constructor(roomName, options = {}) {
     this.roomName = roomName;
     this.path = `ws/chat/${roomName}/`;
+    this.options = {
+      debug: false,
+      ...options
+    };
+    
     this.socket = createWebSocket(this.path, {
-      autoReconnect: true
+      autoReconnect: true,
+      ...options
     });
     
     // Generate unique client ID for this instance
-    this.clientId = `chat_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+    this.clientId = `chat_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
+    
+    // Initialize callback registry
+    this._callbacks = new Set();
   }
   
   /**
    * Subscribe to chat messages
+   * @param {Function} callback - Handler for all chat-related events
+   * @returns {Function} Unsubscribe function
    */
   subscribe(callback) {
     if (!this.socket) return () => {};
+    
+    // Keep track of the callback for reconnection handling
+    this._callbacks.add(callback);
     
     // Subscribe to all chat-related messages
     const handlers = [
@@ -700,11 +992,15 @@ export class ChatService {
     // Return unsubscribe function
     return () => {
       handlers.forEach(unsubscribe => unsubscribe && unsubscribe());
+      this._callbacks.delete(callback);
     };
   }
   
   /**
    * Subscribe to specific message type
+   * @param {string} messageType - Message type to subscribe to
+   * @param {Function} callback - Event handler
+   * @returns {Function} Unsubscribe function
    */
   on(messageType, callback) {
     if (!this.socket) return () => {};
@@ -712,10 +1008,21 @@ export class ChatService {
   }
   
   /**
-   * Send a chat message
+   * Send a chat message with improved error handling
+   * @param {string} message - Message content
+   * @returns {Promise} Promise resolving with message data when sent
    */
   sendMessage(message) {
     if (!this.socket) return Promise.reject(new Error('WebSocket not available'));
+    
+    // Validate message
+    if (!message || typeof message !== 'string' || !message.trim()) {
+      return Promise.reject(new Error('Message cannot be empty'));
+    }
+    
+    if (message.length > 5000) {
+      return Promise.reject(new Error('Message is too long (max 5000 characters)'));
+    }
     
     return new Promise((resolve, reject) => {
       // Listen for error response
@@ -759,6 +1066,8 @@ export class ChatService {
   
   /**
    * Send typing indicator
+   * @param {boolean} isTyping - Whether the user is typing
+   * @returns {Promise} Promise resolving when request is sent
    */
   sendTypingIndicator(isTyping = true) {
     if (!this.socket) return Promise.reject(new Error('WebSocket not available'));
@@ -771,6 +1080,8 @@ export class ChatService {
   
   /**
    * Mark message as read
+   * @param {string} messageId - ID of the message to mark as read
+   * @returns {Promise} Promise resolving when request is sent
    */
   markMessageRead(messageId) {
     if (!this.socket) return Promise.reject(new Error('WebSocket not available'));
@@ -783,6 +1094,9 @@ export class ChatService {
   
   /**
    * Load more message history
+   * @param {string} beforeId - ID of the oldest loaded message
+   * @param {number} limit - Number of messages to load
+   * @returns {Promise} Promise resolving when request is sent
    */
   loadMoreMessages(beforeId, limit = 20) {
     if (!this.socket) return Promise.reject(new Error('WebSocket not available'));
@@ -795,7 +1109,7 @@ export class ChatService {
   }
   
   /**
-   * Close chat connection
+   * Close chat connection and cleanup
    */
   close() {
     if (this.socket) {
@@ -806,7 +1120,18 @@ export class ChatService {
         const { [this.path]: _, ...rest } = current;
         return rest;
       });
+      
+      // Clear callback registry
+      this._callbacks.clear();
     }
+  }
+  
+  /**
+   * Get connection status
+   * @returns {Object} Current connection status
+   */
+  getStatus() {
+    return this.socket ? this.socket.getStatus() : { status: 'disconnected' };
   }
 }
 
@@ -814,19 +1139,33 @@ export class ChatService {
  * Notification WebSocket service
  */
 export class NotificationService {
-  constructor(userId) {
+  constructor(userId, options = {}) {
     this.userId = userId;
     this.path = `ws/notifications/${userId}/`;
+    this.options = {
+      debug: false,
+      ...options
+    };
+    
     this.socket = createWebSocket(this.path, {
-      autoReconnect: true
+      autoReconnect: true,
+      ...options
     });
+    
+    // Initialize callback registry
+    this._callbacks = new Set();
   }
   
   /**
    * Subscribe to notifications
+   * @param {Function} callback - Handler for all notification-related events
+   * @returns {Function} Unsubscribe function
    */
   subscribe(callback) {
     if (!this.socket) return () => {};
+    
+    // Keep track of the callback for reconnection handling
+    this._callbacks.add(callback);
     
     // Subscribe to all notification-related messages
     const handlers = [
@@ -841,11 +1180,15 @@ export class NotificationService {
     // Return unsubscribe function
     return () => {
       handlers.forEach(unsubscribe => unsubscribe && unsubscribe());
+      this._callbacks.delete(callback);
     };
   }
   
   /**
    * Subscribe to specific notification type
+   * @param {string} notificationType - Notification type to subscribe to
+   * @param {Function} callback - Event handler
+   * @returns {Function} Unsubscribe function
    */
   on(notificationType, callback) {
     if (!this.socket) return () => {};
@@ -854,6 +1197,8 @@ export class NotificationService {
   
   /**
    * Mark notification as read
+   * @param {string} notificationId - ID of the notification to mark as read
+   * @returns {Promise} Promise resolving when request is sent
    */
   markRead(notificationId) {
     if (!this.socket) return Promise.reject(new Error('WebSocket not available'));
@@ -866,6 +1211,7 @@ export class NotificationService {
   
   /**
    * Mark all notifications as read
+   * @returns {Promise} Promise resolving when request is sent
    */
   markAllRead() {
     if (!this.socket) return Promise.reject(new Error('WebSocket not available'));
@@ -877,6 +1223,8 @@ export class NotificationService {
   
   /**
    * Mark notification as displayed
+   * @param {string} notificationId - ID of the notification to mark as displayed
+   * @returns {Promise} Promise resolving when request is sent
    */
   markDisplayed(notificationId) {
     if (!this.socket) return Promise.reject(new Error('WebSocket not available'));
@@ -889,6 +1237,9 @@ export class NotificationService {
   
   /**
    * Get notifications with pagination
+   * @param {number} limit - Number of notifications to retrieve
+   * @param {number} offset - Offset for pagination
+   * @returns {Promise} Promise resolving when request is sent
    */
   getNotifications(limit = 50, offset = 0) {
     if (!this.socket) return Promise.reject(new Error('WebSocket not available'));
@@ -902,6 +1253,7 @@ export class NotificationService {
   
   /**
    * Get unread notifications count
+   * @returns {Promise} Promise resolving when request is sent
    */
   getUnreadCount() {
     if (!this.socket) return Promise.reject(new Error('WebSocket not available'));
@@ -912,7 +1264,7 @@ export class NotificationService {
   }
   
   /**
-   * Close notification connection
+   * Close notification connection and cleanup
    */
   close() {
     if (this.socket) {
@@ -923,7 +1275,18 @@ export class NotificationService {
         const { [this.path]: _, ...rest } = current;
         return rest;
       });
+      
+      // Clear callback registry
+      this._callbacks.clear();
     }
+  }
+  
+  /**
+   * Get connection status
+   * @returns {Object} Current connection status
+   */
+  getStatus() {
+    return this.socket ? this.socket.getStatus() : { status: 'disconnected' };
   }
 }
 
@@ -931,19 +1294,33 @@ export class NotificationService {
  * Dashboard WebSocket service
  */
 export class DashboardService {
-  constructor(userId) {
+  constructor(userId, options = {}) {
     this.userId = userId;
     this.path = `ws/dashboard/${userId}/`;
+    this.options = {
+      debug: false,
+      ...options
+    };
+    
     this.socket = createWebSocket(this.path, {
-      autoReconnect: true
+      autoReconnect: true,
+      ...options
     });
+    
+    // Initialize callback registry
+    this._callbacks = new Set();
   }
   
   /**
    * Subscribe to dashboard updates
+   * @param {Function} callback - Handler for all dashboard-related events
+   * @returns {Function} Unsubscribe function
    */
   subscribe(callback) {
     if (!this.socket) return () => {};
+    
+    // Keep track of the callback for reconnection handling
+    this._callbacks.add(callback);
     
     // Subscribe to all dashboard-related messages
     const handlers = [
@@ -960,11 +1337,15 @@ export class DashboardService {
     // Return unsubscribe function
     return () => {
       handlers.forEach(unsubscribe => unsubscribe && unsubscribe());
+      this._callbacks.delete(callback);
     };
   }
   
   /**
    * Subscribe to specific update type
+   * @param {string} updateType - Update type to subscribe to
+   * @param {Function} callback - Event handler
+   * @returns {Function} Unsubscribe function
    */
   on(updateType, callback) {
     if (!this.socket) return () => {};
@@ -973,6 +1354,7 @@ export class DashboardService {
   
   /**
    * Refresh dashboard data
+   * @returns {Promise} Promise resolving when request is sent
    */
   refreshDashboard() {
     if (!this.socket) return Promise.reject(new Error('WebSocket not available'));
@@ -984,6 +1366,8 @@ export class DashboardService {
   
   /**
    * Get specific dashboard section data
+   * @param {string} section - Section name (properties, auctions, bids, contracts, etc.)
+   * @returns {Promise} Promise resolving when request is sent
    */
   getSection(section) {
     if (!this.socket) return Promise.reject(new Error('WebSocket not available'));
@@ -996,6 +1380,9 @@ export class DashboardService {
   
   /**
    * Get chart data
+   * @param {string} chartType - Chart type to retrieve data for
+   * @param {Object} params - Additional parameters for the chart
+   * @returns {Promise} Promise resolving when request is sent
    */
   getChartData(chartType, params = {}) {
     if (!this.socket) return Promise.reject(new Error('WebSocket not available'));
@@ -1008,7 +1395,7 @@ export class DashboardService {
   }
   
   /**
-   * Close dashboard connection
+   * Close dashboard connection and cleanup
    */
   close() {
     if (this.socket) {
@@ -1019,16 +1406,53 @@ export class DashboardService {
         const { [this.path]: _, ...rest } = current;
         return rest;
       });
+      
+      // Clear callback registry
+      this._callbacks.clear();
     }
+  }
+  
+  /**
+   * Get connection status
+   * @returns {Object} Current connection status
+   */
+  getStatus() {
+    return this.socket ? this.socket.getStatus() : { status: 'disconnected' };
   }
 }
 
 /**
- * Get token from localStorage
+ * Get token from localStorage with validation
+ * @returns {string|null} Access token or null if not found
  */
 function getToken() {
   if (!browser) return null;
-  return localStorage.getItem('accessToken');
+  
+  try {
+    // Try getting token directly
+    const token = localStorage.getItem('accessToken');
+    if (token && typeof token === 'string' && token.trim()) {
+      return token;
+    }
+    
+    // Try getting from auth object
+    const authStr = localStorage.getItem('auth');
+    if (authStr) {
+      try {
+        const auth = JSON.parse(authStr);
+        if (auth && auth.token && typeof auth.token === 'string' && auth.token.trim()) {
+          return auth.token;
+        }
+      } catch (e) {
+        console.warn('Failed to parse auth data:', e);
+      }
+    }
+    
+    return null;
+  } catch (e) {
+    console.error('Error getting token:', e);
+    return null;
+  }
 }
 
 /**
@@ -1059,5 +1483,6 @@ export default {
   DashboardService,
   closeAllConnections,
   connections,
-  connectionStatus
+  connectionStatus,
+  getToken
 };

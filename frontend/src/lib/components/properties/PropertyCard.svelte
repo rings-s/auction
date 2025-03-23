@@ -1,6 +1,7 @@
 <!-- src/lib/components/property/PropertyCard.svelte -->
 <script>
-	import { t, formatCurrency, language } from '$lib/i18n';
+	import { t, language } from '$lib/i18n';
+	import { formatCurrency } from '$lib/utils/formatters';  // Or wherever this function is defined
 	// تصدير المتغيرات التي ستستقبلها البطاقة
 	export let property = {
 		id: '',

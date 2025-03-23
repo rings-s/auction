@@ -1,28 +1,310 @@
 // src/lib/stores/auction.js
-// مخزن بيانات المزادات - Auction Store
+// مخزن بيانات المزادات - Auction Store - Refactored Version
 
 import { writable, derived, get } from 'svelte/store';
 import { browser } from '$app/environment';
-import auctionService from '$lib/services/auction';
 import { page } from '$app/stores';
 import { t } from '$lib/i18n'; 
+import { toast } from '$lib/utils/toast';
 
-// State structure for auctions
+/**
+ * Service for auction API calls - separated for better organization
+ */
+class AuctionService {
+    /**
+     * Base URL for auction endpoints - can be configured per environment
+     */
+    baseUrl = '/api/auctions';
+
+    /**
+     * Fetch auctions with filtering
+     * @param {Object} filters - Filter parameters
+     * @returns {Promise<Object>} - API response
+     */
+    async getAuctions(filters = {}) {
+        try {
+            // Build query string from filters
+            const queryParams = new URLSearchParams();
+            
+            for (const [key, value] of Object.entries(filters)) {
+                if (value !== null && value !== undefined) {
+                    queryParams.append(key, value);
+                }
+            }
+            
+            const queryString = queryParams.toString();
+            const url = `${this.baseUrl}/${queryString ? `?${queryString}` : ''}`;
+            
+            const response = await fetch(url);
+            const data = await response.json();
+            
+            return { 
+                success: response.ok,
+                data: response.ok ? data : null,
+                error: !response.ok ? data.error || 'Failed to fetch auctions' : null,
+                status: response.status
+            };
+        } catch (error) {
+            console.error('Error fetching auctions:', error);
+            return { 
+                success: false, 
+                error: error.message || 'Network error' 
+            };
+        }
+    }
+
+    /**
+     * Get details for a specific auction
+     * @param {string|number} auctionId - Auction ID
+     * @param {Object} options - Optional parameters (include_bids, include_property, include_documents)
+     * @returns {Promise<Object>} - API response
+     */
+    async getAuctionDetails(auctionId, options = {}) {
+        try {
+            if (!auctionId) {
+                throw new Error('Auction ID is required');
+            }
+            
+            // Build query string from options
+            const queryParams = new URLSearchParams();
+            
+            for (const [key, value] of Object.entries(options)) {
+                if (value !== null && value !== undefined) {
+                    queryParams.append(key, value);
+                }
+            }
+            
+            const queryString = queryParams.toString();
+            const url = `${this.baseUrl}/${auctionId}/${queryString ? `?${queryString}` : ''}`;
+            
+            const response = await fetch(url);
+            const data = await response.json();
+            
+            return { 
+                success: response.ok,
+                data: response.ok ? data : null,
+                error: !response.ok ? data.error || 'Failed to fetch auction details' : null,
+                status: response.status
+            };
+        } catch (error) {
+            console.error(`Error fetching auction ${auctionId}:`, error);
+            return { 
+                success: false, 
+                error: error.message || 'Network error' 
+            };
+        }
+    }
+
+    /**
+     * Get bids for an auction
+     * @param {string|number} auctionId - Auction ID
+     * @param {Object} options - Optional parameters (page, page_size, etc.)
+     * @returns {Promise<Object>} - API response
+     */
+    async getAuctionBids(auctionId, options = {}) {
+        try {
+            if (!auctionId) {
+                throw new Error('Auction ID is required');
+            }
+            
+            // Build query string from options
+            const queryParams = new URLSearchParams();
+            queryParams.append('auction_id', auctionId);
+            
+            for (const [key, value] of Object.entries(options)) {
+                if (value !== null && value !== undefined) {
+                    queryParams.append(key, value);
+                }
+            }
+            
+            const queryString = queryParams.toString();
+            const url = `/api/bids/?${queryString}`;
+            
+            const response = await fetch(url);
+            const data = await response.json();
+            
+            return { 
+                success: response.ok,
+                data: response.ok ? data : null,
+                error: !response.ok ? data.error || 'Failed to fetch auction bids' : null,
+                status: response.status
+            };
+        } catch (error) {
+            console.error(`Error fetching bids for auction ${auctionId}:`, error);
+            return { 
+                success: false, 
+                error: error.message || 'Network error' 
+            };
+        }
+    }
+
+    /**
+     * Place a bid on an auction
+     * @param {Object} bidData - Bid data including auction, bid_amount, etc.
+     * @returns {Promise<Object>} - API response
+     */
+    async placeBid(bidData) {
+        try {
+            if (!bidData.auction || !bidData.bid_amount) {
+                throw new Error('Auction and bid amount are required');
+            }
+            
+            const response = await fetch('/api/bids/place/', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(bidData)
+            });
+            
+            const data = await response.json();
+            
+            return { 
+                success: response.ok,
+                data: response.ok ? data : null,
+                error: !response.ok ? data.error || 'Failed to place bid' : null,
+                status: response.status
+            };
+        } catch (error) {
+            console.error('Error placing bid:', error);
+            return { 
+                success: false, 
+                error: error.message || 'Network error' 
+            };
+        }
+    }
+
+    /**
+     * Create a new auction
+     * @param {Object} auctionData - New auction data
+     * @returns {Promise<Object>} - API response
+     */
+    async createAuction(auctionData) {
+        try {
+            const response = await fetch(`${this.baseUrl}/create/`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(auctionData)
+            });
+            
+            const data = await response.json();
+            
+            return { 
+                success: response.ok,
+                data: response.ok ? data : null,
+                error: !response.ok ? data.error || 'Failed to create auction' : null,
+                status: response.status
+            };
+        } catch (error) {
+            console.error('Error creating auction:', error);
+            return { 
+                success: false, 
+                error: error.message || 'Network error' 
+            };
+        }
+    }
+
+    /**
+     * Update an existing auction
+     * @param {string|number} auctionId - Auction ID
+     * @param {Object} updateData - Data to update
+     * @param {boolean} partial - True for PATCH (partial update), false for PUT (full update)
+     * @returns {Promise<Object>} - API response
+     */
+    async updateAuction(auctionId, updateData, partial = true) {
+        try {
+            if (!auctionId) {
+                throw new Error('Auction ID is required');
+            }
+            
+            const response = await fetch(`${this.baseUrl}/${auctionId}/update/`, {
+                method: partial ? 'PATCH' : 'PUT',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(updateData)
+            });
+            
+            const data = await response.json();
+            
+            return { 
+                success: response.ok,
+                data: response.ok ? data : null,
+                error: !response.ok ? data.error || 'Failed to update auction' : null,
+                status: response.status
+            };
+        } catch (error) {
+            console.error(`Error updating auction ${auctionId}:`, error);
+            return { 
+                success: false, 
+                error: error.message || 'Network error' 
+            };
+        }
+    }
+
+    /**
+     * Delete an auction
+     * @param {string|number} auctionId - Auction ID
+     * @returns {Promise<Object>} - API response
+     */
+    async deleteAuction(auctionId) {
+        try {
+            if (!auctionId) {
+                throw new Error('Auction ID is required');
+            }
+            
+            const response = await fetch(`${this.baseUrl}/${auctionId}/delete/`, {
+                method: 'DELETE'
+            });
+            
+            const data = await response.json();
+            
+            return { 
+                success: response.ok,
+                data: response.ok ? data : null,
+                error: !response.ok ? data.error || 'Failed to delete auction' : null,
+                status: response.status
+            };
+        } catch (error) {
+            console.error(`Error deleting auction ${auctionId}:`, error);
+            return { 
+                success: false, 
+                error: error.message || 'Network error' 
+            };
+        }
+    }
+}
+
+// Create service instance
+const auctionService = new AuctionService();
+
+/**
+ * Initial state for auction store
+ */
 const initialState = {
     // Main auction collection
     auctions: [],
-    // Total number of auctions
     totalCount: 0,
-    // Total pages
     totalPages: 1,
-    // Current page
     currentPage: 1,
-    // Loading states
+    
+    // Loading states with detailed tracking
     loading: false,
     loadingMore: false,
-    // Error states
+    loadingCreate: false,
+    loadingUpdate: false,
+    loadingDelete: false,
+    
+    // Error states with detailed tracking
     error: null,
-    // Current filters
+    createError: null,
+    updateError: null,
+    deleteError: null,
+    bidError: null,
+    
+    // Current filters with expanded options
     filters: {
         status: null,
         auction_type: null,
@@ -32,43 +314,65 @@ const initialState = {
         city: null,
         district: null,
         is_featured: null,
+        start_date_from: null,
+        start_date_to: null,
+        end_date_from: null,
+        end_date_to: null,
         sort_by: 'start_date',
         order: 'desc',
         page_size: 12
     },
-    // Currently viewed auction detail
+    
+    // Current auction being viewed
     currentAuction: null,
     currentAuctionLoading: false,
     currentAuctionError: null,
-    // Bid history for current auction
+    
+    // Bid history
     currentBids: [],
     bidsLoading: false,
     bidsError: null,
-    // New bid being placed
+    
+    // Bid placement
     placingBid: false,
-    bidError: null,
-    // Cache of auctions by ID 
-    auctionCache: {}
+    
+    // Cache for performance
+    auctionCache: {},
+    
+    // Last successful action timestamp (for optimistic updates)
+    lastSuccessfulAction: null
 };
 
 // Create the writable store
 const auctionStore = writable(initialState);
 
+/**
+ * Check if cache entry is still fresh (< 5 minutes old)
+ * @param {Object} cachedItem - Cached item to check
+ * @returns {boolean} - True if cache is still fresh
+ */
+const isCacheFresh = (cachedItem) => {
+    if (!cachedItem?.lastFetched) return false;
+    
+    const now = new Date().getTime();
+    const maxAge = 5 * 60 * 1000; // 5 minutes in milliseconds
+    return (now - cachedItem.lastFetched) < maxAge;
+};
+
 // Action functions to update the store
 const auctionActions = {
     /**
-     * تحميل قائمة المزادات مع إمكانية التصفية
-     * Load a list of auctions with optional filtering
-     * 
-     * @param {Object} filters - معايير التصفية
-     * @param {boolean} append - إضافة النتائج إلى القائمة الحالية (للتحميل عند التمرير)
+     * Load auctions with filtering
+     * @param {Object} filters - Filter parameters
+     * @param {boolean} append - Whether to append results or replace
+     * @returns {Promise<Object>} - Operation result
      */
     async loadAuctions(filters = {}, append = false) {
         const currentState = get(auctionStore);
         
-        // If already loading, don't start another request
+        // Don't start a new request if already loading
         if ((currentState.loading && !append) || (currentState.loadingMore && append)) {
-            return;
+            return { success: false, error: 'Request already in progress' };
         }
 
         // Update loading state
@@ -79,7 +383,7 @@ const auctionActions = {
             error: null
         }));
 
-        // Apply existing filters with any new ones
+        // Apply filters
         const appliedFilters = {
             ...currentState.filters,
             ...filters,
@@ -87,23 +391,21 @@ const auctionActions = {
         };
 
         try {
+            // Call API service
             const result = await auctionService.getAuctions(appliedFilters);
-
+            
             if (result.success) {
                 const data = result.data;
-                // Only update relevant parts of the store
+                
                 auctionStore.update(state => {
-                    // Cache the fetched auctions
+                    // Update cache
                     const newCache = { ...state.auctionCache };
-                    
-                    if (data.results && Array.isArray(data.results)) {
-                        data.results.forEach(auction => {
-                            newCache[auction.id] = {
-                                ...auction,
-                                lastFetched: new Date().getTime()
-                            };
-                        });
-                    }
+                    data.results?.forEach(auction => {
+                        newCache[auction.id] = {
+                            ...auction,
+                            lastFetched: new Date().getTime()
+                        };
+                    });
 
                     return {
                         ...state,
@@ -117,51 +419,65 @@ const auctionActions = {
                         loadingMore: false,
                         error: null,
                         filters: appliedFilters,
-                        auctionCache: newCache
+                        auctionCache: newCache,
+                        lastSuccessfulAction: new Date().getTime()
                     };
                 });
+                
+                return { success: true, data };
             } else {
+                const errorMessage = result.error || t('general.error_occurred');
+                
                 auctionStore.update(state => ({
                     ...state,
                     loading: false,
                     loadingMore: false,
-                    error: result.error || t('general.error_occurred')
+                    error: errorMessage
                 }));
+                
+                // Show toast notification for error
+                toast.error(errorMessage);
+                
+                return { success: false, error: errorMessage };
             }
         } catch (error) {
+            const errorMessage = error?.message || t('general.error_occurred');
+            
             auctionStore.update(state => ({
                 ...state,
                 loading: false,
                 loadingMore: false,
-                error: error.message || t('general.error_occurred')
+                error: errorMessage
             }));
+            
+            // Show toast notification for error
+            toast.error(errorMessage);
+            
+            return { success: false, error: errorMessage };
         }
     },
 
     /**
-     * تحميل تفاصيل مزاد محدد
      * Load details for a specific auction
-     * 
-     * @param {string|number} auctionId - معرف المزاد
-     * @param {boolean} includeBids - تضمين المزايدات
-     * @param {boolean} includeProperty - تضمين تفاصيل العقار
-     * @param {boolean} forceRefresh - إجبار التحديث حتى لو كان المزاد في ذاكرة التخزين المؤقت
+     * @param {string|number} auctionId - Auction ID
+     * @param {boolean} includeBids - Include bid history
+     * @param {boolean} includeProperty - Include property details
+     * @param {boolean} forceRefresh - Force refresh even if cached
+     * @returns {Promise<Object>} - Operation result
      */
     async loadAuctionDetail(auctionId, includeBids = true, includeProperty = true, forceRefresh = false) {
-        if (!auctionId) return;
+        if (!auctionId) {
+            return { success: false, error: 'Auction ID is required' };
+        }
 
         // Get current state
         const currentState = get(auctionStore);
         
-        // Check if auction is already in cache and was recently fetched (within last 5 minutes)
+        // Check cache
         const cachedAuction = currentState.auctionCache[auctionId];
-        const now = new Date().getTime();
-        const isCacheFresh = cachedAuction && 
-                             cachedAuction.lastFetched && 
-                             (now - cachedAuction.lastFetched < 5 * 60 * 1000);
-
+        
         // If we have a fresh cached version and don't need to refresh, use that
-        if (isCacheFresh && !forceRefresh) {
+        if (isCacheFresh(cachedAuction) && !forceRefresh) {
             auctionStore.update(state => ({
                 ...state,
                 currentAuction: cachedAuction,
@@ -169,12 +485,12 @@ const auctionActions = {
                 currentAuctionError: null
             }));
             
-            // Optionally load bids even if using cached auction
+            // Optionally load bids even with cached auction
             if (includeBids) {
                 this.loadAuctionBids(auctionId);
             }
             
-            return;
+            return { success: true, data: { auction: cachedAuction } };
         }
 
         // Update loading state
@@ -184,26 +500,30 @@ const auctionActions = {
             currentAuctionError: null
         }));
 
+        const options = {
+            include_bids: includeBids,
+            include_property: includeProperty,
+            include_documents: true
+        };
+
         try {
-            const options = {
-                include_bids: includeBids,
-                include_property: includeProperty,
-                include_documents: true
-            };
-
+            // Call API service
             const result = await auctionService.getAuctionDetails(auctionId, options);
-
-            if (result.success && result.data && result.data.auction) {
-                const auctionData = result.data.auction;
+            
+            if (result.success) {
+                const auctionData = result.data?.auction;
                 
-                // Update the store with auction details
+                if (!auctionData) {
+                    throw new Error('No auction data returned');
+                }
+                
                 auctionStore.update(state => {
                     // Add to cache with timestamp
                     const newCache = { 
                         ...state.auctionCache,
                         [auctionId]: {
                             ...auctionData,
-                            lastFetched: now
+                            lastFetched: new Date().getTime()
                         }
                     };
 
@@ -213,36 +533,54 @@ const auctionActions = {
                         currentAuctionLoading: false,
                         currentAuctionError: null,
                         auctionCache: newCache,
-                        // If bids are included in the response, update them too
+                        // If bids included, update them too
                         currentBids: auctionData.recent_bids || state.currentBids,
-                        bidsLoading: false
+                        bidsLoading: false,
+                        lastSuccessfulAction: new Date().getTime()
                     };
                 });
+                
+                return { success: true, data: result.data };
             } else {
+                const errorMessage = result.error || t('general.error_occurred');
+                
                 auctionStore.update(state => ({
                     ...state,
                     currentAuctionLoading: false,
-                    currentAuctionError: result.error || t('general.error_occurred')
+                    currentAuctionError: errorMessage
                 }));
+                
+                // Show toast notification for error
+                toast.error(errorMessage);
+                
+                return { success: false, error: errorMessage };
             }
         } catch (error) {
+            const errorMessage = error?.message || t('general.error_occurred');
+            
             auctionStore.update(state => ({
                 ...state,
                 currentAuctionLoading: false,
-                currentAuctionError: error.message || t('general.error_occurred')
+                currentAuctionError: errorMessage
             }));
+            
+            // Show toast notification for error
+            toast.error(errorMessage);
+            
+            return { success: false, error: errorMessage };
         }
     },
 
     /**
-     * تحميل مزايدات المزاد الحالي
      * Load bids for the current auction
-     * 
-     * @param {string|number} auctionId - معرف المزاد
-     * @param {Object} options - خيارات التصفية
+     * @param {string|number} auctionId - Auction ID
+     * @param {Object} options - Filtering options
+     * @returns {Promise<Object>} - Operation result
      */
     async loadAuctionBids(auctionId, options = {}) {
-        if (!auctionId) return;
+        if (!auctionId) {
+            return { success: false, error: 'Auction ID is required' };
+        }
 
         // Update loading state
         auctionStore.update(state => ({
@@ -252,42 +590,54 @@ const auctionActions = {
         }));
 
         try {
+            // Call API service
             const result = await auctionService.getAuctionBids(auctionId, options);
-
-            if (result.success && result.data) {
+            
+            if (result.success) {
                 auctionStore.update(state => ({
                     ...state,
-                    currentBids: result.data.results || [],
+                    currentBids: result.data?.results || [],
                     bidsLoading: false,
                     bidsError: null
                 }));
+                
+                return { success: true, data: result.data };
             } else {
+                const errorMessage = result.error || t('general.error_occurred');
+                
                 auctionStore.update(state => ({
                     ...state,
                     bidsLoading: false,
-                    bidsError: result.error || t('general.error_occurred')
+                    bidsError: errorMessage
                 }));
+                
+                return { success: false, error: errorMessage };
             }
         } catch (error) {
+            const errorMessage = error?.message || t('general.error_occurred');
+            
             auctionStore.update(state => ({
                 ...state,
                 bidsLoading: false,
-                bidsError: error.message || t('general.error_occurred')
+                bidsError: errorMessage
             }));
+            
+            return { success: false, error: errorMessage };
         }
     },
 
     /**
-     * تقديم مزايدة جديدة
      * Place a new bid on an auction
-     * 
-     * @param {string|number} auctionId - معرف المزاد
-     * @param {number} bidAmount - قيمة المزايدة
-     * @param {boolean} isAutoBid - هل هي مزايدة تلقائية
-     * @param {number} maxBidAmount - الحد الأقصى للمزايدة التلقائية (اختياري)
+     * @param {string|number} auctionId - Auction ID
+     * @param {number} bidAmount - Bid amount
+     * @param {boolean} isAutoBid - Is this an automatic bid
+     * @param {number} maxBidAmount - Maximum bid amount (for auto-bidding)
+     * @returns {Promise<Object>} - Operation result
      */
     async placeBid(auctionId, bidAmount, isAutoBid = false, maxBidAmount = null) {
-        if (!auctionId || !bidAmount) return;
+        if (!auctionId || !bidAmount) {
+            return { success: false, error: 'Auction ID and bid amount are required' };
+        }
 
         // Update loading state
         auctionStore.update(state => ({
@@ -296,30 +646,36 @@ const auctionActions = {
             bidError: null
         }));
 
+        const bidData = {
+            auction: auctionId,
+            bid_amount: bidAmount,
+            is_auto_bid: isAutoBid
+        };
+
+        // Add max bid amount for auto bidding
+        if (isAutoBid && maxBidAmount) {
+            bidData.max_bid_amount = maxBidAmount;
+        }
+
         try {
-            const bidData = {
-                auction: auctionId,
-                bid_amount: bidAmount,
-                is_auto_bid: isAutoBid
-            };
-
-            // Add max bid amount for auto bidding
-            if (isAutoBid && maxBidAmount) {
-                bidData.max_bid_amount = maxBidAmount;
-            }
-
+            // Call API service
             const result = await auctionService.placeBid(bidData);
-
-            if (result.success && result.data) {
-                // Update the store
+            
+            if (result.success) {
+                const newBid = result.data?.bid;
+                
+                if (!newBid) {
+                    throw new Error('No bid data returned');
+                }
+                
                 auctionStore.update(state => {
                     // Add the new bid to the current bids
-                    const newBids = [result.data.bid, ...state.currentBids];
+                    const newBids = [newBid, ...state.currentBids];
                     
-                    // Update the auction with new current bid if available
+                    // Update the auction with new current bid if higher
                     let updatedAuction = { ...state.currentAuction };
-                    if (result.data.bid && result.data.bid.bid_amount > (updatedAuction.current_bid || 0)) {
-                        updatedAuction.current_bid = result.data.bid.bid_amount;
+                    if (newBid.bid_amount > (updatedAuction?.current_bid || 0)) {
+                        updatedAuction.current_bid = newBid.bid_amount;
                     }
                     
                     // Update cache
@@ -337,47 +693,73 @@ const auctionActions = {
                         currentBids: newBids,
                         placingBid: false,
                         bidError: null,
-                        auctionCache: newCache
+                        auctionCache: newCache,
+                        lastSuccessfulAction: new Date().getTime()
                     };
                 });
+                
+                // Show success toast
+                toast.success(t('auctions.bid_placed_successfully'));
+                
+                return { success: true, data: result.data };
             } else {
+                const errorMessage = result.error || t('general.error_occurred');
+                
                 auctionStore.update(state => ({
                     ...state,
                     placingBid: false,
-                    bidError: result.error || t('general.error_occurred')
+                    bidError: errorMessage
                 }));
+                
+                // Show toast notification for error
+                toast.error(errorMessage);
+                
+                return { success: false, error: errorMessage };
             }
         } catch (error) {
+            const errorMessage = error?.message || t('general.error_occurred');
+            
             auctionStore.update(state => ({
                 ...state,
                 placingBid: false,
-                bidError: error.message || t('general.error_occurred')
+                bidError: errorMessage
             }));
+            
+            // Show toast notification for error
+            toast.error(errorMessage);
+            
+            return { success: false, error: errorMessage };
         }
     },
 
     /**
-     * إنشاء مزاد جديد
      * Create a new auction
-     * 
-     * @param {Object} auctionData - بيانات المزاد الجديد
-     * @returns {Promise<Object>} - نتيجة العملية
+     * @param {Object} auctionData - New auction data
+     * @returns {Promise<Object>} - Operation result with new auction
      */
     async createAuction(auctionData) {
+        if (!auctionData) {
+            return { success: false, error: 'Auction data is required' };
+        }
+
         // Update loading state
         auctionStore.update(state => ({
             ...state,
-            loading: true,
-            error: null
+            loadingCreate: true,
+            createError: null
         }));
 
         try {
+            // Call API service
             const result = await auctionService.createAuction(auctionData);
-
-            if (result.success && result.data && result.data.auction) {
-                const newAuction = result.data.auction;
-
-                // Update the store
+            
+            if (result.success) {
+                const newAuction = result.data?.auction;
+                
+                if (!newAuction) {
+                    throw new Error('No auction data returned');
+                }
+                
                 auctionStore.update(state => {
                     // Add to cache
                     const newCache = {
@@ -392,41 +774,53 @@ const auctionActions = {
                         ...state,
                         auctions: [newAuction, ...state.auctions],
                         currentAuction: newAuction,
-                        loading: false,
-                        error: null,
-                        auctionCache: newCache
+                        loadingCreate: false,
+                        createError: null,
+                        auctionCache: newCache,
+                        lastSuccessfulAction: new Date().getTime()
                     };
                 });
-
-                return { success: true, data: result.data.auction };
+                
+                // Show success toast
+                toast.success(t('auctions.auction_created_successfully'));
+                
+                return { success: true, data: result.data };
             } else {
+                const errorMessage = result.error || t('general.error_occurred');
+                
                 auctionStore.update(state => ({
                     ...state,
-                    loading: false,
-                    error: result.error || t('general.error_occurred')
+                    loadingCreate: false,
+                    createError: errorMessage
                 }));
-
-                return { success: false, error: result.error };
+                
+                // Show toast notification for error
+                toast.error(errorMessage);
+                
+                return { success: false, error: errorMessage };
             }
         } catch (error) {
+            const errorMessage = error?.message || t('general.error_occurred');
+            
             auctionStore.update(state => ({
                 ...state,
-                loading: false,
-                error: error.message || t('general.error_occurred')
+                loadingCreate: false,
+                createError: errorMessage
             }));
-
-            return { success: false, error: error.message };
+            
+            // Show toast notification for error
+            toast.error(errorMessage);
+            
+            return { success: false, error: errorMessage };
         }
     },
 
     /**
-     * تحديث مزاد موجود
      * Update an existing auction
-     * 
-     * @param {string|number} auctionId - معرف المزاد
-     * @param {Object} updateData - بيانات التحديث
-     * @param {boolean} partial - تحديث جزئي (PATCH) أو كلي (PUT)
-     * @returns {Promise<Object>} - نتيجة العملية
+     * @param {string|number} auctionId - Auction ID
+     * @param {Object} updateData - Data to update
+     * @param {boolean} partial - True for PATCH, false for PUT
+     * @returns {Promise<Object>} - Operation result
      */
     async updateAuction(auctionId, updateData, partial = true) {
         if (!auctionId) {
@@ -436,17 +830,21 @@ const auctionActions = {
         // Update loading state
         auctionStore.update(state => ({
             ...state,
-            currentAuctionLoading: true,
-            currentAuctionError: null
+            loadingUpdate: true,
+            updateError: null
         }));
 
         try {
+            // Call API service
             const result = await auctionService.updateAuction(auctionId, updateData, partial);
-
-            if (result.success && result.data && result.data.auction) {
-                const updatedAuction = result.data.auction;
-
-                // Update the store
+            
+            if (result.success) {
+                const updatedAuction = result.data?.auction;
+                
+                if (!updatedAuction) {
+                    throw new Error('No auction data returned');
+                }
+                
                 auctionStore.update(state => {
                     // Update auctions list if this auction is in it
                     const updatedAuctions = state.auctions.map(auction => 
@@ -465,40 +863,54 @@ const auctionActions = {
                     return {
                         ...state,
                         auctions: updatedAuctions,
-                        currentAuction: state.currentAuction?.id === auctionId ? updatedAuction : state.currentAuction,
-                        currentAuctionLoading: false,
-                        currentAuctionError: null,
-                        auctionCache: newCache
+                        currentAuction: state.currentAuction?.id === auctionId 
+                            ? updatedAuction 
+                            : state.currentAuction,
+                        loadingUpdate: false,
+                        updateError: null,
+                        auctionCache: newCache,
+                        lastSuccessfulAction: new Date().getTime()
                     };
                 });
-
-                return { success: true, data: updatedAuction };
+                
+                // Show success toast
+                toast.success(t('auctions.auction_updated_successfully'));
+                
+                return { success: true, data: result.data };
             } else {
+                const errorMessage = result.error || t('general.error_occurred');
+                
                 auctionStore.update(state => ({
                     ...state,
-                    currentAuctionLoading: false,
-                    currentAuctionError: result.error || t('general.error_occurred')
+                    loadingUpdate: false,
+                    updateError: errorMessage
                 }));
-
-                return { success: false, error: result.error };
+                
+                // Show toast notification for error
+                toast.error(errorMessage);
+                
+                return { success: false, error: errorMessage };
             }
         } catch (error) {
+            const errorMessage = error?.message || t('general.error_occurred');
+            
             auctionStore.update(state => ({
                 ...state,
-                currentAuctionLoading: false,
-                currentAuctionError: error.message || t('general.error_occurred')
+                loadingUpdate: false,
+                updateError: errorMessage
             }));
-
-            return { success: false, error: error.message };
+            
+            // Show toast notification for error
+            toast.error(errorMessage);
+            
+            return { success: false, error: errorMessage };
         }
     },
 
     /**
-     * حذف مزاد
      * Delete an auction
-     * 
-     * @param {string|number} auctionId - معرف المزاد
-     * @returns {Promise<Object>} - نتيجة العملية
+     * @param {string|number} auctionId - Auction ID
+     * @returns {Promise<Object>} - Operation result
      */
     async deleteAuction(auctionId) {
         if (!auctionId) {
@@ -508,59 +920,73 @@ const auctionActions = {
         // Update loading state
         auctionStore.update(state => ({
             ...state,
-            loading: true,
-            error: null
+            loadingDelete: true,
+            deleteError: null
         }));
 
         try {
+            // Call API service
             const result = await auctionService.deleteAuction(auctionId);
-
+            
             if (result.success) {
-                // Update the store
                 auctionStore.update(state => {
                     // Remove from auctions list
-                    const updatedAuctions = state.auctions.filter(auction => auction.id !== auctionId);
+                    const updatedAuctions = state.auctions.filter(auction => 
+                        auction.id !== auctionId
+                    );
                     
                     // Remove from cache
                     const newCache = { ...state.auctionCache };
                     delete newCache[auctionId];
 
-                    // Clear current auction if it's the deleted one
-                    const currentAuction = state.currentAuction?.id === auctionId ? null : state.currentAuction;
-
                     return {
                         ...state,
                         auctions: updatedAuctions,
-                        currentAuction,
-                        loading: false,
-                        error: null,
-                        auctionCache: newCache
+                        currentAuction: state.currentAuction?.id === auctionId 
+                            ? null 
+                            : state.currentAuction,
+                        loadingDelete: false,
+                        deleteError: null,
+                        auctionCache: newCache,
+                        lastSuccessfulAction: new Date().getTime()
                     };
                 });
-
-                return { success: true };
+                
+                // Show success toast
+                toast.success(t('auctions.auction_deleted_successfully'));
+                
+                return { success: true, data: result.data };
             } else {
+                const errorMessage = result.error || t('general.error_occurred');
+                
                 auctionStore.update(state => ({
                     ...state,
-                    loading: false,
-                    error: result.error || t('general.error_occurred')
+                    loadingDelete: false,
+                    deleteError: errorMessage
                 }));
-
-                return { success: false, error: result.error };
+                
+                // Show toast notification for error
+                toast.error(errorMessage);
+                
+                return { success: false, error: errorMessage };
             }
         } catch (error) {
+            const errorMessage = error?.message || t('general.error_occurred');
+            
             auctionStore.update(state => ({
                 ...state,
-                loading: false,
-                error: error.message || t('general.error_occurred')
+                loadingDelete: false,
+                deleteError: errorMessage
             }));
-
-            return { success: false, error: error.message };
+            
+            // Show toast notification for error
+            toast.error(errorMessage);
+            
+            return { success: false, error: errorMessage };
         }
     },
 
     /**
-     * إعادة تعيين حالة المزاد الحالي
      * Reset the current auction state
      */
     resetCurrentAuction() {
@@ -576,7 +1002,6 @@ const auctionActions = {
     },
 
     /**
-     * إعادة تعيين حالة الخطأ
      * Reset error states
      */
     resetErrors() {
@@ -585,49 +1010,27 @@ const auctionActions = {
             error: null,
             currentAuctionError: null,
             bidsError: null,
-            bidError: null
+            bidError: null,
+            createError: null,
+            updateError: null,
+            deleteError: null
         }));
-    }
-};
-
-// Create derived stores for common queries
-const loading = derived(auctionStore, $store => $store.loading);
-const auctionsList = derived(auctionStore, $store => $store.auctions);
-const auctionsMetadata = derived(auctionStore, $store => ({
-    totalCount: $store.totalCount,
-    totalPages: $store.totalPages,
-    currentPage: $store.currentPage,
-    hasMore: $store.currentPage < $store.totalPages
-}));
-const currentAuction = derived(auctionStore, $store => $store.currentAuction);
-const currentBids = derived(auctionStore, $store => $store.currentBids);
-const currentFilters = derived(auctionStore, $store => $store.filters);
-const errors = derived(auctionStore, $store => ({
-    listError: $store.error,
-    detailError: $store.currentAuctionError,
-    bidsError: $store.bidsError,
-    bidError: $store.bidError
-}));
-
-// Set up URL parameter sync for filters if in browser
-if (browser) {
-    // Subscribe to page store changes
-    page.subscribe(($page) => {
+    },
+    
+    /**
+     * Apply filters from URL parameters
+     * @param {URLSearchParams} params - URL search parameters
+     */
+    applyUrlFilters(params) {
+        if (!params) return;
+        
         const currentState = get(auctionStore);
-        
-        // Don't do anything if we're not on an auction-related page
-        if (!$page.url.pathname.includes('/auctions')) {
-            return;
-        }
-        
-        // Extract filters from URL parameters
-        const urlParams = $page.url.searchParams;
         const filtersFromUrl = {};
         
         // Map URL parameters to filters
-        for (const key of urlParams.keys()) {
+        for (const key of params.keys()) {
             if (key in currentState.filters) {
-                const value = urlParams.get(key);
+                const value = params.get(key);
                 
                 // Handle boolean values
                 if (value === 'true') filtersFromUrl[key] = true;
@@ -646,7 +1049,66 @@ if (browser) {
         );
         
         if (hasFilterChanges && Object.keys(filtersFromUrl).length > 0) {
-            auctionActions.loadAuctions(filtersFromUrl);
+            this.loadAuctions(filtersFromUrl);
+        }
+    }
+};
+
+// Create derived stores for common queries
+const loading = derived(auctionStore, $store => ({
+    auctionsLoading: $store.loading,
+    currentAuctionLoading: $store.currentAuctionLoading,
+    bidsLoading: $store.bidsLoading,
+    placingBid: $store.placingBid,
+    loadingMore: $store.loadingMore,
+    loadingCreate: $store.loadingCreate,
+    loadingUpdate: $store.loadingUpdate,
+    loadingDelete: $store.loadingDelete,
+    anyLoading: $store.loading || $store.currentAuctionLoading || 
+                $store.bidsLoading || $store.placingBid || $store.loadingMore ||
+                $store.loadingCreate || $store.loadingUpdate || $store.loadingDelete
+}));
+
+const auctionsList = derived(auctionStore, $store => $store.auctions);
+
+const auctionsMetadata = derived(auctionStore, $store => ({
+    totalCount: $store.totalCount,
+    totalPages: $store.totalPages,
+    currentPage: $store.currentPage,
+    hasMore: $store.currentPage < $store.totalPages
+}));
+
+const currentAuction = derived(auctionStore, $store => $store.currentAuction);
+const currentBids = derived(auctionStore, $store => $store.currentBids);
+const currentFilters = derived(auctionStore, $store => $store.filters);
+
+const errors = derived(auctionStore, $store => ({
+    listError: $store.error,
+    detailError: $store.currentAuctionError,
+    bidsError: $store.bidsError,
+    bidError: $store.bidError,
+    createError: $store.createError,
+    updateError: $store.updateError,
+    deleteError: $store.deleteError,
+    hasErrors: Boolean($store.error || $store.currentAuctionError || 
+                      $store.bidsError || $store.bidError || $store.createError ||
+                      $store.updateError || $store.deleteError)
+}));
+
+// Set up URL parameter sync for filters if in browser
+if (browser) {
+    // Subscribe to page store changes
+    page.subscribe(($page) => {
+        // Safely check if page and URL are defined
+        if (!$page || !$page.url) {
+            return;
+        }
+        
+        const pathname = $page.url.pathname;
+        
+        // Only apply filters on auction-related pages
+        if (pathname && pathname.includes('/auctions')) {
+            auctionActions.applyUrlFilters($page.url.searchParams);
         }
     });
 }
