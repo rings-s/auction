@@ -352,7 +352,7 @@
     "not_found": "The page you're looking for doesn't exist.",
     "required_fields": "Please fill in all required fields.",
     "message_sent": "Your message has been sent successfully."
-  }
+  },
 
   "documents": {
     "document": "Document",
@@ -431,85 +431,6 @@
       "verified": "Verified",
       "rejected": "Rejected"
     }
-  },
-"documents": {
-  "document": "Document",
-  "documents": "Documents",
-  "no_documents": "No documents available",
-  "no_documents_found": "No documents found",
-  "error_loading": "Error loading documents",
-  "document_type": "Document Type",
-  "verification_status": "Status",
-  "status": "Status",
-  "uploaded": "Uploaded",
-  "by": "by",
-  "expired": "Expired",
-  "document_number": "Document Number",
-  "untitled": "Untitled Document",
-  "preview": "Preview",
-  "download": "Download",
-  "download_started": "Download started",
-  "download_unavailable": "Download unavailable",
-  "refresh": "Refresh Documents",
-  "refresh_error": "Failed to refresh documents",
-  "upload": "Upload Document",
-  "uploading": "Uploading...",
-  "upload_first": "Upload Your First Document",
-  "upload_success": "Document uploaded successfully",
-  "upload_error": "Failed to upload document",
-  "document_title": "Document Title",
-  "title_placeholder": "Enter document title",
-  "description": "Description",
-  "description_placeholder": "Enter additional details about this document",
-  "expiry_date": "Expiry Date",
-  "expiry_date_helper": "Leave blank if document doesn't expire",
-  "upload_files": "Upload Files",
-  "drag_drop": "Drag and drop files here, or click to select files",
-  "select_files": "Select Files",
-  "allowed_types": "Allowed file types",
-  "max_size": "Maximum file size",
-  "add_more_files": "Add more files",
-  "filters": "Filters",
-  "search_placeholder": "Search documents...",
-  "select_type": "Select document type",
-  "select_status": "Select status",
-  "confirm_delete": "Confirm Delete",
-  "delete_warning": "Are you sure you want to delete",
-  "this_document": "this document",
-  "delete_permanent": "This action cannot be undone.",
-  "delete_success": "Document deleted successfully",
-  "delete_error": "Failed to delete document",
-  "document_preview": "Document Preview",
-  "preview_unavailable": "Preview is not available for this document",
-  "upload_document": "Upload Document",
-  "error_title_required": "Document title is required",
-  "error_type_required": "Document type is required",
-  "error_file_required": "Please select a file to upload",
-  "error_file_type": "File type not allowed: {filename}",
-  "error_file_size": "File too large: {filename}. Maximum size is {maxSize}MB",
-  "sort": {
-    "upload_date": "Upload Date",
-    "document_type": "Document Type",
-    "verification_status": "Verification Status"
-  },
-  "types": {
-    "title_deed": "Title Deed",
-    "floor_plan": "Floor Plan",
-    "ownership_cert": "Ownership Certificate",
-    "survey": "Survey Report",
-    "building_permit": "Building Permit",
-    "tax_document": "Tax Document",
-    "appraisal": "Appraisal",
-    "inspection": "Inspection Report",
-    "other": "Other Document"
-  },
-  "status": {
-    "unverified": "Unverified",
-    "pending": "Pending Review",
-    "verified": "Verified",
-    "rejected": "Rejected"
   }
-}
 
 }
-
