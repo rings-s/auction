@@ -1,6 +1,6 @@
 {
   "general": {
-    "app_name": "Auction Platform",
+    "app_name": "Real Estate Auction Platform",
     "slogan": "Discover Your Perfect Property",
     "loading": "Loading...",
     "error": "An error occurred",
@@ -30,7 +30,9 @@
     "language": "Language",
     "dark_mode": "Dark Mode",
     "light_mode": "Light Mode",
-    "retry": "Try Again"
+    "retry": "Try Again",
+    "warning": "Warning",
+    "featured": "Featured"
   },
   
   "navigation": {
@@ -87,6 +89,85 @@
     "winning": "Currently Winning",
     "you_won": "You won this auction",
     "you_lost": "You lost this auction",
+    "create": "Create Auction",
+    "create_description": "Create a new auction listing for your property",
+    "edit": "Edit Auction",
+    "edit_description": "Update details and settings for your auction",
+    "basic_information": "Basic Information",
+    "pricing_information": "Pricing Information",
+    "dates_and_duration": "Dates and Duration",
+    "publication_settings": "Publication Settings",
+    "filter_auctions": "Filter Auctions",
+    "explore_properties": "Browse properties available for auction",
+    "no_auctions_found": "No auctions found matching your criteria",
+    "showing_results": "Showing {0} of {1} results",
+    "try_different_filters": "Try different filter criteria",
+    "bid_to_win": "Place your bid to win this auction",
+    "login_to_bid": "Please login to place a bid",
+    "owner_cannot_bid": "You cannot bid on your own auction",
+    "property": "Property",
+    "select_property": "Select a property",
+    "loading_properties": "Loading your properties...",
+    "reserve_price": "Reserve Price",
+    "deposit_required": "Deposit Required",
+    "deposit_amount": "Deposit Amount",
+    "buyer_premium_percent": "Buyer Premium (%)",
+    "seller_commission_percent": "Seller Commission (%)",
+    "auto_extend": "Auto Extend Auction",
+    "extension_minutes": "Extension Minutes",
+    "is_private": "Private Auction",
+    "private_description": "Only invited users can view and bid",
+    "is_featured": "Featured Auction",
+    "featured_description": "Display prominently on the homepage",
+    "is_published": "Published",
+    "published_description": "Make this auction visible to users",
+    "terms_conditions": "Terms and Conditions",
+    "terms_conditions_placeholder": "Enter any special terms or conditions for this auction...",
+    "bidding_rules": "Bidding Rules",
+    "bidding_rule_1": "Your bid is a binding contract to purchase if you win",
+    "bidding_rule_2": "All bids must be at least the minimum increment higher than the current bid",
+    "bidding_rule_3": "All sales are final and cannot be cancelled",
+    "bidding_rule_4": "The seller reserves the right to accept or reject the highest bid",
+    "enable_auto_bid": "Enable Auto-Bidding",
+    "auto_bidding_info": "We'll automatically place bids for you up to your maximum amount",
+    "max_bid_amount": "Maximum Bid Amount",
+    "bid_confirmation": "By placing a bid, you agree to the auction terms and conditions",
+    "bid_terms": "All bids are final. You will be notified if you are outbid or win the auction.",
+    "bid_placed_successfully": "Your bid has been placed successfully",
+    "error_placing_bid": "There was an error placing your bid",
+    "auction_ended": "This auction has ended",
+    "auction_created_successfully": "Auction has been created successfully",
+    "auction_updated_successfully": "Auction has been updated successfully",
+    "bid_minimum_increment": "Minimum bid is {amount}",
+    "min_bid_info": "Minimum bid: {0}",
+    
+    "delete_auction": "Delete Auction",
+    "delete_confirmation": "Delete Auction Confirmation",
+    "delete_warning": "Are you sure you want to delete the auction",
+    "delete_warning_1": "All auction data will be permanently removed from the system",
+    "delete_warning_2": "This action cannot be undone",
+    "delete_warning_bids": "This auction has active bids, which will be cancelled",
+    "delete_warning_status": "Auctions with status '{status}' may have restrictions on deletion",
+    "confirm_delete_prompt": "To confirm deletion, please type the auction ID ({id}) below:",
+    "confirm_delete_checkbox": "I understand that this action is permanent and cannot be undone",
+    "confirm_text_mismatch": "The confirmation text doesn't match the auction ID",
+    "confirm_checkbox_required": "You must confirm that you understand the consequences",
+    "no_auction_selected": "No auction selected for deletion",
+    "delete_success": "Auction has been successfully deleted",
+    "delete_error": "An error occurred while deleting the auction",
+    "not_authorized_to_delete": "You don't have permission to delete this auction",
+    "auction_id": "Auction ID",
+    "create_success": "Auction has been successfully created",
+    "update_success": "Auction has been successfully updated",
+    "edit_meta_description": "Edit auction details, update settings, or delete auction",
+    "load_error": "Failed to load auctions",
+    "load_detail_error": "Failed to load auction details",
+    "load_bids_error": "Failed to load bid history",
+    "bid_error": "Error placing bid",
+    "create_error": "Error creating auction",
+    "update_error": "Error updating auction",
+    "not_authorized_to_edit": "You don't have permission to edit this auction",
+    
     "sort_options": {
       "newest": "Newest",
       "ending_soon": "Ending Soon",
@@ -107,6 +188,13 @@
       "closed": "Closed",
       "sold": "Sold",
       "cancelled": "Cancelled"
+    },
+    "types": {
+      "public": "Public Auction",
+      "private": "Private Auction",
+      "online": "Online Auction",
+      "onsite": "Onsite Auction",
+      "hybrid": "Hybrid Auction"
     }
   },
   
@@ -138,6 +226,8 @@
     "property_condition": "Property Condition",
     "floor_number": "Floor Number",
     "facing_direction": "Facing Direction",
+    "view_property_details": "View Property Details",
+    "view_property": "View Property",
     
     "meta_description": "Browse our diverse collection of properties available for auction or direct purchase",
     "all_properties": "All Properties",
@@ -224,7 +314,6 @@
     },
     "property_number": "Property Number",
     "view_details": "View Property Details"
-
   },
   
   "auth": {
@@ -271,6 +360,10 @@
     "city": "City",
     "country": "Country",
     "change_password": "Change Password",
+    "access_denied": "Access Denied",
+    "insufficient_permissions": "You don't have sufficient permissions to perform this action",
+    "login_required": "Login required",
+    "login_required_bid": "You must be logged in to place a bid",
     "roles": {
       "title": "Role",
       "buyer": "Buyer",
@@ -351,7 +444,8 @@
     "unauthorized": "Unauthorized. Please login to access this page.",
     "not_found": "The page you're looking for doesn't exist.",
     "required_fields": "Please fill in all required fields.",
-    "message_sent": "Your message has been sent successfully."
+    "message_sent": "Your message has been sent successfully.",
+    "error_loading_auction": "Error loading auction details"
   },
 
   "documents": {
@@ -432,5 +526,4 @@
       "rejected": "Rejected"
     }
   }
-
 }

@@ -1,83 +1,158 @@
 <!-- src/routes/auctions/create/+page.svelte -->
 <script>
-    import { onMount } from 'svelte';
-    import { t } from '$lib/i18n';
-    import { goto } from '$app/navigation';
-    import { authStore } from '$lib/stores/auth';
-    import AuctionForm from '$lib/components/auctions/AuctionForm.svelte';
-    import { Alert } from '$lib/components/ui';
-    
-    // Component state
-    let isAuthorized = false;
-    let alertType = 'error';
-    let alertMessage = '';
-    let showAlert = false;
-    
-    // Handle success
-    function handleSuccess(event) {
-      const auctionId = event.detail.auction?.id;
+  import { onMount } from 'svelte';
+  import { t } from '$lib/i18n';
+  import { goto } from '$app/navigation';
+  import { authStore } from '$lib/stores/auth';
+  import { auctionActions, loading, errors } from '$lib/stores/auction';
+  import AuctionForm from '$lib/components/auctions/AuctionForm.svelte';
+  import Breadcrumb from '$lib/components/ui/Breadcrumb.svelte';
+  import Alert from '$lib/components/ui/Alert.svelte';
+  import Spinner from '$lib/components/ui/Spinner.svelte';
+  import { toast } from '$lib/stores/toast';
+  
+  // Component state
+  let isAuthorized = false;
+  let isAuthorizing = true;
+  let permissionError = null;
+  
+  // Handle form success
+  function handleSuccess(event) {
+      const auction = event.detail?.auction;
       
-      if (auctionId) {
-        // Navigate to auction detail page
-        goto(`/auctions/${auctionId}`);
+      if (auction?.id) {
+          // Show success toast
+          toast.success(t('auctions.create_success'));
+          
+          // Navigate to auction detail page after a brief delay
+          setTimeout(() => {
+              goto(`/auctions/${auction.id}`);
+          }, 800);
       }
-    }
-    
-    // Handle cancellation
-    function handleCancel() {
+  }
+  
+  // Handle cancellation
+  function handleCancel() {
       // Navigate back to auctions list
       goto('/auctions');
-    }
-    
-    // Initialize component
-    onMount(() => {
-      // Check if user is authenticated and has required role
-      if ($authStore.isAuthenticated) {
-        const roles = $authStore.user?.roles || [];
-        isAuthorized = $authStore.user.is_admin || $authStore.user.is_staff || roles.includes('agent');
-        
-        if (!isAuthorized) {
-          alertType = 'error';
-          alertMessage = t('auth.insufficient_permissions');
-          showAlert = true;
-        }
-      } else {
-        // Redirect to login
-        const returnUrl = encodeURIComponent(window.location.pathname);
-        goto(`/auth/login?return_url=${returnUrl}`);
+  }
+  
+  // Check user permissions
+  async function checkPermissions() {
+      isAuthorizing = true;
+      
+      try {
+          // Wait for auth store to initialize
+          if (!$authStore.initialized) {
+              await new Promise(resolve => {
+                  const unsubscribe = authStore.subscribe(state => {
+                      if (state.initialized) {
+                          unsubscribe();
+                          resolve();
+                      }
+                  });
+              });
+          }
+          
+          // Check if user is authenticated
+          if (!$authStore.isAuthenticated) {
+              // Store current path for redirect after login
+              if (browser) {
+                  localStorage.setItem('redirectAfterLogin', window.location.pathname);
+              }
+              
+              // Redirect to login
+              goto('/auth/login');
+              return;
+          }
+          
+          // Check user roles/permissions
+          const hasRequiredRole = $authStore.user?.roles?.some(role => 
+              ['admin', 'staff', 'agent', 'seller'].includes(role)
+          ) || $authStore.user?.is_admin || $authStore.user?.is_staff;
+          
+          if (hasRequiredRole) {
+              isAuthorized = true;
+          } else {
+              permissionError = t('auth.insufficient_permissions');
+              isAuthorized = false;
+          }
+      } catch (error) {
+          console.error('Error checking permissions:', error);
+          permissionError = t('general.error_occurred');
+          isAuthorized = false;
+      } finally {
+          isAuthorizing = false;
       }
-    });
-  </script>
+  }
   
-  <svelte:head>
-    <title>{t('auctions.create')} | {t('site.name')}</title>
-    <meta name="description" content={t('auctions.create_meta_description')} />
-  </svelte:head>
-  
-  <div class="auction-create-page">
-    <div class="mb-6">
-      <h1 class="text-2xl md:text-3xl font-bold">{t('auctions.create')}</h1>
-      <p class="text-gray-600 mt-1">
-        {t('auctions.create_description')}
-      </p>
-    </div>
-    
-    {#if showAlert}
-      <Alert 
-        type={alertType} 
-        message={alertMessage} 
-        class="mb-6"
+  onMount(() => {
+      // Check if user has permission to create auctions
+      checkPermissions();
+      
+      // Reset any previous errors
+      auctionActions.resetErrors();
+  });
+</script>
+
+<svelte:head>
+  <title>{t('auctions.create')} | {t('general.app_name')}</title>
+  <meta name="description" content={t('auctions.create_description')} />
+</svelte:head>
+
+<div class="container mx-auto px-4 py-8">
+  <!-- Breadcrumb -->
+  <div class="mb-6">
+      <Breadcrumb
+          items={[
+              { label: t('navigation.home'), href: '/' },
+              { label: t('auctions.title'), href: '/auctions' },
+              { label: t('auctions.create'), href: '/auctions/create', active: true }
+          ]}
       />
-    {/if}
-    
-    {#if isAuthorized}
-      <div class="bg-white rounded-lg border shadow-sm p-6">
-        <AuctionForm 
-          mode="create"
-          submitText={t('auctions.create')}
-          on:success={handleSuccess}
-          on:cancel={handleCancel}
-        />
-      </div>
-    {/if}
   </div>
+
+  <!-- Page header -->
+  <div class="mb-8">
+      <h1 class="text-3xl font-bold text-neutral-900 dark:text-neutral-100">
+          {t('auctions.create')}
+      </h1>
+      <p class="mt-2 text-neutral-600 dark:text-neutral-400">
+          {t('auctions.create_description')}
+      </p>
+  </div>
+  
+  <!-- Authorization check -->
+  {#if isAuthorizing}
+      <div class="flex justify-center py-12">
+          <Spinner size="lg" />
+      </div>
+  {:else if permissionError}
+      <Alert 
+          type="error" 
+          title={t('auth.access_denied')}
+          message={permissionError}
+          class="mb-6"
+      />
+  {:else if isAuthorized}
+      <!-- Display any form errors -->
+      {#if $errors.createError}
+          <Alert 
+              type="error" 
+              message={$errors.createError}
+              class="mb-6"
+              dismissible={true}
+          />
+      {/if}
+      
+      <!-- Create Auction Form -->
+      <div class="bg-white dark:bg-neutral-800 rounded-xl border border-neutral-200 dark:border-neutral-700 shadow-sm">
+          <AuctionForm 
+              mode="create"
+              submitText={t('auctions.create')}
+              on:success={handleSuccess}
+              on:cancel={handleCancel}
+          />
+      </div>
+  {/if}
+</div>

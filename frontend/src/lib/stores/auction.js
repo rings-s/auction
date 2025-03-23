@@ -1,284 +1,12 @@
 // src/lib/stores/auction.js
-// مخزن بيانات المزادات - Auction Store - Refactored Version
+// Auction Store - Unified Implementation
 
 import { writable, derived, get } from 'svelte/store';
 import { browser } from '$app/environment';
 import { page } from '$app/stores';
 import { t } from '$lib/i18n'; 
-import { toast } from '$lib/utils/toast';
-
-/**
- * Service for auction API calls - separated for better organization
- */
-class AuctionService {
-    /**
-     * Base URL for auction endpoints - can be configured per environment
-     */
-    baseUrl = '/api/auctions';
-
-    /**
-     * Fetch auctions with filtering
-     * @param {Object} filters - Filter parameters
-     * @returns {Promise<Object>} - API response
-     */
-    async getAuctions(filters = {}) {
-        try {
-            // Build query string from filters
-            const queryParams = new URLSearchParams();
-            
-            for (const [key, value] of Object.entries(filters)) {
-                if (value !== null && value !== undefined) {
-                    queryParams.append(key, value);
-                }
-            }
-            
-            const queryString = queryParams.toString();
-            const url = `${this.baseUrl}/${queryString ? `?${queryString}` : ''}`;
-            
-            const response = await fetch(url);
-            const data = await response.json();
-            
-            return { 
-                success: response.ok,
-                data: response.ok ? data : null,
-                error: !response.ok ? data.error || 'Failed to fetch auctions' : null,
-                status: response.status
-            };
-        } catch (error) {
-            console.error('Error fetching auctions:', error);
-            return { 
-                success: false, 
-                error: error.message || 'Network error' 
-            };
-        }
-    }
-
-    /**
-     * Get details for a specific auction
-     * @param {string|number} auctionId - Auction ID
-     * @param {Object} options - Optional parameters (include_bids, include_property, include_documents)
-     * @returns {Promise<Object>} - API response
-     */
-    async getAuctionDetails(auctionId, options = {}) {
-        try {
-            if (!auctionId) {
-                throw new Error('Auction ID is required');
-            }
-            
-            // Build query string from options
-            const queryParams = new URLSearchParams();
-            
-            for (const [key, value] of Object.entries(options)) {
-                if (value !== null && value !== undefined) {
-                    queryParams.append(key, value);
-                }
-            }
-            
-            const queryString = queryParams.toString();
-            const url = `${this.baseUrl}/${auctionId}/${queryString ? `?${queryString}` : ''}`;
-            
-            const response = await fetch(url);
-            const data = await response.json();
-            
-            return { 
-                success: response.ok,
-                data: response.ok ? data : null,
-                error: !response.ok ? data.error || 'Failed to fetch auction details' : null,
-                status: response.status
-            };
-        } catch (error) {
-            console.error(`Error fetching auction ${auctionId}:`, error);
-            return { 
-                success: false, 
-                error: error.message || 'Network error' 
-            };
-        }
-    }
-
-    /**
-     * Get bids for an auction
-     * @param {string|number} auctionId - Auction ID
-     * @param {Object} options - Optional parameters (page, page_size, etc.)
-     * @returns {Promise<Object>} - API response
-     */
-    async getAuctionBids(auctionId, options = {}) {
-        try {
-            if (!auctionId) {
-                throw new Error('Auction ID is required');
-            }
-            
-            // Build query string from options
-            const queryParams = new URLSearchParams();
-            queryParams.append('auction_id', auctionId);
-            
-            for (const [key, value] of Object.entries(options)) {
-                if (value !== null && value !== undefined) {
-                    queryParams.append(key, value);
-                }
-            }
-            
-            const queryString = queryParams.toString();
-            const url = `/api/bids/?${queryString}`;
-            
-            const response = await fetch(url);
-            const data = await response.json();
-            
-            return { 
-                success: response.ok,
-                data: response.ok ? data : null,
-                error: !response.ok ? data.error || 'Failed to fetch auction bids' : null,
-                status: response.status
-            };
-        } catch (error) {
-            console.error(`Error fetching bids for auction ${auctionId}:`, error);
-            return { 
-                success: false, 
-                error: error.message || 'Network error' 
-            };
-        }
-    }
-
-    /**
-     * Place a bid on an auction
-     * @param {Object} bidData - Bid data including auction, bid_amount, etc.
-     * @returns {Promise<Object>} - API response
-     */
-    async placeBid(bidData) {
-        try {
-            if (!bidData.auction || !bidData.bid_amount) {
-                throw new Error('Auction and bid amount are required');
-            }
-            
-            const response = await fetch('/api/bids/place/', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify(bidData)
-            });
-            
-            const data = await response.json();
-            
-            return { 
-                success: response.ok,
-                data: response.ok ? data : null,
-                error: !response.ok ? data.error || 'Failed to place bid' : null,
-                status: response.status
-            };
-        } catch (error) {
-            console.error('Error placing bid:', error);
-            return { 
-                success: false, 
-                error: error.message || 'Network error' 
-            };
-        }
-    }
-
-    /**
-     * Create a new auction
-     * @param {Object} auctionData - New auction data
-     * @returns {Promise<Object>} - API response
-     */
-    async createAuction(auctionData) {
-        try {
-            const response = await fetch(`${this.baseUrl}/create/`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify(auctionData)
-            });
-            
-            const data = await response.json();
-            
-            return { 
-                success: response.ok,
-                data: response.ok ? data : null,
-                error: !response.ok ? data.error || 'Failed to create auction' : null,
-                status: response.status
-            };
-        } catch (error) {
-            console.error('Error creating auction:', error);
-            return { 
-                success: false, 
-                error: error.message || 'Network error' 
-            };
-        }
-    }
-
-    /**
-     * Update an existing auction
-     * @param {string|number} auctionId - Auction ID
-     * @param {Object} updateData - Data to update
-     * @param {boolean} partial - True for PATCH (partial update), false for PUT (full update)
-     * @returns {Promise<Object>} - API response
-     */
-    async updateAuction(auctionId, updateData, partial = true) {
-        try {
-            if (!auctionId) {
-                throw new Error('Auction ID is required');
-            }
-            
-            const response = await fetch(`${this.baseUrl}/${auctionId}/update/`, {
-                method: partial ? 'PATCH' : 'PUT',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify(updateData)
-            });
-            
-            const data = await response.json();
-            
-            return { 
-                success: response.ok,
-                data: response.ok ? data : null,
-                error: !response.ok ? data.error || 'Failed to update auction' : null,
-                status: response.status
-            };
-        } catch (error) {
-            console.error(`Error updating auction ${auctionId}:`, error);
-            return { 
-                success: false, 
-                error: error.message || 'Network error' 
-            };
-        }
-    }
-
-    /**
-     * Delete an auction
-     * @param {string|number} auctionId - Auction ID
-     * @returns {Promise<Object>} - API response
-     */
-    async deleteAuction(auctionId) {
-        try {
-            if (!auctionId) {
-                throw new Error('Auction ID is required');
-            }
-            
-            const response = await fetch(`${this.baseUrl}/${auctionId}/delete/`, {
-                method: 'DELETE'
-            });
-            
-            const data = await response.json();
-            
-            return { 
-                success: response.ok,
-                data: response.ok ? data : null,
-                error: !response.ok ? data.error || 'Failed to delete auction' : null,
-                status: response.status
-            };
-        } catch (error) {
-            console.error(`Error deleting auction ${auctionId}:`, error);
-            return { 
-                success: false, 
-                error: error.message || 'Network error' 
-            };
-        }
-    }
-}
-
-// Create service instance
-const auctionService = new AuctionService();
+import { toast } from '$lib/stores/toast';
+import { api } from '$lib/services/api';
 
 /**
  * Initial state for auction store
@@ -391,16 +119,23 @@ const auctionActions = {
         };
 
         try {
-            // Call API service
-            const result = await auctionService.getAuctions(appliedFilters);
+            // Build query params from filters
+            const queryParams = {};
             
-            if (result.success) {
-                const data = result.data;
-                
+            for (const [key, value] of Object.entries(appliedFilters)) {
+                if (value !== null && value !== undefined && value !== '') {
+                    queryParams[key] = value;
+                }
+            }
+            
+            // Call API service
+            const response = await api.get('/auctions', queryParams);
+            
+            if (response) {
                 auctionStore.update(state => {
                     // Update cache
                     const newCache = { ...state.auctionCache };
-                    data.results?.forEach(auction => {
+                    response.results?.forEach(auction => {
                         newCache[auction.id] = {
                             ...auction,
                             lastFetched: new Date().getTime()
@@ -410,10 +145,10 @@ const auctionActions = {
                     return {
                         ...state,
                         auctions: append 
-                            ? [...state.auctions, ...(data.results || [])]
-                            : (data.results || []),
-                        totalCount: data.count || 0,
-                        totalPages: data.total_pages || 1,
+                            ? [...state.auctions, ...(response.results || [])]
+                            : (response.results || []),
+                        totalCount: response.count || 0,
+                        totalPages: response.total_pages || 1,
                         currentPage: append ? state.currentPage + 1 : 1,
                         loading: false,
                         loadingMore: false,
@@ -424,9 +159,9 @@ const auctionActions = {
                     };
                 });
                 
-                return { success: true, data };
+                return { success: true, data: response };
             } else {
-                const errorMessage = result.error || t('general.error_occurred');
+                const errorMessage = t('auctions.load_error');
                 
                 auctionStore.update(state => ({
                     ...state,
@@ -508,10 +243,10 @@ const auctionActions = {
 
         try {
             // Call API service
-            const result = await auctionService.getAuctionDetails(auctionId, options);
+            const response = await api.get(`/auctions/${auctionId}`, options);
             
-            if (result.success) {
-                const auctionData = result.data?.auction;
+            if (response) {
+                const auctionData = response.auction;
                 
                 if (!auctionData) {
                     throw new Error('No auction data returned');
@@ -540,9 +275,9 @@ const auctionActions = {
                     };
                 });
                 
-                return { success: true, data: result.data };
+                return { success: true, data: response };
             } else {
-                const errorMessage = result.error || t('general.error_occurred');
+                const errorMessage = t('auctions.load_detail_error');
                 
                 auctionStore.update(state => ({
                     ...state,
@@ -590,20 +325,26 @@ const auctionActions = {
         }));
 
         try {
-            // Call API service
-            const result = await auctionService.getAuctionBids(auctionId, options);
+            // Prepare query params
+            const queryParams = {
+                auction_id: auctionId,
+                ...options
+            };
             
-            if (result.success) {
+            // Call API service
+            const response = await api.get('/bids', queryParams);
+            
+            if (response) {
                 auctionStore.update(state => ({
                     ...state,
-                    currentBids: result.data?.results || [],
+                    currentBids: response.results || [],
                     bidsLoading: false,
                     bidsError: null
                 }));
                 
-                return { success: true, data: result.data };
+                return { success: true, data: response };
             } else {
-                const errorMessage = result.error || t('general.error_occurred');
+                const errorMessage = t('auctions.load_bids_error');
                 
                 auctionStore.update(state => ({
                     ...state,
@@ -659,10 +400,10 @@ const auctionActions = {
 
         try {
             // Call API service
-            const result = await auctionService.placeBid(bidData);
+            const response = await api.post('/bids/place', bidData);
             
-            if (result.success) {
-                const newBid = result.data?.bid;
+            if (response) {
+                const newBid = response.bid;
                 
                 if (!newBid) {
                     throw new Error('No bid data returned');
@@ -676,6 +417,7 @@ const auctionActions = {
                     let updatedAuction = { ...state.currentAuction };
                     if (newBid.bid_amount > (updatedAuction?.current_bid || 0)) {
                         updatedAuction.current_bid = newBid.bid_amount;
+                        updatedAuction.bid_count = (updatedAuction.bid_count || 0) + 1;
                     }
                     
                     // Update cache
@@ -701,9 +443,9 @@ const auctionActions = {
                 // Show success toast
                 toast.success(t('auctions.bid_placed_successfully'));
                 
-                return { success: true, data: result.data };
+                return { success: true, data: response };
             } else {
-                const errorMessage = result.error || t('general.error_occurred');
+                const errorMessage = t('auctions.bid_error');
                 
                 auctionStore.update(state => ({
                     ...state,
@@ -751,10 +493,10 @@ const auctionActions = {
 
         try {
             // Call API service
-            const result = await auctionService.createAuction(auctionData);
+            const response = await api.post('/auctions/create', auctionData);
             
-            if (result.success) {
-                const newAuction = result.data?.auction;
+            if (response) {
+                const newAuction = response.auction;
                 
                 if (!newAuction) {
                     throw new Error('No auction data returned');
@@ -781,12 +523,9 @@ const auctionActions = {
                     };
                 });
                 
-                // Show success toast
-                toast.success(t('auctions.auction_created_successfully'));
-                
-                return { success: true, data: result.data };
+                return { success: true, data: response };
             } else {
-                const errorMessage = result.error || t('general.error_occurred');
+                const errorMessage = t('auctions.create_error');
                 
                 auctionStore.update(state => ({
                     ...state,
@@ -836,10 +575,10 @@ const auctionActions = {
 
         try {
             // Call API service
-            const result = await auctionService.updateAuction(auctionId, updateData, partial);
+            const response = await api[partial ? 'patch' : 'put'](`/auctions/${auctionId}/update`, updateData);
             
-            if (result.success) {
-                const updatedAuction = result.data?.auction;
+            if (response) {
+                const updatedAuction = response.auction;
                 
                 if (!updatedAuction) {
                     throw new Error('No auction data returned');
@@ -873,12 +612,9 @@ const auctionActions = {
                     };
                 });
                 
-                // Show success toast
-                toast.success(t('auctions.auction_updated_successfully'));
-                
-                return { success: true, data: result.data };
+                return { success: true, data: response };
             } else {
-                const errorMessage = result.error || t('general.error_occurred');
+                const errorMessage = t('auctions.update_error');
                 
                 auctionStore.update(state => ({
                     ...state,
@@ -926,9 +662,9 @@ const auctionActions = {
 
         try {
             // Call API service
-            const result = await auctionService.deleteAuction(auctionId);
+            const response = await api.delete(`/auctions/${auctionId}`);
             
-            if (result.success) {
+            if (response) {
                 auctionStore.update(state => {
                     // Remove from auctions list
                     const updatedAuctions = state.auctions.filter(auction => 
@@ -952,12 +688,9 @@ const auctionActions = {
                     };
                 });
                 
-                // Show success toast
-                toast.success(t('auctions.auction_deleted_successfully'));
-                
-                return { success: true, data: result.data };
+                return { success: true, data: response };
             } else {
-                const errorMessage = result.error || t('general.error_occurred');
+                const errorMessage = t('auctions.delete_error');
                 
                 auctionStore.update(state => ({
                     ...state,
