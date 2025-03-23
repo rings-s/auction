@@ -1,228 +1,457 @@
 from django.contrib import admin
+from django.contrib.gis.admin import GISModelAdmin
+from django.utils.translation import gettext_lazy as _
 from django.utils.html import format_html
-from django.urls import reverse
 from .models import (
-    Category, Subcategory, Auction, RealEstate, Vehicle, Machinery, Factory,
-    HeavyVehicleAuction, Bid, Transaction, Document, Contract,
-    ContractTermRevision, AuctionTimer, Message, PaymentMethod, Notification
+    Property, Document, Auction, Bid, Contract,
+    Payment, Transaction, MessageThread, Message,
+    ThreadParticipant, Notification, PropertyView
 )
 
-@admin.register(Category)
-class CategoryAdmin(admin.ModelAdmin):
-    list_display = ('name', 'slug', 'created_at')
-    list_filter = ('created_at',)
-    search_fields = ('name',)
-    prepopulated_fields = {'slug': ('name',)}
-    ordering = ('name',)
 
-@admin.register(Subcategory)
-class SubcategoryAdmin(admin.ModelAdmin):
-    list_display = ('name', 'category', 'slug', 'created_at')
-    list_filter = ('category', 'created_at')
-    search_fields = ('name', 'category__name')
-    prepopulated_fields = {'slug': ('name',)}
-    ordering = ('category', 'name')
-
-class AuctionTimerInline(admin.StackedInline):
-    model = AuctionTimer
+# Inline admins
+class DocumentInline(admin.TabularInline):
+    model = Document
     extra = 0
+    classes = ['collapse']
+    fields = ('document_number', 'title', 'document_type', 'verification_status')
+    readonly_fields = ('document_number',)
 
-@admin.register(Auction)
-class AuctionAdmin(admin.ModelAdmin):
-    list_display = ('title', 'category', 'subcategory', 'seller', 'status', 'start_time', 'end_time', 'current_price')
-    list_filter = ('status', 'category', 'subcategory', 'currency')
-    search_fields = ('title', 'description', 'seller__email')
-    readonly_fields = ('id',)
-    inlines = [AuctionTimerInline]
-    
+class BidInline(admin.TabularInline):
+    model = Bid
+    extra = 0
+    classes = ['collapse']
+    fields = ('bidder', 'bid_amount', 'bid_time', 'status')
+    readonly_fields = ('bid_time',)
+
+class MessageInline(admin.TabularInline):
+    model = Message
+    extra = 0
+    classes = ['collapse']
+    fields = ('sender', 'subject', 'sent_at', 'status')
+    readonly_fields = ('sent_at',)
+
+class ThreadParticipantInline(admin.TabularInline):
+    model = ThreadParticipant
+    extra = 0
+    classes = ['collapse']
+    fields = ('user', 'role', 'is_active', 'is_muted')
+
+class PaymentInline(admin.TabularInline):
+    model = Payment
+    extra = 0
+    classes = ['collapse']
+    fields = ('payment_number', 'payment_type', 'amount', 'payment_date', 'status')
+    readonly_fields = ('payment_number',)
+
+class TransactionInline(admin.TabularInline):
+    model = Transaction
+    extra = 0
+    classes = ['collapse']
+    fields = ('transaction_number', 'transaction_type', 'amount', 'transaction_date', 'status')
+    readonly_fields = ('transaction_number',)
+
+@admin.register(Property)
+class PropertyAdmin(GISModelAdmin):
+    list_display = ('property_number', 'title', 'property_type', 'city', 'district', 'bedrooms', 'bathrooms', 'area', 'status', 'is_published', 'main_image_url')
+    list_filter = ('property_type', 'city', 'status', 'is_published', 'is_featured', 'is_verified')
+    search_fields = ('property_number', 'title', 'address', 'city', 'district')
+    readonly_fields = ('created_at', 'updated_at', 'verification_date')
+    list_select_related = ('owner', 'verified_by')
     fieldsets = (
-        ('Basic Information', {
-            'fields': ('id', 'title', 'description', 'category', 'subcategory', 'seller')
+        (_('Basic Information'), {
+            'fields': ('property_number', 'title', 'slug', 'property_type', 'description', 'condition')
         }),
-        ('Timing', {
-            'fields': ('start_time', 'end_time')
+        (_('Ownership Details'), {
+            'fields': ('owner', 'status', 'deed_number', 'deed_date')
         }),
-        ('Pricing', {
-            'fields': ('current_price', 'reserve_price', 'minimum_bid_increment', 'currency')
+        (_('Location Information'), {
+            'fields': ('address', 'city', 'district', 'postal_code', 'country', 'latitude', 'longitude', 'location',
+                      'facing_direction')
         }),
-        ('Status', {
-            'fields': ('status',)
+        (_('Property Specifications'), {
+            'fields': ('area', 'built_up_area', 'bedrooms', 'bathrooms', 'floor_number', 'total_floors', 'year_built')
         }),
-        ('Images', {
-            'fields': ('main_image', 'image_1', 'image_2', 'image_3', 'image_4', 'image_5')
+        (_('Financial Details'), {
+            'fields': ('estimated_value', 'asking_price', 'price_per_sqm')
+        }),
+        (_('JSON Fields'), {
+            'classes': ('collapse',),
+            'fields': ('rooms', 'outdoor_spaces', 'rental_details', 'parking', 'images', 'videos', 'virtual_tours',
+                      'documents', 'floor_plans', 'features', 'amenities', 'building_services', 'infrastructure',
+                      'street_details', 'surroundings', 'reference_ids', 'status_history')
+        }),
+        (_('Usage'), {
+            'fields': ('current_usage', 'optimal_usage')
+        }),
+        (_('Verification and Approvals'), {
+            'fields': ('is_verified', 'verified_by', 'verification_date', 'verification_details')
+        }),
+        (_('Visibility Settings'), {
+            'fields': ('is_featured', 'is_published', 'publish_date', 'views_count')
+        }),
+        (_('Timestamps'), {
+            'fields': ('created_at', 'updated_at')
         }),
     )
+    inlines = [DocumentInline]
 
-@admin.register(RealEstate)
-class RealEstateAdmin(admin.ModelAdmin):
-    list_display = ('auction', 'property_type', 'location', 'size_sqm', 'year_built')
-    list_filter = ('property_type',)
-    search_fields = ('location', 'address', 'auction__title')
-
-@admin.register(Vehicle)
-class VehicleAdmin(admin.ModelAdmin):
-    list_display = ('auction', 'make', 'model', 'year', 'mileage', 'condition')
-    list_filter = ('condition', 'make', 'year')
-    search_fields = ('make', 'model', 'vin', 'registration_number')
-
-@admin.register(Machinery)
-class MachineryAdmin(admin.ModelAdmin):
-    list_display = ('auction', 'machine_type', 'manufacturer', 'model_number', 'year_manufactured')
-    list_filter = ('machine_type', 'manufacturer')
-    search_fields = ('machine_type', 'manufacturer', 'model_number')
-
-@admin.register(Factory)
-class FactoryAdmin(admin.ModelAdmin):
-    list_display = ('auction', 'location', 'total_area_sqm', 'built_up_area_sqm')
-    search_fields = ('location', 'address')
-
-@admin.register(HeavyVehicleAuction)
-class HeavyVehicleAuctionAdmin(admin.ModelAdmin):
-    list_display = ('auction', 'vehicle_type', 'make', 'model', 'year', 'load_capacity')
-    list_filter = ('vehicle_type', 'make')
-    search_fields = ('make', 'model', 'registration_number')
-
-@admin.register(Bid)
-class BidAdmin(admin.ModelAdmin):
-    list_display = ('auction', 'bidder', 'amount', 'status', 'created_at')
-    list_filter = ('status', 'created_at')
-    search_fields = ('auction__title', 'bidder__email')
-    readonly_fields = ('id', 'ip_address')
-
-@admin.register(Transaction)
-class TransactionAdmin(admin.ModelAdmin):
-    list_display = ('reference_number', 'auction', 'winner', 'amount', 'payment_type', 'status')
-    list_filter = ('status', 'payment_type', 'payment_method')
-    search_fields = ('reference_number', 'winner__email', 'auction__title')
-    readonly_fields = ('id',)
-
-    fieldsets = (
-        ('Basic Information', {
-            'fields': ('id', 'auction', 'winner', 'winning_bid')
-        }),
-        ('Payment Details', {
-            'fields': ('amount', 'currency', 'payment_type', 'payment_method', 'status')
-        }),
-        ('Payment Processing', {
-            'fields': ('reference_number', 'payment_proof', 'payment_date')
-        }),
-        ('External Payment IDs', {
-            'fields': ('stripe_payment_id', 'paypal_transaction_id')
-        }),
-        ('Escrow Details', {
-            'fields': ('escrow_agent',)
-        }),
-        ('Additional Information', {
-            'fields': ('notes', 'metadata')
-        }),
-    )
+    def get_queryset(self, request):
+        return super().get_queryset(request).select_related('owner', 'verified_by')
 
 @admin.register(Document)
 class DocumentAdmin(admin.ModelAdmin):
-    list_display = ('title', 'auction', 'document_type', 'verification_status', 'uploaded_by')
+    list_display = ('document_number', 'title', 'document_type', 'related_property', 'auction', 'verification_status', 'is_expired')
     list_filter = ('document_type', 'verification_status')
-    search_fields = ('title', 'description', 'auction__title')
-    readonly_fields = ('id',)
+    search_fields = ('document_number', 'title', 'description')
+    readonly_fields = ('created_at', 'updated_at')
+    list_select_related = ('related_property', 'auction', 'contract', 'uploaded_by', 'verified_by')
+    fieldsets = (
+        (_('Document Information'), {
+            'fields': ('document_number', 'title', 'document_type', 'description')
+        }),
+        (_('Related Models'), {
+            'fields': ('related_property', 'auction', 'contract')
+        }),
+        (_('Files'), {
+            'fields': ('files', 'metadata')
+        }),
+        (_('Ownership and Verification'), {
+            'fields': ('uploaded_by', 'verification_status', 'verified_by', 'verification_date', 'verification_notes')
+        }),
+        (_('Expiry and Validity'), {
+            'fields': ('issue_date', 'expiry_date')
+        }),
+        (_('Timestamps'), {
+            'fields': ('created_at', 'updated_at')
+        }),
+    )
 
-    def get_file_preview(self, obj):
-        if obj.file:
-            return format_html('<a href="{}" target="_blank">View File</a>', obj.file.url)
-        return "No file uploaded"
-    get_file_preview.short_description = 'File Preview'
+@admin.register(Auction)
+class AuctionAdmin(admin.ModelAdmin):
+    list_display = ('get_uuid', 'title', 'related_property', 'auction_type', 'status', 'start_date', 'end_date', 'current_bid', 'is_active', 'highest_bid', 'bid_count')
+    list_filter = ('auction_type', 'status', 'is_private', 'is_published', 'is_featured')
+    search_fields = ('title', 'description', 'related_property__title', 'related_property__property_number')
+    readonly_fields = ('uuid', 'created_at', 'updated_at')
+    list_select_related = ('related_property', 'created_by', 'auctioneer', 'winning_bidder')
+    fieldsets = (
+        (_('Auction Information'), {
+            'fields': ('uuid', 'related_property', 'title', 'slug', 'description', 'auction_type', 'status')
+        }),
+        (_('Ownership and Management'), {
+            'fields': ('created_by', 'auctioneer')
+        }),
+        (_('Dates and Duration'), {
+            'fields': ('start_date', 'end_date', 'auto_extend', 'extension_minutes')
+        }),
+        (_('Pricing and Bidding Rules'), {
+            'fields': ('starting_price', 'reserve_price', 'min_bid_increment', 'deposit_amount', 'deposit_required')
+        }),
+        (_('Commission and Fees'), {
+            'fields': ('buyer_premium_percent', 'seller_commission_percent')
+        }),
+        (_('Results'), {
+            'fields': ('current_bid', 'winning_bid', 'winning_bidder', 'end_reason')
+        }),
+        (_('Location for Onsite Auctions'), {
+            'classes': ('collapse',),
+            'fields': ('location_address', 'location_latitude', 'location_longitude', 'location_details')
+        }),
+        (_('Participation Requirements'), {
+            'classes': ('collapse',),
+            'fields': ('terms_conditions', 'participation_requirements')
+        }),
+        (_('Media'), {
+            'classes': ('collapse',),
+            'fields': ('images', 'videos', 'documents')
+        }),
+        (_('Private Auction Settings'), {
+            'fields': ('is_private',)
+        }),
+        (_('Visibility and Promotion'), {
+            'fields': ('is_featured', 'is_published', 'publish_date', 'views_count')
+        }),
+        (_('Timestamps'), {
+            'fields': ('created_at', 'updated_at')
+        }),
+    )
+    inlines = [BidInline, DocumentInline]
+
+    def get_uuid(self, obj):
+        return str(obj.uuid)
+    get_uuid.short_description = _('UUID')
+    get_uuid.admin_order_field = 'uuid'
+
+    def get_form(self, request, obj=None, **kwargs):
+        form = super().get_form(request, obj, **kwargs)
+        if obj is not None:
+            if 'invited_bidders' not in form.base_fields:
+                from django.forms import ModelMultipleChoiceField
+                from django.contrib.auth import get_user_model
+                User = get_user_model()
+                form.base_fields['invited_bidders'] = ModelMultipleChoiceField(
+                    queryset=User.objects.all(),
+                    required=False,
+                    label=_('المزايدين المدعوين')
+                )
+        return form
+
+@admin.register(PropertyView)
+class PropertyViewAdmin(admin.ModelAdmin):
+    list_display = ('auction', 'view_type', 'location', 'size_sqm', 'condition')
+    list_filter = ('view_type',)
+    search_fields = ('location', 'address', 'legal_description')
+    list_select_related = ('auction',)
+    fieldsets = (
+        (_('Basic Information'), {
+            'fields': ('auction', 'view_type', 'size_sqm', 'location', 'address')
+        }),
+        (_('View Details'), {
+            'fields': ('elevation', 'view_direction', 'condition')
+        }),
+        (_('Legal Information'), {
+            'fields': ('legal_description',)
+        }),
+        (_('Additional Information'), {
+            'fields': ('historical_views', 'images')
+        }),
+    )
+
+@admin.register(Bid)
+class BidAdmin(admin.ModelAdmin):
+    list_display = ('id', 'auction', 'bidder', 'bid_amount', 'bid_time', 'status', 'is_auto_bid')
+    list_filter = ('status', 'is_auto_bid', 'bid_time')
+    search_fields = ('bidder__username', 'auction__title', 'auction__related_property__title')
+    readonly_fields = ('bid_time', 'created_at', 'updated_at')
+    list_select_related = ('auction', 'bidder')
+    fieldsets = (
+        (_('Bid Information'), {
+            'fields': ('auction', 'bidder', 'bid_amount', 'bid_time', 'status')
+        }),
+        (_('Auto Bidding'), {
+            'fields': ('max_bid_amount', 'is_auto_bid')
+        }),
+        (_('Tracking Information'), {
+            'classes': ('collapse',),
+            'fields': ('ip_address', 'user_agent', 'device_info')
+        }),
+        (_('Notes'), {
+            'fields': ('notes',)
+        }),
+        (_('Timestamps'), {
+            'fields': ('created_at', 'updated_at')
+        }),
+    )
 
 @admin.register(Contract)
 class ContractAdmin(admin.ModelAdmin):
-    list_display = ('contract_number', 'auction', 'seller', 'buyer', 'contract_type', 'status')
-    list_filter = ('status', 'contract_type')
-    search_fields = ('contract_number', 'seller__email', 'buyer__email')
-    readonly_fields = ('id',)
-
+    list_display = ('contract_number', 'title', 'auction', 'buyer', 'seller', 'contract_amount', 'contract_date', 'status', 'is_fully_signed')
+    list_filter = ('status', 'is_verified', 'payment_method', 'contract_date')
+    search_fields = ('contract_number', 'title', 'buyer__username', 'seller__username', 'related_property__title')
+    readonly_fields = ('created_at', 'updated_at')
+    list_select_related = ('auction', 'related_property', 'buyer', 'seller', 'agent')
     fieldsets = (
-        ('Basic Information', {
-            'fields': ('id', 'contract_number', 'auction', 'contract_type', 'status')
+        (_('Contract Information'), {
+            'fields': ('contract_number', 'title', 'auction', 'related_property')
         }),
-        ('Parties', {
-            'fields': ('seller', 'buyer', 'seller_legal_rep', 'buyer_legal_rep')
+        (_('Parties'), {
+            'fields': ('buyer', 'seller', 'agent')
         }),
-        ('Contract Details', {
-            'fields': ('contract_value', 'deposit_amount', 'start_date', 'end_date')
+        (_('Contract Details'), {
+            'fields': ('status', 'contract_date', 'effective_date', 'expiry_date')
         }),
-        ('Signatures', {
-            'fields': ('seller_signature_date', 'buyer_signature_date')
+        (_('Financial Details'), {
+            'fields': ('contract_amount', 'deposit_amount', 'commission_amount', 'tax_amount', 'total_amount', 'payment_method', 'payment_terms')
         }),
-        ('Review Information', {
-            'fields': ('reviewed_by', 'review_date', 'review_notes')
+        (_('Files'), {
+            'classes': ('collapse',),
+            'fields': ('files',)
+        }),
+        (_('Content'), {
+            'classes': ('collapse',),
+            'fields': ('terms_conditions', 'special_conditions', 'notes')
+        }),
+        (_('Signatures and Verification'), {
+            'fields': ('buyer_signed', 'seller_signed', 'agent_signed', 'buyer_signature_date', 'seller_signature_date', 'agent_signature_date')
+        }),
+        (_('Verification'), {
+            'fields': ('is_verified', 'verification_authority', 'verification_date')
+        }),
+        (_('Timestamps'), {
+            'fields': ('created_at', 'updated_at')
+        }),
+    )
+    inlines = [PaymentInline, DocumentInline]
+
+@admin.register(Payment)
+class PaymentAdmin(admin.ModelAdmin):
+    list_display = ('payment_number', 'contract', 'payment_type', 'payment_method', 'amount', 'currency', 'payment_date', 'status', 'is_overdue')
+    list_filter = ('payment_type', 'payment_method', 'status', 'currency')
+    search_fields = ('payment_number', 'payer__username', 'payee__username', 'contract__contract_number')
+    readonly_fields = ('created_at', 'updated_at')
+    list_select_related = ('contract', 'payer', 'payee', 'confirmed_by')
+    fieldsets = (
+        (_('Payment Information'), {
+            'fields': ('payment_number', 'contract', 'payment_type', 'payment_method')
+        }),
+        (_('Financial Details'), {
+            'fields': ('amount', 'currency', 'payment_date', 'due_date')
+        }),
+        (_('Parties'), {
+            'fields': ('payer', 'payee')
+        }),
+        (_('Status'), {
+            'fields': ('status', 'confirmed_at', 'confirmed_by')
+        }),
+        (_('Payment Details'), {
+            'classes': ('collapse',),
+            'fields': ('transaction_reference', 'bank_name', 'account_name', 'account_number', 'check_number')
+        }),
+        (_('Files and Notes'), {
+            'classes': ('collapse',),
+            'fields': ('files', 'notes')
+        }),
+        (_('Timestamps'), {
+            'fields': ('created_at', 'updated_at')
+        }),
+    )
+    inlines = [TransactionInline]
+
+@admin.register(Transaction)
+class TransactionAdmin(admin.ModelAdmin):
+    list_display = ('transaction_number', 'transaction_type', 'amount', 'currency', 'from_user', 'to_user', 'transaction_date', 'status')
+    list_filter = ('transaction_type', 'status', 'currency')
+    search_fields = ('transaction_number', 'description', 'from_user__username', 'to_user__username')
+    readonly_fields = ('created_at', 'updated_at')
+    list_select_related = ('from_user', 'to_user', 'payment', 'auction', 'contract', 'processed_by')
+    fieldsets = (
+        (_('Transaction Information'), {
+            'fields': ('transaction_number', 'transaction_type', 'description')
+        }),
+        (_('Financial Details'), {
+            'fields': ('amount', 'currency', 'exchange_rate', 'fee_amount', 'tax_amount')
+        }),
+        (_('Users Involved'), {
+            'fields': ('from_user', 'to_user')
+        }),
+        (_('Related Models'), {
+            'fields': ('payment', 'auction', 'contract')
+        }),
+        (_('Transaction Details'), {
+            'fields': ('transaction_date', 'status', 'reference', 'notes')
+        }),
+        (_('Processing'), {
+            'fields': ('processed_at', 'processed_by')
+        }),
+        (_('Timestamps'), {
+            'fields': ('created_at', 'updated_at')
         }),
     )
 
-@admin.register(ContractTermRevision)
-class ContractTermRevisionAdmin(admin.ModelAdmin):
-    list_display = ('contract', 'terms_type', 'version_number', 'is_current_version', 'revised_by', 'approval_date')
-    list_filter = ('terms_type', 'is_current_version')
-    search_fields = ('contract__contract_number', 'terms_content', 'revision_reason')
-
+@admin.register(MessageThread)
+class MessageThreadAdmin(admin.ModelAdmin):
+    list_display = ('id', 'subject', 'thread_type', 'related_property', 'related_auction', 'is_active', 'is_resolved', 'last_message_at', 'message_count')
+    list_filter = ('thread_type', 'is_active', 'is_resolved')
+    search_fields = ('subject',)
+    readonly_fields = ('created_at', 'updated_at', 'last_message_at')
+    list_select_related = ('related_property', 'related_auction', 'related_contract', 'resolved_by')
     fieldsets = (
-        ('Basic Information', {
-            'fields': ('contract', 'terms_type', 'version_number', 'is_current_version')
+        (_('Thread Information'), {
+            'fields': ('subject', 'thread_type')
         }),
-        ('Content', {
-            'fields': ('terms_content', 'revision_reason')
+        (_('Related Models'), {
+            'fields': ('related_property', 'related_auction', 'related_contract')
         }),
-        ('Approval', {
-            'fields': ('revised_by', 'approved_by', 'approval_date')
+        (_('Thread Status'), {
+            'fields': ('is_active', 'is_resolved', 'resolved_at', 'resolved_by')
+        }),
+        (_('Activity Tracking'), {
+            'fields': ('last_message_at',)
+        }),
+        (_('Timestamps'), {
+            'fields': ('created_at', 'updated_at')
         }),
     )
-
-@admin.register(AuctionTimer)
-class AuctionTimerAdmin(admin.ModelAdmin):
-    list_display = ('auction', 'duration', 'start_time', 'end_time', 'is_extended')
-    list_filter = ('duration', 'is_extended')
-    search_fields = ('auction__title',)
-    
-    fieldsets = (
-        ('Basic Information', {
-            'fields': ('auction', 'duration', 'custom_duration')
-        }),
-        ('Timing', {
-            'fields': ('start_time', 'end_time')
-        }),
-        ('Extension Settings', {
-            'fields': ('auto_extend', 'extension_threshold', 'extension_duration')
-        }),
-        ('Extension Status', {
-            'fields': ('is_extended', 'extension_count', 'last_extension')
-        }),
-    )
+    inlines = [ThreadParticipantInline, MessageInline]
 
 @admin.register(Message)
 class MessageAdmin(admin.ModelAdmin):
-    list_display = ('sender', 'room_id', 'content_preview', 'timestamp')
-    list_filter = ('timestamp',)
-    search_fields = ('sender__email', 'content', 'room_id')
-    readonly_fields = ('timestamp',)
-    
-    def content_preview(self, obj):
-        return obj.content[:50] + ('...' if len(obj.content) > 50 else '')
-    content_preview.short_description = 'Content'
+    list_display = ('id', 'thread', 'sender', 'subject', 'message_type', 'status', 'sent_at', 'has_attachments')
+    list_filter = ('message_type', 'status', 'is_system_message', 'is_important')
+    search_fields = ('subject', 'content', 'sender__username')
+    readonly_fields = ('sent_at', 'created_at', 'updated_at')
+    list_select_related = ('thread', 'sender', 'related_property', 'related_auction', 'related_contract', 'parent_message')
+    fieldsets = (
+        (_('Message Information'), {
+            'fields': ('thread', 'sender', 'subject', 'content', 'message_type', 'status')
+        }),
+        (_('Read Receipts'), {
+            'fields': ('sent_at', 'delivered_at', 'read_at')
+        }),
+        (_('Related Objects'), {
+            'fields': ('related_property', 'related_auction', 'related_contract')
+        }),
+        (_('Nested Messages'), {
+            'fields': ('parent_message',)
+        }),
+        (_('Attachments'), {
+            'classes': ('collapse',),
+            'fields': ('attachments',)
+        }),
+        (_('Flags'), {
+            'fields': ('is_system_message', 'is_important')
+        }),
+        (_('Timestamps'), {
+            'fields': ('created_at', 'updated_at')
+        }),
+    )
 
-@admin.register(PaymentMethod)
-class PaymentMethodAdmin(admin.ModelAdmin):
-    list_display = ('user', 'method_type', 'created_at')
-    list_filter = ('method_type', 'created_at')
-    search_fields = ('user__email', 'method_type')
-    readonly_fields = ('created_at', 'modified_at')
+@admin.register(ThreadParticipant)
+class ThreadParticipantAdmin(admin.ModelAdmin):
+    list_display = ('id', 'thread', 'user', 'role', 'is_active', 'is_muted', 'last_read_at', 'has_unread_messages', 'unread_count')
+    list_filter = ('role', 'is_active', 'is_muted')
+    search_fields = ('thread__subject', 'user__username')
+    readonly_fields = ('created_at', 'updated_at')
+    list_select_related = ('thread', 'user')
+    fieldsets = (
+        (_('Participant Information'), {
+            'fields': ('thread', 'user', 'role')
+        }),
+        (_('Participant Status'), {
+            'fields': ('is_active', 'is_muted', 'last_read_at')
+        }),
+        (_('Timestamps'), {
+            'fields': ('created_at', 'updated_at')
+        }),
+    )
 
 @admin.register(Notification)
 class NotificationAdmin(admin.ModelAdmin):
-    list_display = ('user', 'notification_type', 'message_preview', 'read', 'created_at')
-    list_filter = ('notification_type', 'read', 'created_at')
-    search_fields = ('user__email', 'message', 'notification_type')
-    readonly_fields = ('id', 'created_at')
-    
-    def message_preview(self, obj):
-        return obj.message[:50] + ('...' if len(obj.message) > 50 else '')
-    message_preview.short_description = 'Message'
+    list_display = ('id', 'recipient', 'notification_type', 'title', 'channel', 'is_read', 'is_sent', 'created_at')
+    list_filter = ('notification_type', 'channel', 'is_read', 'is_sent')
+    search_fields = ('title', 'content', 'recipient__username')
+    readonly_fields = ('created_at', 'updated_at')
+    list_select_related = ('recipient', 'related_property', 'related_auction', 'related_bid', 'related_contract', 'related_payment', 'related_message')
+    fieldsets = (
+        (_('Notification Information'), {
+            'fields': ('recipient', 'notification_type', 'title', 'content', 'channel')
+        }),
+        (_('Related Entities'), {
+            'fields': ('related_property', 'related_auction', 'related_bid', 'related_contract', 'related_payment', 'related_message')
+        }),
+        (_('Status'), {
+            'fields': ('is_read', 'read_at', 'is_sent', 'sent_at')
+        }),
+        (_('Display Properties'), {
+            'fields': ('icon', 'color', 'action_url')
+        }),
+        (_('Timestamps'), {
+            'fields': ('created_at', 'updated_at')
+        }),
+    )
 
-admin.site.site_title = 'Gudit Platform'
-admin.site.site_header = 'Gudit Auctions Platform'
-admin.site.index_title = 'Welcome to Gudit Auctions Platform'
+
+# Change admin site title, header, and subtitle
+admin.site.site_title = _("auction")
+admin.site.site_header = _("auction")
+admin.site.index_title = _("auction")

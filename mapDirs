@@ -1,0 +1,107 @@
+real-estate-auctions-app/
+├── src/
+│   ├── lib/
+│   │   ├── components/
+│   │   │   ├── layout/
+│   │   │   │   ├── Header.svelte           # شريط التنقل العلوي
+│   │   │   │   ├── Footer.svelte           # تذييل الصفحة
+│   │   │   │   ├── Sidebar.svelte          # شريط جانبي (للوحة التحكم)
+│   │   │   │   └── Layout.svelte           # القالب الرئيسي
+│   │   │   ├── ui/
+│   │   │   │   ├── Button.svelte           # زر قابل لإعادة الاستخدام
+│   │   │   │   ├── Card.svelte             # بطاقة عامة
+│   │   │   │   ├── Badge.svelte            # شارة الحالة للمزادات
+│   │   │   │   ├── Alert.svelte            # إشعارات للمستخدم
+│   │   │   │   ├── Modal.svelte            # نافذة منبثقة
+│   │   │   │   ├── Loader.svelte           # مؤشر التحميل
+│   │   │   │   ├── Avatar.svelte           # صورة المستخدم
+│   │   │   │   └── Input.svelte            # حقول الإدخال
+│   │   │   ├── auction/
+│   │   │   │   ├── AuctionCard.svelte      # بطاقة المزاد
+│   │   │   │   ├── AuctionDetails.svelte   # تفاصيل المزاد
+│   │   │   │   ├── BidHistory.svelte       # سجل المزايدات
+│   │   │   │   ├── BidForm.svelte          # نموذج المزايدة
+│   │   │   │   ├── AuctionTimer.svelte     # مؤقت المزاد
+│   │   │   │   ├── AuctionFilters.svelte   # فلاتر المزادات
+│   │   │   │   └── AuctionGrid.svelte      # عرض شبكي للمزادات
+│   │   │   ├── property/
+│   │   │   │   ├── PropertyCard.svelte     # بطاقة العقار
+│   │   │   │   ├── PropertyDetails.svelte  # تفاصيل العقار
+│   │   │   │   ├── PropertyImages.svelte   # صور العقار
+│   │   │   │   ├── PropertyMap.svelte      # خريطة موقع العقار
+│   │   │   │   ├── PropertyFeatures.svelte # ميزات العقار
+│   │   │   │   └── PropertyGrid.svelte     # عرض شبكي للعقارات
+│   │   │   ├── dashboard/
+│   │   │   │   ├── DashboardCard.svelte    # بطاقة إحصائيات
+│   │   │   │   ├── ChartComponent.svelte   # رسم بياني
+│   │   │   │   ├── ActivityFeed.svelte     # نشاطات المستخدم
+│   │   │   │   └── StatsCounter.svelte     # عداد الإحصائيات
+│   │   │   └── auth/
+│   │   │       ├── LoginForm.svelte        # نموذج تسجيل الدخول
+│   │   │       ├── RegisterForm.svelte     # نموذج التسجيل
+│   │   │       ├── ProfileForm.svelte      # نموذج الملف الشخصي
+│   │   │       └── PasswordReset.svelte    # إعادة تعيين كلمة المرور
+│   │   ├── services/
+│   │   │   ├── api.js                      # واجهة التعامل مع API (SvelteFetch)
+│   │   │   ├── auth.js                     # خدمات المصادقة
+│   │   │   ├── auction.js                  # خدمات المزادات
+│   │   │   ├── property.js                 # خدمات العقارات
+│   │   │   ├── user.js                     # خدمات المستخدمين
+│   │   │   └── websocket.js                # خدمات WebSocket
+│   │   ├── stores/
+│   │   │   ├── auth.js                     # مخزن بيانات المصادقة
+│   │   │   ├── auction.js                  # مخزن بيانات المزادات
+│   │   │   ├── property.js                 # مخزن بيانات العقارات
+│   │   │   ├── notification.js             # مخزن الإشعارات
+│   │   │   └── lang.js                     # مخزن اللغة الحالية
+│   │   ├── utils/
+│   │   │   ├── formatters.js               # تنسيق البيانات (تاريخ، عملة)
+│   │   │   ├── validators.js               # التحقق من صحة البيانات
+│   │   │   ├── animations.js               # تأثيرات حركية
+│   │   │   └── constants.js                # ثوابت التطبيق
+│   │   └── i18n/
+│   │       ├── ar.json                     # ترجمات عربية
+│   │       ├── en.json                     # ترجمات إنجليزية
+│   │       ├── dictionary.js               # قاموس الترجمة
+│   │       └── index.js                    # إعداد الترجمة
+│   ├── routes/
+│   │   ├── +layout.svelte                  # قالب التطبيق الرئيسي
+│   │   ├── +page.svelte                    # الصفحة الرئيسية
+│   │   ├── +error.svelte                   # صفحة الخطأ
+│   │   ├── auctions/
+│   │   │   ├── +page.svelte                # قائمة المزادات
+│   │   │   └── [id]/
+│   │   │       ├── +page.svelte            # صفحة تفاصيل المزاد
+│   │   │       └── bid/+page.svelte        # صفحة المزايدة
+│   │   ├── properties/
+│   │   │   ├── +page.svelte                # قائمة العقارات
+│   │   │   └── [id]/+page.svelte           # صفحة تفاصيل العقار
+│   │   ├── dashboard/
+│   │   │   ├── +layout.svelte              # قالب لوحة التحكم
+│   │   │   ├── +page.svelte                # الصفحة الرئيسية للوحة التحكم
+│   │   │   ├── properties/+page.svelte     # إدارة العقارات
+│   │   │   ├── auctions/+page.svelte       # إدارة المزادات
+│   │   │   ├── bids/+page.svelte           # إدارة المزايدات
+│   │   │   ├── contracts/+page.svelte      # إدارة العقود
+│   │   │   └── profile/+page.svelte        # الملف الشخصي
+│   │   └── auth/
+│   │       ├── login/+page.svelte          # تسجيل الدخول
+│   │       ├── register/+page.svelte       # التسجيل
+│   │       ├── verify/+page.svelte         # تفعيل الحساب
+│   │       └── reset-password/+page.svelte # إعادة تعيين كلمة المرور
+│   ├── app.html                            # قالب HTML الرئيسي
+│   └── service-worker.js                   # Service Worker للتطبيق
+├── static/
+│   ├── favicon.ico                         # أيقونة الموقع
+│   ├── logo.svg                            # شعار المنصة
+│   ├── images/                             # صور ثابتة
+│   │   ├── backgrounds/                    # خلفيات
+│   │   ├── icons/                          # أيقونات
+│   │   └── placeholders/                   # صور بديلة
+│   └── fonts/                              # خطوط مخصصة
+├── tailwind.config.js                      # إعدادات Tailwind CSS
+├── postcss.config.js                       # إعدادات PostCSS
+├── svelte.config.js                        # إعدادات Svelte
+├── vite.config.js                          # إعدادات Vite
+├── package.json                            # تبعيات المشروع
+└── README.md                               # وثائق المشروع

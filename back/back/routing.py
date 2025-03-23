@@ -1,21 +1,20 @@
 """
-WebSocket routing configuration for the auction platform.
+WebSocket routing configuration for the real estate auction platform.
 Defines URL patterns for WebSocket connections.
-
-This file should be placed in your project root directory alongside asgi.py
 """
 
 from django.urls import re_path
 
-# Import WebSocket consumer classes from consumer modules
+# Import WebSocket consumer classes
 from consumers.chat_consumer import ChatConsumer
 from consumers.auction_consumer import AuctionConsumer
 from consumers.bidding_consumer import BiddingConsumer
 from consumers.notification_consumer import NotificationConsumer
-from consumers.dashboard_consumer import DashboardConsumer  # Include if implemented
+from consumers.dashboard_consumer import DashboardConsumer
+from consumers.base_consumer import BaseConsumer
 
 # WebSocket URL patterns
-# These patterns match the frontend WebSocketService.js expectations
+# These patterns match the existing frontend expectations
 websocket_urlpatterns = [
     # Chat messages
     # Allows alphanumeric characters, underscores, hyphens, and periods
@@ -61,23 +60,69 @@ websocket_urlpatterns = [
         DashboardConsumer.as_asgi(),
         name='dashboard_ws'
     ),
+    
+    # Alternative URL patterns for backward compatibility with our new implementations
+    re_path(
+        r'ws/auction/(?P<auction_id>[0-9a-f-]{36})/$',
+        AuctionConsumer.as_asgi(),
+        name='auction_ws_alt'
+    ),
+    
+    re_path(
+        r'ws/bidding/(?P<auction_id>[0-9a-f-]{36})/$',
+        BiddingConsumer.as_asgi(),
+        name='bidding_ws_alt'
+    ),
 ]
 
 """
-Notes:
-1. Ensure your consumer classes use the correct parameter names:
-   - ChatConsumer should accept 'room_name'
-   - AuctionConsumer should accept 'auction_id'
-   - BiddingConsumer should accept 'auction_id'
-   - NotificationConsumer should accept 'user_id'
-   - DashboardConsumer should accept 'user_id'
+Implementation notes:
 
-2. For production deployments with Daphne:
+1. Consumer parameter naming:
+   - ChatConsumer uses 'room_name'
+   - AuctionConsumer uses 'auction_id'
+   - BiddingConsumer uses 'auction_id'
+   - NotificationConsumer uses 'user_id'
+   - DashboardConsumer uses 'user_id'
+
+2. URL structure maintained for backward compatibility:
+   - Chat: ws/chat/{room_name}/
+   - Auction updates: ws/auctions/{auction_id}/updates/
+   - Bidding: ws/auctions/{auction_id}/bids/
+   - Notifications: ws/notifications/{user_id}/
+   - Dashboard: ws/dashboard/{user_id}/
+
+
+3. For production deployment with Daphne:
    daphne -b 0.0.0.0 -p 8000 your_project.asgi:application
    
    For secure production:
    daphne -e ssl:443:privateKey=key.pem:certKey=cert.pem -b 0.0.0.0 your_project.asgi:application
 
-3. If any of these consumers are not yet implemented, you can comment out 
-   their import and URL pattern until they're ready.
+
+
+4. Configuration for ASGI in asgi.py:
+   
+   ```python
+   import os
+   import django
+   from django.core.asgi import get_asgi_application
+   from channels.routing import ProtocolTypeRouter, URLRouter
+   from channels.auth import AuthMiddlewareStack
+   from consumers.middleware import JwtAuthMiddleware
+   from consumers.routing import websocket_urlpatterns
+
+   os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'your_project.settings')
+   django.setup()
+
+   application = ProtocolTypeRouter({
+       # Django's ASGI application for traditional HTTP requests
+       "http": get_asgi_application(),
+       
+       # WebSocket handler with authentication middleware
+       "websocket": JwtAuthMiddleware(
+           URLRouter(websocket_urlpatterns)
+       ),
+   })
+   ```
 """

@@ -1,649 +1,999 @@
 from rest_framework import serializers
+from django.contrib.auth import get_user_model
+from django.utils.translation import gettext_lazy as _
+from django.utils import timezone
+from django.contrib.gis.geos import Point
 from .models import (
-    Category, Subcategory, AuctionTimer, Auction, RealEstate, Vehicle,
-    Machinery, Factory, HeavyVehicleAuction, Bid, Transaction,
-    Document, Contract, ContractTermRevision, Message, PaymentMethod, Notification
+    Property, Document, Auction, Bid, Contract, Payment,
+    Transaction, Message, MessageThread, ThreadParticipant, Notification, PropertyView
 )
-from accounts.models import CustomUser
 
-import logging
-
-logger = logging.getLogger(__name__)
+User = get_user_model()
 
 
-class CustomUserSerializer(serializers.ModelSerializer):
-    """
-    Serializer for User information.
-    """
-    class Meta:
-        model = CustomUser
-        fields = ['id', 'email', 'first_name', 'last_name']
-        read_only_fields = ['email']
-
-
-class SubcategorySerializer(serializers.ModelSerializer):
-    """
-    Serializer for auction subcategories.
-    """
-    # Remove category_details to break circular reference
-    class Meta:
-        model = Subcategory
-        fields = [
-            'id', 'category', 'name', 'slug',
-            'created_at', 'modified_at'
-        ]
-        read_only_fields = ['created_at', 'modified_at']
-
-class CategorySerializer(serializers.ModelSerializer):
-    """
-    Serializer for auction categories.
-    """
-    subcategories = SubcategorySerializer(many=True, read_only=True)
-    
-    class Meta:
-        model = Category
-        fields = [
-            'id', 'name', 'slug', 'subcategories',
-            'created_at', 'modified_at'
-        ]
-        read_only_fields = ['created_at', 'modified_at']
-
-
-class AuctionTimerSerializer(serializers.ModelSerializer):
-    """
-    Serializer for auction timers.
-    """
-    remaining_time = serializers.SerializerMethodField()
-    
-    class Meta:
-        model = AuctionTimer
-        fields = [
-            'id', 'auction', 'duration', 'custom_duration',
-            'start_time', 'end_time', 'is_extended', 'extension_count',
-            'last_extension', 'auto_extend', 'extension_threshold',
-            'extension_duration', 'remaining_time',
-            'created_at', 'modified_at'
-        ]
-        read_only_fields = ['created_at', 'modified_at', 'remaining_time']
-    
-    def get_remaining_time(self, obj):
-        """
-        Get the remaining time for this auction.
-        """
-        return obj.get_remaining_time()
-    
-    def validate(self, data):
-        """
-        Validate that end time is after start time and check for
-        custom duration when needed.
-        """
-        if 'end_time' in data and 'start_time' in data:
-            if data['end_time'] <= data['start_time']:
-                raise serializers.ValidationError(
-                    "End time must be after start time."
-                )
-                
-        if data.get('duration') == 'CUSTOM' and not data.get('custom_duration'):
-            raise serializers.ValidationError(
-                "Custom duration is required for custom timer."
-            )
-            
-        return data
-
-class BidSerializer(serializers.ModelSerializer):
-    """
-    Serializer for bids.
-    """
-    bidder_details = CustomUserSerializer(source='bidder', read_only=True)
-    
-    class Meta:
-        model = Bid
-        fields = [
-            'id', 'auction', 'bidder', 'bidder_details', 'amount',
-            'auto_bid_limit', 'status', 'ip_address',
-            'created_at', 'modified_at'
-        ]
-        read_only_fields = ['id', 'created_at', 'modified_at', 'ip_address']
-    
-    def validate(self, data):
-        """
-        Validate that bid amount is greater than current price.
-        """
-        amount = data.get('amount')
-        auction = data.get('auction')
-        
-        # Handle case where auction might be an ID (UUID) or an Auction object
-        if amount and auction:
-            if not isinstance(auction, Auction):
-                # If auction is an ID, fetch the Auction object
-                try:
-                    auction = Auction.objects.get(id=auction)
-                except Auction.DoesNotExist:
-                    raise serializers.ValidationError("Invalid auction ID.")
-            
-            # Now validate amount against auction's current price
-            if amount <= auction.current_price:
-                raise serializers.ValidationError(
-                    "Bid amount must be greater than current price."
-                )
-                
-        # Validate auto_bid_limit if provided
-        if 'auto_bid_limit' in data and amount:
-            if data['auto_bid_limit'] < amount:
-                raise serializers.ValidationError(
-                    "Auto bid limit cannot be less than the bid amount."
-                )
-                
-        return data
-    
-    def create(self, validated_data):
-        """
-        Create a new bid and capture the client IP address.
-        """
-        request = self.context.get('request')
-        if request and hasattr(request, 'META'):
-            validated_data['ip_address'] = self._get_client_ip(request)
-        return super().create(validated_data)
-    
-    def _get_client_ip(self, request):
-        """
-        Extract the client IP address from the request.
-        """
-        x_forwarded_for = request.META.get('HTTP_X_FORWARDED_FOR')
-        if x_forwarded_for:
-            ip = x_forwarded_for.split(',')[0]
-        else:
-            ip = request.META.get('REMOTE_ADDR')
-        return ip
-
-
-class AuctionSerializer(serializers.ModelSerializer):
-    """
-    Serializer for auctions.
-    """
-    category_details = serializers.SerializerMethodField()
-    subcategory_details = serializers.SerializerMethodField()
-    seller_details = serializers.SerializerMethodField()
-    timer_details = AuctionTimerSerializer(source='timer', read_only=True)
-    current_highest_bid = serializers.SerializerMethodField()
-    total_bids = serializers.SerializerMethodField()
-    specific_data = serializers.SerializerMethodField()
-    # Add these fields for image handling
-    image_url = serializers.SerializerMethodField()
-    images = serializers.SerializerMethodField()
+class UserSerializer(serializers.ModelSerializer):
+    """Minimal serializer for user information in related objects"""
+    full_name = serializers.SerializerMethodField()
+    avatar_url = serializers.SerializerMethodField()
 
     class Meta:
-        model = Auction
-        fields = [
-            'id', 'category', 'category_details', 'subcategory', 'subcategory_details',
-            'title', 'description', 'seller', 'seller_details',
-            'start_time', 'end_time', 'current_price',
-            'reserve_price', 'minimum_bid_increment',
-            'status', 'currency', 'main_image', 'image_1', 'image_2',
-            'image_3', 'image_4', 'image_5', 'timer_details',
-            'current_highest_bid', 'total_bids', 'specific_data',
-            'created_at', 'modified_at',
-            # Add new fields to fields list
-            'image_url', 'images'
-        ]
-        read_only_fields = ['id', 'created_at', 'modified_at']
+        model = User
+        fields = ('id', 'email', 'full_name', 'avatar_url')
+        read_only_fields = ('id', 'email', 'full_name', 'avatar_url')
 
-    def get_category_details(self, obj):
-        logger.debug(f"Serializing category_details for auction {obj.id}")
-        return {
-            'id': obj.category.id,
-            'name': obj.category.name,
-            'slug': obj.category.slug
-        }
+    def get_full_name(self, obj):
+        return f"{obj.first_name} {obj.last_name}"
 
-    def get_subcategory_details(self, obj):
-        logger.debug(f"Serializing subcategory_details for auction {obj.id}")
-        if obj.subcategory:
-            return {
-                'id': obj.subcategory.id,
-                'name': obj.subcategory.name,
-                'slug': obj.subcategory.slug
-            }
+    def get_avatar_url(self, obj):
+        if hasattr(obj, 'avatar_url') and obj.avatar_url:
+            return obj.avatar_url
         return None
 
-    def get_seller_details(self, obj):
-        logger.debug(f"Serializing seller_details for auction {obj.id}")
-        return {
-            'id': obj.seller.id,
-            'email': obj.seller.email,
-            'first_name': obj.seller.first_name,
-            'last_name': obj.seller.last_name
-        }
 
-    def get_current_highest_bid(self, obj):
-        logger.debug(f"Serializing current_highest_bid for auction {obj.id}")
-        highest_bid = obj.bids.order_by('-amount').first()
-        if highest_bid:
-            return {
-                'id': str(highest_bid.id),
-                'amount': float(highest_bid.amount),
-                'bidder_id': highest_bid.bidder.id,
-                'created_at': highest_bid.created_at.isoformat()
-            }
-        return None
+class PropertyListSerializer(serializers.ModelSerializer):
+    """Serializer for listing properties"""
+    owner_name = serializers.SerializerMethodField()
+    main_image_url = serializers.ReadOnlyField()
+    property_type_display = serializers.CharField(source='get_property_type_display', read_only=True)
+    status_display = serializers.CharField(source='get_status_display', read_only=True)
+    has_auction = serializers.ReadOnlyField()
 
-    def get_total_bids(self, obj):
-        logger.debug(f"Serializing total_bids for auction {obj.id}")
-        return obj.bids.count()
+    class Meta:
+        model = Property
+        fields = (
+            'id', 'property_number', 'title', 'property_type', 'property_type_display',
+            'city', 'district', 'area', 'bedrooms', 'bathrooms',
+            'estimated_value', 'status', 'status_display', 'owner_name',
+            'main_image_url', 'is_featured', 'is_published', 'has_auction',
+            'views_count', 'created_at', 'updated_at'
+        )
+        read_only_fields = ('id', 'property_number', 'created_at', 'updated_at')
 
-    def get_specific_data(self, obj):
-        logger.debug(f"Serializing specific_data for auction {obj.id}")
-        auction_types = {
-            'real_estate': {'model': RealEstate, 'serializer': RealEstateSerializer},
-            'vehicle': {'model': Vehicle, 'serializer': VehicleSerializer},
-            'machinery': {'model': Machinery, 'serializer': MachinerySerializer},
-            'factory': {'model': Factory, 'serializer': FactorySerializer},
-            'heavy_vehicle': {'model': HeavyVehicleAuction, 'serializer': HeavyVehicleAuctionSerializer},
-        }
+    def get_owner_name(self, obj):
+        return f"{obj.owner.first_name} {obj.owner.last_name}"
 
-        for type_name, type_data in auction_types.items():
+
+class PropertyDetailSerializer(serializers.ModelSerializer):
+    """Serializer for detailed property information"""
+    owner = UserSerializer(read_only=True)
+    verified_by = UserSerializer(read_only=True)
+    property_type_display = serializers.CharField(source='get_property_type_display', read_only=True)
+    status_display = serializers.CharField(source='get_status_display', read_only=True)
+    main_image_url = serializers.ReadOnlyField()
+    has_auction = serializers.ReadOnlyField()
+
+    class Meta:
+        model = Property
+        fields = '__all__'
+        read_only_fields = ('id', 'property_number', 'created_at', 'updated_at',
+                           'is_verified', 'verified_by', 'verification_date')
+
+    def validate(self, data):
+        """Validate coordinates if provided"""
+        latitude = data.get('latitude', None)
+        longitude = data.get('longitude', None)
+
+        if latitude and longitude:
             try:
-                if type_name in ['machinery', 'heavy_vehicle']:
-                    instance = type_data['model'].objects.filter(auction=obj).first()
-                else:
-                    instance = type_data['model'].objects.get(auction=obj)
+                # Validate coordinates and create a Point
+                data['location'] = Point(float(longitude), float(latitude), srid=4326)
+            except (ValueError, TypeError) as e:
+                raise serializers.ValidationError({"coordinates": _("Invalid coordinates provided.")})
 
-                if instance:
-                    logger.debug(f"Found {type_name} instance for auction {obj.id}")
-                    serializer = type_data['serializer'](instance, context=self.context)
-                    specific_data = {
-                        key: value for key, value in serializer.data.items()
-                        if key != 'auction_details'
-                    }
-                    return {
-                        'auction_type': type_name,
-                        'data': specific_data
-                    }
-            except type_data['model'].DoesNotExist:
-                continue
-        
-        logger.debug(f"No specific data found for auction {obj.id}")
-        return None
+        return data
+
+
+class PropertyCreateSerializer(serializers.ModelSerializer):
+    """Serializer for creating property"""
+    latitude = serializers.FloatField(required=False, allow_null=True)
+    longitude = serializers.FloatField(required=False, allow_null=True)
+
+    class Meta:
+        model = Property
+        exclude = ('property_number', 'is_verified', 'verified_by', 'verification_date', 'views_count')
+        read_only_fields = ('id', 'created_at', 'updated_at')
 
     def validate(self, data):
-        logger.debug("Validating auction data")
-        if 'end_time' in data and 'start_time' in data:
-            if data['end_time'] <= data['start_time']:
-                raise serializers.ValidationError("End time must be after start time.")
-        if 'current_price' in data and data['current_price'] < 0:
-            raise serializers.ValidationError("Current price cannot be negative.")
-        if 'reserve_price' in data and data['reserve_price'] < 0:
-            raise serializers.ValidationError("Reserve price cannot be negative.")
+        """Validate coordinates if provided"""
+        latitude = data.get('latitude', None)
+        longitude = data.get('longitude', None)
+
+        if latitude and longitude:
+            try:
+                # Validate coordinates and create a Point
+                data['location'] = Point(float(longitude), float(latitude), srid=4326)
+            except (ValueError, TypeError) as e:
+                raise serializers.ValidationError({"coordinates": _("Invalid coordinates provided.")})
+
         return data
 
-    # New methods for image handling
-    def get_image_url(self, obj):
-        """
-        Get the main image URL for the auction.
-        """
+    def create(self, validated_data):
+        """Generate property number and set owner"""
         request = self.context.get('request')
-        
-        # Try main_image first
-        if obj.main_image and hasattr(obj.main_image, 'url'):
-            if request:
-                return request.build_absolute_uri(obj.main_image.url)
-            return obj.main_image.url
-        
-        # If no main image, try image_1 through image_5
-        for i in range(1, 6):
-            image_field = getattr(obj, f'image_{i}', None)
-            if image_field and hasattr(image_field, 'url'):
-                if request:
-                    return request.build_absolute_uri(image_field.url)
-                return image_field.url
-                
-        return None
+        if request and hasattr(request, 'user'):
+            validated_data['owner'] = request.user
 
-    def get_images(self, obj):
-        """
-        Get all image URLs for the auction.
-        """
-        request = self.context.get('request')
-        images = []
-        
-        # Add main image first if it exists
-        if obj.main_image and hasattr(obj.main_image, 'url'):
-            main_image_url = request.build_absolute_uri(obj.main_image.url) if request else obj.main_image.url
-            images.append(main_image_url)
-        
-        # Add additional images
-        for i in range(1, 6):
-            image_field = getattr(obj, f'image_{i}', None)
-            if image_field and hasattr(image_field, 'url'):
-                image_url = request.build_absolute_uri(image_field.url) if request else image_field.url
-                images.append(image_url)
-        
-        return images
+        # Generate property number
+        from datetime import datetime
+        import random
+        property_number = f"PROP-{datetime.now().strftime('%Y%m%d')}-{random.randint(1000, 9999)}"
+        validated_data['property_number'] = property_number
 
-class RealEstateSerializer(serializers.ModelSerializer):
+        return super().create(validated_data)
+
+
+class PropertyUpdateSerializer(serializers.ModelSerializer):
+    """Serializer for updating property"""
+    latitude = serializers.FloatField(required=False, allow_null=True)
+    longitude = serializers.FloatField(required=False, allow_null=True)
+
     class Meta:
-        model = RealEstate
-        fields = [
-            'id', 'auction', 'property_type', 'size_sqm', 'location', 'address',
-            'bedrooms', 'bathrooms', 'year_built', 'zoning_info', 'legal_description',
-            'property_condition', 'historical_value', 'property_image_1', 'property_image_2',
-            'property_image_3', 'property_image_4', 'property_image_5', 'created_at', 'modified_at'
-        ]
-        read_only_fields = ['id', 'created_at', 'modified_at']
+        model = Property
+        exclude = ('property_number', 'is_verified', 'verified_by', 'verification_date', 'owner')
+        read_only_fields = ('id', 'created_at', 'updated_at', 'views_count')
 
-    def to_representation(self, instance):
-        data = super().to_representation(instance)
-        data.pop('auction_details', None)
-        return data
-
-class VehicleSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Vehicle
-        fields = [
-            'id', 'auction', 'make', 'model', 'year', 'mileage', 'condition', 'vin',
-            'engine_type', 'transmission', 'fuel_type', 'color', 'registration_number',
-            'service_history', 'vehicle_image_1', 'vehicle_image_2', 'vehicle_image_3',
-            'vehicle_image_4', 'vehicle_image_5', 'created_at', 'modified_at'
-        ]
-        read_only_fields = ['id', 'created_at', 'modified_at']
-
-    def validate_vin(self, value):
-        instance = getattr(self, 'instance', None)
-        if instance and instance.vin == value:
-            return value
-        if Vehicle.objects.filter(vin=value).exists():
-            raise serializers.ValidationError("This VIN is already in use.")
-        return value
-
-    def to_representation(self, instance):
-        data = super().to_representation(instance)
-        data.pop('auction_details', None)
-        return data
-
-class FactorySerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Factory
-        fields = [
-            'id', 'auction', 'total_area_sqm', 'built_up_area_sqm', 'location', 'address',
-            'production_capacity', 'power_capacity', 'water_supply', 'waste_management',
-            'environmental_certificates', 'infrastructure_details', 'utility_connections',
-            'factory_image_1', 'factory_image_2', 'factory_image_3', 'factory_image_4',
-            'factory_image_5', 'created_at', 'modified_at'
-        ]
-        read_only_fields = ['id', 'created_at', 'modified_at']
-
-    def to_representation(self, instance):
-        data = super().to_representation(instance)
-        data.pop('auction_details', None)
-        return data
-
-class HeavyVehicleAuctionSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = HeavyVehicleAuction
-        fields = [
-            'id', 'auction', 'vehicle_type', 'make', 'model', 'year', 'load_capacity',
-            'operating_hours', 'engine_power', 'registration_number', 'compliance_certificates',
-            'maintenance_history', 'heavy_vehicle_image_1', 'heavy_vehicle_image_2',
-            'heavy_vehicle_image_3', 'heavy_vehicle_image_4', 'heavy_vehicle_image_5',
-            'created_at', 'modified_at'
-        ]
-        read_only_fields = ['id', 'created_at', 'modified_at']
-
-    def to_representation(self, instance):
-        data = super().to_representation(instance)
-        data.pop('auction_details', None)
-        return data
-    
-    
-    
-class MachinerySerializer(serializers.ModelSerializer):
-    """
-    Serializer for machinery auctions.
-    """
-    class Meta:
-        model = Machinery
-        fields = [
-            'id', 'auction', 'machine_type', 'manufacturer', 'model_number',
-            'year_manufactured', 'operating_hours', 'power_requirements',
-            'dimensions', 'weight', 'capacity', 'maintenance_history',
-            'safety_certificates', 'technical_specifications',
-            'machinery_image_1', 'machinery_image_2', 'machinery_image_3',
-            'machinery_image_4', 'machinery_image_5',
-            'created_at', 'modified_at'
-        ]
-        read_only_fields = ['id', 'created_at', 'modified_at']
-
-    def to_representation(self, instance):
-        data = super().to_representation(instance)
-        # Explicitly remove auction_details if it’s being added elsewhere
-        data.pop('auction_details', None)
-        return data
-    
-    
-  
-
-
-class TransactionSerializer(serializers.ModelSerializer):
-    """
-    Serializer for auction transactions.
-    """
-    auction_details = AuctionSerializer(source='auction', read_only=True)
-    winner_details = CustomUserSerializer(source='winner', read_only=True)
-    escrow_agent_details = CustomUserSerializer(source='escrow_agent', read_only=True)
-    
-    class Meta:
-        model = Transaction
-        fields = [
-            'id', 'auction', 'auction_details', 'winner', 'winner_details',
-            'winning_bid', 'amount', 'currency', 'payment_type',
-            'payment_method', 'status', 'reference_number',
-            'payment_proof', 'payment_date', 'stripe_payment_id',
-            'paypal_transaction_id', 'escrow_agent', 'escrow_agent_details',
-            'notes', 'metadata', 'created_at', 'modified_at'
-        ]
-        read_only_fields = [
-            'id', 'reference_number', 'created_at', 'modified_at'
-        ]
-    
     def validate(self, data):
-        """
-        Validate transaction data.
-        """
-        if 'amount' in data and data['amount'] <= 0:
-            raise serializers.ValidationError(
-                "Transaction amount must be greater than zero."
-            )
-            
-        if data.get('payment_method') == 'ESCROW' and not data.get('escrow_agent'):
-            raise serializers.ValidationError(
-                "Escrow agent is required for escrow payments."
-            )
-            
+        """Validate coordinates if provided"""
+        latitude = data.get('latitude', None)
+        longitude = data.get('longitude', None)
+
+        if latitude and longitude:
+            try:
+                # Validate coordinates and create a Point
+                data['location'] = Point(float(longitude), float(latitude), srid=4326)
+            except (ValueError, TypeError) as e:
+                raise serializers.ValidationError({"coordinates": _("Invalid coordinates provided.")})
+
+        # Check if user is owner or has appropriate permissions
+        request = self.context.get('request')
+        if request and hasattr(request, 'user'):
+            if not request.user.is_staff and self.instance.owner != request.user:
+                raise serializers.ValidationError(
+                    _("You don't have permission to update this property.")
+                )
+
         return data
 
 
 class DocumentSerializer(serializers.ModelSerializer):
-    """
-    Serializer for auction documents.
-    """
-    uploaded_by_details = CustomUserSerializer(source='uploaded_by', read_only=True)
-    verified_by_details = CustomUserSerializer(source='verified_by', read_only=True)
-    
+    """Serializer for document model"""
+    uploaded_by = UserSerializer(read_only=True)
+    verified_by = UserSerializer(read_only=True)
+    document_type_display = serializers.CharField(source='get_document_type_display', read_only=True)
+    verification_status_display = serializers.CharField(source='get_verification_status_display', read_only=True)
+    is_expired = serializers.ReadOnlyField()
+    main_file_url = serializers.ReadOnlyField()
+
     class Meta:
         model = Document
-        fields = [
-            'id', 'auction', 'document_type', 'title', 'file',
-            'description', 'uploaded_by', 'uploaded_by_details',
-            'verification_status', 'verified_by', 'verified_by_details',
-            'typed_signature', 'signer_role', 'metadata',
-            'created_at', 'modified_at'
-        ]
-        read_only_fields = ['id', 'created_at', 'modified_at']
+        fields = '__all__'
+        read_only_fields = ('id', 'document_number', 'created_at', 'updated_at',
+                           'verified_by', 'verification_date', 'verification_status')
+
+    def create(self, validated_data):
+        """Generate document number and set uploader"""
+        request = self.context.get('request')
+        if request and hasattr(request, 'user'):
+            validated_data['uploaded_by'] = request.user
+
+        # Generate document number
+        from datetime import datetime
+        import random
+        document_number = f"DOC-{datetime.now().strftime('%Y%m%d')}-{random.randint(1000, 9999)}"
+        validated_data['document_number'] = document_number
+
+        return super().create(validated_data)
+
+
+class BidSerializer(serializers.ModelSerializer):
+    """Serializer for auction bids"""
+    bidder = UserSerializer(read_only=True)
+    status_display = serializers.CharField(source='get_status_display', read_only=True)
+
+    class Meta:
+        model = Bid
+        fields = '__all__'
+        read_only_fields = ('id', 'created_at', 'updated_at', 'status', 'ip_address', 'user_agent', 'device_info')
+
+    def validate(self, data):
+        """Validate bid amount"""
+        auction = data.get('auction')
+        bid_amount = data.get('bid_amount')
+
+        if not auction:
+            raise serializers.ValidationError(_("Auction is required."))
+
+        if not bid_amount:
+            raise serializers.ValidationError(_("Bid amount is required."))
+
+        # Check if auction is active
+        if not auction.is_active:
+            raise serializers.ValidationError(_("Auction is not active."))
+
+        # Check if bid amount is greater than current bid + min increment
+        min_bid = auction.current_bid + auction.min_bid_increment
+        if bid_amount < min_bid:
+            raise serializers.ValidationError(
+                _("Bid amount must be at least {0}.").format(min_bid)
+            )
+
+        # Check for autobidding
+        if data.get('is_auto_bid') and not data.get('max_bid_amount'):
+            raise serializers.ValidationError(_("Max bid amount is required for auto bidding."))
+
+        if data.get('max_bid_amount') and data.get('max_bid_amount') < bid_amount:
+            raise serializers.ValidationError(_("Max bid amount must be greater than bid amount."))
+
+        return data
+
+    def create(self, validated_data):
+        """Set bidder and tracking info"""
+        request = self.context.get('request')
+        if request and hasattr(request, 'user'):
+            validated_data['bidder'] = request.user
+
+            # Track IP and user agent
+            validated_data['ip_address'] = request.META.get('REMOTE_ADDR')
+            validated_data['user_agent'] = request.META.get('HTTP_USER_AGENT')
+            validated_data['device_info'] = {
+                'is_mobile': request.user_agent.is_mobile if hasattr(request, 'user_agent') else None,
+                'browser': request.user_agent.browser.family if hasattr(request, 'user_agent') else None,
+                'os': request.user_agent.os.family if hasattr(request, 'user_agent') else None,
+            }
+
+        return super().create(validated_data)
+
+
+class AuctionListSerializer(serializers.ModelSerializer):
+    """Serializer for listing auctions"""
+    property_title = serializers.CharField(source='related_property.title', read_only=True)
+    property_type = serializers.CharField(source='related_property.property_type', read_only=True)
+    auctioneer_name = serializers.SerializerMethodField()
+    status_display = serializers.CharField(source='get_status_display', read_only=True)
+    auction_type_display = serializers.CharField(source='get_auction_type_display', read_only=True)
+    featured_image_url = serializers.ReadOnlyField()
+    bid_count = serializers.ReadOnlyField()
+    time_remaining = serializers.ReadOnlyField()
+
+    class Meta:
+        model = Auction
+        fields = (
+            'id', 'uuid', 'title', 'slug', 'property_title', 'property_type',
+            'auction_type', 'auction_type_display', 'status', 'status_display',
+            'start_date', 'end_date', 'starting_price', 'current_bid',
+            'min_bid_increment', 'featured_image_url', 'auctioneer_name',
+            'bid_count', 'time_remaining', 'is_featured', 'is_published',
+            'created_at', 'updated_at'
+        )
+        read_only_fields = ('id', 'uuid', 'created_at', 'updated_at', 'current_bid')
+
+    def get_auctioneer_name(self, obj):
+        return f"{obj.auctioneer.first_name} {obj.auctioneer.last_name}"
+
+
+class AuctionDetailSerializer(serializers.ModelSerializer):
+    """Serializer for detailed auction information"""
+    related_property = PropertyListSerializer(read_only=True)
+    created_by = UserSerializer(read_only=True)
+    auctioneer = UserSerializer(read_only=True)
+    winning_bidder = UserSerializer(read_only=True)
+    status_display = serializers.CharField(source='get_status_display', read_only=True)
+    auction_type_display = serializers.CharField(source='get_auction_type_display', read_only=True)
+    featured_image_url = serializers.ReadOnlyField()
+    bid_count = serializers.ReadOnlyField()
+    unique_bidders_count = serializers.ReadOnlyField()
+    time_remaining = serializers.ReadOnlyField()
+    is_active = serializers.ReadOnlyField()
+    highest_bid = serializers.ReadOnlyField()
+
+    # Recent bids
+    recent_bids = serializers.SerializerMethodField()
+
+    class Meta:
+        model = Auction
+        fields = '__all__'
+        read_only_fields = ('id', 'uuid', 'created_at', 'updated_at', 'current_bid',
+                           'winning_bid', 'winning_bidder', 'end_reason')
+
+    def get_recent_bids(self, obj):
+        """Get recent bids for this auction"""
+        recent_bids = obj.bids.order_by('-bid_time')[:5]
+        return BidSerializer(recent_bids, many=True).data
+
+
+class AuctionCreateSerializer(serializers.ModelSerializer):
+    """Serializer for creating auctions"""
+    property_id = serializers.PrimaryKeyRelatedField(
+        queryset=Property.objects.all(),
+        source='related_property',
+        write_only=True
+    )
+
+    class Meta:
+        model = Auction
+        exclude = ('uuid', 'current_bid', 'winning_bid', 'winning_bidder', 'end_reason', 'views_count')
+        read_only_fields = ('id', 'created_at', 'updated_at')
+
+    def validate(self, data):
+        """Validate auction data"""
+        start_date = data.get('start_date')
+        end_date = data.get('end_date')
+
+        if start_date and end_date and start_date >= end_date:
+            raise serializers.ValidationError(_("End date must be after start date."))
+
+        # Validate reserve price
+        if data.get('reserve_price', 0) < data.get('starting_price', 0):
+            raise serializers.ValidationError(_("Reserve price must be greater than or equal to starting price."))
+
+        # Check if property already has an active auction
+        property_obj = data.get('related_property')
+        if property_obj and property_obj.has_auction:
+            raise serializers.ValidationError(_("Property already has an active auction."))
+
+        return data
+
+    def create(self, validated_data):
+        """Set creator and generate slug"""
+        request = self.context.get('request')
+        if request and hasattr(request, 'user'):
+            validated_data['created_by'] = request.user
+
+            # If auctioneer not specified, set to creator
+            if 'auctioneer' not in validated_data:
+                validated_data['auctioneer'] = request.user
+
+        # Generate slug
+        from django.utils.text import slugify
+        import random
+        title = validated_data.get('title', '')
+        random_suffix = ''.join([str(random.randint(0, 9)) for _ in range(4)])
+        validated_data['slug'] = f"{slugify(title)}-{random_suffix}"
+
+        return super().create(validated_data)
 
 
 class ContractSerializer(serializers.ModelSerializer):
-    """
-    Serializer for auction contracts.
-    """
-    seller_details = CustomUserSerializer(source='seller', read_only=True)
-    buyer_details = CustomUserSerializer(source='buyer', read_only=True)
-    seller_legal_rep_details = CustomUserSerializer(
-        source='seller_legal_rep', read_only=True
-    )
-    buyer_legal_rep_details = CustomUserSerializer(
-        source='buyer_legal_rep', read_only=True
-    )
-    reviewed_by_details = CustomUserSerializer(source='reviewed_by', read_only=True)
-    signatures = serializers.SerializerMethodField()
-    current_terms = serializers.SerializerMethodField()
-    
+    """Serializer for contracts"""
+    related_property = PropertyListSerializer(read_only=True)
+    buyer = UserSerializer(read_only=True)
+    seller = UserSerializer(read_only=True)
+    agent = UserSerializer(read_only=True)
+    status_display = serializers.CharField(source='get_status_display', read_only=True)
+    payment_method_display = serializers.CharField(source='get_payment_method_display', read_only=True)
+    is_fully_signed = serializers.ReadOnlyField()
+    main_file_url = serializers.ReadOnlyField()
+
     class Meta:
         model = Contract
-        fields = [
-            'id', 'auction', 'seller', 'seller_details',
-            'buyer', 'buyer_details', 'contract_type', 'status',
-            'contract_value', 'deposit_amount', 'start_date',
-            'end_date', 'contract_number', 'seller_legal_rep',
-            'seller_legal_rep_details', 'buyer_legal_rep',
-            'buyer_legal_rep_details', 'seller_signature_date',
-            'buyer_signature_date', 'reviewed_by', 'reviewed_by_details',
-            'review_date', 'review_notes', 'signatures', 'current_terms',
-            'created_at', 'modified_at'
-        ]
-        read_only_fields = [
-            'id', 'contract_number', 'created_at', 'modified_at',
-            'signatures', 'current_terms'
-        ]
-    
-    def get_signatures(self, obj):
-        """
-        Get signatures for this contract.
-        """
-        return DocumentSerializer(
-            obj.get_signatures(),
-            many=True,
-            context=self.context
-        ).data
-    
-    def get_current_terms(self, obj):
-        """
-        Get current terms for all term types.
-        """
-        term_types = [choice[0] for choice in ContractTermRevision.TERM_TYPE_CHOICES]
-        result = {}
-        
-        for term_type in term_types:
-            terms = obj.get_current_terms(term_type)
-            if terms:
-                result[term_type] = ContractTermRevisionSerializer(terms).data
-                
-        return result
-    
-    def validate(self, data):
-        """
-        Validate contract data.
-        """
-        if 'end_date' in data and 'start_date' in data:
-            if data['end_date'] and data['start_date'] > data['end_date']:
-                raise serializers.ValidationError(
-                    "End date must be after start date."
-                )
-                
-        if 'deposit_amount' in data and 'contract_value' in data:
-            if data['deposit_amount'] > data['contract_value']:
-                raise serializers.ValidationError(
-                    "Deposit amount cannot be greater than contract value."
-                )
-                
-        return data
+        fields = '__all__'
+        read_only_fields = ('id', 'contract_number', 'created_at', 'updated_at',
+                           'is_verified', 'verification_authority', 'verification_date')
+
+    def create(self, validated_data):
+        """Generate contract number"""
+        # Generate contract number
+        from datetime import datetime
+        import random
+        contract_number = f"CONT-{datetime.now().strftime('%Y%m%d')}-{random.randint(1000, 9999)}"
+        validated_data['contract_number'] = contract_number
+
+        return super().create(validated_data)
 
 
-class ContractTermRevisionSerializer(serializers.ModelSerializer):
-    """
-    Serializer for contract term revisions.
-    """
-    revised_by_details = CustomUserSerializer(source='revised_by', read_only=True)
-    approved_by_details = CustomUserSerializer(source='approved_by', read_only=True)
-    
+class PaymentSerializer(serializers.ModelSerializer):
+    """Serializer for payments"""
+    payer = UserSerializer(read_only=True)
+    payee = UserSerializer(read_only=True)
+    confirmed_by = UserSerializer(read_only=True)
+    status_display = serializers.CharField(source='get_status_display', read_only=True)
+    payment_type_display = serializers.CharField(source='get_payment_type_display', read_only=True)
+    payment_method_display = serializers.CharField(source='get_payment_method_display', read_only=True)
+    is_overdue = serializers.ReadOnlyField()
+    receipt_url = serializers.ReadOnlyField()
+
     class Meta:
-        model = ContractTermRevision
-        fields = [
-            'id', 'contract', 'terms_type', 'terms_content',
-            'previous_terms', 'revision_reason', 'revised_by',
-            'revised_by_details', 'approved_by', 'approved_by_details',
-            'approval_date', 'version_number', 'is_current_version',
-            'created_at', 'modified_at'
-        ]
-        read_only_fields = [
-            'id', 'version_number', 'created_at', 'modified_at'
-        ]
+        model = Payment
+        fields = '__all__'
+        read_only_fields = ('id', 'payment_number', 'created_at', 'updated_at',
+                           'confirmed_at', 'confirmed_by')
+
+    def create(self, validated_data):
+        """Generate payment number"""
+        # Generate payment number
+        from datetime import datetime
+        import random
+        payment_number = f"PAY-{datetime.now().strftime('%Y%m%d')}-{random.randint(1000, 9999)}"
+        validated_data['payment_number'] = payment_number
+
+        return super().create(validated_data)
+
+
+class TransactionSerializer(serializers.ModelSerializer):
+    """Serializer for financial transactions"""
+    from_user = UserSerializer(read_only=True)
+    to_user = UserSerializer(read_only=True)
+    processed_by = UserSerializer(read_only=True)
+    transaction_type_display = serializers.CharField(source='get_transaction_type_display', read_only=True)
+    status_display = serializers.CharField(source='get_status_display', read_only=True)
+    total_amount = serializers.ReadOnlyField()
+
+    class Meta:
+        model = Transaction
+        fields = '__all__'
+        read_only_fields = ('id', 'transaction_number', 'created_at', 'updated_at',
+                           'processed_at', 'processed_by')
+
+    def create(self, validated_data):
+        """Generate transaction number"""
+        # Generate transaction number
+        from datetime import datetime
+        import random
+        transaction_number = f"TRANS-{datetime.now().strftime('%Y%m%d')}-{random.randint(1000, 9999)}"
+        validated_data['transaction_number'] = transaction_number
+
+        return super().create(validated_data)
 
 
 class MessageSerializer(serializers.ModelSerializer):
-    """
-    Serializer for chat messages.
-    """
-    sender_details = CustomUserSerializer(source='sender', read_only=True)
-    
+    """Serializer for messages"""
+    sender = UserSerializer(read_only=True)
+    message_type_display = serializers.CharField(source='get_message_type_display', read_only=True)
+    status_display = serializers.CharField(source='get_status_display', read_only=True)
+    has_attachments = serializers.ReadOnlyField()
+
     class Meta:
         model = Message
-        fields = [
-            'id', 'sender', 'sender_details', 'room_id',
-            'content', 'timestamp'
-        ]
-        read_only_fields = ['id', 'timestamp']
+        fields = '__all__'
+        read_only_fields = ('id', 'created_at', 'updated_at', 'sent_at', 'delivered_at', 'read_at')
+
+    def create(self, validated_data):
+        """Set sender and timestamps"""
+        request = self.context.get('request')
+        if request and hasattr(request, 'user'):
+            validated_data['sender'] = request.user
+
+        validated_data['sent_at'] = timezone.now()
+
+        # Get thread and update last_message_at
+        thread = validated_data.get('thread')
+        if thread:
+            thread.last_message_at = timezone.now()
+            thread.save(update_fields=['last_message_at', 'updated_at'])
+
+        return super().create(validated_data)
 
 
-class PaymentMethodSerializer(serializers.ModelSerializer):
-    """
-    Serializer for user payment methods.
-    """
-    user_details = CustomUserSerializer(source='user', read_only=True)
-    
+class ThreadParticipantSerializer(serializers.ModelSerializer):
+    """Serializer for thread participants"""
+    user = UserSerializer(read_only=True)
+    role_display = serializers.CharField(source='get_role_display', read_only=True)
+    has_unread_messages = serializers.ReadOnlyField()
+    unread_count = serializers.ReadOnlyField()
+
     class Meta:
-        model = PaymentMethod
-        fields = [
-            'id', 'user', 'user_details', 'method_type', 
-            'details', 'created_at', 'modified_at'
-        ]
-        read_only_fields = ['id', 'created_at', 'modified_at']
-        extra_kwargs = {
-            'details': {'write_only': True}  # Payment details should be write-only for security
-        }
-    
-    def validate(self, data):
-        """
-        Validate payment method data.
-        """
-        if data.get('method_type') == 'CREDIT_CARD':
-            details = data.get('details', {})
-            
-            # Make sure we don't store complete card details for security
-            if 'card_number' in details:
-                # Only store last 4 digits
-                details['last4'] = details['card_number'][-4:]
-                details.pop('card_number')
-                
-            # Remove CVV entirely
-            if 'cvv' in details:
-                details.pop('cvv')
-                
-            data['details'] = details
-            
-        return data
+        model = ThreadParticipant
+        fields = '__all__'
+        read_only_fields = ('id', 'created_at', 'updated_at')
+
+
+class MessageThreadListSerializer(serializers.ModelSerializer):
+    """Serializer for listing message threads"""
+    thread_type_display = serializers.CharField(source='get_thread_type_display', read_only=True)
+    participants_count = serializers.SerializerMethodField()
+    message_count = serializers.ReadOnlyField()
+    unread_count = serializers.ReadOnlyField()
+    last_message_preview = serializers.SerializerMethodField()
+
+    class Meta:
+        model = MessageThread
+        fields = (
+            'id', 'subject', 'thread_type', 'thread_type_display',
+            'participants_count', 'message_count', 'unread_count',
+            'last_message_at', 'is_active', 'is_resolved',
+            'last_message_preview', 'created_at', 'updated_at'
+        )
+        read_only_fields = ('id', 'created_at', 'updated_at', 'last_message_at')
+
+    def get_participants_count(self, obj):
+        return obj.participants.count()
+
+    def get_last_message_preview(self, obj):
+        last_message = obj.last_message
+        if last_message:
+            return {
+                'sender_name': f"{last_message.sender.first_name} {last_message.sender.last_name}",
+                'content': last_message.content[:100] + ('...' if len(last_message.content) > 100 else ''),
+                'sent_at': last_message.sent_at
+            }
+        return None
+
+
+class MessageThreadDetailSerializer(serializers.ModelSerializer):
+    """Serializer for detailed message thread information"""
+    participants = serializers.SerializerMethodField()
+    thread_type_display = serializers.CharField(source='get_thread_type_display', read_only=True)
+    messages = serializers.SerializerMethodField()
+    resolved_by = UserSerializer(read_only=True)
+
+    class Meta:
+        model = MessageThread
+        fields = '__all__'
+        read_only_fields = ('id', 'created_at', 'updated_at', 'last_message_at',
+                           'resolved_at', 'resolved_by')
+
+    def get_participants(self, obj):
+        """Get participants with roles"""
+        participants = obj.thread_participants.select_related('user')
+        return ThreadParticipantSerializer(participants, many=True).data
+
+    def get_messages(self, obj):
+        """Get messages for this thread"""
+        messages = obj.messages.order_by('sent_at')
+        return MessageSerializer(messages, many=True).data
+
+
+class MessageThreadCreateSerializer(serializers.ModelSerializer):
+    """Serializer for creating message threads"""
+    participant_ids = serializers.ListField(
+        child=serializers.UUIDField(),
+        write_only=True,
+        required=False
+    )
+    initial_message = serializers.CharField(write_only=True, required=False)
+
+    class Meta:
+        model = MessageThread
+        fields = (
+            'subject', 'thread_type', 'related_property', 'related_auction',
+            'related_contract', 'participant_ids', 'initial_message'
+        )
+
+    def create(self, validated_data):
+        participant_ids = validated_data.pop('participant_ids', [])
+        initial_message = validated_data.pop('initial_message', None)
+
+        # Create thread
+        thread = super().create(validated_data)
+
+        # Add creator as participant
+        request = self.context.get('request')
+        if request and hasattr(request, 'user'):
+            ThreadParticipant.objects.create(
+                thread=thread,
+                user=request.user,
+                role='owner'
+            )
+
+            # Add initial message if provided
+            if initial_message:
+                Message.objects.create(
+                    thread=thread,
+                    sender=request.user,
+                    content=initial_message,
+                    sent_at=timezone.now()
+                )
+
+                # Update last_message_at
+                thread.last_message_at = timezone.now()
+                thread.save(update_fields=['last_message_at'])
+
+        # Add other participants
+        for user_id in participant_ids:
+            try:
+                user = User.objects.get(id=user_id)
+                ThreadParticipant.objects.create(
+                    thread=thread,
+                    user=user,
+                    role='member'
+                )
+            except User.DoesNotExist:
+                pass
+
+        return thread
 
 
 class NotificationSerializer(serializers.ModelSerializer):
-    """
-    Serializer for user notifications.
-    """
-    user_details = CustomUserSerializer(source='user', read_only=True)
-    
+    """Serializer for notifications"""
+    recipient = UserSerializer(read_only=True)
+    notification_type_display = serializers.CharField(source='get_notification_type_display', read_only=True)
+    channel_display = serializers.CharField(source='get_channel_display', read_only=True)
+
     class Meta:
         model = Notification
+        fields = '__all__'
+        read_only_fields = ('id', 'created_at', 'updated_at', 'is_sent', 'sent_at', 'is_read', 'read_at')
+
+    def create(self, validated_data):
+        """Set timestamps"""
+        validated_data['is_sent'] = True
+        validated_data['sent_at'] = timezone.now()
+
+        return super().create(validated_data)
+
+
+class BidCreateSerializer(serializers.ModelSerializer):
+    """Serializer for creating bids"""
+
+    class Meta:
+        model = Bid
+        fields = ('auction', 'bid_amount', 'is_auto_bid', 'max_bid_amount')
+
+    def validate(self, data):
+        """Validate bid amount"""
+        auction = data.get('auction')
+        bid_amount = data.get('bid_amount')
+
+        if not auction:
+            raise serializers.ValidationError(_("Auction is required."))
+
+        if not bid_amount:
+            raise serializers.ValidationError(_("Bid amount is required."))
+
+        # Check if auction is active
+        if not auction.is_active:
+            raise serializers.ValidationError(_("Auction is not active."))
+
+        # Check if bid amount is greater than current bid + min increment
+        min_bid = auction.current_bid + auction.min_bid_increment
+        if bid_amount < min_bid:
+            raise serializers.ValidationError(
+                _("Bid amount must be at least {0}.").format(min_bid)
+            )
+
+        # Check for autobidding
+        if data.get('is_auto_bid') and not data.get('max_bid_amount'):
+            raise serializers.ValidationError(_("Max bid amount is required for auto bidding."))
+
+        if data.get('max_bid_amount') and data.get('max_bid_amount') < bid_amount:
+            raise serializers.ValidationError(_("Max bid amount must be greater than bid amount."))
+
+        return data
+
+    def create(self, validated_data):
+        """Set bidder and tracking info"""
+        request = self.context.get('request')
+        if request and hasattr(request, 'user'):
+            validated_data['bidder'] = request.user
+
+            # Track IP and user agent
+            validated_data['ip_address'] = request.META.get('REMOTE_ADDR')
+            validated_data['user_agent'] = request.META.get('HTTP_USER_AGENT')
+            validated_data['device_info'] = {
+                'is_mobile': request.user_agent.is_mobile if hasattr(request, 'user_agent') else None,
+                'browser': request.user_agent.browser.family if hasattr(request, 'user_agent') else None,
+                'os': request.user_agent.os.family if hasattr(request, 'user_agent') else None,
+            }
+
+        return super().create(validated_data)
+
+
+class AuctionUpdateSerializer(serializers.ModelSerializer):
+    """Serializer for updating auctions"""
+
+    class Meta:
+        model = Auction
+        exclude = ('uuid', 'current_bid', 'winning_bid', 'winning_bidder', 'end_reason', 'created_by', 'views_count')
+        read_only_fields = ('id', 'created_at', 'updated_at')
+
+    def validate(self, data):
+        """Validate auction data"""
+        # Get instance values for partial updates
+        instance = self.instance
+
+        start_date = data.get('start_date', instance.start_date if instance else None)
+        end_date = data.get('end_date', instance.end_date if instance else None)
+
+        if start_date and end_date and start_date >= end_date:
+            raise serializers.ValidationError(_("End date must be after start date."))
+
+        # Validate reserve price
+        starting_price = data.get('starting_price', instance.starting_price if instance else None)
+        reserve_price = data.get('reserve_price', instance.reserve_price if instance else None)
+
+        if starting_price and reserve_price and reserve_price < starting_price:
+            raise serializers.ValidationError(_("Reserve price must be greater than or equal to starting price."))
+
+        # Validate status transitions
+        if 'status' in data:
+            new_status = data['status']
+            old_status = instance.status if instance else None
+
+            valid_transitions = {
+                'draft': ['pending', 'cancelled'],
+                'pending': ['active', 'cancelled'],
+                'active': ['extended', 'closed', 'cancelled'],
+                'extended': ['closed', 'cancelled'],
+                'closed': ['sold', 'cancelled'],
+                'sold': []  # Final state
+            }
+
+            if old_status and new_status not in valid_transitions.get(old_status, []):
+                raise serializers.ValidationError(
+                    _("Invalid status transition from '{0}' to '{1}'").format(old_status, new_status)
+                )
+
+        return data
+
+    def update(self, instance, validated_data):
+        """Update auction and handle any location data"""
+        # Handle location data if present
+        if 'location_coordinates' in validated_data and isinstance(validated_data['location_coordinates'], dict):
+            lat = validated_data['location_coordinates'].get('latitude')
+            lng = validated_data['location_coordinates'].get('longitude')
+            if lat is not None and lng is not None:
+                validated_data['location_coordinates'] = Point(float(lng), float(lat), srid=4326)
+
+        return super().update(instance, validated_data)
+
+
+class ContractCreateSerializer(serializers.ModelSerializer):
+    """Serializer for creating contracts"""
+    auction_id = serializers.PrimaryKeyRelatedField(
+        queryset=Auction.objects.all(),
+        source='auction',
+        write_only=True
+    )
+
+    class Meta:
+        model = Contract
+        exclude = ('contract_number', 'is_verified', 'verification_authority', 'verification_date',
+                  'buyer_signed', 'seller_signed', 'agent_signed',
+                  'buyer_signature_date', 'seller_signature_date', 'agent_signature_date')
+        read_only_fields = ('id', 'created_at', 'updated_at')
+
+    def validate(self, data):
+        """Validate contract data"""
+        auction = data.get('auction')
+
+        if not auction:
+            raise serializers.ValidationError(_("Auction is required."))
+
+        # Ensure auction is closed or sold
+        if auction.status not in ['closed', 'sold']:
+            raise serializers.ValidationError(_("Contract can only be created for closed or sold auctions."))
+
+        # Get property from auction
+        property_obj = auction.related_property
+        data['related_property'] = property_obj
+
+        # Check if auction already has a contract
+        if hasattr(auction, 'contract'):
+            raise serializers.ValidationError(_("This auction already has a contract."))
+
+        # Set buyer from winning bidder if not provided
+        if 'buyer' not in data and auction.winning_bidder:
+            data['buyer'] = auction.winning_bidder
+
+        # Set seller from property owner if not provided
+        if 'seller' not in data:
+            data['seller'] = property_obj.owner
+
+        # Set contract_amount from winning_bid if not provided
+        if 'contract_amount' not in data and auction.winning_bid:
+            data['contract_amount'] = auction.winning_bid
+
+        # Validate total_amount calculation
+        contract_amount = data.get('contract_amount', 0)
+        commission_amount = data.get('commission_amount', 0)
+        tax_amount = data.get('tax_amount', 0)
+        total_amount = data.get('total_amount')
+
+        calculated_total = contract_amount + commission_amount + tax_amount
+        if total_amount is not None and total_amount != calculated_total:
+            data['total_amount'] = calculated_total
+
+        return data
+
+    def create(self, validated_data):
+        """Generate contract number and set agent if not provided"""
+        # Set agent from request user if not provided
+        request = self.context.get('request')
+        if request and hasattr(request, 'user') and 'agent' not in validated_data:
+            validated_data['agent'] = request.user
+
+        # Generate contract number
+        from datetime import datetime
+        import random
+        contract_number = f"CONT-{datetime.now().strftime('%Y%m%d')}-{random.randint(1000, 9999)}"
+        validated_data['contract_number'] = contract_number
+
+        # Set contract date to now if not provided
+        if 'contract_date' not in validated_data:
+            validated_data['contract_date'] = datetime.now().date()
+
+        return super().create(validated_data)
+
+
+class ContractUpdateSerializer(serializers.ModelSerializer):
+    """Serializer for updating contracts"""
+
+    class Meta:
+        model = Contract
+        exclude = ('contract_number', 'auction', 'related_property', 'buyer', 'seller',
+                  'is_verified', 'verification_authority', 'verification_date')
+        read_only_fields = ('id', 'created_at', 'updated_at',
+                           'buyer_signed', 'seller_signed', 'agent_signed',
+                           'buyer_signature_date', 'seller_signature_date', 'agent_signature_date')
+
+    def validate(self, data):
+        """Validate contract update data"""
+        instance = self.instance
+
+        # Validate status transitions
+        if 'status' in data:
+            new_status = data['status']
+            old_status = instance.status
+
+            valid_transitions = {
+                'draft': ['pending_review', 'cancelled'],
+                'pending_review': ['pending_buyer', 'pending_seller', 'cancelled'],
+                'pending_buyer': ['pending_seller', 'signed', 'cancelled'],
+                'pending_seller': ['pending_buyer', 'signed', 'cancelled'],
+                'pending_payment': ['active', 'cancelled'],
+                'signed': ['pending_payment', 'active', 'disputed'],
+                'active': ['completed', 'disputed'],
+                'completed': ['disputed'],
+                'cancelled': [],
+                'disputed': ['active', 'cancelled', 'completed']
+            }
+
+            if new_status not in valid_transitions.get(old_status, []):
+                raise serializers.ValidationError(
+                    _("Invalid status transition from '{0}' to '{1}'").format(old_status, new_status)
+                )
+
+        # Validate total_amount calculation
+        contract_amount = data.get('contract_amount', instance.contract_amount)
+        commission_amount = data.get('commission_amount', instance.commission_amount)
+        tax_amount = data.get('tax_amount', instance.tax_amount)
+        total_amount = data.get('total_amount')
+
+        calculated_total = contract_amount + commission_amount + tax_amount
+        if total_amount is not None and total_amount != calculated_total:
+            data['total_amount'] = calculated_total
+
+        return data
+
+
+class TransactionCreateSerializer(serializers.ModelSerializer):
+    """Serializer for creating transactions"""
+    payment_id = serializers.PrimaryKeyRelatedField(
+        queryset=Payment.objects.all(),
+        source='payment',
+        required=False,
+        allow_null=True,
+        write_only=True
+    )
+    auction_id = serializers.PrimaryKeyRelatedField(
+        queryset=Auction.objects.all(),
+        source='auction',
+        required=False,
+        allow_null=True,
+        write_only=True
+    )
+    contract_id = serializers.PrimaryKeyRelatedField(
+        queryset=Contract.objects.all(),
+        source='contract',
+        required=False,
+        allow_null=True,
+        write_only=True
+    )
+
+    class Meta:
+        model = Transaction
+        exclude = ('transaction_number', 'processed_at', 'processed_by')
+        read_only_fields = ('id', 'created_at', 'updated_at')
+
+    def validate(self, data):
+        """Validate transaction data"""
+        # Validate from_user and to_user
+        from_user = data.get('from_user')
+        to_user = data.get('to_user')
+
+        if from_user == to_user:
+            raise serializers.ValidationError(_("Sender and recipient cannot be the same user."))
+
+        # Validate transaction amount
+        amount = data.get('amount')
+        if amount is not None and amount <= 0:
+            raise serializers.ValidationError(_("Transaction amount must be greater than zero."))
+
+        # Validate transaction date
+        transaction_date = data.get('transaction_date')
+        if transaction_date is not None:
+            from django.utils import timezone
+            if transaction_date > timezone.now():
+                raise serializers.ValidationError(_("Transaction date cannot be in the future."))
+
+        # Set transaction date to now if not provided
+        if 'transaction_date' not in data:
+            from django.utils import timezone
+            data['transaction_date'] = timezone.now()
+
+        return data
+
+    def create(self, validated_data):
+        """Generate transaction number"""
+        # Generate transaction number
+        from datetime import datetime
+        import random
+        transaction_number = f"TRANS-{datetime.now().strftime('%Y%m%d')}-{random.randint(1000, 9999)}"
+        validated_data['transaction_number'] = transaction_number
+
+        return super().create(validated_data)
+
+
+class TransactionUpdateSerializer(serializers.ModelSerializer):
+    """Serializer for updating transactions"""
+
+    class Meta:
+        model = Transaction
+        exclude = ('transaction_number', 'from_user', 'to_user', 'payment', 'auction', 'contract',
+                  'processed_at', 'processed_by')
+        read_only_fields = ('id', 'created_at', 'updated_at')
+
+    def validate(self, data):
+        """Validate transaction update data"""
+        instance = self.instance
+
+        # Validate status transitions
+        if 'status' in data:
+            new_status = data['status']
+            old_status = instance.status
+
+            valid_transitions = {
+                'pending': ['processing', 'completed', 'failed', 'cancelled'],
+                'processing': ['completed', 'failed', 'disputed'],
+                'completed': ['disputed', 'refunded'],
+                'failed': ['processing', 'cancelled'],
+                'cancelled': [],
+                'disputed': ['completed', 'failed', 'refunded'],
+                'refunded': []
+            }
+
+            if new_status not in valid_transitions.get(old_status, []):
+                raise serializers.ValidationError(
+                    _("Invalid status transition from '{0}' to '{1}'").format(old_status, new_status)
+                )
+
+        return data
+
+    def update(self, instance, validated_data):
+        """Update transaction and set processed info if status changes"""
+        old_status = instance.status
+        new_status = validated_data.get('status', old_status)
+
+        # If status is changing, record who processed it
+        if old_status != new_status:
+            request = self.context.get('request')
+            if request and hasattr(request, 'user'):
+                validated_data['processed_by'] = request.user
+
+            from django.utils import timezone
+            validated_data['processed_at'] = timezone.now()
+
+        return super().update(instance, validated_data)
+
+
+
+
+class PropertyViewSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = PropertyView
         fields = [
-            'id', 'user', 'user_details', 'message', 'notification_type',
-            'read', 'displayed', 'related_object_id', 'related_object_type',
-            'created_at'
+            'id', 'auction', 'view_type', 'size_sqm', 'location', 'address',
+            'elevation', 'view_direction', 'legal_description', 'condition',
+            'historical_views', 'images'  # Updated to JSONField
         ]
-        read_only_fields = ['id', 'created_at']
+        read_only_fields = ['id']  # Add 'created_at', 'modified_at' if using TimeStampedModel
+
+    def validate_images(self, value):
+        if not isinstance(value, list):
+            raise serializers.ValidationError(_("Images must be a list."))
+        return value
+
+    def validate_size_sqm(self, value):
+        if value <= 0:
+            raise serializers.ValidationError(_("Size must be greater than zero."))
+        return value

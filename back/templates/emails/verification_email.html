@@ -1,0 +1,147 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>تأكيد البريد الإلكتروني</title>
+        <style>
+            /* Base styles */
+            body {
+                font-family: 'Tajawal', 'IBM Plex Sans Arabic', Arial, sans-serif;
+                line-height: 1.6;
+                color: #1f2937;
+                background-color: #f9fafb;
+                margin: 0;
+                padding: 0;
+                direction: rtl;
+                text-align: right;
+            }
+            
+            .container {
+                max-width: 600px;
+                margin: 20px auto;
+                background-color: #ffffff;
+                border-radius: 16px;
+                overflow: hidden;
+                box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+            }
+            
+            .header {
+                background-color: #3b82f6;
+                padding: 24px;
+                text-align: center;
+            }
+            
+            .header h1 {
+                margin: 0;
+                color: #ffffff;
+                font-size: 24px;
+                font-weight: 700;
+            }
+            
+            .content {
+                padding: 32px 24px;
+            }
+            
+            p {
+                margin: 16px 0;
+                color: #4b5563;
+            }
+            
+            .verification-code {
+                display: flex;
+                justify-content: center;
+                gap: 8px;
+                margin: 24px 0;
+            }
+            
+            .digit {
+                width: 40px;
+                height: 48px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                background-color: #ffffff;
+                border: 1px solid #d1d5db;
+                border-radius: 8px;
+                font-size: 20px;
+                font-weight: 700;
+                color: #1f2937;
+                box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+            }
+            
+            .verification-link {
+                color: #3b82f6;
+                word-break: break-all;
+                font-weight: 500;
+            }
+            
+            .expiration {
+                font-size: 14px;
+                color: #6b7280;
+            }
+            
+            .divider {
+                height: 1px;
+                background-color: #e5e7eb;
+                margin: 24px 0;
+            }
+            
+            .signature {
+                margin-top: 24px;
+            }
+            
+            .footer {
+                background-color: #f3f4f6;
+                padding: 16px 24px;
+                text-align: center;
+                border-top: 1px solid #e5e7eb;
+            }
+            
+            .footer p {
+                margin: 4px 0;
+                font-size: 12px;
+                color: #6b7280;
+            }
+        </style>
+    </head>
+    <body>
+        <div class="container">
+            <div class="header">
+                <h1>تأكيد البريد الإلكتروني</h1>
+            </div>
+
+            <div class="content">
+                <p>مرحباً {{ user.first_name }}،</p>
+                <p>شكراً للتسجيل في {{ site_name }}. فيما يلي رمز التحقق المكون من 6 أرقام:</p>
+
+                <!-- Verification Code Box -->
+                <div class="verification-code">
+                    {% for digit in verification_code %}
+                    <div class="digit">{{ digit }}</div>
+                    {% endfor %}
+                </div>
+
+                <p>الرجاء إدخال هذا الرمز في صفحة التحقق لتأكيد بريدك الإلكتروني.</p>
+
+                <p>بدلاً من ذلك، يمكنك زيارة الرابط التالي وإدخال الرمز:</p>
+                <p class="verification-link">{{ verification_url }}</p>
+
+                <p class="expiration">ينتهي هذا الرمز خلال {{ expires_in }}.</p>
+
+                <div class="divider"></div>
+
+                <p>إذا لم تقم بإنشاء حساب في {{ site_name }}، يرجى تجاهل هذا البريد الإلكتروني.</p>
+
+                <div class="signature">
+                    <p>مع التحية،<br />فريق {{ site_name }}</p>
+                </div>
+            </div>
+
+            <div class="footer">
+                <p>هذا بريد إلكتروني آلي، يرجى عدم الرد عليه.</p>
+                <p>&copy; {{ current_year }} {{ site_name }} - كل الحقوق محفوظة</p>
+            </div>
+        </div>
+    </body>
+</html>

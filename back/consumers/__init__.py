@@ -4,9 +4,13 @@ from .auction_consumer import AuctionConsumer
 from .bidding_consumer import BiddingConsumer
 from .notification_consumer import NotificationConsumer
 from .dashboard_consumer import DashboardConsumer
+from .base_consumer import BaseConsumer
+
 __all__ = [
+    'BaseConsumer',
     'ChatConsumer', 
     'AuctionConsumer', 
     'BiddingConsumer', 
-    'NotificationConsumer'
+    'NotificationConsumer',
+    'DashboardConsumer'
 ]

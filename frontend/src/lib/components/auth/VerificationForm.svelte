@@ -1,324 +1,182 @@
+<!-- src/lib/components/auth/VerificationForm.svelte -->
 <script>
-  import { createEventDispatcher } from 'svelte';
-  import { goto } from '$app/navigation';
   import { onMount } from 'svelte';
-  import { authStore } from '$lib/stores/authStore';
-  import { notificationStore } from '$lib/stores/notificationStore';
-  import Input from '$lib/components/ui/Input.svelte';
-  import Button from '$lib/components/ui/Button.svelte';
-  import Alert from '$lib/components/ui/Alert.svelte';
-  
+  import { page } from '$app/stores';
+  import { t } from '$lib/i18n';
+  import { createEventDispatcher } from 'svelte';
+  import { authStore } from '$lib/stores/auth';
+  import FormButton from '$lib/components/ui/FormButton.svelte';
+  import FormInput from '$lib/components/ui/FormInput.svelte';
+  import FormAlert from '$lib/components/ui/FormAlert.svelte';
+  import { goto } from '$app/navigation';
+  import authService from '$lib/services/auth';
+
   const dispatch = createEventDispatcher();
-  
-  // Props
-  export let email = '';
-  export let verificationCode = ''; // If provided in URL
-  export let redirectTo = '/dashboard';
-  
-  // Component state
-  let loading = false;
-  let error = '';
-  let resendLoading = false;
-  let resendSuccess = false;
-  let resendTimer = 0;
-  let resendInterval;
-  
-  // Code input state - for individual digit inputs
-  let codeDigits = ['', '', '', '', '', ''];
-  let codeInputRefs = Array(6);
-  
-  // Watch digits and update verification code
-  $: {
-    verificationCode = codeDigits.join('');
-  }
-  
+
+  // Get email from URL query params but don't display in form
+  let email = '';
+
   onMount(() => {
-    // Focus first digit input if we have email
-    if (email && codeInputRefs[0]) {
-      codeInputRefs[0].focus();
+    if ($page.url.searchParams.has('email')) {
+      email = $page.url.searchParams.get('email');
     }
-    
-    // If we have a code from URL, populate the digits
-    if (verificationCode && verificationCode.length === 6) {
-      codeDigits = verificationCode.split('');
-    }
-    
-    // Clean up interval on component unmount
-    return () => {
-      if (resendInterval) {
-        clearInterval(resendInterval);
-      }
-    };
   });
-  
-  // Handle digit input focus and navigation
-  function handleDigitInput(index, event) {
-    const value = event.target.value;
-    
-    // Only allow numeric input
-    if (!/^[0-9]$/.test(value) && value !== '') {
-      codeDigits[index] = '';
-      return;
-    }
-    
-    // Update the digit
-    codeDigits[index] = value;
-    codeDigits = [...codeDigits]; // Force reactivity
-    
-    // Auto-focus next input
-    if (value !== '' && index < 5) {
-      codeInputRefs[index + 1].focus();
-    }
-  }
-  
-  // Handle backspace to navigate to previous input
-  function handleDigitKeydown(index, event) {
-    if (event.key === 'Backspace') {
-      if (codeDigits[index] === '' && index > 0) {
-        codeInputRefs[index - 1].focus();
-      }
-    }
-  }
-  
-  // Handle paste into code inputs
-  function handleCodePaste(event) {
-    event.preventDefault();
-    const pastedData = event.clipboardData.getData('text');
-    
-    // Only process if it looks like a code (numbers only)
-    if (/^\d+$/.test(pastedData)) {
-      const digits = pastedData.slice(0, 6).split('');
-      
-      // Fill available positions
-      for (let i = 0; i < digits.length && i < 6; i++) {
-        codeDigits[i] = digits[i];
-      }
-      
-      codeDigits = [...codeDigits]; // Force reactivity
-      
-      // Focus the next empty input or the last one
-      for (let i = 0; i < 6; i++) {
-        if (!codeDigits[i]) {
-          codeInputRefs[i].focus();
-          return;
-        }
-      }
-      
-      // If all filled, focus the last one
-      codeInputRefs[5].focus();
-    }
+
+  // Form data
+  let verificationCode = '';
+
+  // Form state
+  let loading = false;
+  let resending = false;
+  let error = null;
+  let resendError = null;
+  let resendSuccess = false;
+  let formSubmitted = false;
+
+  // Validation errors
+  let errors = {
+    verificationCode: null
+  };
+
+  // Validate form
+  function validate() {
+    errors = {
+      verificationCode: !verificationCode ? $t('auth.verification_code') + ' ' + $t('general.required') : null
+    };
+
+    return !Object.values(errors).some(error => error);
   }
 
-  async function handleVerify() {
-    if (!email || !verificationCode || verificationCode.length !== 6) {
-      error = 'Please enter the 6-digit verification code';
+  // Handle form submission
+  async function handleSubmit() {
+    formSubmitted = true;
+
+    if (!validate() || !email) {
       return;
     }
-    
+
     loading = true;
-    error = '';
-    
+    error = null;
+
     try {
-      console.log('Verifying email:', email, 'with code:', verificationCode);
-      
-      // Call the actual API through the auth store
       const result = await authStore.verifyEmail(email, verificationCode);
-      
-      if (result) {
-        notificationStore.success('Email verified successfully!');
-        
-        // Emit success event
+
+      if (result.success) {
         dispatch('success');
-        
-        // Redirect to dashboard or specified route after a short delay
-        setTimeout(() => {
-          goto(redirectTo);
-        }, 1000);
-      }
-    } catch (err) {
-      console.error('Verification error:', err);
-      
-      // Specific error handling based on error codes
-      if (err.code === 'invalid_code') {
-        error = 'Invalid or expired verification code';
-      } else if (err.code === 'verification_code_expired') {
-        error = 'Your verification code has expired. Please request a new one.';
-      } else if (err.status === 400) {
-        error = err.error || 'Verification failed. Please check your code.';
+        // Redirect to dashboard
+        goto('/dashboard');
       } else {
-        error = err.error || 'Verification failed. Please try again.';
+        error = result.error;
       }
-      
-      notificationStore.error(error);
+    } catch (e) {
+      console.error('Verification error:', e);
+      // Enhanced error handling
+      if (e.error) {
+        error = e.error;
+      } else if (e.message) {
+        error = e.message;
+      } else {
+        error = $t('system_messages.verification_failure');
+      }
     } finally {
       loading = false;
     }
   }
-  
-  async function handleResend() {
+
+  // Resend verification code
+  async function resendCode() {
     if (!email) {
-      error = 'Email address is required';
+      resendError = $t('auth.errors.email_required');
       return;
     }
-    
-    resendLoading = true;
-    error = '';
+
+    resending = true;
+    resendError = null;
     resendSuccess = false;
-    
+
     try {
-      // Call the resend verification API
-      const result = await authStore.resendVerification(email);
-      
-      resendSuccess = true;
-      notificationStore.success('Verification code has been sent to your email.');
-      
-      // Start countdown for resend button (5 minutes)
-      resendTimer = 300;
-      if (resendInterval) {
-        clearInterval(resendInterval);
-      }
-      
-      resendInterval = setInterval(() => {
-        resendTimer -= 1;
-        if (resendTimer <= 0) {
-          clearInterval(resendInterval);
-        }
-      }, 1000);
-    } catch (err) {
-      console.error('Resend verification error:', err);
-      
-      // Specific error handling
-      if (err.code === 'rate_limit' || err.status === 429) {
-        error = 'Please wait before requesting another verification code';
+      const response = await authService.resendVerification(email);
+
+      if (response && (response.status === 'success' || response.success === true)) {
+        resendSuccess = true;
       } else {
-        error = err.error || 'Failed to resend verification code. Please try again.';
+        resendError = (response.error || response.message) || $t('system_messages.error_occurred');
       }
-      
-      notificationStore.error(error);
+    } catch (e) {
+      console.error('Resend verification error:', e);
+      // Enhanced error handling
+      if (e.error) {
+        resendError = e.error;
+      } else if (e.message) {
+        resendError = e.message;
+      } else {
+        resendError = $t('system_messages.error_occurred');
+      }
     } finally {
-      resendLoading = false;
+      resending = false;
     }
-  }
-  
-  function formatTime(seconds) {
-    const mins = Math.floor(seconds / 60);
-    const secs = seconds % 60;
-    return `${mins}:${secs.toString().padStart(2, '0')}`;
   }
 </script>
 
-<div class="space-y-6">
-  <!-- Email field (shown if not provided) -->
-  {#if !email}
-    <Input
-      type="email"
-      id="verification-email"
-      name="email"
-      label="Email Address"
-      bind:value={email}
-      required
-    />
-  {/if}
-  
-  {#if error}
-    <Alert variant="error">{error}</Alert>
-  {/if}
-  
-  {#if resendSuccess}
-    <Alert variant="success">
-      Verification code has been sent to your email.
-    </Alert>
-  {/if}
-  
-  <p class="text-sm text-text-medium">
-    Enter the 6-digit verification code sent to {email || "your email"}.
+<form on:submit|preventDefault={handleSubmit} class="space-y-6" novalidate>
+{#if error}
+  <FormAlert type="error" dismissible={true}>{error}</FormAlert>
+{/if}
+
+{#if resendError}
+  <FormAlert type="error" dismissible={true}>{resendError}</FormAlert>
+{/if}
+
+{#if resendSuccess}
+  <FormAlert type="success" dismissible={true}>
+    {$t('auth.verification_sent')}
+  </FormAlert>
+{/if}
+
+<div>
+  <p class="mb-4 text-neutral-600 dark:text-neutral-400">
+    {$t('auth.verification_info')}
   </p>
-  
-  <!-- Code input with individual digits for better UX -->
-  <div class="mt-6">
-    <label for="verification-code" class="sr-only">Verification Code</label>
-    
-    <div class="flex justify-between items-center gap-2">
-      {#each Array(6) as _, i}
-        <input
-          type="text"
-          inputmode="numeric"
-          maxlength="1"
-          class="w-11 h-14 text-center text-xl text-text-dark font-semibold rounded-lg border-2 border-primary-blue/30 focus:border-secondary-blue focus:ring-2 focus:ring-primary-blue/20 transition-all"
-          bind:value={codeDigits[i]}
-          bind:this={codeInputRefs[i]}
-          on:input={(e) => handleDigitInput(i, e)}
-          on:keydown={(e) => handleDigitKeydown(i, e)}
-          on:paste={handleCodePaste}
-        />
-      {/each}
-    </div>
-  </div>
-  
-  <div>
-    <Button
-      type="button"
-      variant="primary"
-      size="lg"
-      fullWidth={true}
-      disabled={loading || verificationCode.length !== 6}
-      loading={loading}
-      onClick={handleVerify}
-    >
-      Verify Email
-    </Button>
-  </div>
-  
-  <div class="text-center">
-    <p class="text-sm text-text-medium mb-2">
-      Didn't receive the code?
-    </p>
-    
-    {#if resendTimer > 0}
-      <p class="text-sm text-text-medium">
-        You can request a new code in <span class="text-secondary-blue font-medium">{formatTime(resendTimer)}</span>
-      </p>
-    {:else}
-      <Button
-        type="button"
-        variant="outline"
-        size="md"
-        disabled={resendLoading || !email}
-        loading={resendLoading}
-        onClick={handleResend}
-      >
-        Resend Verification Code
-      </Button>
-    {/if}
-  </div>
-  
-  <div class="text-center text-sm">
-    <p class="text-text-medium">
-      Changed your mind?
-      <a href="/login" class="font-medium text-secondary-blue hover:text-secondary-blue/80 transition-colors">
-        Back to login
-      </a>
-    </p>
-  </div>
 </div>
 
-<style>
-  /* Custom styling for digit inputs */
-  input[type="text"] {
-    -webkit-appearance: none;
-    -moz-appearance: textfield;
-  }
-  
-  /* Remove arrows from number inputs */
-  input::-webkit-outer-spin-button,
-  input::-webkit-inner-spin-button {
-    -webkit-appearance: none;
-    margin: 0;
-  }
-  
-  /* Focus animation for code inputs */
-  input:focus {
-    transform: translateY(-2px);
-    box-shadow: 0 4px 8px rgba(185, 220, 242, 0.25);
-  }
-</style>
+<FormInput
+  type="text"
+  name="verificationCode"
+  id="verificationCode"
+  bind:value={verificationCode}
+  label={$t('auth.verification_code')}
+  placeholder={$t('auth.verification_code')}
+  error={formSubmitted && errors.verificationCode}
+  required={true}
+  forceLTR={true}
+/>
+
+<FormButton
+  type="submit"
+  variant="primary"
+  fullWidth={true}
+  loading={loading}
+  disabled={loading}
+>
+  {$t('auth.verify_account')}
+</FormButton>
+
+<div class="text-center">
+  <button
+    type="button"
+    on:click={resendCode}
+    class="text-sm font-medium text-primary hover:text-primary-dark hover:underline"
+    disabled={resending}
+  >
+    {resending ? $t('general.loading') : $t('auth.resend_code')}
+  </button>
+</div>
+
+<div class="text-center text-sm">
+  <p class="text-neutral-600 dark:text-neutral-400">
+    <a href="/auth/login" class="font-medium text-primary hover:text-primary-dark hover:underline">
+      {$t('auth.login')}
+    </a>
+  </p>
+</div>
+</form>

@@ -1,118 +1,80 @@
 // src/hooks.server.js
-// This file handles global server-side session and permission checks
+import { redirect } from '@sveltejs/kit';
+
+// Routes that require authentication
+const protectedRoutes = ['/profile'];
+
+// Routes that should redirect to home if already authenticated
+const authRoutes = [
+	'/auth/login',
+	'/auth/register',
+	'/auth/reset-password',
+	'/auth/reset-password-confirm'
+];
+
+// Verify if a route is protected
+function isProtectedRoute(path) {
+	return protectedRoutes.some((route) => path.startsWith(route));
+}
+
+// Verify if a route is an auth route
+function isAuthRoute(path) {
+	return authRoutes.some((route) => path.startsWith(route));
+}
+
+// Check if user is authenticated based on cookies
+function isAuthenticated(cookies) {
+	// Check for auth cookie
+	return !!cookies.get('auth');
+}
 
 /** @type {import('@sveltejs/kit').Handle} */
 export async function handle({ event, resolve }) {
-  // Try to authenticate using session cookie first (original method)
-  const session = event.cookies.get('session');
-  
-  // Also check for JWT token auth (new method)
-  const accessToken = event.cookies.get('accessToken');
-  
-  // Flag to track if authentication was successful
-  let isAuthenticated = false;
-  
-  // First try session-based auth
-  if (session) {
-    try {
-      // Verify the session and get user data
-      const userData = await verifySession(session);
-      
-      if (userData) {
-        // Attach user data to the event locals
-        event.locals.user = {
-          id: userData.id,
-          email: userData.email,
-          roles: userData.roles || ['buyer'], // Default to buyer if no roles defined
-          name: userData.name
-        };
-        
-        // Mark as authenticated
-        event.locals.authenticated = true;
-        isAuthenticated = true;
-      }
-    } catch (error) {
-      console.error('Session verification error:', error);
-      // Clear invalid session cookie
-      event.cookies.delete('session', { path: '/' });
-    }
-  }
-  
-  // If not authenticated by session, try JWT token
-  if (!isAuthenticated && accessToken) {
-    try {
-      // For JWT token, we don't need to verify with the server for this fix
-      // Just create a minimal user object with necessary roles
-      event.locals.user = {
-        id: 'jwt-auth-user',
-        roles: ['buyer', 'seller', 'admin'], // Include all roles to ensure permissions work
-        authenticated: true
-      };
-      
-      event.locals.authenticated = true;
-      console.log('User authenticated via JWT token');
-    } catch (error) {
-      console.error('JWT token verification error:', error);
-      event.cookies.delete('accessToken', { path: '/' });
-    }
-  }
-  
-  // If still not authenticated, set flag to false
-  if (!isAuthenticated && !event.locals.authenticated) {
-    event.locals.authenticated = false;
-  }
-  
-  // Process the request
-  const response = await resolve(event);
-  return response;
+	// Get path
+	const path = event.url.pathname;
+
+	// Handle API routes during SSR by returning 404
+	// This prevents SSR from attempting to fetch API routes that only exist on the backend
+	if (path.startsWith('/api/')) {
+		console.log(`[SSR] Blocking API request to ${path}`);
+		return new Response('Not found', { status: 404 });
+	}
+
+	// Check if user is authenticated
+	const authenticated = isAuthenticated(event.cookies);
+
+	// Handle protected routes
+	if (isProtectedRoute(path) && !authenticated) {
+		throw redirect(303, '/auth/login');
+	}
+
+	// Handle auth routes for already authenticated users
+	if (isAuthRoute(path) && authenticated) {
+		throw redirect(303, '/');
+	}
+
+	// Process the request
+	const response = await resolve(event);
+
+	return response;
 }
 
-// Helper function to verify session
-async function verifySession(sessionToken) {
-  // Call your auth service to verify the token
-  try {
-    // Update this URL to match your actual API endpoint
-    const API_URL = import.meta.env?.VITE_API_URL || 'http://localhost:8000/api';
-    
-    const response = await fetch(`${API_URL}/accounts/verify-session`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({ token: sessionToken })
-    });
-    
-    if (response.ok) {
-      return await response.json();
-    }
-    
-    // For development fallback - if the endpoint doesn't exist yet, return mock data
-    if (response.status === 404 && import.meta.env?.DEV) {
-      console.warn('Verify session endpoint not found, using mock data for development');
-      // Return mock user data for development
-      return {
-        id: 'dev-user-id',
-        email: 'dev@example.com',
-        name: 'Development User',
-        roles: ['buyer', 'seller']
-      };
-    }
-    
-    return null;
-  } catch (error) {
-    console.error('Session verification error:', error);
-    
-    // For development only - return mock data if in dev mode
-    if (import.meta.env?.DEV) {
-      console.warn('Using mock user data due to session verification error in development');
-      return {
-        id: 'dev-user-id',
-        email: 'dev@example.com',
-        name: 'Development User',
-        roles: ['buyer', 'seller']
-      };
-    }
-    
-    return null;
-  }
+/** @type {import('@sveltejs/kit').HandleServerError} */
+export function handleError({ error, event }) {
+	// Don't treat API 404s as real errors
+	if (event.url.pathname.startsWith('/api/') && error.status === 404) {
+		console.log(`[SSR] Expected 404 for API path: ${event.url.pathname}`);
+		return {
+			message: 'API not available during SSR',
+			code: 'API_UNAVAILABLE'
+		};
+	}
+
+	// Log other server errors
+	console.error('Server error:', error, 'Path:', event.url.pathname);
+
+	return {
+		message: 'An unexpected error occurred',
+		code: error?.code || 'UNKNOWN'
+	};
 }

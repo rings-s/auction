@@ -1,70 +1,59 @@
+"""
+URL configuration for Real Estate Auction System API
+All endpoints are defined in a single file to match the consolidated views
+"""
 from django.urls import path
 from . import views
 
 app_name = 'base'
 
 urlpatterns = [
-    # Category URLs
-    path('categories/', views.category_list, name='category-list'),
-    path('categories/create/', views.category_create, name='category-create'),
-    path('categories/<str:slug>/', views.category_detail, name='category-detail'),
-    path('categories/<str:slug>/update/', views.category_update, name='category-update'),
-    path('categories/<str:slug>/delete/', views.category_delete, name='category-delete'),
-
-    # Subcategory URLs
-    path('subcategories/', views.subcategory_list, name='subcategory-list'),
-    path('subcategories/create/', views.subcategory_create, name='subcategory-create'),
-    path('subcategories/<str:slug>/', views.subcategory_detail, name='subcategory-detail'),
-
-    # Auction URLs
-    path('auctions/', views.auction_list, name='auction-list'),
-    path('auctions/create/', views.auction_create, name='auction-create'),
+    # Auction endpoints
+    path('auctions/', views.list_auctions, name='auction-list'),
+    path('auctions/analytics/', views.auction_analytics, name='auction-analytics'),
     path('auctions/<uuid:auction_id>/', views.auction_detail, name='auction-detail'),
-    path('auctions/<uuid:auction_id>/update/', views.auction_update, name='auction-update'),
-    path('auctions/<uuid:auction_id>/delete/', views.auction_delete, name='auction-delete'),
-    
-    # Bid URLs
-    path('auctions/<uuid:auction_id>/bids/', views.list_bids, name='list-bids'),
-    path('auctions/<uuid:auction_id>/bids/create/', views.create_bid, name='create-bid'),
-    path('user/bids/', views.user_bids, name='user-bids'),
-    path('auctions/my-bids/', views.user_bids, name='my-bids'),
+    path('auctions/create/', views.create_auction, name='auction-create'),
+    path('auctions/<uuid:auction_id>/update/', views.update_auction, name='auction-update'),
+    path('auctions/<uuid:auction_id>/delete/', views.delete_auction, name='auction-delete'),
 
-    
-    # Document URLs
-    path('auctions/<uuid:auction_id>/documents/', views.document_list, name='document-list'),
-    path('auctions/<uuid:auction_id>/documents/upload/', views.document_upload, name='document-upload'),
-    
-    # Transaction URLs
-    path('auctions/<uuid:auction_id>/transactions/create/', views.create_transaction, name='create-transaction'),
-    path('transactions/', views.transaction_list, name='transaction-list'),
-    
-    # Search URLs
-    path('search/', views.search, name='search'),
-    
-    # Dashboard URLs
-    path('dashboard/', views.user_dashboard, name='user-dashboard'),
-    path('admin/dashboard/', views.admin_dashboard, name='admin-dashboard'),
-    
-    # Message URLs
-    path('messages/<str:room_id>/', views.message_history, name='message-history'),
-    
-    # Contract URLs
-    path('contracts/create/', views.create_contract, name='create-contract'),
-    path('contracts/', views.list_contracts, name='list-contracts'),
-    
-    # Payment Method URLs
-    path('payment-methods/', views.list_payment_methods, name='list-payment-methods'),
-    path('payment-methods/add/', views.add_payment_method, name='add-payment-method'),
-    
-    # Notification URLs
-    path('notifications/', views.notification_list, name='notification-list'),
-    path('notifications/<uuid:notification_id>/read/', views.mark_notification_read, name='mark-notification-read'),
-    
-    # Inspector URLs
-    path('inspections/create/<uuid:auction_id>/', views.create_inspection_report, name='create-inspection'),
-    path('documents/<uuid:document_id>/verify/', views.verify_document, name='verify-document'),
+    # Property endpoints
+    path('properties/', views.list_properties, name='property-list'),
+    path('properties/analytics/', views.property_analytics, name='property-analytics'),
+    path('properties/create/', views.create_property, name='property-create'),
+    path('properties/<uuid:property_id>/', views.property_detail, name='property-detail'),
+    path('properties/<uuid:property_id>/update/', views.update_property, name='property-update'),
+    path('properties/<uuid:property_id>/delete/', views.delete_property, name='property-delete'),
+    path('properties/<uuid:property_id>/documents/', views.property_documents, name='property-documents'),
+    path('properties/<uuid:property_id>/status/', views.change_property_status, name='property-status-change'),
 
-    # Legal URLs
-    path('contracts/<uuid:contract_id>/review/', views.review_contract, name='review-contract'),
-    path('transactions/<uuid:transaction_id>/dispute/', views.handle_dispute, name='handle-dispute'),
+    # Bid endpoints
+    path('bids/', views.list_bids, name='bid-list'),
+    path('bids/place/', views.place_bid, name='place-bid'),
+    path('bids/analytics/', views.bid_analytics, name='bid-analytics'),
+
+    # Contract endpoints
+    path('contracts/', views.list_contracts, name='contract-list'),
+    path('contracts/create/', views.create_contract, name='contract-create'),
+    path('contracts/analytics/', views.contract_analytics, name='contract-analytics'),
+    path('contracts/<uuid:contract_id>/', views.contract_detail, name='contract-detail'),
+    path('contracts/<uuid:contract_id>/update/', views.update_contract, name='contract-update'),
+    path('contracts/<uuid:contract_id>/sign/', views.sign_contract, name='contract-sign'),
+    path('contracts/<uuid:contract_id>/payments/', views.create_contract_payment, name='contract-payment-create'),
+
+    # Transaction endpoints
+    path('transactions/', views.list_transactions, name='transaction-list'),
+    path('transactions/create/', views.create_transaction, name='transaction-create'),
+    path('transactions/analytics/', views.transaction_analytics, name='transaction-analytics'),
+    path('transactions/<uuid:transaction_id>/', views.transaction_detail, name='transaction-detail'),
+    path('transactions/<uuid:transaction_id>/update/', views.update_transaction, name='transaction-update'),
+    path('transactions/<uuid:transaction_id>/process/', views.process_transaction, name='transaction-process'),
+
+
+    path('dashboard/overview/', views.dashboard_overview, name='dashboard-overview'),
+    path('dashboard/section/<str:section>/', views.dashboard_section, name='dashboard-section'),
+    path('dashboard/chart/<str:chart_type>/', views.dashboard_chart, name='dashboard-chart'),
+
+    # Quick statistics endpoints
+    path('dashboard/quick-stats/', views.dashboard_quick_stats, name='dashboard-quick-stats'),
+    path('dashboard/recent-activity/', views.dashboard_recent_activity, name='dashboard-recent-activity'),
 ]

@@ -1,248 +1,301 @@
+<!-- src/lib/components/auth/LoginForm.svelte -->
 <script>
   import { createEventDispatcher } from 'svelte';
+  import { t } from '$lib/i18n';
+  import { isValidEmail, isNotEmpty } from '$lib/utils/validators';
+  import { onMount } from 'svelte';
+  import { toast } from '$lib/stores/toast';
+  import authService from '$lib/services/auth';
   import { goto } from '$app/navigation';
-  import { authStore } from '$lib/stores/authStore';
-  import { notificationStore } from '$lib/stores/notificationStore';
-  import Input from '$lib/components/ui/Input.svelte';
-  import Button from '$lib/components/ui/Button.svelte';
-  import Alert from '$lib/components/ui/Alert.svelte';
+  import FormInput from '$lib/components/ui/FormInput.svelte';
+  import FormButton from '$lib/components/ui/FormButton.svelte';
+  import FormAlert from '$lib/components/ui/FormAlert.svelte';
+  import GlassCard from '$lib/components/ui/GlassCard.svelte';
   
+  // Event dispatcher
   const dispatch = createEventDispatcher();
   
-  export let redirectTo = '/dashboard';
-  
-  // Form data
+  // State management
   let email = '';
   let password = '';
+  let rememberMe = true;
+  let isSubmitting = false;
+  let networkError = '';
+  let debugMode = false;
   
-  // Form state
-  let loading = false;
-  let error = '';
-  let showResetPassword = false;
+  // Mode management
+  let mode = 'login'; // login, forgotPassword
   let resetEmail = '';
   let resetSent = false;
+  let resetLoading = false;
+  let resetError = '';
   
+  // Form validation
+  let errors = {
+    email: '',
+    password: '',
+    form: ''
+  };
+  
+  // Enable debug mode in development
+  onMount(() => {
+    if (typeof window !== 'undefined') {
+      debugMode = window.location.hostname === 'localhost';
+    }
+  });
+  
+  // Login function
   async function handleLogin() {
-    if (!email || !password) {
-      error = 'Please enter both email and password';
-      return;
+    // Reset errors
+    errors = { email: '', password: '', form: '' };
+    networkError = '';
+    
+    // Validate form
+    if (!isNotEmpty(email)) {
+      errors.email = $t('auth.errors.email_required');
+    } else if (!isValidEmail(email)) {
+      errors.email = $t('auth.errors.email_invalid');
     }
     
-    loading = true;
-    error = '';
+    if (!isNotEmpty(password)) {
+      errors.password = $t('auth.errors.password_required');
+    }
     
-    try {
-      // Call auth API through auth store
-      await authStore.login(email, password);
-      
-      loading = false;
-      
-      // Show success notification
-      notificationStore.success('Welcome back! You have successfully signed in.');
-      
-      // Redirect after successful login
-      goto(redirectTo);
-      
-      // Emit success event
-      dispatch('success');
-      
-    } catch (err) {
-      console.error('Login error:', err);
-      
-      // Handle error based on response
-      if (err.status === 401 || err.status === 403) {
-        error = 'Invalid email or password';
-      } else if (err.status === 429) {
-        error = 'Too many login attempts. Please try again later.';
-      } else {
-        error = err.error || 'Login failed. Please try again.';
+    // Check if there are any validation errors
+    const isValid = !errors.email && !errors.password;
+    
+    if (isValid) {
+      try {
+        isSubmitting = true;
+        
+        // Use the auth service for login
+        const result = await authService.login(email, password);
+        
+        // Successful login
+        toast.success($t('auth.login_success'));
+        dispatch('success');
+      } catch (error) {
+        console.error('Login error:', error);
+        
+        // Check for network issues
+        if (error.message && error.message.includes('Failed to fetch')) {
+          networkError = `${$t('system_messages.no_internet')}`;
+          errors.form = $t('auth.network_error');
+        } else {
+          errors.form = error.message || $t('auth.login_failed');
+        }
+        
+        toast.error(errors.form);
+      } finally {
+        isSubmitting = false;
       }
-      
-      notificationStore.error(error);
-      loading = false;
     }
   }
   
-  async function handleResetPassword() {
-    if (!resetEmail) {
-      error = 'Please enter your email address';
+  // Password reset function
+  async function handlePasswordReset() {
+    // Reset errors
+    resetError = '';
+    
+    // Validate email
+    if (!isNotEmpty(resetEmail)) {
+      resetError = $t('auth.errors.email_required');
+      return;
+    } else if (!isValidEmail(resetEmail)) {
+      resetError = $t('auth.errors.email_invalid');
       return;
     }
     
-    loading = true;
-    error = '';
-    
     try {
-      // Call your password reset API here
-      // Example: await authStore.requestPasswordReset(resetEmail);
+      resetLoading = true;
       
-      // Simulate API call response
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      // Call the password reset service
+      const response = await authService.requestPasswordReset(resetEmail);
       
-      resetSent = true;
-      showResetPassword = false;
-      
-      notificationStore.success('Password reset instructions have been sent to your email.');
-    } catch (err) {
-      console.error('Reset password error:', err);
-      error = 'Failed to send reset instructions. Please try again.';
-      notificationStore.error(error);
+      if (response && response.success) {
+        resetSent = true;
+        toast.success($t('system_messages.password_reset_sent'));
+      } else {
+        resetError = response?.error || $t('system_messages.error_occurred');
+      }
+    } catch (error) {
+      console.error('Password reset error:', error);
+      resetError = error.message || $t('system_messages.error_occurred');
     } finally {
-      loading = false;
+      resetLoading = false;
     }
   }
   
-  function toggleResetPassword() {
-    showResetPassword = !showResetPassword;
-    resetEmail = email;
-    error = '';
+  // Switch to password reset mode
+  function switchToPasswordReset() {
+    mode = 'forgotPassword';
+    resetEmail = email; // Pre-fill with login email if exists
+  }
+  
+  // Switch back to login mode
+  function switchToLogin() {
+    mode = 'login';
   }
 </script>
 
-<div class="space-y-6">
-  {#if resetSent}
-    <Alert variant="success">
-      If an account exists with this email, password reset instructions have been sent to your inbox.
-    </Alert>
-  {:else if showResetPassword}
-    <form on:submit|preventDefault={handleResetPassword} class="space-y-6 fade-in-up">
-      <h2 class="text-xl font-semibold text-text-dark">Reset Password</h2>
-      
-      {#if error}
-        <Alert variant="error">{error}</Alert>
-      {/if}
-      
-      <p class="text-sm text-text-medium">
-        Enter your email address and we'll send you instructions to reset your password.
-      </p>
-      
-      <Input
-        type="email"
-        id="reset-email"
-        name="email"
-        label="Email Address"
-        bind:value={resetEmail}
-        required
-      />
-      
-      <div class="flex items-center justify-between space-x-4">
-        <Button
-          type="button"
-          variant="outline"
-          size="md"
-          on:click={toggleResetPassword}
-          disabled={loading}
-        >
-          Back to login
-        </Button>
-        
-        <Button
-          type="submit"
-          variant="primary"
-          size="md"
-          disabled={loading}
-          loading={loading}
-        >
-          Send Instructions
-        </Button>
-      </div>
-    </form>
-  {:else}
-    <form on:submit|preventDefault={handleLogin} class="space-y-6">
-      {#if error}
-        <Alert variant="error">{error}</Alert>
-      {/if}
-      
-      <Input
-        type="email"
-        id="email"
-        name="email"
-        label="Email Address"
-        bind:value={email}
-        autocomplete="email"
-        required
-      />
-      
-      <div>
-        <Input
-          type="password"
-          id="password"
-          name="password"
-          label="Password"
-          bind:value={password}
-          autocomplete="current-password"
-          required
+{#if mode === 'login'}
+  <form on:submit|preventDefault={handleLogin} class="space-y-6">
+    {#if errors.form}
+      <FormAlert type="error" dismissible={true}>{errors.form}</FormAlert>
+    {/if}
+
+    {#if networkError}
+      <FormAlert type="warning" dismissible={true}>
+        {networkError}
+      </FormAlert>
+    {/if}
+
+    <FormInput
+      id="email"
+      type="email"
+      name="email"
+      bind:value={email}
+      label={$t('auth.email')}
+      placeholder={$t('auth.email')}
+      error={errors.email}
+      autocomplete="email"
+      forceLTR={true}
+      required={true}
+      disabled={isSubmitting}
+    />
+
+    <FormInput
+      id="password"
+      type="password"
+      name="password"
+      bind:value={password}
+      label={$t('auth.password')}
+      placeholder={$t('auth.password')}
+      error={errors.password}
+      autocomplete="current-password"
+      required={true}
+      disabled={isSubmitting}
+    />
+
+    <div class="flex items-center justify-between">
+      <div class="flex items-center">
+        <input
+          id="remember-me"
+          name="remember-me"
+          type="checkbox"
+          bind:checked={rememberMe}
+          class="h-4 w-4 rounded border-neutral-300 text-primary focus:ring-primary"
         />
-        <div class="mt-1 text-right">
+        <label for="remember-me" class="ml-2 block text-sm text-neutral-600 dark:text-neutral-400">
+          {$t('auth.remember_me')}
+        </label>
+      </div>
+
+      <button
+        type="button"
+        on:click={switchToPasswordReset}
+        class="text-sm font-medium text-primary hover:text-primary-dark"
+      >
+        {$t('auth.forgot_password')}
+      </button>
+    </div>
+
+    <FormButton
+      type="submit"
+      variant="primary"
+      fullWidth={true}
+      loading={isSubmitting}
+      disabled={isSubmitting}
+    >
+      {$t('auth.login')}
+    </FormButton>
+
+    <div class="text-center text-sm">
+      <p class="text-neutral-600 dark:text-neutral-400">
+        {$t('auth.no_account')}
+        <a href="/auth/register" class="ml-1 font-medium text-primary hover:text-primary-dark">
+          {$t('auth.register_now')}
+        </a>
+      </p>
+    </div>
+  </form>
+{:else if mode === 'forgotPassword'}
+  <div class="space-y-6">
+    {#if resetSent}
+      <FormAlert type="success">
+        {$t('system_messages.password_reset_sent')}
+        <div class="mt-2 text-sm">
           <button
             type="button"
-            class="text-sm font-medium text-secondary-blue hover:text-secondary-blue/80 transition-colors"
-            on:click={toggleResetPassword}
+            on:click={switchToLogin}
+            class="font-medium hover:underline"
           >
-            Forgot your password?
+            {$t('auth.login')}
           </button>
         </div>
+      </FormAlert>
+    {:else}
+      <div class="mb-4">
+        <h3 class="text-lg font-medium text-neutral-800 dark:text-white mb-1">
+          {$t('auth.reset_password')}
+        </h3>
+        <p class="text-sm text-neutral-600 dark:text-neutral-400">
+          {$t('auth.reset_password_info')}
+        </p>
       </div>
-      
-      <div class="flex items-center justify-between">
-        <div class="flex items-center">
-          <input
-            id="remember-me"
-            name="remember-me"
-            type="checkbox"
-            class="h-4 w-4 rounded border-primary-blue/30 text-secondary-blue focus:ring-secondary-blue"
-          />
-          <label for="remember-me" class="ml-2 block text-sm text-text-medium">
-            Remember me
-          </label>
-        </div>
-      </div>
-      
-      <div>
-        <Button
-          type="submit"
-          variant="primary"
-          size="lg"
-          fullWidth={true}
-          disabled={loading}
-          loading={loading}
-        >
-          Sign in
-        </Button>
-      </div>
-    </form>
-  {/if}
-</div>
 
-<style>
-  /* Fade-in animation for the reset password form */
-  .fade-in-up {
-    animation: fadeInUp 0.5s forwards;
-  }
-  
-  @keyframes fadeInUp {
-    from {
-      opacity: 0;
-      transform: translateY(10px);
-    }
-    to {
-      opacity: 1;
-      transform: translateY(0);
-    }
-  }
-  
-  /* Custom checkbox styling */
-  input[type="checkbox"] {
-    cursor: pointer;
-    position: relative;
-  }
-  
-  input[type="checkbox"]:checked {
-    background-color: var(--secondary-blue);
-    border-color: var(--secondary-blue);
-  }
-  
-  input[type="checkbox"]:focus {
-    box-shadow: 0 0 0 2px var(--primary-blue);
-  }
-</style>
+      {#if resetError}
+        <FormAlert type="error" dismissible={true}>{resetError}</FormAlert>
+      {/if}
+
+      <FormInput
+        id="reset-email"
+        type="email"
+        name="resetEmail"
+        bind:value={resetEmail}
+        label={$t('auth.email')}
+        placeholder={$t('auth.email')}
+        forceLTR={true}
+        required={true}
+        disabled={resetLoading}
+      />
+
+      <div class="flex flex-col space-y-3">
+        <FormButton
+          type="button"
+          variant="primary"
+          fullWidth={true}
+          loading={resetLoading}
+          disabled={resetLoading}
+          onClick={handlePasswordReset}
+        >
+          {$t('auth.request_reset')}
+        </FormButton>
+        
+        <FormButton
+          type="button"
+          variant="outline"
+          fullWidth={true}
+          disabled={resetLoading}
+          onClick={switchToLogin}
+        >
+          {$t('general.back')}
+        </FormButton>
+      </div>
+    {/if}
+  </div>
+{/if}
+
+<!-- Debug info for development only -->
+{#if debugMode && (errors.form || networkError || resetError)}
+  <div class="mt-4 text-xs p-2 bg-neutral-100 dark:bg-neutral-800 rounded-xl">
+    <details>
+      <summary class="cursor-pointer text-neutral-500">Debug Info</summary>
+      <div class="mt-2 p-2 bg-neutral-200 dark:bg-neutral-700 rounded-xl">
+        <p class="mb-1 text-neutral-600 dark:text-neutral-300">Mode: {mode}</p>
+        <p class="mb-1 text-neutral-600 dark:text-neutral-300">Error: {errors.form || resetError || 'None'}</p>
+        <p class="mb-1 text-neutral-600 dark:text-neutral-300">Network: {networkError || 'None'}</p>
+      </div>
+    </details>
+  </div>
+{/if}

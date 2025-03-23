@@ -1,126 +1,114 @@
 # consumers/notification_consumer.py
 
 import json
-from channels.generic.websocket import AsyncWebsocketConsumer
 from channels.db import database_sync_to_async
-from channels.layers import get_channel_layer
-from datetime import datetime
-import logging
-from django.conf import settings
 from django.core.exceptions import ObjectDoesNotExist
-from django.contrib.auth import get_user_model
+from django.utils import timezone
+
+from .base_consumer import BaseConsumer
 from base.models import Notification
 
-User = get_user_model()
-logger = logging.getLogger(__name__)
-
-class NotificationConsumer(AsyncWebsocketConsumer):
-    async def connect(self):
-        self.user_id = self.scope['url_route']['kwargs']['user_id']
-        self.notification_group_name = f'notifications_{self.user_id}'
-        
-        # Authenticate
+class NotificationConsumer(BaseConsumer):
+    """
+    WebSocket consumer for real-time notification updates.
+    Handles new notifications, marking notifications as read,
+    and notification delivery status updates.
+    """
+    group_prefix = 'notifications'
+    
+    async def authenticate(self):
+        """Ensure the user is authenticated and authorized to receive these notifications"""
         user = self.scope.get('user')
-        if not user or not user.is_authenticated or str(user.id) != self.user_id:
-            logger.warning(f"Unauthorized connection attempt to notifications for user_id: {self.user_id}")
-            await self.close(code=4003)  # Custom close code for authentication failure
-            return
+        requested_user_id = self.params.get('user_id')
         
-        # Join notification group
-        await self.channel_layer.group_add(
-            self.notification_group_name,
-            self.channel_name
-        )
-        
-        await self.accept()
-        
-        # Send unread notifications
+        if not user or not user.is_authenticated:
+            return False
+            
+        # Users can only access their own notifications
+        if str(user.id) != requested_user_id:
+            return False
+            
+        return True
+    
+    async def get_initial_data(self):
+        """Get initial notification data to send on connect"""
         try:
             notifications = await self.get_notifications()
-            await self.send(text_data=json.dumps({
+            return {
                 'type': 'notifications',
                 'notifications': notifications
-            }))
+            }
         except Exception as e:
-            logger.error(f"Error sending initial notifications: {str(e)}")
-            await self.send(text_data=json.dumps({
+            self.logger.error(f"Error getting initial notifications: {str(e)}")
+            return {
                 'type': 'error',
-                'error': 'Failed to load notifications'
-            }))
+                'message': 'Failed to load notifications'
+            }
     
-    async def disconnect(self, close_code):
-        # Leave notification group
-        try:
-            await self.channel_layer.group_discard(
-                self.notification_group_name,
-                self.channel_name
-            )
-        except Exception as e:
-            logger.error(f"Error during disconnect: {str(e)}")
-    
-    # Receive message from WebSocket
-    async def receive(self, text_data):
-        try:
-            text_data_json = json.loads(text_data)
-            
-            # Handle ping messages for connection keepalive
-            if text_data_json.get('type') == 'ping':
+    async def process_message(self, data):
+        """Process messages from the client"""
+        action = data.get('action')
+        
+        if action == 'mark_read':
+            notification_id = data.get('notification_id')
+            if notification_id:
+                success = await self.mark_notification_read(notification_id)
                 await self.send(text_data=json.dumps({
-                    'type': 'pong',
-                    'timestamp': datetime.now().isoformat()
-                }))
-                return
-                
-            action = text_data_json.get('action')
-            
-            if action == 'mark_read':
-                notification_id = text_data_json.get('notification_id')
-                if notification_id:
-                    success = await self.mark_notification_read(notification_id)
-                    await self.send(text_data=json.dumps({
-                        'type': 'notification_read',
-                        'notification_id': notification_id,
-                        'success': success
-                    }))
-                    
-                    # Also broadcast to other connected clients for this user
-                    await self.channel_layer.group_send(
-                        self.notification_group_name,
-                        {
-                            'type': 'notification_read_event',
-                            'notification_id': notification_id
-                        }
-                    )
-                
-            elif action == 'mark_all_read':
-                success = await self.mark_all_notifications_read()
-                await self.send(text_data=json.dumps({
-                    'type': 'all_read',
+                    'type': 'notification_read',
+                    'notification_id': notification_id,
                     'success': success
                 }))
                 
                 # Also broadcast to other connected clients for this user
                 await self.channel_layer.group_send(
-                    self.notification_group_name,
+                    self.group_name,
                     {
-                        'type': 'all_read_event'
+                        'type': 'notification_read_event',
+                        'notification_id': notification_id
                     }
                 )
+            else:
+                await self.send_error('Missing notification_id')
                 
-            elif action == 'mark_displayed':
-                notification_id = text_data_json.get('notification_id')
-                if notification_id:
-                    await self.mark_notification_displayed(notification_id)
-        except json.JSONDecodeError:
+        elif action == 'mark_all_read':
+            success = await self.mark_all_notifications_read()
             await self.send(text_data=json.dumps({
-                'type': 'error',
-                'error': 'Invalid JSON format'
+                'type': 'all_read',
+                'success': success
             }))
-        except Exception as e:
-            logger.error(f"Error in receive: {str(e)}")
+            
+            # Also broadcast to other connected clients for this user
+            await self.channel_layer.group_send(
+                self.group_name,
+                {
+                    'type': 'all_read_event',
+                }
+            )
+            
+        elif action == 'mark_displayed':
+            notification_id = data.get('notification_id')
+            if notification_id:
+                await self.mark_notification_displayed(notification_id)
+            else:
+                await self.send_error('Missing notification_id')
+                
+        elif action == 'get_notifications':
+            # Get notifications with optional parameters
+            limit = data.get('limit', 50)
+            offset = data.get('offset', 0)
+            
+            notifications = await self.get_notifications(limit, offset)
             await self.send(text_data=json.dumps({
-                'type': 'error',
-                'error': f'An error occurred: {str(e)}'
+                'type': 'notifications',
+                'notifications': notifications
+            }))
+            
+        elif action == 'get_unread_count':
+            # Get unread notifications count
+            count = await self.get_unread_count()
+            await self.send(text_data=json.dumps({
+                'type': 'unread_count',
+                'count': count
             }))
     
     # Event handlers for group messages
@@ -143,76 +131,133 @@ class NotificationConsumer(AsyncWebsocketConsumer):
         await self.send(text_data=json.dumps({
             'type': 'all_read'
         }))
+        
+    async def notification_deleted_event(self, event):
+        """Handle notification deletion event"""
+        await self.send(text_data=json.dumps({
+            'type': 'notification_deleted',
+            'notification_id': event['notification_id']
+        }))
     
     # Database access methods
     @database_sync_to_async
-    def get_notifications(self, limit=50):
+    def get_notifications(self, limit=50, offset=0):
+        """Get notifications for the user with pagination"""
         try:
+            user_id = self.params.get('user_id')
+            
             notifications = Notification.objects.filter(
-                user_id=self.user_id
-            ).order_by('-created_at')[:limit]
+                recipient_id=user_id
+            ).order_by('-created_at')[offset:offset+limit]
             
             # Convert to dict for JSON serialization
             return [
                 {
                     'id': str(notification.id),
-                    'user_id': str(notification.user.id),
-                    'message': notification.message,
-                    'type': notification.notification_type,
-                    'read': notification.read,
-                    'displayed': notification.displayed,
-                    'related_object_id': str(notification.related_object_id) if notification.related_object_id else None,
-                    'related_object_type': notification.related_object_type,
-                    'created_at': notification.created_at.isoformat()
+                    'title': notification.title,
+                    'content': notification.content,
+                    'notification_type': notification.notification_type,
+                    'notification_type_display': notification.get_notification_type_display(),
+                    'channel': notification.channel,
+                    'channel_display': notification.get_channel_display(),
+                    'related_property_id': str(notification.related_property.id) if notification.related_property else None,
+                    'related_auction_id': str(notification.related_auction.id) if notification.related_auction else None,
+                    'related_bid_id': str(notification.related_bid.id) if notification.related_bid else None,
+                    'related_contract_id': str(notification.related_contract.id) if notification.related_contract else None,
+                    'related_payment_id': str(notification.related_payment.id) if notification.related_payment else None,
+                    'related_message_id': str(notification.related_message.id) if notification.related_message else None,
+                    'is_read': notification.is_read,
+                    'read_at': self.encode_datetime(notification.read_at),
+                    'is_sent': notification.is_sent,
+                    'sent_at': self.encode_datetime(notification.sent_at),
+                    'icon': notification.icon,
+                    'color': notification.color,
+                    'action_url': notification.action_url,
+                    'created_at': self.encode_datetime(notification.created_at)
                 }
                 for notification in notifications
             ]
         except Exception as e:
-            logger.error(f"Error getting notifications: {str(e)}")
+            self.logger.error(f"Error getting notifications: {str(e)}")
             return []
     
     @database_sync_to_async
-    def mark_notification_read(self, notification_id):
+    def get_unread_count(self):
+        """Get unread notifications count"""
         try:
+            user_id = self.params.get('user_id')
+            return Notification.objects.filter(recipient_id=user_id, is_read=False).count()
+        except Exception as e:
+            self.logger.error(f"Error getting unread count: {str(e)}")
+            return 0
+    
+    @database_sync_to_async
+    def mark_notification_read(self, notification_id):
+        """Mark a notification as read"""
+        try:
+            user_id = self.params.get('user_id')
+            
             notification = Notification.objects.get(
                 id=notification_id,
-                user_id=self.user_id
+                recipient_id=user_id
             )
-            notification.read = True
-            notification.save(update_fields=['read'])
+            
+            if not notification.is_read:
+                notification.is_read = True
+                notification.read_at = timezone.now()
+                notification.save(update_fields=['is_read', 'read_at', 'updated_at'])
+            
             return True
         except ObjectDoesNotExist:
-            logger.warning(f"Notification {notification_id} not found for user {self.user_id}")
+            self.logger.warning(f"Notification {notification_id} not found for user {user_id}")
             return False
         except Exception as e:
-            logger.error(f"Error marking notification read: {str(e)}")
+            self.logger.error(f"Error marking notification read: {str(e)}")
             return False
     
     @database_sync_to_async
     def mark_all_notifications_read(self):
+        """Mark all notifications as read"""
         try:
-            result = Notification.objects.filter(
-                user_id=self.user_id,
-                read=False
-            ).update(read=True)
-            return result > 0  # True if at least one notification was updated
+            user_id = self.params.get('user_id')
+            
+            # Get current time
+            now = timezone.now()
+            
+            # Update all unread notifications
+            updated = Notification.objects.filter(
+                recipient_id=user_id,
+                is_read=False
+            ).update(is_read=True, read_at=now, updated_at=now)
+            
+            return updated > 0  # Return True if at least one was updated
         except Exception as e:
-            logger.error(f"Error marking all notifications read: {str(e)}")
+            self.logger.error(f"Error marking all notifications read: {str(e)}")
             return False
     
     @database_sync_to_async
     def mark_notification_displayed(self, notification_id):
+        """Mark a notification as displayed (seen by the user)"""
         try:
-            notification = Notification.objects.get(
-                id=notification_id,
-                user_id=self.user_id
-            )
-            notification.displayed = True
-            notification.save(update_fields=['displayed'])
-            return True
-        except ObjectDoesNotExist:
-            logger.warning(f"Notification {notification_id} not found for user {self.user_id}")
-            return False
+            user_id = self.params.get('user_id')
+            
+            # This is an optional field that may not be in the model,
+            # so we'll check if it exists first
+            try:
+                notification = Notification.objects.get(
+                    id=notification_id,
+                    recipient_id=user_id
+                )
+                
+                # Only update if the model has this field
+                if hasattr(notification, 'displayed'):
+                    notification.displayed = True
+                    notification.save(update_fields=['displayed', 'updated_at'])
+                
+                return True
+            except ObjectDoesNotExist:
+                self.logger.warning(f"Notification {notification_id} not found for user {user_id}")
+                return False
         except Exception as e:
-            logger.error(f"Error marking notification displayed: {str(e)}")
+            self.logger.error(f"Error marking notification displayed: {str(e)}")
             return False

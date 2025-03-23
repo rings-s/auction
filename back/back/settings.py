@@ -1,11 +1,13 @@
 from pathlib import Path
 import os
+import sys
 from datetime import timedelta
+
 from django.core.exceptions import ImproperlyConfigured
 from django.utils.translation import gettext_lazy as _
 from dotenv import load_dotenv
 from django.utils import timezone
-
+SPATIALITE_LIBRARY_PATH = 'mod_spatialite'
 # Load environment variables
 load_dotenv()
 
@@ -31,21 +33,24 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
 
+    'django.contrib.gis',  # Add this before your app
+    'leaflet',  # Add this
+    'rest_framework_gis',  # Add this
+
     'corsheaders',
-    
     'rest_framework',
     'rest_framework_simplejwt',
     'rest_framework_simplejwt.token_blacklist',
     'phonenumber_field',
     'accounts.apps.AccountsConfig',
     'base.apps.BaseConfig',
-    
+
     'django_filters',
     'channels',
 ]
 
-MIDDLEWARE = [
-    'corsheaders.middleware.CorsMiddleware',  
+_BASE_MIDDLEWARE = [
+    'corsheaders.middleware.CorsMiddleware',  # This should be at the top
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
@@ -53,6 +58,25 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'django.middleware.common.BrokenLinkEmailsMiddleware',
+
+]
+
+# Check if we're running under ASGI
+if os.environ.get('RUNNING_ASGI') == 'True':
+    # For ASGI (Channels), use only the Django middleware
+    MIDDLEWARE = _BASE_MIDDLEWARE
+else:
+    # For WSGI (regular Django), include all middleware
+    MIDDLEWARE = _BASE_MIDDLEWARE + [
+        'accounts.middleware.RequestResponseLoggingMiddleware',
+        'accounts.middleware.LoginTrackingMiddleware',
+        'accounts.middleware.FormSubmissionLoggingMiddleware',
+    ]
+
+AUTHENTICATION_BACKENDS = [
+    'accounts.auth.UUIDModelBackend',  # Our custom backend
+    'django.contrib.auth.backends.ModelBackend',  # Default backend
 ]
 
 ROOT_URLCONF = 'back.urls'
@@ -67,7 +91,8 @@ TEMPLATES = [
                 'django.template.context_processors.debug',
                 'django.template.context_processors.request',
                 'django.contrib.auth.context_processors.auth',
-                'base.context_processors.user_roles',
+                # Remove this line for the custom roles: 'base.context_processors.user_roles'
+                # 'base.context_processors.user_roles',
                 'django.contrib.messages.context_processors.messages',
             ],
         },
@@ -80,10 +105,15 @@ ASGI_APPLICATION = 'back.asgi.application'
 # Database
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
+        # Must be this, not 'django.db.backends.sqlite3'
+        'ENGINE': 'django.contrib.gis.db.backends.spatialite',
+        # 'ENGINE': 'django.db.backends.sqlite3',
         'NAME': BASE_DIR / 'db.sqlite3',
     }
 }
+
+SPATIALITE_LIBRARY_PATH = 'mod_spatialite'
+
 
 # If you want to use a different database, uncomment this and set environment variables
 # DATABASES = {
@@ -115,20 +145,13 @@ AUTH_PASSWORD_VALIDATORS = [
 
 
 
-
+# REST Framework settings
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': (
         'rest_framework_simplejwt.authentication.JWTAuthentication',
     ),
-    'DEFAULT_PERMISSION_CLASSES': ('rest_framework.permissions.IsAuthenticated',),
-    'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',
-    'PAGE_SIZE': 10,
-    'DEFAULT_SCHEMA_CLASS': 'rest_framework.schemas.coreapi.AutoSchema',
-    'DEFAULT_RENDERER_CLASSES': ('rest_framework.renderers.JSONRenderer',),
-    'DEFAULT_PARSER_CLASSES': (
-        'rest_framework.parsers.JSONParser',
-        'rest_framework.parsers.MultiPartParser',
-        'rest_framework.parsers.FormParser',
+    'DEFAULT_PERMISSION_CLASSES': (
+        'rest_framework.permissions.IsAuthenticated',
     ),
 }
 
@@ -136,21 +159,21 @@ REST_FRAMEWORK = {
 SIMPLE_JWT = {
     'ACCESS_TOKEN_LIFETIME': timedelta(minutes=15),
     'REFRESH_TOKEN_LIFETIME': timedelta(days=1),
-    'ROTATE_REFRESH_TOKENS': True,
+    'ROTATE_REFRESH_TOKENS': False,
     'BLACKLIST_AFTER_ROTATION': True,
-    'UPDATE_LAST_LOGIN': True,
-    'ALGORITHM': 'HS256',
-    'SIGNING_KEY': SECRET_KEY,
-    'VERIFYING_KEY': None,
-    'AUDIENCE': None,
-    'ISSUER': None,
     'AUTH_HEADER_TYPES': ('Bearer',),
-    'AUTH_HEADER_NAME': 'HTTP_AUTHORIZATION',
-    'USER_ID_FIELD': 'id',
-    'USER_ID_CLAIM': 'user_id',
-    'AUTH_TOKEN_CLASSES': ('rest_framework_simplejwt.tokens.AccessToken',),
-    'TOKEN_TYPE_CLAIM': 'token_type',
-    'JTI_CLAIM': 'jti',
+}
+
+
+LEAFLET_CONFIG = {
+    # Saudi Arabia coordinates (adjust as needed)
+    'DEFAULT_CENTER': (24.6897, 46.7172),
+    'DEFAULT_ZOOM': 6,
+    'MIN_ZOOM': 4,
+    'MAX_ZOOM': 18,
+    'TILES': [('OpenStreetMap', 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        'attribution': '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+    })],
 }
 
 # Static files (CSS, JavaScript, Images)
@@ -172,14 +195,43 @@ REQUIRED_DIRS = [
 
 # CORS settings - allow all origins for development
 CORS_ALLOW_ALL_ORIGINS = True
-
-
 # CORS settings
 CORS_ALLOWED_ORIGINS = [
     "http://localhost:5137",
-    #     "https://your-production-domain.com",
-
+    "http://localhost:5173",  # Default SvelteKit dev server
+    "http://localhost:3000",
+    "http://127.0.0.1:5173",
+    "http://127.0.0.1:5137",
 ]
+
+CORS_ALLOW_CREDENTIALS = True  # Required for cookies/authentication to work
+CORS_ALLOW_METHODS = [
+    "DELETE",
+    "GET",
+    "OPTIONS",
+    "PATCH",
+    "POST",
+    "PUT",
+]
+
+CORS_ALLOW_HEADERS = [
+    "accept",
+    "accept-encoding",
+    "authorization",
+    "content-type",
+    "dnt",
+    "origin",
+    "user-agent",
+    "x-csrftoken",
+    "x-requested-with",
+    "x-request-id",
+    "x-debug",  # Allow your custom debug header
+]
+
+# For development, you can use this instead of specifying individual origins
+# Only use this in development, not in production
+if DEBUG:
+    CORS_ALLOW_ALL_ORIGINS = True
 
 # Email settings - using your working .env values
 EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
@@ -227,7 +279,7 @@ AUTH_USER_MODEL = 'accounts.CustomUser'
 SERVER_TIMEZONE = timezone
 
 
-
+# Channel layers configuration - keeping the existing InMemoryChannelLayer
 CHANNEL_LAYERS = {
     'default': {
         'BACKEND': 'channels.layers.InMemoryChannelLayer',
@@ -240,13 +292,16 @@ CHANNEL_LAYERS = {
 }
 
 
-
 LOGGING = {
     'version': 1,
     'disable_existing_loggers': False,
     'formatters': {
         'verbose': {
             'format': '{levelname} {asctime} {module} {message}',
+            'style': '{',
+        },
+        'simple': {
+            'format': '{levelname} {message}',
             'style': '{',
         },
     },
@@ -262,12 +317,33 @@ LOGGING = {
             'class': 'logging.StreamHandler',
             'formatter': 'verbose',
         },
+        'api_file': {
+            'level': 'DEBUG',
+            'class': 'logging.FileHandler',
+            'filename': BASE_DIR / 'api_requests.log',
+            'formatter': 'verbose',
+        },
     },
     'loggers': {
         '': {  # Root logger
             'handlers': ['file', 'console'],
-            'level': 'DEBUG',
+            'level': 'INFO',
             'propagate': True,
+        },
+        'django.request': {
+            'handlers': ['file', 'console'],
+            'level': 'INFO',
+            'propagate': False,
+        },
+        'api.requests': {  # New logger for API requests
+            'handlers': ['api_file', 'console'],
+            'level': 'DEBUG',
+            'propagate': False,
         },
     },
 }
+
+
+# Add to your settings.py
+SITE_NAME = os.getenv('SITE_NAME', 'Auction Platform')  # Default site name
+VERIFICATION_TOKEN_EXPIRATION_HOURS = int(os.getenv('VERIFICATION_TOKEN_EXPIRATION_HOURS', 24))  # Token expiration in hours

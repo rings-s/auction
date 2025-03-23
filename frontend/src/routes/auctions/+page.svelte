@@ -1,446 +1,407 @@
-<!-- src/routes/auctions/+page.svelte -->
 <script>
-  import { onMount } from 'svelte';
-  import { auctionStore } from '$lib/stores/auctionStore';
-  import AuctionCard from '$lib/components/auction/AuctionCard.svelte';
-  import Button from '$lib/components/ui/Button.svelte';
-  import Spinner from '$lib/components/ui/Spinner.svelte';
-  import { isAuthenticated, primaryRole } from '$lib/stores/authStore';
-  import { browser } from '$app/environment';
-  import { api } from '$lib/api';
-  import RelatedAuctions from '$lib/components/auction/RelatedAuctions.svelte';
-  
-  // State variables
-  let auctions = [];
-  let categories = [];
-  let loading = true;
-  let error = null;
-  let filters = {
-    status: 'ACTIVE',
-    sort_by: 'created_at',
-    direction: 'desc',
-    min_price: '',
-    max_price: '',
-    category: ''
-  };
-  let pagination = {
-    page: 1,
-    total_pages: 1,
-    count: 0,
-    next: null,
-    previous: null
-  };
-  
-  // Status options
-  const statusOptions = [
-    { value: 'ACTIVE', label: 'Active' },
-    { value: 'ENDED', label: 'Ended' },
-    { value: 'DRAFT', label: 'Draft' },
-    { value: 'CANCELLED', label: 'Cancelled' }
-  ];
-  
-  // Sort options
-  const sortOptions = [
-    { value: 'created_at', label: 'Date Created' },
-    { value: 'end_time', label: 'End Time' },
-    { value: 'current_price', label: 'Price' }
-  ];
-  
-  // Direction options
-  const directionOptions = [
-    { value: 'desc', label: 'Descending' },
-    { value: 'asc', label: 'Ascending' }
-  ];
-  
-  // Load auctions and categories
-  async function loadCategories() {
-    try {
-      const response = await api.category.list({
-        params: { is_active: true }
-      });
-      
-      if (response && Array.isArray(response.results)) {
-        categories = response.results || [];
-      } else {
-        categories = [];
-        console.warn('Unexpected categories response format:', response);
-      }
-    } catch (err) {
-      console.error('Error loading categories:', err);
-      categories = [];
-    }
-  }
-  
-  async function loadAuctions(page = 1) {
-    loading = true;
+    import { onMount, onDestroy } from 'svelte';
+    import { t } from '$lib/i18n';
+    import { page } from '$app/stores';
+    import { auctionActions, currentAuction, currentBids, loading, errors } from '$lib/stores/auction';
+    import { formatCurrency, formatDate } from '$lib/utils/formatters';
+    import { notifications } from '$lib/stores/notification';
+    import { toast } from '$lib/stores/toast';
+    import { animateSequence } from '$lib/utils/animations';
+    import { goto } from '$app/navigation';
+    import AuctionTimer from '$components/auctions/AuctionTimer.svelte';
+    import BidHistory from '$components/auctions/BidHistory.svelte';
     
-    try {
-      // Filter out empty parameters
-      const cleanFilters = Object.fromEntries(
-        Object.entries(filters).filter(([_, v]) => v !== '')
-      );
-      
-      const params = {
-        page: page,
-        page_size: 12,
-        ...cleanFilters
+    // Helper function to get status color
+    function getStatusColor(status) {
+      const colors = {
+        'active': 'status-success',
+        'pending': 'status-warning',
+        'extended': 'status-info',
+        'closed': 'cosmos-text-dim',
+        'sold': 'status-error',
+        'cancelled': 'status-error'
       };
       
-      const response = await api.auction.list({ params });
-      
-      if (response && Array.isArray(response.results)) {
-        auctions = response.results || [];
-        pagination = {
-          page: page,
-          total_pages: response.total_pages || 1,
-          count: response.count || 0,
-          next: response.next ? page + 1 : null,
-          previous: page > 1 ? page - 1 : null
-        };
-      } else {
-        console.warn('Unexpected auctions response format:', response);
-        auctions = [];
-        pagination = {
-          page: 1,
-          total_pages: 1,
-          count: 0,
-          next: null,
-          previous: null
-        };
-      }
-      
-      error = null;
-    } catch (err) {
-      console.error('Error loading auctions:', err);
-      error = 'Failed to load auctions. Please try again.';
-      auctions = [];
-    } finally {
-      loading = false;
+      return colors[status] || 'cosmos-text-dim';
     }
-  }
-  
-  // Handle filter changes
-  function handleFilterChange(event) {
-    const { name, value } = event.target;
-    filters = { ...filters, [name]: value };
-    loadAuctions(1); // Reset to first page when filter changes
-  }
-  
-  // Clear all filters
-  function clearFilters() {
-    filters = {
-      status: 'ACTIVE',
-      sort_by: 'created_at',
-      direction: 'desc',
-      min_price: '',
-      max_price: '',
-      category: ''
-    };
-    loadAuctions(1);
-  }
-  
-  // Handle pagination
-  function goToPage(page) {
-    if (page < 1 || page > pagination.total_pages) return;
-    loadAuctions(page);
-    // Scroll to top of auctions section
-    if (browser) {
-      setTimeout(() => {
-        document.getElementById('auctions-section')?.scrollIntoView({ behavior: 'smooth' });
-      }, 100);
-    }
-  }
-  
-  // Format currency
-  function formatCurrency(amount, currency = 'USD') {
-    if (amount === undefined || amount === null) return '$0.00';
     
-    try {
-      // Ensure amount is a number
-      const numericAmount = typeof amount === 'string' ? parseFloat(amount) : amount;
-      
-      if (isNaN(numericAmount)) {
-        console.warn('Invalid amount for formatting:', amount);
-        return '$0.00';
-      }
-      
-      return new Intl.NumberFormat('en-US', {
-        style: 'currency',
-        currency: currency
-      }).format(numericAmount);
-    } catch (err) {
-      console.error('Error formatting currency:', err);
-      return '$0.00';
+    // Get auction ID from URL params
+    let auctionId = '';
+    let animElements;
+    let unsubscribe;
+    
+    // Subscribe to page store to get auction ID from URL params
+    $: if ($page && $page.params && $page.params.id) {
+        auctionId = $page.params.id;
+        loadAuctionData();
     }
-  }
-  
-  // Initialize on mount
-  onMount(async () => {
-    // Load categories first
-    await loadCategories();
-    // Then load auctions with default filters
-    await loadAuctions();
-  });
+    
+    // Load auction data from store
+    async function loadAuctionData() {
+        if (!auctionId) return;
+        
+        try {
+            // Load auction details with related data
+            await auctionActions.loadAuctionDetail(
+                auctionId, 
+                true,  // include bids
+                true   // include property
+            );
+            
+            // Check if we need to load bids separately
+            if (!$currentAuction?.recent_bids?.length && $currentAuction) {
+                await auctionActions.loadAuctionBids(auctionId);
+            }
+            
+            // Animate elements when data is loaded
+            if (animElements && $currentAuction) {
+                setTimeout(() => {
+                    animateSequence(animElements, {
+                        animation: 'fadeInUp',
+                        delay: 100,
+                        stagger: 100
+                    });
+                }, 200);
+            }
+            
+        } catch (error) {
+            console.error('Error loading auction:', error);
+            toast.error($t('system_messages.error_loading_auction'));
+        }
+    }
+    
+    // Handle auction timer end
+    function handleAuctionEnd() {
+        // Reload auction data to get updated status
+        loadAuctionData();
+        
+        // Show toast notification
+        toast.info($t('auctions.auction_has_ended'));
+    }
+    
+    // Navigate to bid page
+    function navigateToBidPage() {
+        goto(`/auctions/${auctionId}/bid`);
+    }
+    
+    onMount(() => {
+        // Initialize notification store
+        const notifyCleanup = notifications.init();
+        
+        // Reload auction data if already pre-loaded but might be stale
+        if ($currentAuction && $currentAuction.id === auctionId) {
+            loadAuctionData();
+        }
+        
+        return () => {
+            if (notifyCleanup) notifyCleanup();
+        };
+    });
+    
+    onDestroy(() => {
+        // Reset current auction in store when leaving the page
+        auctionActions.resetCurrentAuction();
+    });
 </script>
 
 <svelte:head>
-  <title>Browse Auctions | GUDIC</title>
-  <meta name="description" content="Browse all active auctions on the GUDIC platform." />
+    {#if $currentAuction}
+        <title>{$currentAuction.title} | {$t('general.site_name')}</title>
+        <meta name="description" content={$currentAuction.description || $t('auctions.auction_details')} />
+    {:else}
+        <title>{$t('auctions.auction_details')} | {$t('general.site_name')}</title>
+        <meta name="description" content={$t('auctions.loading_auction_details')} />
+    {/if}
 </svelte:head>
 
-<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-  <!-- Header Section -->
-  <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-6">
-    <div>
-      <h1 class="text-2xl font-bold text-gray-900 tracking-tight">Browse Auctions</h1>
-      <p class="mt-1 text-gray-600">Find and bid on auctions that match your interests</p>
-    </div>
-    
-    <!-- Create Auction button for sellers and admins -->
-    {#if browser && $isAuthenticated && ($primaryRole?.code === 'seller' || $primaryRole?.code === 'admin')}
-      <a 
-        href="/auctions/create" 
-        class="mt-3 md:mt-0 shadow-sm hover:shadow transition-shadow duration-200 inline-flex items-center justify-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
-      >
-        Create Auction
-      </a>
-    {/if}
-  </div>
-  
-  <!-- Filters -->
-  <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-5 mb-6 transition-all duration-200 hover:shadow">
-    <div class="flex justify-between items-center mb-4">
-      <h2 class="text-lg font-semibold text-gray-900">Filters</h2>
-      <button 
-        type="button"
-        class="text-gray-600 hover:text-gray-800 hover:bg-gray-50 inline-flex items-center justify-center px-3 py-1.5 border border-gray-300 text-sm font-medium rounded-md focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
-        on:click={clearFilters}
-      >
-        Clear Filters
-      </button>
-    </div>
-    
-    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-      <!-- Category filter -->
-      <div class="space-y-1">
-        <label for="category" class="block text-sm font-medium text-gray-700">
-          Category
-        </label>
-        <select
-          id="category"
-          name="category"
-          value={filters.category || ''}
-          on:change={handleFilterChange}
-          class="block w-full rounded-lg border-gray-300 shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
-        >
-          <option value="">All Categories</option>
-          {#each categories as category}
-            <option value={category.slug}>{category.name}</option>
-          {/each}
-        </select>
-      </div>
-      
-      <!-- Status filter -->
-      <div class="space-y-1">
-        <label for="status" class="block text-sm font-medium text-gray-700">
-          Status
-        </label>
-        <select
-          id="status"
-          name="status"
-          value={filters.status || ''}
-          on:change={handleFilterChange}
-          class="block w-full rounded-lg border-gray-300 shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
-        >
-          <option value="">All Statuses</option>
-          {#each statusOptions as option}
-            <option value={option.value}>{option.label}</option>
-          {/each}
-        </select>
-      </div>
-      
-      <!-- Price range filters -->
-      <div class="space-y-1">
-        <label for="min_price" class="block text-sm font-medium text-gray-700">
-          Min Price
-        </label>
-        <input
-          type="number"
-          id="min_price"
-          name="min_price"
-          value={filters.min_price || ''}
-          on:change={handleFilterChange}
-          min="0"
-          placeholder="Min Price"
-          class="block w-full rounded-lg border-gray-300 shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
-        />
-      </div>
-      
-      <div class="space-y-1">
-        <label for="max_price" class="block text-sm font-medium text-gray-700">
-          Max Price
-        </label>
-        <input
-          type="number"
-          id="max_price"
-          name="max_price"
-          value={filters.max_price || ''}
-          on:change={handleFilterChange}
-          min="0"
-          placeholder="Max Price"
-          class="block w-full rounded-lg border-gray-300 shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
-        />
-      </div>
-      
-      <!-- Search -->
-      <div class="md:col-span-2 space-y-1">
-        <label for="search" class="block text-sm font-medium text-gray-700">
-          Search
-        </label>
-        <div class="relative">
-          <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-            </svg>
-          </div>
-          <input
-            type="text"
-            id="search"
-            name="search"
-            value={filters.search || ''}
-            on:change={handleFilterChange}
-            placeholder="Search auctions..."
-            class="block w-full pl-10 pr-3 py-2 rounded-lg border-gray-300 shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
-          />
+<!-- Main content -->
+<div class="container mx-auto px-4 py-8">
+    {#if $loading.currentAuctionLoading}
+        <!-- Loading state -->
+        <div class="flex justify-center p-20">
+            <div class="animate-pulse-slow flex flex-col items-center">
+                <div class="h-16 w-16 rounded-full bg-primary bg-opacity-20"></div>
+                <p class="mt-4 text-cosmos-text-muted">{$t('general.loading')}</p>
+            </div>
         </div>
-      </div>
-      
-      <!-- Sort options -->
-      <div class="space-y-1">
-        <label for="sort_by" class="block text-sm font-medium text-gray-700">
-          Sort By
-        </label>
-        <select
-          id="sort_by"
-          name="sort_by"
-          value={filters.sort_by || 'created_at'}
-          on:change={handleFilterChange}
-          class="block w-full rounded-lg border-gray-300 shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
-        >
-          {#each sortOptions as option}
-            <option value={option.value}>{option.label}</option>
-          {/each}
-        </select>
-      </div>
-      
-      <!-- Direction -->
-      <div class="space-y-1">
-        <label for="direction" class="block text-sm font-medium text-gray-700">
-          Order
-        </label>
-        <select
-          id="direction"
-          name="direction"
-          value={filters.direction || 'desc'}
-          on:change={handleFilterChange}
-          class="block w-full rounded-lg border-gray-300 shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
-        >
-          {#each directionOptions as option}
-            <option value={option.value}>{option.label}</option>
-          {/each}
-        </select>
-      </div>
-    </div>
-  </div>
-  
-  <!-- Auctions list -->
-  <div id="auctions-section" class="min-h-[400px]">
-    {#if loading}
-      <div class="flex justify-center items-center py-12">
-        <Spinner size="lg" />
-      </div>
-    {:else if error}
-      <div class="bg-red-50 border border-red-200 p-6 rounded-xl text-red-600 mb-6">
-        <div class="flex flex-col items-center">
-          <svg xmlns="http://www.w3.org/2000/svg" class="h-12 w-12 text-red-500 mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-          </svg>
-          <p class="text-center font-medium mb-2">{error}</p>
-          <p class="text-sm text-red-500 mb-4">There was a problem loading the auctions.</p>
-          <button 
-            type="button"
-            class="inline-flex items-center justify-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
-            on:click={() => loadAuctions(1)}
-          >
-            Try Again
-          </button>
+    {:else if $errors.detailError}
+        <!-- Error state -->
+        <div class="rounded-xl bg-status-error bg-opacity-10 p-6 text-center">
+            <p class="text-status-error">{$errors.detailError}</p>
+            <button 
+                class="mt-4 rounded-lg bg-primary px-4 py-2 text-white hover:bg-primary-dark"
+                on:click={loadAuctionData}
+            >
+                {$t('general.retry')}
+            </button>
         </div>
-      </div>
-    {:else if auctions.length === 0}
-      <div class="bg-white border border-gray-200 rounded-xl p-8 text-center shadow-sm">
-        <svg xmlns="http://www.w3.org/2000/svg" class="h-14 w-14 text-gray-400 mx-auto mb-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
-        </svg>
-        <h3 class="text-xl font-medium text-gray-900 mb-2">No auctions found</h3>
-        <p class="text-gray-500 max-w-md mx-auto mb-5">Try changing your filters or check back later for new auctions.</p>
-        <button 
-          type="button"
-          class="inline-flex items-center justify-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md shadow-sm text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
-          on:click={clearFilters}
-        >
-          Clear Filters
-        </button>
-      </div>
+    {:else if $currentAuction}
+        <!-- Auction Header -->
+        <div class="mb-8 flex flex-col lg:flex-row lg:items-center lg:justify-between">
+            <div>
+                <h1 class="text-3xl font-bold text-cosmos-text">{$currentAuction.title}</h1>
+                <p class="mt-2 text-cosmos-text-muted">
+                    {$currentAuction.related_property?.title || ''}
+                </p>
+                
+                <div class="mt-4 flex flex-wrap gap-3">
+                    <span class={`rounded-full px-3 py-1 text-sm text-white bg-${getStatusColor($currentAuction.status)}`}>
+                        {$currentAuction.status_display || $t(`auctions.status.${$currentAuction.status}`)}
+                    </span>
+                    
+                    {#if $currentAuction.related_property}
+                        <span class="rounded-full bg-property-{$currentAuction.related_property.property_type} bg-opacity-80 px-3 py-1 text-sm text-white">
+                            {$currentAuction.related_property.property_type_display || $t(`properties.types.${$currentAuction.related_property.property_type}`)}
+                        </span>
+                    {/if}
+                    
+                    {#if $currentAuction.is_featured}
+                        <span class="rounded-full bg-[#FFD700] px-3 py-1 text-sm text-cosmos-bg-dark">
+                            {$t('general.featured')}
+                        </span>
+                    {/if}
+                </div>
+            </div>
+            
+            <div class="mt-6 lg:mt-0">
+                {#if isActive}
+                    <div class="rounded-xl bg-primary bg-opacity-5 p-4">
+                        <AuctionTimer 
+                            endTime={$currentAuction.end_date}
+                            status={$currentAuction.status}
+                            on:end={handleAuctionEnd}
+                        />
+                    </div>
+                {:else if isPending}
+                    <div class="rounded-xl bg-status-warning bg-opacity-5 p-4">
+                        <AuctionTimer 
+                            endTime={$currentAuction.start_date}
+                            status={$currentAuction.status}
+                            on:end={handleAuctionEnd}
+                        />
+                    </div>
+                {:else}
+                    <div class="rounded-xl bg-cosmos-bg-light p-4 text-center">
+                        <p class="text-cosmos-text-muted">
+                            {$t('auctions.ended')}
+                        </p>
+                    </div>
+                {/if}
+            </div>
+        </div>
+        
+        <!-- Main Content -->
+        <div class="grid grid-cols-1 gap-8 lg:grid-cols-3">
+            <!-- Left Column - Images and Description -->
+            <div class="lg:col-span-2">
+                <!-- Main Image -->
+                <div class="mb-6 overflow-hidden rounded-xl">
+                    <img 
+                        src={$currentAuction.featured_image_url || '/images/placeholders/auction-placeholder.jpg'} 
+                        alt={$currentAuction.title}
+                        class="w-full object-cover"
+                    />
+                </div>
+                
+                <!-- Image Gallery -->
+                {#if $currentAuction.related_property && $currentAuction.related_property.images && $currentAuction.related_property.images.length > 1}
+                    <div class="mb-8 grid grid-cols-4 gap-2">
+                        {#each $currentAuction.related_property.images.slice(0, 4) as image, i}
+                            <div class="overflow-hidden rounded-lg">
+                                <img 
+                                    src={image.path} 
+                                    alt={`${$currentAuction.related_property.title} - ${i + 1}`}
+                                    class="h-24 w-full cursor-pointer object-cover hover:opacity-90"
+                                />
+                            </div>
+                        {/each}
+                    </div>
+                {/if}
+                
+                <!-- Auction Description -->
+                <div class="mb-8 rounded-xl bg-cosmos-bg-light bg-opacity-20 p-6 backdrop-blur-sm">
+                    <h2 class="mb-4 text-xl font-bold text-cosmos-text">{$t('auctions.auction_details')}</h2>
+                    <p class="mb-4 text-cosmos-text">{$currentAuction.description}</p>
+                    
+                    <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                        <div>
+                            <p class="text-sm text-cosmos-text-muted">{$t('auctions.auction_type')}</p>
+                            <p class="font-medium text-cosmos-text">{$currentAuction.auction_type_display}</p>
+                        </div>
+                        
+                        <div>
+                            <p class="text-sm text-cosmos-text-muted">{$t('auctions.start_date')}</p>
+                            <p class="font-medium text-cosmos-text">{formatDate($currentAuction.start_date)}</p>
+                        </div>
+                        
+                        <div>
+                            <p class="text-sm text-cosmos-text-muted">{$t('auctions.end_date')}</p>
+                            <p class="font-medium text-cosmos-text">{formatDate($currentAuction.end_date)}</p>
+                        </div>
+                        
+                        <div>
+                            <p class="text-sm text-cosmos-text-muted">{$t('auctions.starting_price')}</p>
+                            <p class="font-medium text-cosmos-text">{formatCurrency($currentAuction.starting_price)}</p>
+                        </div>
+                        
+                        <div>
+                            <p class="text-sm text-cosmos-text-muted">{$t('auctions.current_bid')}</p>
+                            <p class="font-bold text-primary">{formatCurrency($currentAuction.current_bid)}</p>
+                        </div>
+                        
+                        <div>
+                            <p class="text-sm text-cosmos-text-muted">{$t('auctions.min_increment')}</p>
+                            <p class="font-medium text-cosmos-text">{formatCurrency($currentAuction.min_bid_increment)}</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Bid History Section -->
+                <div class="mb-8">
+                    <BidHistory 
+                        {auctionId} 
+                        bids={$currentBids || []}
+                        isLoading={$loading.bidsLoading}
+                        winningBid={$currentBids && $currentBids.length > 0 ? $currentBids[0] : null}
+                        onRefresh={() => auctionActions.loadAuctionBids(auctionId)}
+                    />
+                </div>
+            </div>
+            
+            <!-- Right Column - Bid Form and Summary -->
+            <div>
+                <!-- Bid Form Card -->
+                <div class="mb-6 rounded-xl bg-cosmos-bg-light bg-opacity-30 p-6 backdrop-blur-sm">
+                    <h3 class="mb-4 text-xl font-bold text-cosmos-text">{$t('auctions.place_bid')}</h3>
+                    
+                    <div class="mb-4 space-y-4">
+                        <div>
+                            <p class="text-sm text-cosmos-text-muted">{$t('auctions.current_bid')}</p>
+                            <p class="text-2xl font-bold text-primary">{formatCurrency($currentAuction.current_bid)}</p>
+                        </div>
+                        
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <p class="text-sm text-cosmos-text-muted">{$t('auctions.bid_count')}</p>
+                                <p class="text-lg font-medium text-cosmos-text">{$currentAuction.bid_count}</p>
+                            </div>
+                            
+                            <div>
+                                <p class="text-sm text-cosmos-text-muted">{$t('auctions.min_increment')}</p>
+                                <p class="text-lg font-medium text-cosmos-text">{formatCurrency($currentAuction.min_bid_increment)}</p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="mt-6">
+                        {#if canBid}
+                            <a 
+                                href={`/auctions/${auctionId}/bid`}
+                                class="block w-full rounded-lg bg-primary py-3 text-center font-medium text-white transition hover:bg-primary-dark"
+                            >
+                                {$t('auctions.place_bid')}
+                            </a>
+                        {:else if isPending}
+                            <div class="rounded-lg bg-status-warning bg-opacity-10 p-4 text-center">
+                                <p class="text-status-warning">
+                                    {$t('auctions.starts_in')}
+                                </p>
+                            </div>
+                        {:else if isEnded}
+                            <div class="rounded-lg bg-cosmos-text-dim bg-opacity-10 p-4 text-center">
+                                <p class="text-cosmos-text-dim">
+                                    {$t('auctions.ended')}
+                                </p>
+                            </div>
+                        {/if}
+                    </div>
+                </div>
+                
+                <!-- Property Summary Card -->
+                {#if $currentAuction.related_property}
+                    <div class="rounded-xl bg-cosmos-bg-light bg-opacity-30 p-6 backdrop-blur-sm">
+                        <h3 class="mb-4 text-lg font-bold text-cosmos-text">{$t('properties.property_details')}</h3>
+                        
+                        <div class="space-y-4">
+                            <div class="flex items-center">
+                                <div class="mr-3 h-10 w-10 flex-shrink-0 rounded-full bg-property-{$currentAuction.related_property.property_type} bg-opacity-20 p-2">
+                                    <!-- Icon based on property type -->
+                                    <svg class="h-full w-full text-property-{$currentAuction.related_property.property_type}" fill="currentColor" viewBox="0 0 20 20">
+                                        <path d="M10.707 2.293a1 1 0 00-1.414 0l-7 7a1 1 0 001.414 1.414L4 10.414V17a1 1 0 001 1h2a1 1 0 001-1v-2a1 1 0 011-1h2a1 1 0 011 1v2a1 1 0 001 1h2a1 1 0 001-1v-6.586l.293.293a1 1 0 001.414-1.414l-7-7z" />
+                                    </svg>
+                                </div>
+                                
+                                <div class="flex-grow">
+                                    <p class="text-sm text-cosmos-text-muted">{$t('properties.property_type')}</p>
+                                    <p class="font-medium text-cosmos-text">{$currentAuction.related_property.property_type_display}</p>
+                                </div>
+                            </div>
+                            
+                            <div class="flex items-center">
+                                <div class="mr-3 h-10 w-10 flex-shrink-0 rounded-full bg-primary bg-opacity-20 p-2">
+                                    <!-- Location icon -->
+                                    <svg class="h-full w-full text-primary" fill="currentColor" viewBox="0 0 20 20">
+                                        <path fill-rule="evenodd" d="M5.05 4.05a7 7 0 119.9 9.9L10 18.9l-4.95-4.95a7 7 0 010-9.9zM10 11a2 2 0 100-4 2 2 0 000 4z" clip-rule="evenodd" />
+                                    </svg>
+                                </div>
+                                
+                                <div class="flex-grow">
+                                    <p class="text-sm text-cosmos-text-muted">{$t('properties.property_location')}</p>
+                                    <p class="font-medium text-cosmos-text">{$currentAuction.related_property.city}, {$currentAuction.related_property.district}</p>
+                                </div>
+                            </div>
+                            
+                            <div class="flex items-center">
+                                <div class="mr-3 h-10 w-10 flex-shrink-0 rounded-full bg-primary bg-opacity-20 p-2">
+                                    <!-- Area icon -->
+                                    <svg class="h-full w-full text-primary" fill="currentColor" viewBox="0 0 20 20">
+                                        <path fill-rule="evenodd" d="M4 4a2 2 0 012-2h8a2 2 0 012 2v12a1 1 0 01-1 1h-2a1 1 0 01-1-1v-2a1 1 0 00-1-1H9a1 1 0 00-1 1v2a1 1 0 01-1 1H5a1 1 0 01-1-1V4zm3 1h2v2H7V5zm2 4H7v2h2V9zm2-4h2v2h-2V5zm2 4h-2v2h2V9z" clip-rule="evenodd" />
+                                    </svg>
+                                </div>
+                                
+                                <div class="flex-grow">
+                                    <p class="text-sm text-cosmos-text-muted">{$t('properties.property_area')}</p>
+                                    <p class="font-medium text-cosmos-text">{$currentAuction.related_property.area} m²</p>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="mt-6">
+                            <a 
+                                href={`/properties/${$currentAuction.related_property.id}`}
+                                class="block w-full rounded-lg bg-primary bg-opacity-10 py-3 text-center text-sm font-medium text-primary transition hover:bg-primary hover:text-white"
+                            >
+                                {$t('properties.view_property')}
+                            </a>
+                        </div>
+                    </div>
+                {/if}
+            </div>
+        </div>
     {:else}
-      <!-- Results Summary -->
-      <div class="text-sm text-gray-500 mb-4">
-        Showing <span class="font-medium text-gray-700">{auctions.length}</span> of <span class="font-medium text-gray-700">{pagination.count}</span> auctions
-      </div>
-      
-      <!-- Auction grid -->
-      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
-        {#each auctions as auction (auction.id)}
-          <AuctionCard {auction} />
-        {/each}
-      </div>
-      
-      <!-- Pagination -->
-      {#if pagination.total_pages > 1}
-        <div class="flex justify-center mt-8">
-          <nav class="relative z-0 inline-flex rounded-md shadow-sm" aria-label="Pagination">
-            <!-- Previous page -->
-            <button
-              type="button"
-              class="relative inline-flex items-center px-3 py-2 rounded-l-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50 transition-colors {!pagination.previous ? 'opacity-50 cursor-not-allowed' : ''}"
-              on:click={() => pagination.previous && goToPage(pagination.previous)}
-              disabled={!pagination.previous}
-              aria-label="Previous page"
-            >
-              <svg class="h-5 w-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
-                <path fill-rule="evenodd" d="M12.707 5.293a1 1 0 010 1.414L9.414 10l3.293 3.293a1 1 0 01-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z" clip-rule="evenodd" />
-              </svg>
-            </button>
-            
-            <!-- Page numbers -->
-            <span class="relative inline-flex items-center px-4 py-2 border border-gray-300 bg-white text-sm font-medium text-gray-700">
-              Page {pagination.page} of {pagination.total_pages}
-            </span>
-            
-            <!-- Next page -->
-            <button
-              type="button"
-              class="relative inline-flex items-center px-3 py-2 rounded-r-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50 transition-colors {!pagination.next ? 'opacity-50 cursor-not-allowed' : ''}"
-              on:click={() => pagination.next && goToPage(pagination.next)}
-              disabled={!pagination.next}
-              aria-label="Next page"
-            >
-              <svg class="h-5 w-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
-                <path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd" />
-              </svg>
-            </button>
-          </nav>
+        <!-- No auction data found -->
+        <div class="flex h-32 items-center justify-center">
+            <p class="text-cosmos-text-muted">{$t('general.not_found')}</p>
         </div>
-      {/if}
     {/if}
-  </div>
 </div>
+
+<!-- Floating Bid Button - Only show for active auctions -->
+{#if $currentAuction && $currentAuction.status === 'active'}
+    <div class="fixed bottom-6 right-6 z-header sm:bottom-8 sm:right-8">
+        <button
+            on:click={navigateToBidPage}
+            class="flex items-center gap-2 rounded-full bg-primary px-6 py-3 text-white shadow-glow transition hover:bg-primary-dark"
+        >
+            <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+            </svg>
+            <span class="font-medium">{$t('auctions.place_bid')}</span>
+        </button>
+    </div>
+{/if}
+
+<!-- Error toast displayed when there's an error loading auction -->
+{#if $errors.detailError}
+    <div class="toast-error">{$errors.detailError}</div>
+{/if}
