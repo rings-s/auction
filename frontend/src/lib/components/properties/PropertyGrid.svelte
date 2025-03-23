@@ -1,11 +1,21 @@
 <!-- src/lib/components/properties/PropertyGrid.svelte -->
 <script>
+  /**
+   * Property Grid Component
+   * Displays a filterable, sortable grid of property listings with pagination.
+   */
   import { onMount } from 'svelte';
   import { t } from '$lib/i18n';
-  import api from '$lib/services/api';
-  import PropertyCard from './PropertyCard.svelte';
-  import LoadingIndicator from '$lib/components/ui/LoadingIndicator.svelte';
   import { fade, slide } from 'svelte/transition';
+  
+  import PropertyCard from './PropertyCard.svelte';
+  import Button from '$lib/components/ui/Button.svelte';
+  import Input from '$lib/components/ui/Input.svelte';
+  import Select from '$lib/components/ui/Select.svelte';
+  import Card from '$lib/components/ui/Card.svelte';
+  import Alert from '$lib/components/ui/Alert.svelte';
+  import Spinner from '$lib/components/ui/Spinner.svelte';
+  import api from '$lib/services/api';
 
   // Props with default values
   export let initialFilters = {
@@ -27,6 +37,7 @@
   export let pageSize = 12;
   export let loadingPlaceholders = 6;
   export let autoPaginate = true;
+  export let apiEndpoint = 'properties/';
   
   // State
   let properties = [];
@@ -62,11 +73,31 @@
     { value: 'mixed_use', label: $t('properties.types.mixed_use') }
   ];
   
+  const bedroomOptions = [
+    { value: '', label: $t('general.any') },
+    { value: '1', label: '1+' },
+    { value: '2', label: '2+' },
+    { value: '3', label: '3+' },
+    { value: '4', label: '4+' },
+    { value: '5', label: '5+' }
+  ];
+  
+  const bathroomOptions = [
+    { value: '', label: $t('general.any') },
+    { value: '1', label: '1+' },
+    { value: '2', label: '2+' },
+    { value: '3', label: '3+' },
+    { value: '4', label: '4+' }
+  ];
+  
   const sortOptions = [
-    { value: 'created_at', label: $t('properties.sort_options.newest') },
-    { value: 'estimated_value', label: $t('properties.sort_options.price') },
-    { value: 'area', label: $t('properties.sort_options.area') },
-    { value: 'views_count', label: $t('properties.sort_options.popular') }
+    { value: 'created_at-desc', label: $t('properties.sort_options.newest') },
+    { value: 'created_at-asc', label: $t('properties.sort_options.oldest') },
+    { value: 'estimated_value-asc', label: $t('properties.sort_options.price_low') },
+    { value: 'estimated_value-desc', label: $t('properties.sort_options.price_high') },
+    { value: 'area-asc', label: $t('properties.sort_options.area_small') },
+    { value: 'area-desc', label: $t('properties.sort_options.area_large') },
+    { value: 'views_count-desc', label: $t('properties.sort_options.popular') }
   ];
   
   // Load properties with current filters and pagination
@@ -96,7 +127,7 @@
         }
       });
       
-      const response = await api.get('properties/', params);
+      const response = await api.get(apiEndpoint, params);
       
       if (response?.data?.results) {
         // Update properties data based on append mode
@@ -178,7 +209,7 @@
   
   // Set up infinite scroll
   function setupInfiniteScroll() {
-    if (!autoPaginate || typeof window === 'undefined') return;
+    if (!autoPaginate || typeof window === 'undefined' || !window.IntersectionObserver) return;
     
     const observer = new IntersectionObserver(
       (entries) => {
@@ -224,19 +255,21 @@
 
 <div class="property-grid">
   <!-- Header -->
-  <div class="mb-6 flex items-center justify-between">
-    <h2 class="text-2xl font-bold text-cosmos-text">{title}</h2>
-    
-    {#if !loading && properties.length > 0}
-      <p class="text-sm text-cosmos-text-muted">
-        {$t('properties.showing_results').replace('{0}', properties.length).replace('{1}', totalProperties)}
-      </p>
-    {/if}
-  </div>
+  {#if title}
+    <div class="mb-6 flex items-center justify-between">
+      <h2 class="text-2xl font-bold text-cosmos-text">{title}</h2>
+      
+      {#if !loading && properties.length > 0}
+        <p class="text-sm text-cosmos-text-muted">
+          {$t('properties.showing_results').replace('{0}', properties.length).replace('{1}', totalProperties)}
+        </p>
+      {/if}
+    </div>
+  {/if}
   
   {#if showFilters}
     <!-- Desktop Filters -->
-    <div class="mb-6 hidden rounded-xl bg-cosmos-bg-light bg-opacity-30 p-4 backdrop-blur-sm md:block">
+    <Card bordered={true} padding={true} class="mb-6 hidden md:block">
       <div class="mb-4 flex items-center justify-between">
         <div class="flex items-center space-x-4">
           <h3 class="text-lg font-bold text-cosmos-text">{$t('properties.filter_properties')}</h3>
@@ -249,189 +282,136 @@
         </div>
         
         <div class="flex space-x-2">
-          <button
-            on:click={resetFilters}
-            class="rounded-lg border border-cosmos-bg-light px-3 py-1 text-sm text-cosmos-text-muted hover:text-cosmos-text"
+          <Button
+            variant="secondary"
+            size="sm"
+            onClick={resetFilters}
           >
             {$t('general.reset')}
-          </button>
+          </Button>
           
-          <button
-            on:click={applyFilters}
-            class="rounded-lg bg-primary px-3 py-1 text-sm text-white hover:bg-primary-dark"
+          <Button
+            variant="primary"
+            size="sm"
+            onClick={applyFilters}
           >
             {$t('general.apply')}
-          </button>
+          </Button>
         </div>
       </div>
       
       <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
         <!-- Property Type -->
-        <div>
-          <label for="property_type" class="mb-1 block text-sm font-medium text-cosmos-text-muted">
-            {$t('properties.property_type')}
-          </label>
-          <select
-            id="property_type"
-            bind:value={filters.property_type}
-            class="w-full rounded-lg border border-cosmos-bg-light bg-cosmos-bg p-2 text-cosmos-text outline-none focus:border-primary"
-          >
-            {#each propertyTypeOptions as option}
-              <option value={option.value}>{option.label}</option>
-            {/each}
-          </select>
-        </div>
+        <Select
+          name="property_type"
+          label={$t('properties.property_type')}
+          options={propertyTypeOptions}
+          value={filters.property_type}
+        />
         
         <!-- Status -->
-        <div>
-          <label for="status" class="mb-1 block text-sm font-medium text-cosmos-text-muted">
-            {$t('properties.property_status')}
-          </label>
-          <select
-            id="status"
-            bind:value={filters.status}
-            class="w-full rounded-lg border border-cosmos-bg-light bg-cosmos-bg p-2 text-cosmos-text outline-none focus:border-primary"
-          >
-            {#each statusOptions as option}
-              <option value={option.value}>{option.label}</option>
-            {/each}
-          </select>
-        </div>
+        <Select
+          name="status"
+          label={$t('properties.property_status')}
+          options={statusOptions}
+          value={filters.status}
+        />
         
         <!-- Bedrooms -->
-        <div>
-          <label for="bedrooms" class="mb-1 block text-sm font-medium text-cosmos-text-muted">
-            {$t('properties.bedrooms')}
-          </label>
-          <select
-            id="bedrooms"
-            bind:value={filters.bedrooms}
-            class="w-full rounded-lg border border-cosmos-bg-light bg-cosmos-bg p-2 text-cosmos-text outline-none focus:border-primary"
-          >
-            <option value="">{$t('general.any')}</option>
-            <option value="1">1+</option>
-            <option value="2">2+</option>
-            <option value="3">3+</option>
-            <option value="4">4+</option>
-            <option value="5">5+</option>
-          </select>
-        </div>
+        <Select
+          name="bedrooms"
+          label={$t('properties.bedrooms')}
+          options={bedroomOptions}
+          value={filters.bedrooms}
+        />
         
         <!-- Bathrooms -->
-        <div>
-          <label for="bathrooms" class="mb-1 block text-sm font-medium text-cosmos-text-muted">
-            {$t('properties.bathrooms')}
-          </label>
-          <select
-            id="bathrooms"
-            bind:value={filters.bathrooms}
-            class="w-full rounded-lg border border-cosmos-bg-light bg-cosmos-bg p-2 text-cosmos-text outline-none focus:border-primary"
-          >
-            <option value="">{$t('general.any')}</option>
-            <option value="1">1+</option>
-            <option value="2">2+</option>
-            <option value="3">3+</option>
-            <option value="4">4+</option>
-          </select>
-        </div>
+        <Select
+          name="bathrooms"
+          label={$t('properties.bathrooms')}
+          options={bathroomOptions}
+          value={filters.bathrooms}
+        />
         
         <!-- City -->
-        <div>
-          <label for="city" class="mb-1 block text-sm font-medium text-cosmos-text-muted">
-            {$t('properties.property_city')}
-          </label>
-          <input
-            type="text"
-            id="city"
-            bind:value={filters.city}
-            placeholder={$t('properties.enter_city')}
-            class="w-full rounded-lg border border-cosmos-bg-light bg-cosmos-bg p-2 text-cosmos-text outline-none focus:border-primary"
-          />
-        </div>
+        <Input
+          type="text"
+          name="city"
+          label={$t('properties.property_city')}
+          placeholder={$t('properties.enter_city')}
+          bind:value={filters.city}
+        />
         
         <!-- District -->
-        <div>
-          <label for="district" class="mb-1 block text-sm font-medium text-cosmos-text-muted">
-            {$t('properties.property_district')}
-          </label>
-          <input
-            type="text"
-            id="district"
-            bind:value={filters.district}
-            placeholder={$t('properties.enter_district')}
-            class="w-full rounded-lg border border-cosmos-bg-light bg-cosmos-bg p-2 text-cosmos-text outline-none focus:border-primary"
-          />
-        </div>
+        <Input
+          type="text"
+          name="district"
+          label={$t('properties.property_district')}
+          placeholder={$t('properties.enter_district')}
+          bind:value={filters.district}
+        />
         
         <!-- Price Range -->
         <div>
-          <label class="mb-1 block text-sm font-medium text-cosmos-text-muted">
+          <label class="mb-1.5 block text-sm font-medium text-cosmos-text">
             {$t('properties.price_range')}
           </label>
           <div class="flex space-x-2">
-            <input
+            <Input
               type="number"
-              bind:value={filters.min_price}
               placeholder={$t('general.min')}
-              class="w-1/2 rounded-lg border border-cosmos-bg-light bg-cosmos-bg p-2 text-cosmos-text outline-none focus:border-primary"
+              bind:value={filters.min_price}
+              class="w-1/2"
             />
-            <input
+            <Input
               type="number"
-              bind:value={filters.max_price}
               placeholder={$t('general.max')}
-              class="w-1/2 rounded-lg border border-cosmos-bg-light bg-cosmos-bg p-2 text-cosmos-text outline-none focus:border-primary"
+              bind:value={filters.max_price}
+              class="w-1/2"
             />
           </div>
         </div>
         
         <!-- Area Range -->
         <div>
-          <label class="mb-1 block text-sm font-medium text-cosmos-text-muted">
+          <label class="mb-1.5 block text-sm font-medium text-cosmos-text">
             {$t('properties.area_range')} (m²)
           </label>
           <div class="flex space-x-2">
-            <input
+            <Input
               type="number"
-              bind:value={filters.min_area}
               placeholder={$t('general.min')}
-              class="w-1/2 rounded-lg border border-cosmos-bg-light bg-cosmos-bg p-2 text-cosmos-text outline-none focus:border-primary"
+              bind:value={filters.min_area}
+              class="w-1/2"
             />
-            <input
+            <Input
               type="number"
-              bind:value={filters.max_area}
               placeholder={$t('general.max')}
-              class="w-1/2 rounded-lg border border-cosmos-bg-light bg-cosmos-bg p-2 text-cosmos-text outline-none focus:border-primary"
+              bind:value={filters.max_area}
+              class="w-1/2"
             />
           </div>
         </div>
         
         <!-- Sorting -->
-        <div>
-          <label for="sort_by" class="mb-1 block text-sm font-medium text-cosmos-text-muted">
-            {$t('general.sort')}
-          </label>
-          <select
-            id="sort_by"
-            bind:value={sortValue}
-            on:change={handleSortChange}
-            class="w-full rounded-lg border border-cosmos-bg-light bg-cosmos-bg p-2 text-cosmos-text outline-none focus:border-primary"
-          >
-            {#each sortOptions as option}
-              <option value={`${option.value}-asc`}>{option.label} ({$t('general.asc')})</option>
-              <option value={`${option.value}-desc`}>{option.label} ({$t('general.desc')})</option>
-            {/each}
-          </select>
-        </div>
+        <Select
+          name="sort_by"
+          label={$t('general.sort')}
+          options={sortOptions}
+          value={sortValue}
+          onChange={handleSortChange}
+        />
       </div>
-    </div>
+    </Card>
     
     <!-- Mobile Filters Toggle -->
     <div class="mb-4 flex items-center justify-between md:hidden">
-      <button
-        on:click={() => showMobileFilters = !showMobileFilters}
-        class="flex items-center rounded-lg bg-cosmos-bg-light px-3 py-2 text-sm text-cosmos-text"
+      <Button
+        variant="secondary"
+        onClick={() => showMobileFilters = !showMobileFilters}
+        size="sm"
       >
-        <svg class="mr-2 h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <svg class="mr-2 h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" />
         </svg>
         {$t('general.filter')}
@@ -441,31 +421,22 @@
             {activeFiltersCount}
           </span>
         {/if}
-      </button>
+      </Button>
       
       <!-- Mobile Sort -->
-      <div class="relative">
-        <select
-          bind:value={sortValue}
-          on:change={handleSortChange}
-          class="rounded-lg border border-cosmos-bg-light bg-cosmos-bg py-2 pl-8 pr-8 text-sm text-cosmos-text"
-        >
-          {#each sortOptions as option}
-            <option value={`${option.value}-asc`}>{option.label} ↑</option>
-            <option value={`${option.value}-desc`}>{option.label} ↓</option>
-          {/each}
-        </select>
-        <div class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-2">
-          <svg class="h-4 w-4 text-cosmos-text-muted" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4" />
-          </svg>
-        </div>
-      </div>
+      <Select
+        name="sort_mobile"
+        options={sortOptions}
+        value={sortValue}
+        onChange={handleSortChange}
+        size="sm"
+        className="w-auto min-w-[180px]"
+      />
     </div>
     
     <!-- Mobile Filters Modal -->
     {#if showMobileFilters}
-      <div class="fixed inset-0 z-modal flex items-end bg-cosmos-bg-dark bg-opacity-80 p-4 md:hidden" transition:fade={{ duration: 200 }}>
+      <div class="fixed inset-0 z-50 flex items-end bg-cosmos-bg-dark bg-opacity-80 p-4 md:hidden" transition:fade={{ duration: 200 }}>
         <div 
           class="w-full rounded-t-xl bg-cosmos-bg p-4"
           transition:slide={{ duration: 300 }}
@@ -473,154 +444,113 @@
           <div class="flex items-center justify-between border-b border-cosmos-bg-light pb-4">
             <h3 class="text-lg font-bold text-cosmos-text">{$t('properties.filter_properties')}</h3>
             
-            <button
-              on:click={() => showMobileFilters = false}
-              class="rounded-full p-1 text-cosmos-text-muted hover:bg-cosmos-bg-light hover:text-cosmos-text"
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => showMobileFilters = false}
+              ariaLabel={$t('general.close')}
             >
-              <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
               </svg>
-            </button>
+            </Button>
           </div>
           
           <div class="max-h-[70vh] overflow-y-auto py-4">
             <div class="space-y-4">
               <!-- Property Type -->
-              <div>
-                <label for="m-property_type" class="mb-1 block text-sm font-medium text-cosmos-text-muted">
-                  {$t('properties.property_type')}
-                </label>
-                <select
-                  id="m-property_type"
-                  bind:value={filters.property_type}
-                  class="w-full rounded-lg border border-cosmos-bg-light bg-cosmos-bg-light p-3 text-cosmos-text outline-none focus:border-primary"
-                >
-                  {#each propertyTypeOptions as option}
-                    <option value={option.value}>{option.label}</option>
-                  {/each}
-                </select>
-              </div>
+              <Select
+                name="property_type_mobile"
+                label={$t('properties.property_type')}
+                options={propertyTypeOptions}
+                value={filters.property_type}
+                bind:value={filters.property_type}
+              />
               
               <!-- Status -->
-              <div>
-                <label for="m-status" class="mb-1 block text-sm font-medium text-cosmos-text-muted">
-                  {$t('properties.property_status')}
-                </label>
-                <select
-                  id="m-status"
-                  bind:value={filters.status}
-                  class="w-full rounded-lg border border-cosmos-bg-light bg-cosmos-bg-light p-3 text-cosmos-text outline-none focus:border-primary"
-                >
-                  {#each statusOptions as option}
-                    <option value={option.value}>{option.label}</option>
-                  {/each}
-                </select>
-              </div>
+              <Select
+                name="status_mobile"
+                label={$t('properties.property_status')}
+                options={statusOptions}
+                value={filters.status}
+                bind:value={filters.status}
+              />
               
               <!-- Bedrooms and Bathrooms -->
               <div class="grid grid-cols-2 gap-4">
-                <div>
-                  <label for="m-bedrooms" class="mb-1 block text-sm font-medium text-cosmos-text-muted">
-                    {$t('properties.bedrooms')}
-                  </label>
-                  <select
-                    id="m-bedrooms"
-                    bind:value={filters.bedrooms}
-                    class="w-full rounded-lg border border-cosmos-bg-light bg-cosmos-bg-light p-3 text-cosmos-text outline-none focus:border-primary"
-                  >
-                    <option value="">{$t('general.any')}</option>
-                    <option value="1">1+</option>
-                    <option value="2">2+</option>
-                    <option value="3">3+</option>
-                    <option value="4">4+</option>
-                    <option value="5">5+</option>
-                  </select>
-                </div>
+                <Select
+                  name="bedrooms_mobile"
+                  label={$t('properties.bedrooms')}
+                  options={bedroomOptions}
+                  value={filters.bedrooms}
+                  bind:value={filters.bedrooms}
+                />
                 
-                <div>
-                  <label for="m-bathrooms" class="mb-1 block text-sm font-medium text-cosmos-text-muted">
-                    {$t('properties.bathrooms')}
-                  </label>
-                  <select
-                    id="m-bathrooms"
-                    bind:value={filters.bathrooms}
-                    class="w-full rounded-lg border border-cosmos-bg-light bg-cosmos-bg-light p-3 text-cosmos-text outline-none focus:border-primary"
-                  >
-                    <option value="">{$t('general.any')}</option>
-                    <option value="1">1+</option>
-                    <option value="2">2+</option>
-                    <option value="3">3+</option>
-                    <option value="4">4+</option>
-                  </select>
-                </div>
+                <Select
+                  name="bathrooms_mobile"
+                  label={$t('properties.bathrooms')}
+                  options={bathroomOptions}
+                  value={filters.bathrooms}
+                  bind:value={filters.bathrooms}
+                />
               </div>
               
               <!-- City -->
-              <div>
-                <label for="m-city" class="mb-1 block text-sm font-medium text-cosmos-text-muted">
-                  {$t('properties.property_city')}
-                </label>
-                <input
-                  type="text"
-                  id="m-city"
-                  bind:value={filters.city}
-                  placeholder={$t('properties.enter_city')}
-                  class="w-full rounded-lg border border-cosmos-bg-light bg-cosmos-bg-light p-3 text-cosmos-text outline-none focus:border-primary"
-                />
-              </div>
+              <Input
+                type="text"
+                name="city_mobile"
+                label={$t('properties.property_city')}
+                placeholder={$t('properties.enter_city')}
+                bind:value={filters.city}
+              />
               
               <!-- District -->
-              <div>
-                <label for="m-district" class="mb-1 block text-sm font-medium text-cosmos-text-muted">
-                  {$t('properties.property_district')}
-                </label>
-                <input
-                  type="text"
-                  id="m-district"
-                  bind:value={filters.district}
-                  placeholder={$t('properties.enter_district')}
-                  class="w-full rounded-lg border border-cosmos-bg-light bg-cosmos-bg-light p-3 text-cosmos-text outline-none focus:border-primary"
-                />
-              </div>
+              <Input
+                type="text"
+                name="district_mobile"
+                label={$t('properties.property_district')}
+                placeholder={$t('properties.enter_district')}
+                bind:value={filters.district}
+              />
               
               <!-- Price Range -->
               <div>
-                <label class="mb-1 block text-sm font-medium text-cosmos-text-muted">
+                <label class="mb-1.5 block text-sm font-medium text-cosmos-text">
                   {$t('properties.price_range')}
                 </label>
                 <div class="flex space-x-2">
-                  <input
+                  <Input
                     type="number"
-                    bind:value={filters.min_price}
                     placeholder={$t('general.min')}
-                    class="w-1/2 rounded-lg border border-cosmos-bg-light bg-cosmos-bg-light p-3 text-cosmos-text outline-none focus:border-primary"
+                    bind:value={filters.min_price}
+                    class="w-1/2"
                   />
-                  <input
+                  <Input
                     type="number"
-                    bind:value={filters.max_price}
                     placeholder={$t('general.max')}
-                    class="w-1/2 rounded-lg border border-cosmos-bg-light bg-cosmos-bg-light p-3 text-cosmos-text outline-none focus:border-primary"
+                    bind:value={filters.max_price}
+                    class="w-1/2"
                   />
                 </div>
               </div>
               
               <!-- Area Range -->
               <div>
-                <label class="mb-1 block text-sm font-medium text-cosmos-text-muted">
+                <label class="mb-1.5 block text-sm font-medium text-cosmos-text">
                   {$t('properties.area_range')} (m²)
                 </label>
                 <div class="flex space-x-2">
-                  <input
+                  <Input
                     type="number"
-                    bind:value={filters.min_area}
                     placeholder={$t('general.min')}
-                    class="w-1/2 rounded-lg border border-cosmos-bg-light bg-cosmos-bg-light p-3 text-cosmos-text outline-none focus:border-primary"
+                    bind:value={filters.min_area}
+                    class="w-1/2"
                   />
-                  <input
+                  <Input
                     type="number"
-                    bind:value={filters.max_area}
                     placeholder={$t('general.max')}
-                    class="w-1/2 rounded-lg border border-cosmos-bg-light bg-cosmos-bg-light p-3 text-cosmos-text outline-none focus:border-primary"
+                    bind:value={filters.max_area}
+                    class="w-1/2"
                   />
                 </div>
               </div>
@@ -629,19 +559,21 @@
           
           <!-- Filter Actions -->
           <div class="mt-4 flex space-x-2 border-t border-cosmos-bg-light pt-4">
-            <button
-              on:click={resetFilters}
-              class="flex-1 rounded-lg border border-cosmos-bg-light py-3 text-cosmos-text-muted hover:text-cosmos-text"
+            <Button
+              variant="secondary"
+              onClick={resetFilters}
+              fullWidth={true}
             >
               {$t('general.reset')}
-            </button>
+            </Button>
             
-            <button
-              on:click={applyFilters}
-              class="flex-1 rounded-lg bg-primary py-3 text-white hover:bg-primary-dark"
+            <Button
+              variant="primary"
+              onClick={applyFilters}
+              fullWidth={true}
             >
               {$t('general.apply_filters')}
-            </button>
+            </Button>
           </div>
         </div>
       </div>
@@ -651,15 +583,17 @@
   <!-- Main Content Area -->
   {#if error}
     <!-- Error State -->
-    <div class="my-8 rounded-xl bg-status-error bg-opacity-10 p-6 text-center">
-      <p class="text-status-error">{error}</p>
-      <button 
-        class="mt-4 rounded-lg bg-primary px-4 py-2 text-white hover:bg-primary-dark"
-        on:click={() => loadProperties(1, false)}
-      >
-        {$t('general.retry')}
-      </button>
-    </div>
+    <Alert type="error" title={$t('general.error')} class="my-8">
+      <p>{error}</p>
+      <div class="mt-4">
+        <Button 
+          variant="primary"
+          onClick={() => loadProperties(1, false)}
+        >
+          {$t('general.retry')}
+        </Button>
+      </div>
+    </Alert>
   {:else if loading && properties.length === 0}
     <!-- Loading Placeholders -->
     <div class="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
@@ -679,12 +613,22 @@
     <!-- Empty State -->
     <div class="my-12 rounded-xl bg-cosmos-bg-light bg-opacity-10 p-8 text-center">
       <div class="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-cosmos-bg-light bg-opacity-30">
-        <svg class="h-8 w-8 text-cosmos-text-muted" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <svg class="h-8 w-8 text-cosmos-text-muted" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
         </svg>
       </div>
       <h3 class="mb-2 text-lg font-medium text-cosmos-text">{$t('properties.no_properties_found')}</h3>
       <p class="text-cosmos-text-muted">{$t('properties.try_different_filters')}</p>
+      
+      {#if activeFiltersCount > 0}
+        <Button 
+          variant="primary"
+          onClick={resetFilters}
+          class="mt-4"
+        >
+          {$t('general.reset_filters')}
+        </Button>
+      {/if}
     </div>
   {:else}
     <!-- Property Grid -->
@@ -695,24 +639,24 @@
       {#each properties as property (property.id)}
         <PropertyCard {property} />
       {/each}
-      
-      <!-- Loading More Indicator -->
-      {#if loadingMore}
-        <div class="col-span-full my-6 flex justify-center">
-          <LoadingIndicator size="5" color="#3B82F6" text={$t('general.loading_more')} />
-        </div>
-      {/if}
     </div>
+    
+    <!-- Loading More Indicator -->
+    {#if loadingMore}
+      <div class="col-span-full my-6 flex justify-center">
+        <Spinner color="primary" size="md" text={$t('general.loading_more')} />
+      </div>
+    {/if}
     
     <!-- Manual Load More Button (when autoPaginate is false) -->
     {#if !autoPaginate && hasMoreProperties && !loadingMore}
       <div class="mt-8 flex justify-center">
-        <button
-          on:click={loadMore}
-          class="rounded-lg bg-primary bg-opacity-10 px-6 py-3 text-primary transition hover:bg-primary hover:text-white"
+        <Button
+          variant="outline"
+          onClick={loadMore}
         >
           {$t('general.load_more')}
-        </button>
+        </Button>
       </div>
     {/if}
     

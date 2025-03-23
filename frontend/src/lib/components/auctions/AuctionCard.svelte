@@ -67,12 +67,12 @@
   // Get color class based on auction status
   function getStatusColor(status) {
     const colors = {
-      'active': 'bg-success-500 text-white',
-      'pending': 'bg-warning-500 text-white',
-      'extended': 'bg-info-500 text-white',
+      'active': 'bg-success text-white',
+      'pending': 'bg-warning text-white',
+      'extended': 'bg-info text-white',
       'closed': 'bg-neutral-500 text-white',
-      'sold': 'bg-accent-500 text-white',
-      'cancelled': 'bg-error-500 text-white'
+      'sold': 'bg-accent text-white',
+      'cancelled': 'bg-error text-white'
     };
     
     return colors[status] || 'bg-neutral-500 text-white';
@@ -112,7 +112,7 @@
 
 <a
   href={`/auctions/${auction.id}`}
-  class="group relative flex flex-col w-full overflow-hidden rounded-xl bg-surface-light dark:bg-surface-dark backdrop-blur-md transition-all duration-300 hover:-translate-y-1 hover:shadow-glass-lg {auction.is_featured ? 'ring-2 ring-primary-500 ring-opacity-60' : ''}"
+  class="group relative flex flex-col w-full overflow-hidden rounded-xl bg-surface-light dark:bg-surface-dark backdrop-blur-md transition-all duration-300 hover:-translate-y-1 hover:shadow-glass {auction.is_featured ? 'ring-2 ring-primary ring-opacity-60' : ''}"
 >
   <!-- Auction Image -->
   <div class="relative aspect-[4/3] w-full overflow-hidden rounded-t-xl">
@@ -125,7 +125,7 @@
     
     <!-- Property Type Badge -->
     <div class="absolute top-3 {$language === 'ar' ? 'right-3' : 'left-3'} z-10">
-      <span class="rounded-full bg-primary-500 bg-opacity-80 px-3 py-1 text-xs font-medium text-white backdrop-blur-sm">
+      <span class="rounded-full bg-primary-600 bg-opacity-80 px-3 py-1 text-xs font-medium text-white backdrop-blur-sm">
         {auction.property_type_display || $t(`properties.types.${auction.property_type}`)}
       </span>
     </div>
@@ -133,7 +133,7 @@
     <!-- Featured Badge -->
     {#if auction.is_featured}
       <div class="absolute top-3 {$language === 'ar' ? 'left-3' : 'right-3'} z-10">
-        <span class="rounded-full bg-accent-500 px-3 py-1 text-xs font-medium text-white">
+        <span class="rounded-full bg-accent px-3 py-1 text-xs font-medium text-white">
           {$t('general.featured')}
         </span>
       </div>
@@ -149,7 +149,7 @@
         </div>
         
         <div class="rounded-full bg-neutral-900 bg-opacity-60 px-3 py-1 backdrop-blur-sm">
-          <span class="text-xs font-mono font-medium {isEnded ? 'text-error-500' : isActive ? 'text-success-500' : 'text-warning-500'}">
+          <span class="text-xs font-mono font-medium {isEnded ? 'text-error' : isActive ? 'text-success' : 'text-warning'}">
             {isActive ? $t('auctions.ends_in') : isPending ? $t('auctions.starts_in') : ''} {getTimeDisplay()}
           </span>
         </div>
@@ -159,7 +159,7 @@
   
   <!-- Auction Info -->
   <div class="flex flex-col flex-grow p-4">
-    <h3 class="mb-2 text-lg font-bold text-neutral-900 dark:text-neutral-50 group-hover:text-primary-500 line-clamp-2">
+    <h3 class="mb-2 text-lg font-bold text-neutral-900 dark:text-neutral-50 group-hover:text-primary line-clamp-2">
       {auction.title}
     </h3>
     
@@ -196,7 +196,7 @@
         {$t('auctions.min_increment')}: {formatCurrency(auction.min_bid_increment)}
       </span>
       
-      <span class="rounded-full bg-primary-50 dark:bg-primary-900/30 px-4 py-2 text-sm font-medium text-primary-600 dark:text-primary-400 transition group-hover:bg-primary-500 group-hover:text-white">
+      <span class="rounded-full bg-primary-50 dark:bg-primary-900/30 px-4 py-2 text-sm font-medium text-primary-600 dark:text-primary-400 transition group-hover:bg-primary group-hover:text-white">
         {isActive ? $t('auctions.bid_now') : $t('general.view')}
       </span>
     </div>

@@ -1,290 +1,155 @@
 <!-- src/routes/auctions/+page.svelte -->
 <script>
-    import { onMount } from 'svelte';
-    import { t } from '$lib/i18n';
-    import { page } from '$app/stores';
-    import { auctionActions, auctionsList, loading, errors, auctionsMetadata } from '$lib/stores/auction';
-    import { authStore } from '$lib/stores/auth';
-    import AuctionCard from './components/auctions/AuctionCard.svelte';
-    import AuctionFilters from './components/auctions/AuctionFilters.svelte';
-    import { 
-      Button, 
-      Loading, 
-      Alert, 
-      Pagination,
-      Icon, 
-      Empty 
-    } from '$lib/components/ui';
-    
-    // Component state
-    let filters = {
-      status: null,
-      auction_type: null,
-      property_type: null,
-      min_price: null,
-      max_price: null,
-      city: null,
-      district: null,
-      is_featured: null,
-      sort_by: 'start_date',
-      order: 'desc'
-    };
-    
-    let showFilters = false;
-    let isInitialLoad = true;
-    
-    // Load auctions with current filters
-    async function loadAuctions(appendMode = false) {
-      try {
-        const result = await auctionActions.loadAuctions(filters, appendMode);
-        isInitialLoad = false;
-        return result;
-      } catch (error) {
-        console.error('Error loading auctions:', error);
-        isInitialLoad = false;
-        return { success: false, error: error.message };
-      }
-    }
-    
-    // Handle filter changes
-    function handleFilterChange(event) {
-      const updatedFilters = event.detail;
-      filters = { ...filters, ...updatedFilters };
-      
-      // Update URL with filters
-      updateUrl();
-      
-      // Reload auctions with new filters
-      loadAuctions();
-    }
-    
-    // Handle pagination
-    function handlePageChange(event) {
-      const page = event.detail;
-      filters = { ...filters, page };
-      
-      // Update URL with page
-      updateUrl();
-      
-      // Reload auctions with new page
-      loadAuctions();
-    }
-    
-    // Handle "load more" button
-    function handleLoadMore() {
-      loadAuctions(true);
-    }
-    
-    // Update URL with current filters
-    function updateUrl() {
-      // Don't update URL if not in browser
-      if (typeof window === 'undefined') return;
-      
-      const url = new URL(window.location);
-      
-      // Add non-null filters to URL
-      Object.entries(filters).forEach(([key, value]) => {
-        if (value !== null && value !== undefined && value !== '') {
-          url.searchParams.set(key, value);
-        } else {
-          url.searchParams.delete(key);
-        }
-      });
-      
-      // Update URL without reloading the page
-      history.pushState({}, '', url);
-    }
-    
-    // Extract filters from URL
-    function extractFiltersFromUrl() {
-      if (!$page || !$page.url) return;
-      
-      const urlParams = $page.url.searchParams;
-      const filtersFromUrl = {};
-      
-      // Gather all filter parameters from URL
-      Object.keys(filters).forEach(key => {
-        const value = urlParams.get(key);
-        if (value !== null) {
-          // Convert values to appropriate types
-          if (value === 'true') filtersFromUrl[key] = true;
-          else if (value === 'false') filtersFromUrl[key] = false;
-          else if (/^\d+$/.test(value)) filtersFromUrl[key] = parseInt(value, 10);
-          else if (/^\d+\.\d+$/.test(value)) filtersFromUrl[key] = parseFloat(value);
-          else filtersFromUrl[key] = value;
-        }
-      });
-      
-      // Update filters state
-      if (Object.keys(filtersFromUrl).length > 0) {
-        filters = { ...filters, ...filtersFromUrl };
-      }
-    }
-    
-    // Initialize component
-    onMount(() => {
-      // Extract filters from URL
-      extractFiltersFromUrl();
-      
-      // Load auctions
-      loadAuctions();
-    });
-  </script>
+  import { onMount, onDestroy } from 'svelte';
+  import { t, isRTL } from '$lib/i18n';
+  import { page } from '$app/stores';
+  import { auctionActions, loading, auctionsList, auctionsMetadata } from '$lib/stores/auction';
   
-  <svelte:head>
-    <title>{t('auctions.browse')} | {t('site.name')}</title>
-    <meta name="description" content={t('auctions.meta_description')} />
-  </svelte:head>
+  // Components
+  import AuctionGrid from '$lib/components/auctions/AuctionGrid.svelte';
+  import Breadcrumb from '$lib/components/ui/Breadcrumb.svelte';
+  import Button from '$lib/components/ui/Button.svelte';
+  import Select from '$lib/components/ui/Select.svelte';
+  import { goto } from '$app/navigation';
   
-  <div class="auctions-list">
-    <!-- Page header -->
-    <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-6">
-      <div>
-        <h1 class="text-2xl md:text-3xl font-bold">{t('auctions.browse')}</h1>
-        <p class="text-gray-600 mt-1">
-          {t('auctions.browse_description')}
-        </p>
-      </div>
-      
-      <div class="flex gap-3 mt-4 md:mt-0">
-        <!-- Filter toggle button -->
-        <Button 
-          variant="outline" 
-          on:click={() => showFilters = !showFilters}
-        >
-          <Icon name="filter" />
-          {t('general.filters')}
-          {#if Object.values(filters).some(v => v !== null && v !== undefined && v !== '')}
-            <span class="ml-1 bg-primary text-white rounded-full w-5 h-5 inline-flex items-center justify-center text-xs">
-              {Object.values(filters).filter(v => v !== null && v !== undefined && v !== '').length}
-            </span>
-          {/if}
-        </Button>
-        
-        <!-- Create auction button (for authenticated users) -->
-        {#if $authStore.isAuthenticated}
-          <Button 
-            variant="primary" 
-            href="/auctions/create"
-          >
-            <Icon name="plus" />
-            {t('auctions.create')}
-          </Button>
-        {/if}
-      </div>
+  // Get query params from URL
+  let queryParams = {};
+  let auctionType = '';
+  
+  // URL parameter subscription
+  const unsubscribe = page.subscribe(($page) => {
+    // Extract query params from URL
+    const params = new URLSearchParams($page.url.search);
+    
+    // Build query params object
+    queryParams = {};
+    
+    for (const [key, value] of params.entries()) {
+      queryParams[key] = value;
+    }
+    
+    // Check if auction type is specified in URL
+    auctionType = params.get('auction_type') || '';
+  });
+  
+  // Auction type options for filter tabs
+  const auctionTypeOptions = [
+    { id: '', label: $t('general.all') },
+    { id: 'active', label: $t('auctions.active_auctions') },
+    { id: 'upcoming', label: $t('auctions.upcoming_auctions') },
+    { id: 'closed', label: $t('auctions.closed_auctions') }
+  ];
+  
+  // Handle auction type change
+  function setAuctionType(type) {
+    // Update URL
+    const url = new URL(window.location);
+    
+    if (type) {
+      url.searchParams.set('auction_type', type);
+    } else {
+      url.searchParams.delete('auction_type');
+    }
+    
+    goto(url.toString());
+  }
+  
+  // Handle creating a new auction
+  function createAuction() {
+    goto('/auctions/create');
+  }
+  
+  // Cleanup on component destroy
+  onDestroy(() => {
+    unsubscribe();
+  });
+</script>
+
+<svelte:head>
+  <title>{$t('auctions.title')} | {$t('general.app_name')}</title>
+  <meta name="description" content={$t('auctions.title')} />
+</svelte:head>
+
+<div class="auctions-page container mx-auto px-4 py-8">
+  <!-- Breadcrumb -->
+  <div class="mb-6">
+    <Breadcrumb
+      items={[
+        { label: $t('navigation.home'), href: '/' },
+        { label: $t('auctions.title'), href: '/auctions', active: true }
+      ]}
+    />
+  </div>
+  
+  <!-- Page Header with Title and Actions -->
+  <div class="mb-8 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+    <div>
+      <h1 class="text-3xl font-bold text-neutral-900 dark:text-neutral-100">
+        {$t('auctions.title')}
+      </h1>
+      <p class="mt-2 text-neutral-600 dark:text-neutral-400">
+        {$t('auctions.explore_properties')}
+      </p>
     </div>
     
-    <!-- Filters section -->
-    {#if showFilters}
-      <div class="mb-6">
-        <AuctionFilters 
-          currentFilters={filters} 
-          on:change={handleFilterChange}
-          on:close={() => showFilters = false}
-        />
-      </div>
-    {/if}
-    
-    <!-- Loading state -->
-    {#if $loading.auctionsLoading && isInitialLoad}
-      <div class="flex flex-col items-center justify-center p-10">
-        <Loading size="large" />
-        <p class="mt-4 text-lg">{t('auctions.loading')}</p>
-      </div>
-    <!-- Error state -->
-    {:else if $errors.listError}
-      <Alert 
-        type="error" 
-        message={$errors.listError} 
-        class="mb-6"
-      />
-    <!-- No results -->
-    {:else if $auctionsList.length === 0}
-      <Empty 
-        title={t('auctions.no_results')}
-        description={t('auctions.no_results_description')}
-        actionText={t('auctions.clear_filters')}
-        actionHref="/auctions"
-        imageSrc="/images/no-auctions.svg"
-      />
-    <!-- Auctions grid -->
-    {:else}
-      <!-- Results count and sort options -->
-      <div class="flex justify-between items-center mb-4">
-        <p class="text-gray-600">
-          {t('auctions.showing_results', { count: $auctionsList.length, total: $auctionsMetadata.totalCount })}
-        </p>
-        
-        <!-- Sort options -->
-        <div class="flex items-center gap-2">
-          <span class="text-gray-600 text-sm">{t('general.sort_by')}:</span>
-          <select 
-            class="border border-gray-300 rounded-md text-sm px-2 py-1"
-            bind:value={filters.sort_by}
-            on:change={() => {
-              updateUrl();
-              loadAuctions();
-            }}
-          >
-            <option value="start_date">{t('auctions.start_date')}</option>
-            <option value="end_date">{t('auctions.end_date')}</option>
-            <option value="current_bid">{t('auctions.current_bid')}</option>
-            <option value="title">{t('general.title')}</option>
-            <option value="created_at">{t('general.created_at')}</option>
-          </select>
-          
-          <select 
-            class="border border-gray-300 rounded-md text-sm px-2 py-1"
-            bind:value={filters.order}
-            on:change={() => {
-              updateUrl();
-              loadAuctions();
-            }}
-          >
-            <option value="desc">{t('general.descending')}</option>
-            <option value="asc">{t('general.ascending')}</option>
-          </select>
-        </div>
+    <div class="flex flex-wrap items-center gap-3">
+      <!-- View Options (Grid/List) -->
+      <div class="hidden md:flex bg-white dark:bg-neutral-800 rounded-lg border border-neutral-200 dark:border-neutral-700 p-1">
+        <button 
+          class="p-2 rounded-md text-neutral-800 dark:text-neutral-200 hover:bg-neutral-100 dark:hover:bg-neutral-700 transition-colors"
+          aria-label="Grid view"
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" />
+          </svg>
+        </button>
+        <button 
+          class="p-2 rounded-md text-neutral-500 dark:text-neutral-400 hover:bg-neutral-100 dark:hover:bg-neutral-700 transition-colors"
+          aria-label="List view"
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 10h16M4 14h16M4 18h16" />
+          </svg>
+        </button>
       </div>
       
-      <!-- Auctions grid -->
-      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
-        {#each $auctionsList as auction (auction.id)}
-          <AuctionCard {auction} />
-        {/each}
-      </div>
-      
-      <!-- Loading spinner for "load more" -->
-      {#if $loading.loadingMore}
-        <div class="flex justify-center my-6">
-          <Loading />
-        </div>
-      {/if}
-      
-      <!-- Pagination options -->
-      <div class="flex flex-col md:flex-row justify-between items-center">
-        <!-- Load more button -->
-        {#if $auctionsMetadata.hasMore}
-          <Button 
-            variant="outline" 
-            on:click={handleLoadMore} 
-            disabled={$loading.loadingMore}
-            class="w-full md:w-auto mb-4 md:mb-0"
-          >
-            {t('general.load_more')}
-          </Button>
-        {:else}
-          <div class="text-gray-500 text-sm mb-4 md:mb-0">
-            {t('auctions.end_of_results')}
-          </div>
-        {/if}
-        
-        <!-- Pagination controls -->
-        <Pagination 
-          currentPage={$auctionsMetadata.currentPage} 
-          totalPages={$auctionsMetadata.totalPages}
-          on:change={handlePageChange}
-        />
-      </div>
-    {/if}
+      <!-- Create Auction Button (for authorized users) -->
+      <Button 
+        variant="primary" 
+        on:click={createAuction}
+      >
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 {isRTL() ? 'ml-1.5' : 'mr-1.5'}" viewBox="0 0 20 20" fill="currentColor">
+          <path fill-rule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clip-rule="evenodd" />
+        </svg>
+        {$t('auctions.create_auction')}
+      </Button>
+    </div>
   </div>
+  
+  <!-- Auction Type Filter Tabs -->
+  <div class="mb-6 border-b border-neutral-200 dark:border-neutral-700">
+    <div class="flex flex-wrap -mb-px">
+      {#each auctionTypeOptions as option}
+        <button 
+          class={`inline-block py-4 px-4 text-sm font-medium border-b-2 ${
+            auctionType === option.id 
+              ? 'border-primary-600 text-primary-600 dark:border-primary-400 dark:text-primary-400' 
+              : 'border-transparent text-neutral-500 hover:text-neutral-700 hover:border-neutral-300 dark:text-neutral-400 dark:hover:text-neutral-300 dark:hover:border-neutral-600'
+          }`}
+          on:click={() => setAuctionType(option.id)}
+        >
+          {option.label}
+        </button>
+      {/each}
+    </div>
+  </div>
+  
+  <!-- Auction Grid Component -->
+  <AuctionGrid
+    initialFilters={queryParams}
+    autoPaginate={true}
+    pageSize={12}
+    showFilters={true}
+    filtersExpanded={false}
+  />
+</div>

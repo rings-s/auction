@@ -1,100 +1,70 @@
 <!-- src/lib/components/ui/ToastContainer.svelte -->
 <script>
+	/**
+	 * Toast Container Component
+	 * Manages displaying multiple Toast notifications with proper positioning.
+	 */
 	import { onMount } from 'svelte';
-	import { fade, fly } from 'svelte/transition';
+	import Toast from './Toast.svelte';
 	import { toast } from '$lib/stores/toast';
-
+	
+	// Props
+	export let position = 'bottom-right'; // Position: top-right, top-left, bottom-right, bottom-left, top-center, bottom-center
+	export let maxToasts = 5; // Maximum number of toasts to show at once
+	export let gap = 'gap-3'; // Gap between toasts
+	export let containerWidth = 'max-w-sm'; // Width of the container
+	export let zIndex = 'z-50'; // z-index of the container
+	
 	let toasts = [];
-
+	
 	// Subscribe to toast store changes
 	onMount(() => {
-		const unsubscribe = toast.subscribe((value) => {
-			toasts = value;
-		});
-
-		return unsubscribe;
+	  const unsubscribe = toast.subscribe((value) => {
+		toasts = value.slice(0, maxToasts);
+	  });
+	  
+	  return unsubscribe;
 	});
-
+	
 	// Dismiss a toast
-	function dismiss(id) {
-		toast.dismiss(id);
+	function dismissToast(event) {
+	  const { id } = event.detail;
+	  toast.dismiss(id);
 	}
-
-	// Get icon based on toast type
-	function getIcon(type) {
-		switch (type) {
-			case 'success':
-				return `<svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
-                </svg>`;
-			case 'error':
-				return `<svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-                </svg>`;
-			case 'warning':
-				return `<svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-                </svg>`;
-			case 'info':
-			default:
-				return `<svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                </svg>`;
-		}
-	}
-
-	// Get background color class based on type
-	function getBackgroundColor(type) {
-		switch (type) {
-			case 'success':
-				return 'bg-status-success';
-			case 'error':
-				return 'bg-status-error';
-			case 'warning':
-				return 'bg-status-warning';
-			case 'info':
-			default:
-				return 'bg-status-info';
-		}
-	}
-</script>
-
-<div class="fixed right-0 bottom-0 z-50 m-4 max-w-sm space-y-4 p-4">
-	{#each toasts as { id, message, type, dismissible } (id)}
-		<div
-			in:fly={{ y: 50, duration: 300 }}
-			out:fade={{ duration: 200 }}
-			class="bg-cosmos-bg-light flex items-center overflow-hidden rounded-lg p-4 shadow-lg"
-		>
-			<div
-				class={`mr-3 w-1.5 flex-shrink-0 self-stretch rounded-l-lg ${getBackgroundColor(type)}`}
-			></div>
-			<div class="mr-3 flex-shrink-0">
-				{@html getIcon(type)}
-			</div>
-			<div class="text-cosmos-text mr-2 flex-grow">
-				{message}
-			</div>
-			{#if dismissible}
-				<button
-					class="text-cosmos-text-muted hover:text-cosmos-text flex-shrink-0 transition"
-					on:click={() => dismiss(id)}
-					aria-label="Dismiss"
-				>
-					<svg
-						xmlns="http://www.w3.org/2000/svg"
-						class="h-5 w-5"
-						viewBox="0 0 20 20"
-						fill="currentColor"
-					>
-						<path
-							fill-rule="evenodd"
-							d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z"
-							clip-rule="evenodd"
-						/>
-					</svg>
-				</button>
-			{/if}
+	
+	// Generate position classes
+	$: positionClasses = {
+	  'top-right': 'top-0 right-0',
+	  'top-left': 'top-0 left-0',
+	  'bottom-right': 'bottom-0 right-0',
+	  'bottom-left': 'bottom-0 left-0',
+	  'top-center': 'top-0 left-1/2 transform -translate-x-1/2',
+	  'bottom-center': 'bottom-0 left-1/2 transform -translate-x-1/2'
+	}[position] || 'bottom-0 right-0';
+	
+	// Determine flex direction
+	$: flexDirection = position.startsWith('top') ? 'flex-col' : 'flex-col-reverse';
+  </script>
+  
+  <div 
+	class="fixed m-4 p-4 {containerWidth} {positionClasses} {zIndex} pointer-events-none"
+	role="region" 
+	aria-label="Notifications"
+  >
+	<div class="flex {flexDirection} {gap} overflow-hidden">
+	  {#each toasts as toast (toast.id)}
+		<div class="pointer-events-auto w-full">
+		  <Toast
+			id={toast.id}
+			type={toast.type}
+			message={toast.message}
+			title={toast.title}
+			dismissible={toast.dismissible}
+			duration={toast.duration}
+			showIcon={toast.showIcon}
+			on:dismiss={dismissToast}
+		  />
 		</div>
-	{/each}
-</div>
+	  {/each}
+	</div>
+  </div>
