@@ -1,4 +1,4 @@
-<!-- src/routes/properties/create/+page.svelte -->
+// src/routes/properties/create/+page.svelte
 <script>
 	import { onMount } from 'svelte';
 	import { goto } from '$app/navigation';
@@ -271,8 +271,8 @@
 		submitting = true;
 
 		try {
-			// Create the property using the property store
-			const result = await propertyStore.createProperty(propertyData);
+			// Create the property using the property store's createProperty method
+			const result = await property.createProperty(propertyData);
 
 			if (result) {
 				toast.success($t('properties.create.success') || 'Property created successfully');

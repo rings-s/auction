@@ -1,5 +1,5 @@
-// src/lib/stores/propertyStore.js
-// مخزن بيانات العقارات 
+// src/lib/stores/property.js
+// Property store with all necessary exports for the application
 
 import { writable, derived, get } from 'svelte/store';
 import { browser } from '$app/environment';
@@ -50,6 +50,9 @@ export const isLoadingMore = writable(false);
 export const propertyError = writable(null);
 export const favoriteProperties = writable([]);
 export const recommendedProperties = writable([]);
+
+// Export loading state for components that expect it (like AuctionGrid)
+export const loading = isLoadingProperties;
 
 // ==================== Derived Stores ====================
 
@@ -581,17 +584,35 @@ if (browser) {
     }
 }
 
-// Export default actions
-export default {
+// Export single object for use as "property" in existing code
+export const property = {
+    properties,
+    currentProperty,
+    propertyFilters,
+    isLoadingProperties,
+    isLoadingProperty,
+    isLoadingMore,
+    loading,
+    propertyError,
+    favoriteProperties,
+    recommendedProperties,
+    activeFiltersCount,
+    filtersQueryString,
     loadProperties,
     loadMoreProperties,
     loadProperty,
+    loadRecommendedProperties,
     applyFilters,
     resetFilters,
+    loadFeaturedProperties,
     searchProperties,
+    loadFavoriteProperties,
     toggleFavorite,
     updateProperty,
     createProperty,
     changePropertyStatus,
     uploadPropertyImage
 };
+
+// Export default object for default imports
+export default property;
