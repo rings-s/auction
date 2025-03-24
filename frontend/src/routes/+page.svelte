@@ -45,7 +45,7 @@
 </svelte:head>
 
 <!-- Hero Section -->
-<section class="from-primary-700 to-primary-900 bg-gradient-to-br px-4 py-16 text-black sm:py-24">
+<section class="from-primary-700 to-primary-900 bg-gradient-to-br px-4 py-16 sm:py-24">
 	<div class="mx-auto max-w-6xl text-center">
 		<h1 class="mb-6 text-3xl font-bold md:text-5xl">المنصة الأولى للمزادات العقارية</h1>
 		<p class="mx-auto mb-8 max-w-3xl text-lg md:text-xl">

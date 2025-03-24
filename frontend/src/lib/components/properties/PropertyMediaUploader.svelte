@@ -1,367 +1,448 @@
-<!-- src/lib/components/properties/PropertyMediaUploader.svelte -->
+<!-- src/lib/components/properties/PropertyFeaturesSelector.svelte -->
 <script>
-    import { createEventDispatcher } from 'svelte';
-    import { t, language } from '$lib/i18n';
-    import { toast } from '$lib/stores/toast';
-    
-    // UI Components
-    import Button from '$lib/components/ui/Button.svelte';
-    import Card from '$lib/components/ui/Card.svelte';
-    
-    const dispatch = createEventDispatcher();
-    
-    // Props
-    export let images = []; // Array of image files or URLs
-    export let mainImage = null; // Index of main image or URL
-    export let maxImages = 10;
-    export let maxFileSize = 5; // In MB
-    export let allowedFileTypes = ['jpg', 'jpeg', 'png', 'webp'];
-    
-    // State
-    let dragActive = false;
-    let imagePreviews = [];
-    let isRTL = false;
-    
-    // Reactive state for RTL support
-    $: isRTL = $language === 'ar';
-    
-    // Update image previews whenever images change
-    $: {
-      updateImagePreviews();
-    }
-    
-    // Generate image previews
-    function updateImagePreviews() {
-      // Clear previous previews
-      imagePreviews = [];
-      
-      // Create preview for each image
-      if (images && images.length > 0) {
-        images.forEach((image, index) => {
-          let previewUrl;
-          
-          if (typeof image === 'string') {
-            // Image is a URL
-            previewUrl = image;
-          } else if (image instanceof File) {
-            // Image is a File object
-            previewUrl = URL.createObjectURL(image);
-          }
-          
-          if (previewUrl) {
-            imagePreviews.push({
-              url: previewUrl,
-              isMain: mainImage === index || mainImage === image
-            });
-          }
-        });
-      }
-    }
-    
-    // Handle file selection
-    function handleFileSelect(event) {
-      if (event.target.files && event.target.files.length > 0) {
-        handleFiles(event.target.files);
-      }
-    }
-    
-    // Handle drag and drop
-    function handleDragEnter(e) {
-      e.preventDefault();
-      e.stopPropagation();
-      dragActive = true;
-    }
-    
-    function handleDragLeave(e) {
-      e.preventDefault();
-      e.stopPropagation();
-      dragActive = false;
-    }
-    
-    function handleDragOver(e) {
-      e.preventDefault();
-      e.stopPropagation();
-      dragActive = true;
-    }
-    
-    function handleDrop(e) {
-      e.preventDefault();
-      e.stopPropagation();
-      dragActive = false;
-      
-      if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
-        handleFiles(e.dataTransfer.files);
-      }
-    }
-    
-    // Process the files
-    function handleFiles(fileList) {
-      const newFiles = Array.from(fileList);
-      
-      // Check if max images limit is reached
-      if (images.length + newFiles.length > maxImages) {
-        toast.error($t('properties.media.max_images_error', { max: maxImages }));
-        return;
-      }
-      
-      // Validate files
-      const validFiles = newFiles.filter(file => {
-        // Check file type
-        const extension = file.name.split('.').pop().toLowerCase();
-        if (!allowedFileTypes.includes(extension)) {
-          toast.error($t('properties.media.invalid_type_error', { filename: file.name }));
-          return false;
-        }
-        
-        // Check file size
-        const fileSizeMB = file.size / (1024 * 1024);
-        if (fileSizeMB > maxFileSize) {
-          toast.error($t('properties.media.file_too_large_error', { 
-            filename: file.name,
-            size: fileSizeMB.toFixed(2),
-            max: maxFileSize
-          }));
-          return false;
-        }
-        
-        return true;
-      });
-      
-      // Add valid files to images array
-      if (validFiles.length > 0) {
-        images = [...images, ...validFiles];
-        
-        // Set the first image as main if none is selected
-        if (mainImage === null && images.length > 0) {
-          mainImage = 0;
-        }
-        
-        // Update parent component
-        dispatch('update', { images, mainImage });
-      }
-    }
-    
-    // Set an image as the main image
-    function setMainImage(index) {
-      mainImage = index;
-      updateImagePreviews();
-      dispatch('update', { images, mainImage });
-    }
-    
-    // Remove an image
-    function removeImage(index) {
-      // Remove the image from the array
-      images = images.filter((_, i) => i !== index);
-      
-      // Update main image index if needed
-      if (mainImage === index) {
-        mainImage = images.length > 0 ? 0 : null;
-      } else if (mainImage > index) {
-        mainImage--;
-      }
-      
-      // Update parent component
-      dispatch('update', { images, mainImage });
-    }
-    
-    // Reorder images by drag and drop
-    function moveImage(fromIndex, toIndex) {
-      if (fromIndex === toIndex) return;
-      
-      const newImages = [...images];
-      const [movedItem] = newImages.splice(fromIndex, 1);
-      newImages.splice(toIndex, 0, movedItem);
-      
-      // Update main image index if needed
-      if (mainImage === fromIndex) {
-        mainImage = toIndex;
-      } else if (mainImage > fromIndex && mainImage <= toIndex) {
-        mainImage--;
-      } else if (mainImage < fromIndex && mainImage >= toIndex) {
-        mainImage++;
-      }
-      
-      images = newImages;
-      dispatch('update', { images, mainImage });
-    }
-    
-    // Format file size
-    function formatFileSize(bytes) {
-      if (bytes === 0) return '0 Bytes';
-      
-      const k = 1024;
-      const sizes = ['Bytes', 'KB', 'MB', 'GB'];
-      const i = Math.floor(Math.log(bytes) / Math.log(k));
-      
-      return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
-    }
-  </script>
+  import { createEventDispatcher, onMount } from 'svelte';
+  import { fade, slide, scale } from 'svelte/transition';
+  import { quintOut } from 'svelte/easing';
+  import { t } from '$lib/i18n';
   
-  <div class="property-media-uploader" class:rtl={isRTL}>
-    <div class="mb-4">
-      <h3 class="text-lg font-medium text-neutral-900 dark:text-white">
-        {$t('properties.media.images')} 
-        {#if images.length > 0}
-          <span class="text-sm font-normal text-neutral-500 dark:text-neutral-400">
-            ({images.length}/{maxImages})
-          </span>
-        {/if}
-      </h3>
-      <p class="text-sm text-neutral-600 dark:text-neutral-400">
-        {$t('properties.media.images_description')}
-      </p>
-    </div>
+  // UI Components
+  import Button from '$lib/components/ui/Button.svelte';
+  import Input from '$lib/components/ui/Input.svelte';
+  import Switch from '$lib/components/ui/Switch.svelte';
+  
+  const dispatch = createEventDispatcher();
+  
+  // Component props
+  export let selectedFeatures = {}; // Object of selected features
+  export let categories = []; // Custom feature categories
+  export let maxCustomFeatures = 10; // Maximum number of custom features
+  export let searchEnabled = true; // Enable search
+  export let allowCustomFeatures = true; // Allow adding custom features
+  export let variant = 'default'; // default, glass, outline, minimal
+  export let expandedByDefault = false; // All categories expanded by default
+  export let compact = false; // Compact display mode
+  export let disabled = false; // Disable all inputs
+  
+  // Internal state
+  let search = '';
+  let customFeatureText = '';
+  let expandedCategories = {};
+  let customFeatures = [];
+  let hoveredFeature = null;
+  
+  // Default feature categories if none provided
+  const defaultCategories = [
+    {
+      id: 'indoor',
+      name: 'Indoor Features',
+      icon: 'home',
+      features: [
+        { id: 'air_conditioning', name: 'Air Conditioning' },
+        { id: 'heating', name: 'Heating System' },
+        { id: 'furnished', name: 'Furnished' },
+        { id: 'fireplace', name: 'Fireplace' },
+        { id: 'walk_in_closet', name: 'Walk-in Closet' },
+        { id: 'smart_home', name: 'Smart Home Features' },
+        { id: 'high_ceilings', name: 'High Ceilings' },
+        { id: 'storage_room', name: 'Storage Room' }
+      ]
+    },
+    {
+      id: 'outdoor',
+      name: 'Outdoor Features',
+      icon: 'sun',
+      features: [
+        { id: 'backyard', name: 'Backyard' },
+        { id: 'patio', name: 'Patio/Deck' },
+        { id: 'garage', name: 'Garage' },
+        { id: 'parking', name: 'Parking' },
+        { id: 'outdoor_grill', name: 'Outdoor Grill' },
+        { id: 'privacy_fence', name: 'Privacy Fence' }
+      ]
+    },
+    {
+      id: 'community',
+      name: 'Community Features',
+      icon: 'users',
+      features: [
+        { id: 'gym', name: 'Gym/Fitness Center' },
+        { id: 'community_pool', name: 'Community Pool' },
+        { id: 'security', name: 'Security Guard/Gate' },
+        { id: 'playground', name: 'Playground' },
+        { id: 'clubhouse', name: 'Clubhouse' },
+        { id: 'tennis_court', name: 'Tennis Courts' }
+      ]
+    },
+    {
+      id: 'accessibility',
+      name: 'Accessibility Features',
+      icon: 'accessibility',
+      features: [
+        { id: 'wheelchair_accessible', name: 'Wheelchair Accessible' },
+        { id: 'no_stairs', name: 'No Stairs to Entry' },
+        { id: 'wide_doorway', name: 'Wide Doorways' },
+        { id: 'accessible_bathroom', name: 'Accessible Bathroom' }
+      ]
+    }
+  ];
+  
+  // Use provided categories or default ones
+  $: effectiveCategories = categories.length > 0 ? categories : defaultCategories;
+  
+  // Container variant classes based on the style prop
+  $: containerClasses = {
+    'default': 'bg-white dark:bg-neutral-800 border border-neutral-300 dark:border-neutral-700',
+    'glass': 'bg-surface-glass dark:bg-neutral-800/30 backdrop-blur-sm border border-neutral-200/30 dark:border-neutral-700/30 shadow-glass-sm',
+    'outline': 'bg-transparent border border-neutral-300 dark:border-neutral-700',
+    'minimal': 'bg-neutral-50 dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800'
+  }[variant] || 'bg-white dark:bg-neutral-800 border border-neutral-300 dark:border-neutral-700';
+  
+  // Helper to get feature icon
+  function getIconSvg(icon) {
+    switch (icon) {
+      case 'home':
+        return `<svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+          <path d="M10.707 2.293a1 1 0 00-1.414 0l-7 7a1 1 0 001.414 1.414L4 10.414V17a1 1 0 001 1h2a1 1 0 001-1v-2a1 1 0 011-1h2a1 1 0 011 1v2a1 1 0 001 1h2a1 1 0 001-1v-6.586l.293.293a1 1 0 001.414-1.414l-7-7z" />
+        </svg>`;
+      case 'sun':
+        return `<svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+          <path fill-rule="evenodd" d="M10 2a1 1 0 011 1v1a1 1 0 11-2 0V3a1 1 0 011-1zm4 8a4 4 0 11-8 0 4 4 0 018 0zm-.464 4.95l.707.707a1 1 0 001.414-1.414l-.707-.707a1 1 0 00-1.414 1.414zm2.12-10.607a1 1 0 010 1.414l-.706.707a1 1 0 11-1.414-1.414l.707-.707a1 1 0 011.414 0zM17 11a1 1 0 100-2h-1a1 1 0 100 2h1zm-7 4a1 1 0 011 1v1a1 1 0 11-2 0v-1a1 1 0 011-1zM5.05 6.464A1 1 0 106.465 5.05l-.708-.707a1 1 0 00-1.414 1.414l.707.707zm1.414 8.486l-.707.707a1 1 0 01-1.414-1.414l.707-.707a1 1 0 011.414 1.414zM4 11a1 1 0 100-2H3a1 1 0 000 2h1z" clip-rule="evenodd" />
+        </svg>`;
+      case 'users':
+        return `<svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+          <path d="M9 6a3 3 0 11-6 0 3 3 0 016 0zM17 6a3 3 0 11-6 0 3 3 0 016 0zM12.93 17c.046-.327.07-.66.07-1a6.97 6.97 0 00-1.5-4.33A5 5 0 0119 16v1h-6.07zM6 11a5 5 0 015 5v1H1v-1a5 5 0 015-5z" />
+        </svg>`;
+      case 'accessibility':
+        return `<svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+          <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" />
+        </svg>`;
+      case 'plus':
+        return `<svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+          <path fill-rule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clip-rule="evenodd" />
+        </svg>`;
+      default:
+        return `<svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+          <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-11a1 1 0 10-2 0v2H7a1 1 0 100 2h2v2a1 1 0 102 0v-2h2a1 1 0 100-2h-2V7z" clip-rule="evenodd" />
+        </svg>`;
+    }
+  }
+  
+  // Initialize expanded categories
+  function initializeExpandedCategories() {
+    let expanded = {};
+    effectiveCategories.forEach(category => {
+      expanded[category.id] = expandedByDefault;
+    });
+    expandedCategories = expanded;
+  }
+  
+  // Toggle category expansion
+  function toggleCategory(categoryId) {
+    expandedCategories = {
+      ...expandedCategories,
+      [categoryId]: !expandedCategories[categoryId]
+    };
+  }
+  
+  // Add a custom feature
+  function addCustomFeature() {
+    if (!customFeatureText.trim() || disabled) return;
     
-    <!-- Image Upload Area -->
-    {#if images.length < maxImages}
-      <div
-        class="border-2 border-dashed rounded-lg transition-colors mb-6"
-        class:border-neutral-300={!dragActive}
-        class:dark:border-neutral-700={!dragActive}
-        class:border-primary={dragActive}
-        class:dark:border-primary={dragActive}
-        class:bg-neutral-50={dragActive}
-        class:dark:bg-neutral-800/50={dragActive}
-        on:dragenter={handleDragEnter}
-        on:dragleave={handleDragLeave}
-        on:dragover={handleDragOver}
-        on:drop={handleDrop}
-      >
-        <div class="p-8 text-center">
-          <svg xmlns="http://www.w3.org/2000/svg" class="mx-auto h-12 w-12 text-neutral-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
-          </svg>
-          
-          <p class="mt-3 text-sm text-neutral-600 dark:text-neutral-400">
-            {$t('properties.media.drag_drop')}
-          </p>
-          
-          <div class="mt-4">
-            <label for="property-image-upload" class="cursor-pointer rounded-md bg-white px-4 py-2 text-sm font-medium text-primary hover:bg-neutral-50 dark:bg-neutral-800 dark:hover:bg-neutral-700">
-              {$t('properties.media.select_images')}
-            </label>
-            <input 
-              id="property-image-upload" 
-              name="property-image-upload" 
-              type="file" 
-              class="sr-only" 
-              accept={allowedFileTypes.map(type => `.${type}`).join(',')}
-              on:change={handleFileSelect}
-              multiple
+    // Check if we've hit the max number of custom features
+    if (customFeatures.length >= maxCustomFeatures) {
+      return;
+    }
+    
+    // Generate a unique ID for the custom feature
+    const id = `custom_${Date.now()}`;
+    
+    // Add to custom features
+    customFeatures = [
+      ...customFeatures,
+      { id, name: customFeatureText.trim() }
+    ];
+    
+    // Set as selected
+    selectedFeatures = {
+      ...selectedFeatures,
+      [id]: true
+    };
+    
+    // Clear input
+    customFeatureText = '';
+    
+    // Update parent component
+    dispatchUpdate();
+  }
+  
+  // Remove a custom feature
+  function removeCustomFeature(id) {
+    customFeatures = customFeatures.filter(feature => feature.id !== id);
+    
+    // Remove from selected features
+    const { [id]: removed, ...rest } = selectedFeatures;
+    selectedFeatures = rest;
+    
+    // Update parent component
+    dispatchUpdate();
+  }
+  
+  // Handle feature toggle
+  function toggleFeature(feature) {
+    if (disabled) return;
+    
+    selectedFeatures = {
+      ...selectedFeatures,
+      [feature.id]: !selectedFeatures[feature.id]
+    };
+    
+    dispatchUpdate();
+  }
+  
+  // Handle mouse enter/leave for feature items
+  function handleMouseEnter(featureId) {
+    hoveredFeature = featureId;
+  }
+  
+  function handleMouseLeave() {
+    hoveredFeature = null;
+  }
+  
+  // Dispatch update event
+  function dispatchUpdate() {
+    dispatch('update', { 
+      features: selectedFeatures,
+      customFeatures: customFeatures
+    });
+  }
+  
+  // Filter features based on search
+  $: filteredCategories = effectiveCategories.map(category => {
+    if (!search) return category;
+    
+    const filteredFeatures = category.features.filter(feature => 
+      feature.name.toLowerCase().includes(search.toLowerCase())
+    );
+    
+    return {
+      ...category,
+      features: filteredFeatures
+    };
+  }).filter(category => category.features.length > 0);
+  
+  // Check if any category has matches (for empty state)
+  $: hasMatches = filteredCategories.some(category => category.features.length > 0);
+  
+  // Track number of selected features
+  $: selectedFeaturesCount = Object.values(selectedFeatures).filter(Boolean).length;
+  
+  // Initialize
+  onMount(() => {
+    initializeExpandedCategories();
+  });
+</script>
+
+<div class="property-features-selector w-full">
+  <!-- Search and controls -->
+  {#if searchEnabled || allowCustomFeatures}
+    <div class="mb-4 flex flex-col sm:flex-row space-y-3 sm:space-y-0 sm:space-x-3">
+      {#if searchEnabled}
+        <div class="w-full sm:flex-1">
+          <Input
+            type="search"
+            placeholder={t('features.search_features') || 'Search features...'}
+            bind:value={search}
+            disabled={disabled}
+            rounded="lg"
+            leadingIcon="search"
+          />
+        </div>
+      {/if}
+      
+      {#if allowCustomFeatures}
+        <div class="w-full sm:flex-1 flex space-x-2">
+          <div class="flex-1">
+            <Input
+              type="text"
+              placeholder={t('features.custom_feature') || 'Add custom feature...'}
+              bind:value={customFeatureText}
+              disabled={disabled || customFeatures.length >= maxCustomFeatures}
+              rounded="lg"
+              on:keydown={(e) => e.key === 'Enter' && addCustomFeature()}
             />
           </div>
-          
-          <p class="mt-2 text-xs text-neutral-500 dark:text-neutral-500">
-            {$t('properties.media.allowed_types')}: {allowedFileTypes.join(', ')}
-          </p>
-          <p class="text-xs text-neutral-500 dark:text-neutral-500">
-            {$t('properties.media.max_size')}: {maxFileSize} MB
-          </p>
+          <Button
+            variant="primary"
+            size="md"
+            disabled={!customFeatureText.trim() || disabled || customFeatures.length >= maxCustomFeatures}
+            on:click={addCustomFeature}
+            rounded="lg"
+            aria-label={t('features.add_custom_feature') || 'Add custom feature'}
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+              <path fill-rule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clip-rule="evenodd" />
+            </svg>
+          </Button>
         </div>
+      {/if}
+    </div>
+  {/if}
+  
+  <!-- Info banner for search results -->
+  {#if search && filteredCategories.length > 0}
+    <div class="mb-4 py-2 px-4 bg-info/10 dark:bg-info/5 border border-info/20 rounded-lg">
+      <p class="text-sm text-neutral-700 dark:text-neutral-300">
+        {t('features.search_results', { count: filteredCategories.reduce((acc, category) => acc + category.features.length, 0) }) || 
+          `Found ${filteredCategories.reduce((acc, category) => acc + category.features.length, 0)} matches for "${search}"`}
+      </p>
+    </div>
+  {/if}
+  
+  <!-- Show custom features as pills -->
+  {#if customFeatures.length > 0}
+    <div class="mb-4">
+      <h3 class="text-sm font-medium text-neutral-700 dark:text-neutral-300 mb-2">
+        {t('features.custom_features') || 'Custom Features'}
+      </h3>
+      <div class="flex flex-wrap gap-2" role="list" aria-label="Custom features">
+        {#each customFeatures as feature (feature.id)}
+          <div 
+            class="inline-flex items-center rounded-full px-3 py-1 text-sm
+              {selectedFeatures[feature.id] ? 
+                'bg-primary-100 text-primary-800 dark:bg-primary-900/30 dark:text-primary-300' : 
+                'bg-neutral-100 text-neutral-700 dark:bg-neutral-800 dark:text-neutral-300'}"
+            in:scale={{ duration: 200, start: 0.8, opacity: 0 }}
+            out:scale={{ duration: 200, start: 0.8, opacity: 0 }}
+            role="listitem"
+          >
+            <span>{feature.name}</span>
+            <button 
+              class="ml-1 text-neutral-500 hover:text-error dark:text-neutral-400 dark:hover:text-error"
+              on:click={() => removeCustomFeature(feature.id)}
+              disabled={disabled}
+              aria-label={t('features.remove_feature') || `Remove feature: ${feature.name}`}
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+                <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd" />
+              </svg>
+            </button>
+          </div>
+        {/each}
       </div>
-    {/if}
-    
-    <!-- Image Gallery -->
-    {#if imagePreviews.length > 0}
-      <div class="image-gallery mt-4">
-        <div class="mb-4 flex justify-between items-center">
-          <h4 class="font-medium text-neutral-900 dark:text-white">
-            {$t('properties.media.uploaded_images')}
-          </h4>
-          
-          <p class="text-sm text-neutral-500 dark:text-neutral-400">
-            {$t('properties.media.main_image_note')}
-          </p>
-        </div>
-        
-        <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-          {#each imagePreviews as preview, index}
-            <Card class="relative overflow-hidden group">
-              <div 
-                class="aspect-w-3 aspect-h-2 w-full overflow-hidden bg-neutral-200 dark:bg-neutral-800"
-                class:ring-2={preview.isMain}
-                class:ring-primary={preview.isMain}
-                class:ring-offset-2={preview.isMain}
+    </div>
+  {/if}
+  
+  <!-- Features categories -->
+  <div class={compact ? 'space-y-2' : 'space-y-4'}>
+    {#each filteredCategories as category (category.id)}
+      <div class={`${containerClasses} rounded-lg overflow-hidden`}>
+        <!-- Category header with toggle -->
+        <button
+          class="w-full px-4 py-3 flex items-center justify-between bg-neutral-50 dark:bg-neutral-900/50 hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors duration-200"
+          on:click={() => toggleCategory(category.id)}
+          aria-expanded={expandedCategories[category.id]}
+          aria-controls={`category-${category.id}-content`}
+        >
+          <div class="flex items-center">
+            {#if category.icon}
+              <div class="mr-3 text-primary-600 dark:text-primary-400">
+                {@html getIconSvg(category.icon)}
+              </div>
+            {/if}
+            <h3 class="font-medium text-neutral-800 dark:text-neutral-200">{category.name}</h3>
+            
+            <!-- Counter badge for selected features in this category -->
+            {#if Object.entries(selectedFeatures).filter(([key, value]) => value && category.features.some(f => f.id === key)).length > 0}
+              <span 
+                class="ml-2 px-2 py-0.5 text-xs rounded-full bg-primary-100 text-primary-800 dark:bg-primary-900/30 dark:text-primary-300"
+                in:scale={{ duration: 200, start: 0.8 }}
               >
-                <img 
-                  src={preview.url} 
-                  alt={$t('properties.media.property_image', { number: index + 1 })}
-                  class="w-full h-full object-cover"
-                />
-                
-                {#if preview.isMain}
-                  <div class="absolute top-2 left-2 bg-primary text-white text-xs px-2 py-1 rounded-md">
-                    {$t('properties.media.main')}
-                  </div>
-                {/if}
-                
-                <!-- Image Controls Overlay -->
-                <div class="absolute inset-0 bg-black bg-opacity-40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
-                  {#if !preview.isMain}
-                    <Button
-                      variant="primary"
-                      size="sm"
-                      title={$t('properties.media.set_as_main')}
-                      on:click={() => setMainImage(index)}
-                    >
-                      <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                        <path d="m9 12 2 2 4-4" />
-                        <circle cx="12" cy="12" r="10" />
-                      </svg>
-                    </Button>
-                  {/if}
-                  
-                  <Button
-                    variant="error"
-                    size="sm"
-                    title={$t('properties.media.remove_image')}
-                    on:click={() => removeImage(index)}
-                  >
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                      <path d="M3 6h18" />
-                      <path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6" />
-                      <path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2" />
-                      <line x1="10" y1="11" x2="10" y2="17" />
-                      <line x1="14" y1="11" x2="14" y2="17" />
-                    </svg>
-                  </Button>
+                {Object.entries(selectedFeatures).filter(([key, value]) => value && category.features.some(f => f.id === key)).length}
+              </span>
+            {/if}
+          </div>
+          <span class="text-neutral-500 dark:text-neutral-400 transition-transform duration-200" style={expandedCategories[category.id] ? 'transform: rotate(180deg)' : ''}>
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+              <path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" />
+            </svg>
+          </span>
+        </button>
+        
+        <!-- Category content -->
+        {#if expandedCategories[category.id]}
+          <div 
+            id={`category-${category.id}-content`}
+            class="px-4 py-3"
+            transition:slide={{ duration: 200, easing: quintOut }}
+          >
+            <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-x-4 gap-y-2" role="group" aria-label={`${category.name} features`}>
+              {#each category.features as feature (feature.id)}
+                <div 
+                  class="feature-item flex items-center py-1.5 px-2 rounded-md
+                    {hoveredFeature === feature.id ? 'bg-neutral-100 dark:bg-neutral-800' : ''}
+                    transition-colors duration-100"
+                  on:mouseenter={() => handleMouseEnter(feature.id)}
+                  on:mouseleave={() => handleMouseLeave()}
+                  role="checkbox"
+                  aria-checked={!!selectedFeatures[feature.id]}
+                >
+                  <Switch 
+                    checked={!!selectedFeatures[feature.id]}
+                    on:change={() => toggleFeature(feature)}
+                    label={feature.name}
+                    disabled={disabled}
+                    size={compact ? 'sm' : 'md'}
+                  />
                 </div>
-              </div>
-              
-              <div class="p-2 text-xs text-neutral-600 dark:text-neutral-400 truncate">
-                {#if images[index] instanceof File}
-                  {images[index].name} ({formatFileSize(images[index].size)})
-                {:else}
-                  {$t('properties.media.image')} {index + 1}
-                {/if}
-              </div>
-            </Card>
-          {/each}
-        </div>
+              {/each}
+            </div>
+          </div>
+        {/if}
       </div>
-    {/if}
+    {/each}
   </div>
   
-  <style>
-    /* RTL support */
-    .rtl {
-      direction: rtl;
-      text-align: right;
-    }
-    
-    /* Image aspect ratio utility */
-    .aspect-w-3 {
-      position: relative;
-      padding-bottom: calc(2 / 3 * 100%);
-    }
-    
-    .aspect-h-2 > * {
-      position: absolute;
-      height: 100%;
-      width: 100%;
-      top: 0;
-      right: 0;
-      bottom: 0;
-      left: 0;
-    }
-  </style>
+  <!-- Empty state when no search results found -->
+  {#if search && !hasMatches}
+    <div class="py-8 px-4 text-center rounded-lg bg-neutral-50 dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800">
+      <div class="mb-4 text-neutral-400 dark:text-neutral-500">
+        <svg xmlns="http://www.w3.org/2000/svg" class="mx-auto h-12 w-12" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+        </svg>
+      </div>
+      <h3 class="text-lg font-medium text-neutral-700 dark:text-neutral-300">
+        {t('features.no_results') || 'No matching features found'}
+      </h3>
+      <p class="mt-2 text-sm text-neutral-500 dark:text-neutral-400">
+        {t('features.try_different_search') || 'Try a different search term or add a custom feature'}
+      </p>
+      
+      {#if allowCustomFeatures}
+        <div class="mt-4 flex justify-center">
+          <Button
+            variant="outline"
+            color="primary"
+            size="sm"
+            on:click={() => { customFeatureText = search; addCustomFeature(); }}
+            disabled={!search.trim() || disabled || customFeatures.length >= maxCustomFeatures}
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" viewBox="0 0 20 20" fill="currentColor">
+              <path fill-rule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clip-rule="evenodd" />
+            </svg>
+            {t('features.add_as_custom') || 'Add as custom feature'}
+          </Button>
+        </div>
+      {/if}
+    </div>
+  {/if}
+  
+  <!-- Summary of selected features -->
+  {#if selectedFeaturesCount > 0}
+    <div class="mt-4 pt-3 border-t border-neutral-200 dark:border-neutral-800">
+      <p class="text-sm text-neutral-700 dark:text-neutral-300">
+        {t('features.selected_count', { count: selectedFeaturesCount }) || 
+        `${selectedFeaturesCount} feature${selectedFeaturesCount !== 1 ? 's' : ''} selected`}
+      </p>
+    </div>
+  {/if}
+</div>

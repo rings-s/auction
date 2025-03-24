@@ -306,7 +306,7 @@
           name="property_type"
           label={$t('properties.property_type')}
           options={propertyTypeOptions}
-          value={filters.property_type}
+          bind:value={filters.property_type}
         />
         
         <!-- Status -->
@@ -314,7 +314,7 @@
           name="status"
           label={$t('properties.property_status')}
           options={statusOptions}
-          value={filters.status}
+          bind:value={filters.status}
         />
         
         <!-- Bedrooms -->
@@ -322,7 +322,7 @@
           name="bedrooms"
           label={$t('properties.bedrooms')}
           options={bedroomOptions}
-          value={filters.bedrooms}
+          bind:value={filters.bedrooms}
         />
         
         <!-- Bathrooms -->
@@ -330,7 +330,7 @@
           name="bathrooms"
           label={$t('properties.bathrooms')}
           options={bathroomOptions}
-          value={filters.bathrooms}
+          bind:value={filters.bathrooms}
         />
         
         <!-- City -->
@@ -463,7 +463,6 @@
                 name="property_type_mobile"
                 label={$t('properties.property_type')}
                 options={propertyTypeOptions}
-                value={filters.property_type}
                 bind:value={filters.property_type}
               />
               
@@ -472,7 +471,6 @@
                 name="status_mobile"
                 label={$t('properties.property_status')}
                 options={statusOptions}
-                value={filters.status}
                 bind:value={filters.status}
               />
               
@@ -482,7 +480,6 @@
                   name="bedrooms_mobile"
                   label={$t('properties.bedrooms')}
                   options={bedroomOptions}
-                  value={filters.bedrooms}
                   bind:value={filters.bedrooms}
                 />
                 
@@ -490,7 +487,6 @@
                   name="bathrooms_mobile"
                   label={$t('properties.bathrooms')}
                   options={bathroomOptions}
-                  value={filters.bathrooms}
                   bind:value={filters.bathrooms}
                 />
               </div>

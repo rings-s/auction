@@ -6,7 +6,7 @@ import { browser } from '$app/environment';
 import { page } from '$app/stores';
 import { t } from '$lib/i18n'; 
 import { toast } from '$lib/stores/toast';
-import { api } from '$lib/services/api';
+import api from '$lib/services/api';
 
 /**
  * Initial state for auction store

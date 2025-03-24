@@ -38,6 +38,8 @@ const notificationService = {
   _unsubscribeWs: null,
   _initialized: false,
   _debug: false,
+  _authStore: null,
+  _isAuthenticated: null,
   
   /**
    * Initialize the notification system
@@ -61,34 +63,42 @@ const notificationService = {
       console.log('Initializing notification service');
     }
     
-    // Import auth store on demand to avoid circular dependencies
-    const { isAuthenticated, authStore } = require('./auth');
-    
-    // Connect if already authenticated
-    if (get(isAuthenticated)) {
-      const user = authStore.getUser();
-      if (user && user.id) {
-        this.connect(user.id);
-      }
-    }
-    
-    // Set up subscription to auth changes
-    this._unsubscribeAuth = isAuthenticated.subscribe(value => {
-      if (value) {
-        // User is now authenticated, connect to notifications
-        const user = authStore.getUser();
-        if (user && user.id) {
-          this.connect(user.id);
+    // Use dynamic import to avoid circular dependencies
+    if (browser) {
+      // Dynamically import auth store
+      import('./auth').then(authModule => {
+        this._isAuthenticated = authModule.isAuthenticated;
+        this._authStore = authModule.authStore;
+        
+        // Connect if already authenticated
+        if (get(this._isAuthenticated)) {
+          const user = this._authStore.getUser();
+          if (user && user.id) {
+            this.connect(user.id);
+          }
         }
-      } else {
-        // User logged out, disconnect
-        this.disconnect();
-        // Clear notifications
-        notifications.set([]);
-        unreadCount.set(0);
-        lastNotification.set(null);
-      }
-    });
+        
+        // Set up subscription to auth changes
+        this._unsubscribeAuth = this._isAuthenticated.subscribe(value => {
+          if (value) {
+            // User is now authenticated, connect to notifications
+            const user = this._authStore.getUser();
+            if (user && user.id) {
+              this.connect(user.id);
+            }
+          } else {
+            // User logged out, disconnect
+            this.disconnect();
+            // Clear notifications
+            notifications.set([]);
+            unreadCount.set(0);
+            lastNotification.set(null);
+          }
+        });
+      }).catch(error => {
+        console.error('Failed to import auth module:', error);
+      });
+    }
     
     this._initialized = true;
   },

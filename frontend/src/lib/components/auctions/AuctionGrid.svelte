@@ -1,57 +1,71 @@
-<!-- src/lib/components/auctions/AuctionGrid.svelte -->
+<!-- src/lib/components/properties/PropertyGrid.svelte -->
 <script>
   import { onMount, onDestroy } from 'svelte';
   import { t } from '$lib/i18n';
-  import { auctionActions, loading } from '$lib/stores/auction';
-  import AuctionCard from './AuctionCard.svelte';
-  import AuctionFilters from './AuctionFilters.svelte';
+  import { propertyActions, loading } from '$lib/stores/property';
+  import PropertyCard from '$lib/components/properties/PropertyCard.svelte';
+  import PropertyFilters from '$lib/components/properties/PropertyFilters.svelte';
   import Button from '$lib/components/ui/Button.svelte';
+  import Select from '$lib/components/ui/Select.svelte';
   
   // Props
   export let initialFilters = {
     status: '',
     property_type: '',
-    auction_type: '',
     city: '',
     min_price: '',
     max_price: '',
-    sort_by: 'start_date',
+    min_bedrooms: '',
+    max_bedrooms: '',
+    min_bathrooms: '',
+    max_bathrooms: '',
+    sort_by: 'created_at',
     order: 'desc'
   };
-  export let title = $t('auctions.title');
+  export let title = $t('properties.title');
   export let showFilters = true;
   export let showTitle = true;
   export let pageSize = 12;
   export let loadingPlaceholders = 6;
   export let autoPaginate = true;
   export let filtersExpanded = false;
-  export let emptyStateMessage = $t('auctions.no_auctions_found');
+  export let emptyStateMessage = $t('properties.no_properties_found');
   export let compact = false;
   
   // State
-  let auctions = [];
-  let loadingAuctions = false;
+  let properties = [];
+  let loadingProperties = false;
   let loadingMore = false;
   let error = null;
   let page = 1;
   let totalPages = 1;
-  let totalAuctions = 0;
-  let hasMoreAuctions = false;
+  let totalProperties = 0;
+  let hasMoreProperties = false;
   let filters = { ...initialFilters };
   let showFilterPanel = false;
+  
+  // Property type options
+  const propertyTypeOptions = [
+    { value: '', label: $t('properties.all_types') },
+    { value: 'house', label: $t('properties.house') },
+    { value: 'apartment', label: $t('properties.apartment') },
+    { value: 'condo', label: $t('properties.condo') },
+    { value: 'land', label: $t('properties.land') },
+    { value: 'commercial', label: $t('properties.commercial') }
+  ];
   
   // Element ref for infinite scroll detection
   let gridContainer;
   let observer;
   
-  // Load auctions with current filters and pagination
-  async function loadAuctions(pageNum = 1, append = false) {
-    if ((loadingAuctions && !append) || (loadingMore && append)) return;
+  // Load properties with current filters and pagination
+  async function loadProperties(pageNum = 1, append = false) {
+    if ((loadingProperties && !append) || (loadingMore && append)) return;
     
     if (append) {
       loadingMore = true;
     } else {
-      loadingAuctions = true;
+      loadingProperties = true;
       error = null;
     }
     
@@ -65,14 +79,14 @@
         ...filters
       };
       
-      const result = await auctionActions.loadAuctions(params, append);
+      const result = await propertyActions.loadProperties(params, append);
       
       if (result.success) {
-        // Update auction data based on append mode
+        // Update property data based on append mode
         if (append) {
-          auctions = [...auctions, ...result.data.results];
+          properties = [...properties, ...result.data.results];
         } else {
-          auctions = result.data.results;
+          properties = result.data.results;
           
           // Scroll to top when filters change
           if (pageNum === 1 && window) {
@@ -83,16 +97,16 @@
         // Update pagination info
         page = pageNum;
         totalPages = result.data.total_pages || 1;
-        totalAuctions = result.data.count || 0;
-        hasMoreAuctions = page < totalPages;
+        totalProperties = result.data.count || 0;
+        hasMoreProperties = page < totalPages;
       } else {
         error = result.error || $t('system_messages.error_occurred');
       }
     } catch (err) {
-      console.error('Error loading auctions:', err);
+      console.error('Error loading properties:', err);
       error = err.message || $t('system_messages.error_occurred');
     } finally {
-      loadingAuctions = false;
+      loadingProperties = false;
       loadingMore = false;
     }
   }
@@ -101,7 +115,7 @@
   function handleFilterChange(event) {
     filters = event.detail;
     page = 1; // Reset to first page
-    loadAuctions(1, false);
+    loadProperties(1, false);
     
     // Close filter panel on mobile
     if (window.innerWidth < 768) {
@@ -114,10 +128,10 @@
     showFilterPanel = !showFilterPanel;
   }
   
-  // Load more auctions (for pagination)
+  // Load more properties (for pagination)
   function loadMore() {
-    if (hasMoreAuctions && !loadingMore) {
-      loadAuctions(page + 1, true);
+    if (hasMoreProperties && !loadingMore) {
+      loadProperties(page + 1, true);
     }
   }
   
@@ -127,7 +141,7 @@
     
     observer = new IntersectionObserver(
       (entries) => {
-        if (entries[0].isIntersecting && hasMoreAuctions && !loadingAuctions && !loadingMore) {
+        if (entries[0].isIntersecting && hasMoreProperties && !loadingProperties && !loadingMore) {
           loadMore();
         }
       },
@@ -156,7 +170,7 @@
   
   // Initialize component
   onMount(() => {
-    loadAuctions();
+    loadProperties();
     setupInfiniteScroll();
   });
   
@@ -166,7 +180,7 @@
   });
 </script>
 
-<div class="auction-grid">
+<div class="property-grid">
   <!-- Title and controls header -->
   {#if showTitle}
     <div class="flex flex-col md:flex-row md:items-center md:justify-between mb-6 gap-4">
@@ -175,9 +189,9 @@
       </h2>
       
       <div class="flex items-center space-x-4">
-        {#if !loadingAuctions && auctions.length > 0}
+        {#if !loadingProperties && properties.length > 0}
           <p class="text-sm text-neutral-500 dark:text-neutral-400 hidden md:block">
-            {$t('auctions.showing_results').replace('{0}', auctions.length).replace('{1}', totalAuctions)}
+            {$t('properties.showing_results').replace('{0}', properties.length).replace('{1}', totalProperties)}
           </p>
         {/if}
         
@@ -203,11 +217,28 @@
     <!-- Filters sidebar - desktop version -->
     {#if showFilters}
       <div class="hidden md:block md:col-span-3">
-        <AuctionFilters 
-          currentFilters={filters} 
-          isExpanded={filtersExpanded}
-          on:change={handleFilterChange}
-        />
+        <div class="bg-white dark:bg-neutral-800 rounded-xl p-4 shadow">
+          <h3 class="font-medium text-lg mb-4">{$t('general.filters')}</h3>
+          
+          <div class="space-y-4">
+            <div>
+              <label for="property-type" class="block text-sm font-medium mb-1">
+                {$t('properties.property_type')}
+              </label>
+              <Select
+                id="property-type"
+                options={propertyTypeOptions}
+                bind:value={filters.property_type}
+              />
+            </div>
+            
+            <PropertyFilters 
+              currentFilters={filters} 
+              isExpanded={filtersExpanded}
+              on:change={handleFilterChange}
+            />
+          </div>
+        </div>
       </div>
     {/if}
     
@@ -215,17 +246,32 @@
     {#if showFilters && showFilterPanel}
       <div class="fixed inset-0 z-50 bg-neutral-800 bg-opacity-75 md:hidden">
         <div class="h-full w-full max-w-md ml-auto bg-white dark:bg-neutral-800 shadow-xl flex flex-col">
-          <AuctionFilters 
-            currentFilters={filters} 
-            isExpanded={filtersExpanded}
-            on:change={handleFilterChange}
-            on:close={toggleFilters}
-          />
+          <div class="p-4 border-b border-neutral-200 dark:border-neutral-700 flex justify-between items-center">
+            <h3 class="font-medium">{$t('general.filters')}</h3>
+            <Button
+              variant="ghost"
+              size="sm"
+              on:click={toggleFilters}
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd" />
+              </svg>
+            </Button>
+          </div>
+          
+          <div class="p-4 flex-grow overflow-y-auto">
+            <PropertyFilters 
+              currentFilters={filters} 
+              isExpanded={true}
+              on:change={handleFilterChange}
+              on:close={toggleFilters}
+            />
+          </div>
         </div>
       </div>
     {/if}
     
-    <!-- Auctions grid -->
+    <!-- Properties grid -->
     <div class={`${showFilters ? 'md:col-span-9' : 'md:col-span-12'}`}>
       {#if error}
         <!-- Error state -->
@@ -234,12 +280,12 @@
           <Button 
             variant="primary" 
             class="mt-4"
-            on:click={() => loadAuctions(1, false)}
+            on:click={() => loadProperties(1, false)}
           >
             {$t('general.retry')}
           </Button>
         </div>
-      {:else if loadingAuctions && auctions.length === 0}
+      {:else if loadingProperties && properties.length === 0}
         <!-- Loading Placeholders -->
         <div class="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
           {#each placeholders() as placeholder}
@@ -254,7 +300,7 @@
             </div>
           {/each}
         </div>
-      {:else if auctions.length === 0}
+      {:else if properties.length === 0}
         <!-- Empty State -->
         <div class="my-12 rounded-xl bg-neutral-50 dark:bg-neutral-800/50 p-8 text-center">
           <div class="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-neutral-100 dark:bg-neutral-700">
@@ -263,16 +309,16 @@
             </svg>
           </div>
           <h3 class="mb-2 text-lg font-medium text-neutral-800 dark:text-neutral-200">{emptyStateMessage}</h3>
-          <p class="text-neutral-500 dark:text-neutral-400">{$t('auctions.try_different_filters')}</p>
+          <p class="text-neutral-500 dark:text-neutral-400">{$t('properties.try_different_filters')}</p>
         </div>
       {:else}
-        <!-- Auction Grid -->
+        <!-- Property Grid -->
         <div 
           bind:this={gridContainer}
           class="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3"
         >
-          {#each auctions as auction (auction.id)}
-            <AuctionCard {auction} {compact} />
+          {#each properties as property (property.id)}
+            <PropertyCard {property} {compact} />
           {/each}
         </div>
         
@@ -287,7 +333,7 @@
         {/if}
         
         <!-- Manual Load More Button (when autoPaginate is false) -->
-        {#if !autoPaginate && hasMoreAuctions && !loadingMore}
+        {#if !autoPaginate && hasMoreProperties && !loadingMore}
           <div class="mt-8 flex justify-center">
             <Button
               variant="outline"
@@ -299,10 +345,10 @@
         {/if}
         
         <!-- End of Results Message -->
-        {#if !hasMoreAuctions && auctions.length > 0 && !loadingAuctions && !loadingMore}
+        {#if !hasMoreProperties && properties.length > 0 && !loadingProperties && !loadingMore}
           <div class="mt-8 text-center">
             <p class="text-sm text-neutral-500 dark:text-neutral-400">
-              {$t('auctions.end_of_results')}
+              {$t('properties.end_of_results')}
             </p>
           </div>
         {/if}

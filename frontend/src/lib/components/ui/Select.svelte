@@ -1,590 +1,780 @@
 <!-- src/lib/components/ui/Select.svelte -->
 <script>
-    /**
-     * Select Component
-     * A customizable select dropdown with support for option groups and multiple selection.
-     */
-    import { createEventDispatcher, onMount, tick } from 'svelte';
-    import { fade } from 'svelte/transition';
-    import { language } from '$lib/i18n';
-    import Spinner from './Spinner.svelte';
-    
-    const dispatch = createEventDispatcher();
-    
-    // Props
-    export let options = []; // Array of { value, label, disabled, group } objects
-    export let groups = []; // Array of { id, label } objects for option groups
-    export let value = ''; // Current value (string or array for multiple)
-    export let name = ''; // Input name
-    export let id = name || undefined; // Input ID, defaults to name
-    export let label = undefined; // Input label
-    export let placeholder = 'Select an option'; // Placeholder text
-    export let disabled = false; // Disabled state
-    export let readonly = false; // Readonly state
-    export let required = false; // Required field
-    export let error = undefined; // Error message
-    export let helpText = undefined; // Help text below select
-    export let loading = false; // Loading state
-    export let searchable = false; // Enable search/filtering
-    export let clearable = false; // Allow clearing selection
-    export let multiple = false; // Allow multiple selections
-    export let size = 'default'; // Size: sm, default, lg
-    export let width = undefined; // Custom width
-    export let maxHeight = '15rem'; // Max height of dropdown
-    export let icon = undefined; // Custom icon component
-    export let noOptionsMessage = 'No options available'; // Message when no options
-    export let noResultsMessage = 'No results found'; // Message when search has no matches
-    export let aria = {}; // Additional ARIA attributes
-    
-    // Internal state
-    let open = false;
-    let focused = false;
-    let searchQuery = '';
-    let highlightedIndex = -1;
-    let selectElement;
-    let dropdownElement;
-    let searchInput;
-    let optionsContainerElement;
-    
-    // RTL support
-    $: isRTL = $language === 'ar';
-    $: dir = isRTL ? 'rtl' : 'ltr';
-    
-    // Size classes
-    $: sizeClasses = {
-      sm: 'py-1.5 px-3 text-sm',
-      default: 'py-2 px-4 text-base',
-      lg: 'py-3 px-5 text-lg'
-    }[size] || 'py-2 px-4 text-base';
-    
-    // Get current selection information
-    $: selection = getSelection(value, options, multiple);
-    
-    // Filter and prepare options based on search query
-    $: filteredOptions = options
-      .filter(option => {
-        if (!searchQuery) return true;
-        return option.label.toLowerCase().includes(searchQuery.toLowerCase());
-      })
-      .map(option => ({
-        ...option,
-        // For ARIA and visual highlighting purposes
-        highlighted: options[highlightedIndex] === option
-      }));
-    
-    // Track if there are no options or no results for search
-    $: hasNoOptions = options.length === 0;
-    $: hasNoResults = searchQuery && filteredOptions.length === 0;
-    
-    // Group options by their group property
-    $: groupedOptions = groupOptions(filteredOptions, groups);
-    
-    // Generate unique IDs for associated elements
-    $: selectId = id || `select-${Math.random().toString(36).substring(2, 10)}`;
-    $: listboxId = `${selectId}-listbox`;
-    $: labelId = label ? `${selectId}-label` : undefined;
-    $: errorId = error ? `${selectId}-error` : undefined;
-    $: helpTextId = helpText ? `${selectId}-description` : undefined;
-    
-    // Calculate the aria-describedby attribute
-    $: describedBy = [
-      error && errorId ? errorId : null,
-      helpText && helpTextId ? helpTextId : null,
-    ].filter(Boolean).join(' ') || undefined;
-    
-    // Select button classes
-    $: selectClasses = [
-      "block w-full rounded-lg border transition-all duration-200 appearance-none",
-      "bg-cosmos-bg text-cosmos-text",
-      "border-cosmos-bg-light",
-      "focus:outline-none",
-      disabled || readonly ? "opacity-60 cursor-not-allowed" : "cursor-pointer",
-      error ? "border-red-500 focus:border-red-500 focus:ring-red-500" : "focus:border-primary focus:ring-2 focus:ring-primary focus:ring-opacity-25",
-      sizeClasses,
-      "flex items-center justify-between"
-    ].filter(Boolean).join(' ');
-    
-    // Dropdown container classes
-    $: dropdownClasses = [
-      "absolute mt-1 w-full rounded-lg",
-      "bg-cosmos-bg shadow-lg border border-cosmos-bg-light",
-      "z-50"
-    ].filter(Boolean).join(' ');
-    
-    // Helper to get selection information
-    function getSelection(value, options, isMultiple) {
-      if (isMultiple) {
-        // For multiple selection, return array of selected options
-        const selectedValues = Array.isArray(value) ? value : [];
-        return options.filter(option => selectedValues.includes(option.value));
-      } else {
-        // For single selection, return the selected option
-        return options.find(option => option.value === value) || null;
-      }
+  /**
+   * Select Component
+   * A flexible select dropdown with advanced features like search, multi-select, and option groups.
+   */
+  import { createEventDispatcher, onMount, tick } from 'svelte';
+  import { fade, fly } from 'svelte/transition';
+  
+  const dispatch = createEventDispatcher();
+  
+  // Props
+  export let value = ''; // Current value (string or array for multiple)
+  export let options = []; // Array of option objects: { value, label, disabled, group, icon }
+  export let groups = []; // Array of option group objects: { id, label }
+  export let name = ''; // Input name
+  export let id = name || `select-${Math.random().toString(36).substring(2, 9)}`; // Input ID
+  export let label = ''; // Label text
+  export let placeholder = 'Select an option'; // Placeholder text
+  export let disabled = false; // Disabled state
+  export let readonly = false; // Read-only state
+  export let required = false; // Required field
+  export let error = ''; // Error message
+  export let helpText = ''; // Help text
+  export let loading = false; // Loading state
+  export let clearable = false; // Show clear button
+  export let searchable = false; // Enable search
+  export let multiple = false; // Allow multiple selections
+  export let size = 'md'; // sm, md, lg
+  export let variant = 'outline'; // outline, filled, flushed, unstyled
+  export let rounded = 'md'; // none, sm, md, lg, full
+  export let leadingIcon = undefined; // Icon component to show at the start
+  export let noOptionsMessage = 'No options available'; // Message when no options
+  export let noResultsMessage = 'No results found'; // Message when search has no matches
+  export let closeOnSelect = !multiple; // Close dropdown when an option is selected
+  export let maxHeight = '15rem'; // Max height of dropdown
+  export let tabIndex = 0; // Tab index
+  export let creatable = false; // Allow creating new options
+  export let createOptionLabel = 'Create'; // Label for create option
+  export let onCreate = undefined; // Function to call when creating a new option
+  export let maxItems = undefined; // Maximum number of selectable items (multiple mode)
+  export let formatSelectedText = undefined; // Function to format selected text display
+  export let customOptionRenderer = undefined; // Custom function to render options
+  
+  // Local state
+  let open = false;
+  let searchQuery = '';
+  let highlightedIndex = -1;
+  let containerElement;
+  let inputElement;
+  let dropdownElement;
+  let optionsListElement;
+  let isTouched = false;
+  let isComposing = false; // For IME composition
+  
+  // Store original tab index before disabling
+  let originalTabIndex = tabIndex;
+  
+  // Size classes
+  $: sizeClasses = {
+    sm: 'h-8 text-sm',
+    md: 'h-10 text-base',
+    lg: 'h-12 text-lg'
+  }[size] || 'h-10 text-base';
+  
+  // Text size based on container size
+  $: textSizeClasses = {
+    sm: 'text-sm',
+    md: 'text-base',
+    lg: 'text-lg'
+  }[size] || 'text-base';
+  
+  // Padding classes based on icon
+  $: paddingClasses = leadingIcon
+    ? size === 'sm' ? 'pl-8 pr-3' : size === 'lg' ? 'pl-12 pr-4' : 'pl-10 pr-4'
+    : size === 'sm' ? 'px-3' : size === 'lg' ? 'px-5' : 'px-4';
+  
+  // Border radius classes
+  $: roundedClasses = {
+    none: 'rounded-none',
+    sm: 'rounded-sm',
+    md: 'rounded-md',
+    lg: 'rounded-lg',
+    full: 'rounded-full'
+  }[rounded] || 'rounded-md';
+  
+  // Get variant classes
+  $: variantClasses = {
+    outline: `border border-neutral-300 dark:border-neutral-700 bg-transparent ${open ? 'border-primary ring-2 ring-primary/20' : ''}`,
+    filled: `border border-transparent bg-neutral-100 dark:bg-neutral-800 ${open ? 'border-primary ring-2 ring-primary/20' : ''}`,
+    flushed: `border-b border-neutral-300 dark:border-neutral-700 rounded-none ${open ? 'border-primary' : ''}`,
+    unstyled: 'border-none shadow-none'
+  }[variant] || 'border border-neutral-300 dark:border-neutral-700 bg-transparent';
+  
+  // Container classes
+  $: containerClasses = [
+    'relative w-full transition-colors duration-200',
+    disabled ? 'opacity-60 cursor-not-allowed' : 'cursor-pointer',
+    error ? 'border-error' : '',
+  ].filter(Boolean).join(' ');
+  
+  // Dropdown trigger classes
+  $: triggerClasses = [
+    'flex w-full items-center justify-between',
+    sizeClasses,
+    roundedClasses,
+    variantClasses,
+    paddingClasses,
+    disabled ? 'bg-neutral-50 dark:bg-neutral-900 cursor-not-allowed' : 'cursor-pointer',
+    error ? 'border-error focus:ring-error/20 focus:border-error' : ''
+  ].filter(Boolean).join(' ');
+  
+  // Normalized value for internal use
+  $: internalValue = multiple ? (Array.isArray(value) ? value : []) : value;
+  
+  // Get selected option(s)
+  $: selectedOptions = multiple
+    ? options.filter(option => internalValue.includes(option.value))
+    : options.find(option => option.value === internalValue);
+  
+  // Filter options based on search query
+  $: filteredOptions = options
+    .filter(option => {
+      if (!searchQuery) return true;
+      return option.label.toLowerCase().includes(searchQuery.toLowerCase());
+    })
+    .map((option, index) => ({
+      ...option,
+      highlighted: index === highlightedIndex
+    }));
+  
+  // Group options by their group property
+  $: groupedOptions = prepareGroupedOptions(filteredOptions);
+  
+  // Track if there are no options or no results for search
+  $: hasNoOptions = options.length === 0;
+  $: hasNoResults = searchQuery && filteredOptions.length === 0;
+  
+  // Check if "create option" should be shown
+  $: showCreateOption = creatable && 
+                      searchQuery && 
+                      filteredOptions.length === 0 && 
+                      !options.some(opt => opt.label.toLowerCase() === searchQuery.toLowerCase());
+  
+  // Format display text for selected value(s)
+  $: displayText = formatDisplayText(selectedOptions, internalValue, placeholder);
+  
+  // Check if the max number of items is reached
+  $: maxItemsReached = multiple && maxItems && internalValue.length >= maxItems;
+  
+  // Group options by their group property
+  function prepareGroupedOptions(options) {
+    if (!groups || groups.length === 0) {
+      return { default: options };
     }
     
-    // Group options by their group property
-    function groupOptions(options, groups) {
-      if (!groups || groups.length === 0) {
-        return { default: options };
+    const result = {};
+    
+    // Initialize groups
+    groups.forEach(group => {
+      result[group.id] = [];
+    });
+    
+    // Add a default group for items without a group
+    result.default = [];
+    
+    // Add options to their groups
+    options.forEach(option => {
+      const groupId = option.group || 'default';
+      if (!result[groupId]) {
+        result[groupId] = [];
+      }
+      result[groupId].push(option);
+    });
+    
+    return result;
+  }
+  
+  // Format the display text for the select button
+  function formatDisplayText(selected, currentValue, placeholder) {
+    if (formatSelectedText && (selected || (multiple && currentValue.length > 0))) {
+      return formatSelectedText(selected, currentValue);
+    }
+    
+    if (multiple) {
+      if (!Array.isArray(currentValue) || currentValue.length === 0) {
+        return placeholder;
       }
       
-      const result = {};
+      if (currentValue.length === 1) {
+        const option = options.find(opt => opt.value === currentValue[0]);
+        return option ? option.label : placeholder;
+      }
       
-      // Initialize groups
-      groups.forEach(group => {
-        result[group.id] = [];
-      });
-      
-      // Add options to their groups
-      options.forEach(option => {
-        const groupId = option.group || 'default';
-        if (!result[groupId]) {
-          result[groupId] = [];
+      return `${currentValue.length} item${currentValue.length !== 1 ? 's' : ''} selected`;
+    } else {
+      if (!selected) return placeholder;
+      return selected.label;
+    }
+  }
+  
+  // Toggle dropdown open/closed
+  function toggleDropdown() {
+    if (disabled || readonly) return;
+    
+    if (!open) {
+      openDropdown();
+    } else {
+      closeDropdown();
+    }
+  }
+  
+  // Open dropdown
+  async function openDropdown() {
+    if (disabled || readonly) return;
+    
+    open = true;
+    searchQuery = '';
+    highlightedIndex = -1;
+    
+    // Focus search input if searchable
+    await tick();
+    if (searchable && inputElement) {
+      inputElement.focus();
+    }
+    
+    dispatch('open');
+  }
+  
+  // Close dropdown
+  function closeDropdown() {
+    if (!open) return;
+    
+    open = false;
+    searchQuery = '';
+    
+    // Restore focus to container
+    if (containerElement) {
+      containerElement.focus();
+    }
+    
+    dispatch('close');
+  }
+  
+  // Handle selecting an option
+  function selectOption(option) {
+    if (option.disabled) return;
+    
+    if (multiple) {
+      // Toggle selection for multi-select
+      const index = internalValue.indexOf(option.value);
+      if (index === -1) {
+        // Check max items constraint
+        if (maxItems && internalValue.length >= maxItems) {
+          dispatch('maxItems', { max: maxItems });
+          return;
         }
-        result[groupId].push(option);
-      });
-      
-      return result;
-    }
-    
-    // Toggle dropdown
-    function toggleDropdown() {
-      if (disabled || readonly) return;
-      
-      if (!open) {
-        openDropdown();
-      } else {
-        closeDropdown();
-      }
-    }
-    
-    // Open dropdown
-    async function openDropdown() {
-      if (disabled || readonly) return;
-      
-      open = true;
-      
-      // Reset search and highlighted index
-      searchQuery = '';
-      highlightedIndex = -1;
-      
-      // Focus the search input if searchable
-      await tick();
-      if (searchable && searchInput) {
-        searchInput.focus();
-      }
-      
-      // Dispatch open event
-      dispatch('open');
-    }
-    
-    // Close dropdown
-    function closeDropdown() {
-      open = false;
-      highlightedIndex = -1;
-      
-      // Focus the select button again
-      if (selectElement) {
-        selectElement.focus();
-      }
-      
-      // Dispatch close event
-      dispatch('close');
-    }
-    
-    // Handle option selection
-    function selectOption(option) {
-      if (option.disabled) return;
-      
-      if (multiple) {
-        // For multiple selection, toggle the option in the array
-        const selectedValues = Array.isArray(value) ? [...value] : [];
-        const index = selectedValues.indexOf(option.value);
         
-        if (index === -1) {
-          selectedValues.push(option.value);
+        value = [...internalValue, option.value];
+      } else {
+        value = [...internalValue.slice(0, index), ...internalValue.slice(index + 1)];
+      }
+    } else {
+      // Single select
+      value = option.value;
+    }
+    
+    isTouched = true;
+    dispatch('change', { value });
+    
+    if (closeOnSelect && !multiple) {
+      closeDropdown();
+    }
+  }
+  
+  // Handle creating a new option
+  function createOption() {
+    if (!searchQuery || !creatable) return;
+    
+    // Call the onCreate handler if provided
+    if (onCreate) {
+      const newOption = onCreate(searchQuery);
+      if (newOption) {
+        if (multiple) {
+          value = [...internalValue, newOption.value];
         } else {
-          selectedValues.splice(index, 1);
+          value = newOption.value;
         }
         
-        value = selectedValues;
-      } else {
-        // For single selection, set the value directly
-        value = option.value;
-        closeDropdown();
+        dispatch('change', { value });
+        dispatch('create', { option: newOption });
+        
+        if (closeOnSelect) {
+          closeDropdown();
+        }
       }
-      
-      // Dispatch change event
-      dispatch('change', { value });
-    }
-    
-    // Clear selection
-    function clearSelection(event) {
-      event.stopPropagation();
+    } else {
+      // Default behavior: create a simple option with value = label
+      const newOption = { value: searchQuery, label: searchQuery };
+      options = [...options, newOption];
       
       if (multiple) {
-        value = [];
+        value = [...internalValue, newOption.value];
       } else {
-        value = '';
+        value = newOption.value;
       }
       
-      // Dispatch change event
       dispatch('change', { value });
+      dispatch('create', { option: newOption });
+      
+      if (closeOnSelect) {
+        closeDropdown();
+      }
     }
     
-    // Handle keyboard navigation
-    function handleKeyDown(event) {
-      if (disabled || readonly) return;
-      
-      switch (event.key) {
-        case 'ArrowDown':
+    searchQuery = '';
+  }
+  
+  // Clear the selection
+  function clearSelection() {
+    value = multiple ? [] : '';
+    isTouched = true;
+    dispatch('change', { value });
+    dispatch('clear');
+  }
+  
+  // Handle keyboard navigation
+  function handleKeydown(event) {
+    if (disabled || readonly || isComposing) return;
+    
+    // Don't handle keypresses during IME composition
+    if (event.isComposing) return;
+    
+    switch (event.key) {
+      case 'Enter':
+        if (open) {
           event.preventDefault();
-          if (!open) {
-            openDropdown();
-          } else {
-            // Navigate to next option
-            highlightedIndex = Math.min(
-              highlightedIndex + 1,
-              filteredOptions.length - 1
-            );
-            scrollToHighlighted();
-          }
-          break;
           
-        case 'ArrowUp':
-          event.preventDefault();
-          if (!open) {
-            openDropdown();
-          } else {
-            // Navigate to previous option
-            highlightedIndex = Math.max(highlightedIndex - 1, 0);
-            scrollToHighlighted();
+          if (showCreateOption) {
+            createOption();
+            return;
           }
-          break;
           
-        case 'Enter':
-          event.preventDefault();
-          if (!open) {
-            openDropdown();
-          } else if (highlightedIndex >= 0 && highlightedIndex < filteredOptions.length) {
-            // Select the highlighted option
+          if (highlightedIndex >= 0 && highlightedIndex < filteredOptions.length) {
             selectOption(filteredOptions[highlightedIndex]);
           }
-          break;
-          
-        case 'Escape':
+        } else {
+          toggleDropdown();
+        }
+        break;
+        
+      case ' ': // Space key
+        if (!searchable || !open) {
+          event.preventDefault();
+          toggleDropdown();
+        }
+        break;
+        
+      case 'ArrowDown':
+        if (open) {
+          event.preventDefault();
+          if (filteredOptions.length > 0) {
+            highlightedIndex = (highlightedIndex + 1) % filteredOptions.length;
+            scrollToHighlighted();
+          }
+        } else {
+          toggleDropdown();
+        }
+        break;
+        
+      case 'ArrowUp':
+        if (open) {
+          event.preventDefault();
+          if (filteredOptions.length > 0) {
+            highlightedIndex = (highlightedIndex - 1 + filteredOptions.length) % filteredOptions.length;
+            scrollToHighlighted();
+          }
+        } else {
+          toggleDropdown();
+        }
+        break;
+        
+      case 'Escape':
+        if (open) {
           event.preventDefault();
           closeDropdown();
-          break;
-          
-        case 'Tab':
-          if (open) {
-            closeDropdown();
-          }
-          break;
-          
-        default:
-          // If searchable is enabled, the search input will handle typing
-          // Otherwise, we could implement type-ahead search here
-          break;
-      }
-    }
-    
-    // Scroll to the highlighted option
-    function scrollToHighlighted() {
-      if (!optionsContainerElement || highlightedIndex === -1) return;
-      
-      const highlightedOption = optionsContainerElement.querySelector('[data-highlighted="true"]');
-      if (highlightedOption) {
-        highlightedOption.scrollIntoView({
-          block: 'nearest',
-          inline: 'nearest'
-        });
-      }
-    }
-    
-    // Check if an option is selected
-    function isSelected(option) {
-      if (multiple) {
-        return Array.isArray(value) && value.includes(option.value);
-      } else {
-        return value === option.value;
-      }
-    }
-    
-    // Handle focus
-    function handleFocus() {
-      focused = true;
-      dispatch('focus');
-    }
-    
-    // Handle blur
-    function handleBlur(event) {
-      // Check if the related target is inside the component
-      const isInsideComponent = 
-        event.relatedTarget && 
-        (event.relatedTarget === dropdownElement || 
-         dropdownElement?.contains(event.relatedTarget));
-      
-      if (!isInsideComponent) {
-        focused = false;
-        
-        // Close dropdown after a short delay to allow for clicking options
-        setTimeout(() => {
-          if (!focused) {
-            closeDropdown();
-          }
-        }, 150);
-        
-        dispatch('blur');
-      }
-    }
-    
-    // Handle search input
-    function handleSearch(event) {
-      searchQuery = event.target.value;
-      highlightedIndex = -1;
-      dispatch('search', { query: searchQuery });
-    }
-    
-    // Handle clicking outside the component
-    function handleClickOutside(event) {
-      if (open && 
-          selectElement && 
-          !selectElement.contains(event.target) && 
-          dropdownElement && 
-          !dropdownElement.contains(event.target)) {
-        closeDropdown();
-      }
-    }
-    
-    // Format selected values for display
-    function formatSelection() {
-      if (multiple) {
-        if (selection.length === 0) {
-          return placeholder;
-        } else if (selection.length === 1) {
-          return selection[0].label;
-        } else {
-          return `${selection.length} items selected`;
         }
-      } else {
-        return selection ? selection.label : placeholder;
-      }
+        break;
+        
+      case 'Tab':
+        if (open) {
+          closeDropdown();
+        }
+        break;
+        
+      case 'Backspace':
+        if (multiple && internalValue.length > 0 && !searchQuery && open) {
+          // Remove the last selected item when pressing backspace
+          const newValue = [...internalValue];
+          newValue.pop();
+          value = newValue;
+          dispatch('change', { value });
+        }
+        break;
+    }
+  }
+  
+  // Handle search input
+  function handleSearch(event) {
+    searchQuery = event.target.value;
+    highlightedIndex = -1;
+    dispatch('search', { query: searchQuery });
+  }
+  
+  // Scroll to highlighted option
+  function scrollToHighlighted() {
+    if (!optionsListElement || highlightedIndex === -1) return;
+    
+    const highlightedOption = optionsListElement.querySelector('[data-highlighted="true"]');
+    if (highlightedOption) {
+      highlightedOption.scrollIntoView({
+        block: 'nearest',
+        inline: 'nearest'
+      });
+    }
+  }
+  
+  // Handle click outside to close dropdown
+  function handleClickOutside(event) {
+    if (!containerElement) return;
+    
+    if (open && 
+        !containerElement.contains(event.target) &&
+        (!dropdownElement || !dropdownElement.contains(event.target))) {
+      closeDropdown();
+    }
+  }
+  
+  // Handle composition events for IME input
+  function handleCompositionStart() {
+    isComposing = true;
+  }
+  
+  function handleCompositionEnd() {
+    isComposing = false;
+  }
+  
+  // Check if an option is selected
+  function isSelected(option) {
+    if (multiple) {
+      return internalValue.includes(option.value);
+    } else {
+      return option.value === internalValue;
+    }
+  }
+  
+  // Remove a specific selected item (for multi-select tags)
+  function removeItem(itemValue, event) {
+    if (event) {
+      event.stopPropagation();
     }
     
-    onMount(() => {
-      // Add document event listener for clicking outside
-      document.addEventListener('mousedown', handleClickOutside);
-      
-      return () => {
-        document.removeEventListener('mousedown', handleClickOutside);
-      };
-    });
-  </script>
+    if (multiple) {
+      const index = internalValue.indexOf(itemValue);
+      if (index !== -1) {
+        const newValue = [...internalValue.slice(0, index), ...internalValue.slice(index + 1)];
+        value = newValue;
+        dispatch('change', { value });
+      }
+    }
+  }
   
-  <div class="relative" style={width ? `width: ${width}` : ''}>
-    {#if label}
-      <label 
-        for={selectId} 
-        id={labelId}
-        class="block mb-1.5 text-sm font-medium text-cosmos-text"
-      >
-        {label} {#if required}<span class="text-error ml-0.5">*</span>{/if}
-      </label>
-    {/if}
+  // Focus handling
+  function handleFocus() {
+    dispatch('focus');
+  }
+  
+  function handleBlur() {
+    if (!open) {
+      isTouched = true;
+      dispatch('blur');
+    }
+  }
+  
+  onMount(() => {
+    // Add document event listener for clicking outside
+    document.addEventListener('mousedown', handleClickOutside);
     
-    <!-- Select button -->
-    <button
-      bind:this={selectElement}
-      type="button"
-      id={selectId}
-      aria-haspopup="listbox"
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  });
+</script>
+
+<div class="w-full mb-4" bind:this={containerElement}>
+  {#if label}
+    <label 
+      for={id} 
+      class="block mb-1.5 text-sm font-medium text-neutral-700 dark:text-neutral-200"
+    >
+      {label} {#if required}<span class="text-error">*</span>{/if}
+    </label>
+  {/if}
+  
+  <div class={containerClasses}>
+    <!-- Main select button/control -->
+    <div
+      {id}
+      class={triggerClasses}
+      tabindex={disabled ? -1 : originalTabIndex}
+      role="combobox"
+      aria-controls={`${id}-listbox`}
       aria-expanded={open}
-      aria-controls={open ? listboxId : undefined}
-      aria-labelledby={labelId}
-      aria-describedby={describedBy}
-      aria-invalid={error ? 'true' : 'false'}
-      disabled={disabled || readonly}
-      class={selectClasses}
-      style={width ? `width: ${width}` : ''}
+      aria-haspopup="listbox"
+      aria-disabled={disabled}
+      aria-readonly={readonly}
+      aria-required={required}
+      aria-invalid={!!error}
+      aria-label={label}
       on:click={toggleDropdown}
-      on:keydown={handleKeyDown}
+      on:keydown={handleKeydown}
       on:focus={handleFocus}
       on:blur={handleBlur}
-      {...aria}
+      data-error={!!error}
     >
-      <span class="flex-grow text-left overflow-hidden truncate" class:text-cosmos-text-muted={!selection || (Array.isArray(selection) && selection.length === 0)}>
-        {#if loading}
-          <Spinner size="sm" class="mr-2 inline-block" />
+      <!-- Leading icon -->
+      {#if leadingIcon}
+        <div class={`absolute left-0 flex items-center justify-center pointer-events-none text-neutral-500 dark:text-neutral-400 
+          ${size === 'sm' ? 'w-8' : size === 'lg' ? 'w-12' : 'w-10'}`}>
+          <svelte:component this={leadingIcon} size={size === 'sm' ? 16 : size === 'lg' ? 24 : 20} />
+        </div>
+      {/if}
+      
+      <!-- Display selected value(s) or placeholder -->
+      <div class="flex-grow overflow-hidden flex items-center">
+        {#if multiple && Array.isArray(internalValue) && internalValue.length > 0}
+          <div class="flex flex-wrap gap-1 max-w-full overflow-hidden">
+            {#each internalValue as itemValue, i (itemValue)}
+              {#if i < 3 || !open}
+                {@const option = options.find(opt => opt.value === itemValue)}
+                {#if option}
+                  <div class="inline-flex items-center py-0.5 px-2 rounded-full bg-primary-100 dark:bg-primary-900/30 text-primary-800 dark:text-primary-200 text-sm">
+                    {#if option.icon}
+                      <svelte:component this={option.icon} size={14} class="mr-1" />
+                    {/if}
+                    <span class="truncate max-w-[100px]">{option.label}</span>
+                    <button
+                      type="button"
+                      class="ml-1 focus:outline-none text-primary-600 dark:text-primary-400 hover:text-primary-800 dark:hover:text-primary-200"
+                      aria-label={`Remove ${option.label}`}
+                      on:click={(e) => removeItem(itemValue, e)}
+                    >
+                      <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+                        <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd" />
+                      </svg>
+                    </button>
+                  </div>
+                {/if}
+              {:else if i === 3 && !open}
+                <div class="inline-flex items-center py-0.5 px-2 rounded-full bg-neutral-100 dark:bg-neutral-800 text-neutral-700 dark:text-neutral-300 text-sm">
+                  +{internalValue.length - 3} more
+                </div>
+              {/if}
+            {/each}
+          </div>
+        {:else}
+          <div class={`truncate ${!selectedOptions ? 'text-neutral-500 dark:text-neutral-400' : ''}`}>
+            {displayText}
+          </div>
         {/if}
-        
-        {#if icon}
-          <span class="mr-2">
-            <svelte:component this={icon} size={18} />
-          </span>
-        {/if}
-        
-        {formatSelection()}
-      </span>
+      </div>
       
       <div class="flex items-center ml-2">
-        {#if clearable && ((multiple && value.length > 0) || (!multiple && value))}
+        {#if loading}
+          <div class="mr-2 animate-spin h-4 w-4 border-2 border-neutral-500 border-t-transparent rounded-full"></div>
+        {/if}
+        
+        {#if clearable && (multiple ? internalValue.length > 0 : internalValue) && !disabled && !readonly}
           <button
             type="button"
-            class="p-1 mr-1 text-cosmos-text-muted hover:text-cosmos-text"
+            class="p-1 text-neutral-400 hover:text-neutral-700 dark:hover:text-neutral-300 focus:outline-none"
             aria-label="Clear selection"
-            on:click={clearSelection}
+            on:click|stopPropagation={clearSelection}
           >
-            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
               <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd" />
             </svg>
           </button>
         {/if}
         
-        <svg class={`h-5 w-5 text-cosmos-text-muted ${open ? 'transform rotate-180' : ''}`} xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
-          <path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" />
-        </svg>
+        <div class="pointer-events-none ml-1">
+          <svg xmlns="http://www.w3.org/2000/svg" class={`h-5 w-5 text-neutral-400 transition-transform duration-200 ${open ? 'transform rotate-180' : ''}`} viewBox="0 0 20 20" fill="currentColor">
+            <path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" />
+          </svg>
+        </div>
       </div>
-    </button>
+    </div>
     
-    {#if error}
-      <p id={errorId} class="mt-1.5 text-sm text-red-500">{error}</p>
-    {:else if helpText}
-      <p id={helpTextId} class="mt-1.5 text-sm text-cosmos-text-muted">{helpText}</p>
-    {/if}
-    
-    <!-- Dropdown -->
+    <!-- Dropdown menu -->
     {#if open}
-      <div 
+      <div
         bind:this={dropdownElement}
-        class={dropdownClasses}
-        in:fade={{ duration: 150 }}
-        dir={dir}
+        class="absolute z-50 mt-1 w-full bg-white dark:bg-neutral-800 shadow-lg rounded-md border border-neutral-200 dark:border-neutral-700 overflow-hidden"
+        transition:fly={{ duration: 150, y: 8 }}
       >
         {#if searchable}
-          <div class="p-2 border-b border-cosmos-bg-light">
-            <input
-              bind:this={searchInput}
-              type="text"
-              bind:value={searchQuery}
-              placeholder="Search..."
-              class="w-full p-2 text-sm rounded-md border border-cosmos-bg-light bg-cosmos-bg focus:outline-none focus:ring-1 focus:ring-primary"
-              on:input={handleSearch}
-              on:keydown={e => {
-                // Prevent event bubbling for navigation keys
-                if (['ArrowUp', 'ArrowDown', 'Enter', 'Escape'].includes(e.key)) {
-                  e.stopPropagation();
-                  handleKeyDown(e);
-                }
-              }}
-            />
+          <div class="p-2 border-b border-neutral-200 dark:border-neutral-700">
+            <div class="relative">
+              <input
+                type="text"
+                bind:this={inputElement}
+                bind:value={searchQuery}
+                placeholder="Search..."
+                class="w-full h-9 px-3 py-2 text-sm bg-neutral-50 dark:bg-neutral-700 border border-neutral-200 dark:border-neutral-600 rounded-md focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
+                on:input={handleSearch}
+                on:keydown={handleKeydown}
+                on:compositionstart={handleCompositionStart}
+                on:compositionend={handleCompositionEnd}
+              />
+              {#if searchQuery}
+                <button
+                  type="button"
+                  class="absolute right-2 top-1/2 -translate-y-1/2 text-neutral-400 hover:text-neutral-700 dark:hover:text-neutral-300"
+                  on:click={() => { searchQuery = ''; }}
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+                    <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd" />
+                  </svg>
+                </button>
+              {:else}
+                <div class="absolute left-3 top-1/2 -translate-y-1/2 text-neutral-400">
+                  <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+                    <path fill-rule="evenodd" d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z" clip-rule="evenodd" />
+                  </svg>
+                </div>
+              {/if}
+            </div>
           </div>
         {/if}
         
-        <div 
-          id={listboxId}
+        <!-- Options list -->
+        <div
+          id={`${id}-listbox`}
+          bind:this={optionsListElement}
           role="listbox"
           aria-multiselectable={multiple ? 'true' : undefined}
-          tabindex="-1"
-          class="py-1 max-h-[15rem] overflow-y-auto"
+          class="max-h-60 overflow-y-auto p-1"
           style={maxHeight ? `max-height: ${maxHeight}` : ''}
-          bind:this={optionsContainerElement}
-          aria-activedescendant={highlightedIndex >= 0 && filteredOptions[highlightedIndex] ? `option-${filteredOptions[highlightedIndex].value}` : undefined}
+          aria-activedescendant={highlightedIndex >= 0 ? `${id}-option-${highlightedIndex}` : undefined}
+          tabindex="-1"
         >
           {#if hasNoOptions}
-            <div class="px-4 py-2 text-cosmos-text-muted text-sm">{noOptionsMessage}</div>
+            <div class="px-3 py-2 text-sm text-neutral-500 dark:text-neutral-400">
+              {noOptionsMessage}
+            </div>
           {:else if hasNoResults}
-            <div class="px-4 py-2 text-cosmos-text-muted text-sm">{noResultsMessage}</div>
+            <div class="px-3 py-2 text-sm text-neutral-500 dark:text-neutral-400">
+              {noResultsMessage}
+            </div>
           {:else}
             {#each Object.entries(groupedOptions) as [groupId, groupOptions]}
-              {#if groupId !== 'default' && groups.length > 0}
-                <!-- Group label -->
-                <div class="px-3 py-1 text-xs font-semibold text-cosmos-text-muted">
+              {#if groupId !== 'default' && groups.length > 0 && groupOptions.length > 0}
+                <div class="px-3 py-1 text-xs font-medium text-neutral-500 dark:text-neutral-400 uppercase tracking-wider">
                   {groups.find(g => g.id === groupId)?.label || groupId}
                 </div>
               {/if}
               
               {#each groupOptions as option, index}
-                <!-- Option item -->
-                <div
-                  id={`option-${option.value}`}
-                  role="option"
-                  class={`
-                    px-4 py-2 cursor-pointer flex items-center
-                    ${option.disabled ? 'opacity-50 cursor-not-allowed' : 'hover:bg-cosmos-bg-light'}
-                    ${isSelected(option) ? 'bg-primary bg-opacity-10 text-primary' : 'text-cosmos-text'}
-                    ${option.highlighted ? 'bg-cosmos-bg-light' : ''}
-                  `}
-                  aria-selected={isSelected(option) ? 'true' : 'false'}
-                  aria-disabled={option.disabled ? 'true' : undefined}
-                  data-highlighted={option.highlighted ? 'true' : 'false'}
-                  on:click={() => selectOption(option)}
-                  on:mouseenter={() => { highlightedIndex = options.indexOf(option); }}
-                >
-                  {#if multiple}
-                    <div class="mr-2 flex items-center justify-center">
-                      {#if isSelected(option)}
-                        <svg class="h-4 w-4 text-primary" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
-                          <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" />
-                        </svg>
-                      {:else}
-                        <div class="h-4 w-4 border border-cosmos-bg-light rounded"></div>
-                      {/if}
-                    </div>
-                  {/if}
+                {#if customOptionRenderer}
+                  {@const renderedOption = customOptionRenderer(option, {
+                    selected: isSelected(option),
+                    highlighted: option.highlighted,
+                    disabled: option.disabled,
+                    handleSelect: () => selectOption(option)
+                  })}
                   
-                  <span class={option.class || ''}>
-                    {#if option.icon}
-                      <span class="mr-2">
-                        <svelte:component this={option.icon} size={16} />
-                      </span>
+                  <!-- Custom option rendering -->
+                  <div 
+                    id={`${id}-option-${option.highlighted ? highlightedIndex : index}`}
+                    role="option"
+                    aria-selected={isSelected(option) ? 'true' : 'false'}
+                    aria-disabled={option.disabled ? 'true' : 'false'}
+                    data-highlighted={option.highlighted ? 'true' : 'false'}
+                    on:click={() => !option.disabled && selectOption(option)}
+                    on:mouseenter={() => { highlightedIndex = filteredOptions.indexOf(option); }}
+                  >
+                    {@html renderedOption}
+                  </div>
+                {:else}
+                  <!-- Default option rendering -->
+                  <div
+                    id={`${id}-option-${option.highlighted ? highlightedIndex : index}`}
+                    role="option"
+                    class={`px-3 py-2 text-sm flex items-center cursor-pointer rounded-md ${option.highlighted ? 'bg-neutral-100 dark:bg-neutral-700' : ''} 
+                      ${isSelected(option) ? 'bg-primary-50 dark:bg-primary-900/20 text-primary-700 dark:text-primary-300' : 'text-neutral-700 dark:text-neutral-200'} 
+                      ${option.disabled ? 'opacity-50 cursor-not-allowed' : 'hover:bg-neutral-100 dark:hover:bg-neutral-700'}`}
+                    aria-selected={isSelected(option) ? 'true' : 'false'}
+                    aria-disabled={option.disabled ? 'true' : 'false'}
+                    data-highlighted={option.highlighted ? 'true' : 'false'}
+                    on:click={() => !option.disabled && selectOption(option)}
+                    on:mouseenter={() => { highlightedIndex = filteredOptions.indexOf(option); }}
+                  >
+                    {#if multiple}
+                      <div class="mr-2 flex items-center justify-center h-5 w-5">
+                        {#if isSelected(option)}
+                          <svg class="h-5 w-5 text-primary-600 dark:text-primary-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                            <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" />
+                          </svg>
+                        {/if}
+                      </div>
                     {/if}
-                    {option.label}
-                  </span>
-                </div>
+                    
+                    {#if option.icon}
+                      <div class="mr-2 text-neutral-500 dark:text-neutral-400">
+                        <svelte:component this={option.icon} size={18} />
+                      </div>
+                    {/if}
+                    
+                    <span class="truncate">{option.label}</span>
+                    
+                    {#if maxItemsReached && multiple && !isSelected(option)}
+                      <span class="ml-auto text-xs text-neutral-500 dark:text-neutral-400">Max items reached</span>
+                    {/if}
+                  </div>
+                {/if}
               {/each}
             {/each}
+          {/if}
+          
+          {#if showCreateOption}
+            <div
+              role="option"
+              class="px-3 py-2 text-sm flex items-center cursor-pointer rounded-md bg-neutral-50 dark:bg-neutral-750 hover:bg-neutral-100 dark:hover:bg-neutral-700 text-primary-700 dark:text-primary-300"
+              on:click={createOption}
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-2" viewBox="0 0 20 20" fill="currentColor">
+                <path fill-rule="evenodd" d="M10 5a1 1 0 011 1v3h3a1 1 0 110 2h-3v3a1 1 0 11-2 0v-3H6a1 1 0 110-2h3V6a1 1 0 011-1z" clip-rule="evenodd" />
+              </svg>
+              {createOptionLabel} "{searchQuery}"
+            </div>
           {/if}
         </div>
       </div>
     {/if}
     
-    <!-- Hidden native select for form submission -->
-    {#if name}
-      {#if multiple}
-        <select 
-          {name}
-          hidden
-          multiple
-          {disabled}
-          {required}
-          aria-hidden="true"
-        >
-          {#each options as option}
-            <option 
-              value={option.value} 
-              selected={Array.isArray(value) && value.includes(option.value)}
-            >{option.label}</option>
-          {/each}
-        </select>
-      {:else}
-        <select 
-          {name}
-          hidden
-          {disabled}
-          {required}
-          aria-hidden="true"
-        >
-          <option value="" disabled selected={!value}></option>
-          {#each options as option}
-            <option 
-              value={option.value} 
-              selected={value === option.value}
-            >{option.label}</option>
-          {/each}
-        </select>
-      {/if}
+    {#if error}
+      <p id={`${id}-error`} class="mt-1.5 text-sm text-error">
+        {error}
+      </p>
+    {:else if helpText}
+      <p id={`${id}-helptext`} class="mt-1.5 text-sm text-neutral-500 dark:text-neutral-400">
+        {helpText}
+      </p>
     {/if}
   </div>
+  
+  <!-- Hidden native select for form submission -->
+  {#if name}
+    {#if multiple}
+      <select {name} multiple hidden disabled={disabled} required={required}>
+        {#each options as option}
+          <option 
+            value={option.value} 
+            selected={Array.isArray(internalValue) && internalValue.includes(option.value)}
+          >{option.label}</option>
+        {/each}
+      </select>
+    {:else}
+      <select {name} hidden disabled={disabled} required={required}>
+        <option value="" disabled selected={!internalValue}></option>
+        {#each options as option}
+          <option 
+            value={option.value} 
+            selected={internalValue === option.value}
+          >{option.label}</option>
+        {/each}
+      </select>
+    {/if}
+  {/if}
+</div>
