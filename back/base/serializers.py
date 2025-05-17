@@ -34,13 +34,22 @@ class MediaSerializer(serializers.ModelSerializer):
     dimensions = serializers.SerializerMethodField()
     content_type_str = serializers.CharField(write_only=True, required=False)
     content_type_model = serializers.CharField(source='content_type.model', read_only=True)
+    content_type_app_label = serializers.CharField(source='content_type.app_label', read_only=True)
 
     class Meta:
         model = Media
-        fields = '__all__'
-        read_only_fields = ['file_size', 'dimensions', 'created_at', 'updated_at', 'content_type_model']
+        fields = ['id', 'file', 'url', 'name', 'media_type', 'is_primary', 'order', 
+                 'content_type', 'content_type_str', 'content_type_model', 'content_type_app_label',
+                 'object_id', 'file_size', 'dimensions', 'created_at', 'updated_at']
+        read_only_fields = ['file_size', 'dimensions', 'created_at', 'updated_at', 
+                           'content_type_model', 'content_type_app_label']
+        extra_kwargs = {
+            'content_type': {'required': False},
+            'file': {'required': True}
+        }
 
     def get_url(self, obj):
+        """Get full URL for the file, including domain if request is available"""
         if obj.file:
             request = self.context.get('request')
             if request:
@@ -49,25 +58,113 @@ class MediaSerializer(serializers.ModelSerializer):
         return None
 
     def get_file_size(self, obj):
-        return obj.file_size
+        """Get file size in bytes"""
+        return obj.file_size if hasattr(obj, 'file_size') else 0
 
     def get_dimensions(self, obj):
-        return obj.get_dimensions()
+        """Get image dimensions if media is an image"""
+        return obj.get_dimensions() if hasattr(obj, 'get_dimensions') else None
 
     def validate(self, data):
-        """Handle content_type_str conversion to ContentType object"""
+        """Validate the media data including content type resolution"""
+        # Handle content_type_str to ContentType conversion
         content_type_str = data.pop('content_type_str', None)
-        if content_type_str and not data.get('content_type'):
+        
+        # If content_type is not directly provided, try to resolve from content_type_str
+        if not data.get('content_type') and content_type_str:
             try:
-                app_label, model = content_type_str.lower().split('.') if '.' in content_type_str else ('base', content_type_str.lower())
-                content_type = ContentType.objects.get(app_label=app_label, model=model)
-                data['content_type'] = content_type
-            except (ContentType.DoesNotExist, ValueError):
-                raise serializers.ValidationError(
-                    {"content_type_str": f"Invalid content type: {content_type_str}. Format should be 'app_label.model' or just 'model'"}
-                )
+                # Parse content_type_str - accept both 'app_label.model' and just 'model' formats
+                if '.' in content_type_str:
+                    app_label, model = content_type_str.lower().split('.')
+                else:
+                    # Default to 'base' app if not specified
+                    app_label, model = 'base', content_type_str.lower()
+                
+                # Log for debugging
+                print(f"Looking for content type with app_label='{app_label}', model='{model}'")
+                
+                try:
+                    content_type = ContentType.objects.get(app_label=app_label, model=model)
+                    data['content_type'] = content_type
+                    print(f"Found content type: {content_type.app_label}.{content_type.model} (id={content_type.id})")
+                except ContentType.DoesNotExist:
+                    # List available content types to help debugging
+                    available = list(ContentType.objects.filter(app_label=app_label).values_list('model', flat=True))
+                    msg = f"Content type '{app_label}.{model}' not found. Available models in '{app_label}': {available}"
+                    print(msg)
+                    raise serializers.ValidationError({"content_type_str": msg})
+                
+            except Exception as e:
+                # Provide detailed error for debugging
+                print(f"Error resolving content_type_str '{content_type_str}': {str(e)}")
+                raise serializers.ValidationError({
+                    "content_type_str": f"Invalid content type format: {content_type_str}. "
+                                        f"Use format 'app_label.model' or just 'model'. Error: {str(e)}"
+                })
+        
+        # Ensure both content_type and object_id are present
+        if 'content_type' not in data and self.instance is None:
+            raise serializers.ValidationError({
+                "content_type": "Content type is required. Provide either content_type or content_type_str."
+            })
+            
+        if 'object_id' not in data and self.instance is None:
+            raise serializers.ValidationError({"object_id": "Object ID is required."})
+            
+        # Validate file is present for new uploads
+        if 'file' not in data and self.instance is None:
+            raise serializers.ValidationError({"file": "File is required for new media uploads."})
+            
+        # Validate media_type based on file extension
+        if 'file' in data and 'media_type' not in data:
+            # Auto-detect media type from file if not provided
+            file = data['file']
+            if hasattr(file, 'content_type'):
+                if file.content_type.startswith('image/'):
+                    data['media_type'] = 'image'
+                elif file.content_type.startswith('video/'):
+                    data['media_type'] = 'video'
+                elif file.content_type.startswith('application/pdf'):
+                    data['media_type'] = 'document'
+                else:
+                    data['media_type'] = 'other'
+        
         return data
-    
+
+    def create(self, validated_data):
+        """Create a new media instance with proper error handling"""
+        try:
+            # Check that content_type and object_id point to a valid object
+            content_type = validated_data.get('content_type')
+            object_id = validated_data.get('object_id')
+            
+            if content_type and object_id:
+                # Try to get the related object to verify it exists
+                model_class = content_type.model_class()
+                if model_class:
+                    try:
+                        related_object = model_class.objects.get(pk=object_id)
+                        print(f"Found related object: {related_object}")
+                    except model_class.DoesNotExist:
+                        print(f"Related object {content_type.model} with id={object_id} not found")
+                        raise serializers.ValidationError({
+                            "object_id": f"Object with id={object_id} of type {content_type.app_label}.{content_type.model} does not exist."
+                        })
+            
+            # Proceed with creation
+            instance = super().create(validated_data)
+            
+            # For image files, handle various processing tasks like thumbnails 
+            # (already handled in the model's save method)
+            
+            return instance
+            
+        except Exception as e:
+            import traceback
+            print(f"Error creating media: {str(e)}")
+            print(traceback.format_exc())
+            raise
+
 class RoomSerializer(serializers.ModelSerializer):
     room_type_display = serializers.CharField(source='get_room_type_display', read_only=True)
     media = serializers.SerializerMethodField()

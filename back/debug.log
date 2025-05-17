@@ -361,3 +361,121 @@ INFO 2025-05-17 14:13:11,826 basehttp 46116 131300598990528 "OPTIONS /api/auctio
 INFO 2025-05-17 14:13:11,877 basehttp 46116 131300598990528 "GET /api/auctions/?status=live&auction_type=sealed HTTP/1.1" 200 52
 INFO 2025-05-17 14:13:13,672 basehttp 46116 131300598990528 "OPTIONS /api/auctions/?status=scheduled&auction_type=sealed HTTP/1.1" 200 0
 INFO 2025-05-17 14:13:13,685 basehttp 46116 131300598990528 "GET /api/auctions/?status=scheduled&auction_type=sealed HTTP/1.1" 200 52
+WARNING 2025-05-17 15:22:55,121 log 46116 131300598990528 Unauthorized: /api/properties/
+WARNING 2025-05-17 15:22:55,122 basehttp 46116 131300598990528 "GET /api/properties/?page=1&ordering=-created_at HTTP/1.1" 401 172
+INFO 2025-05-17 15:22:55,131 basehttp 46116 131300598990528 "OPTIONS /api/accounts/token/refresh/ HTTP/1.1" 200 0
+INFO 2025-05-17 15:22:55,176 basehttp 46116 131300598990528 "POST /api/accounts/token/refresh/ HTTP/1.1" 200 269
+INFO 2025-05-17 15:22:55,256 basehttp 46116 131300598990528 "GET /api/properties/?page=1&ordering=-created_at HTTP/1.1" 200 3711
+INFO 2025-05-17 15:22:55,313 basehttp 46116 131300582205120 "GET /media/uploads/2025/05/17/dummy_imgs.png HTTP/1.1" 304 0
+INFO 2025-05-17 15:23:00,831 basehttp 46116 131300598990528 "GET /api/properties/the-property-title/ HTTP/1.1" 200 2357
+INFO 2025-05-17 15:23:00,958 basehttp 46116 131300609480384 "GET /api/properties/the-property-title/ HTTP/1.1" 200 2357
+INFO 2025-05-17 15:23:08,225 basehttp 46116 131300609480384 "GET /api/accounts/profile/ HTTP/1.1" 200 594
+INFO 2025-05-17 15:23:09,899 basehttp 46116 131300609480384 "GET /api/accounts/profile/ HTTP/1.1" 200 594
+INFO 2025-05-17 15:23:10,505 basehttp 46116 131300609480384 "GET /api/properties/the-property-title/ HTTP/1.1" 200 2357
+INFO 2025-05-17 15:23:10,773 basehttp 46116 131300598990528 "GET /api/properties/the-property-title/ HTTP/1.1" 200 2357
+INFO 2025-05-17 15:32:22,607 basehttp 46116 131300609480384 "GET /api/properties/the-property-title/ HTTP/1.1" 200 2357
+INFO 2025-05-17 15:32:22,844 basehttp 46116 131300598990528 "GET /api/properties/the-property-title/ HTTP/1.1" 200 2357
+INFO 2025-05-17 15:32:23,845 basehttp 46116 131300598990528 "GET /api/properties/the-property-title/ HTTP/1.1" 200 2357
+INFO 2025-05-17 15:32:23,956 basehttp 46116 131300609480384 "GET /api/properties/the-property-title/ HTTP/1.1" 200 2357
+INFO 2025-05-17 15:32:50,876 autoreload 46116 131300698584896 /home/ahmed/tech-Savvy-projects/2025/new_ones/auction/back/base/serializers.py changed, reloading.
+INFO 2025-05-17 15:32:51,811 autoreload 51224 137536771872576 Watching for file changes with StatReloader
+INFO 2025-05-17 15:32:58,158 autoreload 51224 137536771872576 /home/ahmed/tech-Savvy-projects/2025/new_ones/auction/back/base/serializers.py changed, reloading.
+INFO 2025-05-17 15:32:59,093 autoreload 51226 133482703828800 Watching for file changes with StatReloader
+INFO 2025-05-17 15:33:07,684 autoreload 51226 133482703828800 /home/ahmed/tech-Savvy-projects/2025/new_ones/auction/back/base/serializers.py changed, reloading.
+INFO 2025-05-17 15:33:08,682 autoreload 51228 139296676509504 Watching for file changes with StatReloader
+INFO 2025-05-17 15:33:09,938 autoreload 51228 139296676509504 /home/ahmed/tech-Savvy-projects/2025/new_ones/auction/back/base/serializers.py changed, reloading.
+INFO 2025-05-17 15:33:10,782 autoreload 51230 139657761916736 Watching for file changes with StatReloader
+INFO 2025-05-17 15:33:17,107 autoreload 51230 139657761916736 /home/ahmed/tech-Savvy-projects/2025/new_ones/auction/back/base/serializers.py changed, reloading.
+INFO 2025-05-17 15:33:18,335 autoreload 51251 138822793500480 Watching for file changes with StatReloader
+INFO 2025-05-17 15:35:24,788 autoreload 51251 138822793500480 /home/ahmed/tech-Savvy-projects/2025/new_ones/auction/back/base/serializers.py changed, reloading.
+INFO 2025-05-17 15:35:26,051 autoreload 51376 126696672646976 Watching for file changes with StatReloader
+INFO 2025-05-17 15:35:31,819 autoreload 51376 126696672646976 /home/ahmed/tech-Savvy-projects/2025/new_ones/auction/back/base/serializers.py changed, reloading.
+INFO 2025-05-17 15:35:33,016 autoreload 51382 134596433901376 Watching for file changes with StatReloader
+INFO 2025-05-17 15:35:35,060 autoreload 51382 134596433901376 /home/ahmed/tech-Savvy-projects/2025/new_ones/auction/back/base/serializers.py changed, reloading.
+INFO 2025-05-17 15:35:36,623 autoreload 51389 128889440003904 Watching for file changes with StatReloader
+INFO 2025-05-17 15:35:44,167 autoreload 51389 128889440003904 /home/ahmed/tech-Savvy-projects/2025/new_ones/auction/back/base/serializers.py changed, reloading.
+INFO 2025-05-17 15:35:45,876 autoreload 51400 134339278989120 Watching for file changes with StatReloader
+INFO 2025-05-17 15:35:48,192 autoreload 51400 134339278989120 /home/ahmed/tech-Savvy-projects/2025/new_ones/auction/back/base/serializers.py changed, reloading.
+INFO 2025-05-17 15:35:50,264 autoreload 51426 126898289997632 Watching for file changes with StatReloader
+INFO 2025-05-17 15:36:22,647 autoreload 51426 126898289997632 /home/ahmed/tech-Savvy-projects/2025/new_ones/auction/back/base/views.py changed, reloading.
+INFO 2025-05-17 15:36:23,557 autoreload 51455 133434438178624 Watching for file changes with StatReloader
+INFO 2025-05-17 15:36:26,906 autoreload 51455 133434438178624 /home/ahmed/tech-Savvy-projects/2025/new_ones/auction/back/base/views.py changed, reloading.
+INFO 2025-05-17 15:36:27,644 autoreload 51461 133941457798976 Watching for file changes with StatReloader
+INFO 2025-05-17 15:38:38,993 basehttp 51461 133941306586816 "OPTIONS /api/properties/the-property-title/ HTTP/1.1" 200 0
+INFO 2025-05-17 15:38:39,175 basehttp 51461 133941306586816 "GET /api/properties/the-property-title/ HTTP/1.1" 200 2347
+INFO 2025-05-17 15:38:39,336 basehttp 51461 133941298194112 "GET /api/properties/the-property-title/ HTTP/1.1" 200 2347
+INFO 2025-05-17 15:45:47,319 basehttp 51461 133941298194112 "OPTIONS /api/accounts/profile/ HTTP/1.1" 200 0
+INFO 2025-05-17 15:45:47,338 basehttp 51461 133941298194112 "GET /api/accounts/profile/ HTTP/1.1" 200 594
+INFO 2025-05-17 15:45:47,721 basehttp 51461 133941298194112 "GET /api/properties/the-property-title/ HTTP/1.1" 200 2347
+INFO 2025-05-17 15:45:47,969 basehttp 51461 133941306586816 "GET /api/properties/the-property-title/ HTTP/1.1" 200 2347
+INFO 2025-05-17 15:46:17,415 basehttp 51461 133941306586816 "GET /api/accounts/profile/ HTTP/1.1" 200 594
+INFO 2025-05-17 15:46:17,558 basehttp 51461 133941306586816 "GET /api/properties/the-property-title/ HTTP/1.1" 200 2347
+INFO 2025-05-17 15:46:17,776 basehttp 51461 133941298194112 "GET /api/properties/the-property-title/ HTTP/1.1" 200 2347
+INFO 2025-05-17 15:46:18,833 basehttp 51461 133941298194112 "GET /api/accounts/profile/ HTTP/1.1" 200 594
+INFO 2025-05-17 15:46:19,023 basehttp 51461 133941298194112 "GET /api/properties/the-property-title/ HTTP/1.1" 200 2347
+INFO 2025-05-17 15:46:19,195 basehttp 51461 133941306586816 "GET /api/properties/the-property-title/ HTTP/1.1" 200 2347
+INFO 2025-05-17 15:46:24,659 basehttp 51461 133941306586816 "GET /api/accounts/profile/ HTTP/1.1" 200 594
+INFO 2025-05-17 15:46:24,781 basehttp 51461 133941306586816 "GET /api/properties/the-property-title/ HTTP/1.1" 200 2347
+INFO 2025-05-17 15:46:24,970 basehttp 51461 133941298194112 "GET /api/properties/the-property-title/ HTTP/1.1" 200 2347
+INFO 2025-05-17 15:46:28,679 basehttp 51461 133941298194112 "GET /api/accounts/profile/ HTTP/1.1" 200 594
+INFO 2025-05-17 15:46:28,806 basehttp 51461 133941298194112 "GET /api/properties/the-property-title/ HTTP/1.1" 200 2347
+INFO 2025-05-17 15:46:28,961 basehttp 51461 133941306586816 "GET /api/properties/the-property-title/ HTTP/1.1" 200 2347
+INFO 2025-05-17 15:46:31,962 basehttp 51461 133941306586816 "GET /api/accounts/profile/ HTTP/1.1" 200 594
+INFO 2025-05-17 15:46:32,691 basehttp 51461 133941306586816 "GET /api/properties/the-property-title/ HTTP/1.1" 200 2347
+INFO 2025-05-17 15:46:32,852 basehttp 51461 133941298194112 "GET /api/properties/the-property-title/ HTTP/1.1" 200 2347
+INFO 2025-05-17 15:46:40,690 basehttp 51461 133941298194112 "GET /api/accounts/profile/ HTTP/1.1" 200 594
+INFO 2025-05-17 15:46:40,832 basehttp 51461 133941298194112 "GET /api/properties/the-property-title/ HTTP/1.1" 200 2347
+INFO 2025-05-17 15:46:41,012 basehttp 51461 133941306586816 "GET /api/properties/the-property-title/ HTTP/1.1" 200 2347
+INFO 2025-05-17 15:46:42,364 basehttp 51461 133941306586816 "GET /api/accounts/profile/ HTTP/1.1" 200 594
+INFO 2025-05-17 15:46:42,480 basehttp 51461 133941306586816 "GET /api/properties/the-property-title/ HTTP/1.1" 200 2347
+INFO 2025-05-17 15:46:42,621 basehttp 51461 133941298194112 "GET /api/properties/the-property-title/ HTTP/1.1" 200 2347
+INFO 2025-05-17 15:46:44,118 basehttp 51461 133941298194112 "GET /api/accounts/profile/ HTTP/1.1" 200 594
+INFO 2025-05-17 15:46:44,280 basehttp 51461 133941298194112 "GET /api/properties/the-property-title/ HTTP/1.1" 200 2347
+INFO 2025-05-17 15:46:44,477 basehttp 51461 133941306586816 "GET /api/properties/the-property-title/ HTTP/1.1" 200 2347
+INFO 2025-05-17 15:46:55,184 basehttp 51461 133941306586816 "GET /api/accounts/profile/ HTTP/1.1" 200 594
+INFO 2025-05-17 15:46:55,332 basehttp 51461 133941306586816 "GET /api/properties/the-property-title/ HTTP/1.1" 200 2347
+INFO 2025-05-17 15:46:55,529 basehttp 51461 133941298194112 "GET /api/properties/the-property-title/ HTTP/1.1" 200 2347
+INFO 2025-05-17 15:47:10,831 basehttp 51461 133941298194112 "GET /api/accounts/profile/ HTTP/1.1" 200 594
+INFO 2025-05-17 15:47:11,180 basehttp 51461 133941298194112 "GET /api/properties/the-property-title/ HTTP/1.1" 200 2347
+INFO 2025-05-17 15:47:11,252 basehttp 51461 133941289801408 "GET /media/uploads/2025/05/17/dummy_imgs.png HTTP/1.1" 304 0
+INFO 2025-05-17 15:47:11,397 basehttp 51461 133941306586816 "GET /api/properties/the-property-title/ HTTP/1.1" 200 2347
+INFO 2025-05-17 15:47:15,701 basehttp 51461 133941306586816 "GET /api/accounts/profile/ HTTP/1.1" 200 594
+INFO 2025-05-17 20:54:14,685 basehttp 51461 133941306586816 "GET /admin/base/property/ HTTP/1.1" 200 19239
+INFO 2025-05-17 20:54:14,741 basehttp 51461 133941306586816 "GET /admin/jsi18n/ HTTP/1.1" 200 3342
+INFO 2025-05-17 20:57:20,554 basehttp 51461 133941289801408 "OPTIONS /api/properties/ HTTP/1.1" 200 0
+WARNING 2025-05-17 20:57:20,559 log 51461 133941289801408 Unauthorized: /api/properties/
+WARNING 2025-05-17 20:57:20,560 basehttp 51461 133941289801408 "POST /api/properties/ HTTP/1.1" 401 172
+INFO 2025-05-17 20:57:20,608 basehttp 51461 133941289801408 "OPTIONS /api/accounts/token/refresh/ HTTP/1.1" 200 0
+INFO 2025-05-17 20:57:20,657 basehttp 51461 133941289801408 "POST /api/accounts/token/refresh/ HTTP/1.1" 200 269
+INFO 2025-05-17 20:57:20,840 basehttp 51461 133941289801408 "POST /api/properties/ HTTP/1.1" 201 1489
+INFO 2025-05-17 20:57:20,888 basehttp 51461 133941289801408 "OPTIONS /api/media/ HTTP/1.1" 200 0
+INFO 2025-05-17 20:57:21,039 basehttp 51461 133941289801408 "POST /api/media/ HTTP/1.1" 201 476
+INFO 2025-05-17 20:57:21,518 basehttp 51461 133941289801408 "POST /api/media/ HTTP/1.1" 201 437
+INFO 2025-05-17 20:57:23,594 basehttp 51461 133941289801408 "OPTIONS /api/properties/3/ HTTP/1.1" 200 0
+INFO 2025-05-17 20:57:23,612 basehttp 51461 133941289801408 "OPTIONS /api/properties/3/ HTTP/1.1" 200 0
+INFO 2025-05-17 20:57:23,928 basehttp 51461 133941298194112 "GET /api/properties/3/ HTTP/1.1" 200 2875
+INFO 2025-05-17 20:57:23,994 basehttp 51461 133941273016000 "GET /media/uploads/2025/05/17/dummy_imgs_wozqbR7.png HTTP/1.1" 200 1785
+INFO 2025-05-17 20:57:23,996 basehttp 51461 133941281408704 "GET /media/uploads/2025/05/17/d.jpeg HTTP/1.1" 200 1058
+INFO 2025-05-17 20:57:24,082 basehttp 51461 133941289801408 "GET /api/properties/3/ HTTP/1.1" 200 2875
+INFO 2025-05-17 20:57:40,374 basehttp 51461 133941289801408 "OPTIONS /api/properties/?page=1&ordering=-created_at HTTP/1.1" 200 0
+INFO 2025-05-17 20:57:40,427 basehttp 51461 133941289801408 "GET /api/properties/?page=1&ordering=-created_at HTTP/1.1" 200 6577
+INFO 2025-05-17 20:57:40,485 basehttp 51461 133941281408704 "GET /media/uploads/2025/05/17/dummy_imgs.png HTTP/1.1" 304 0
+INFO 2025-05-17 20:59:38,001 basehttp 51461 133941264623296 "GET /admin/base/property/ HTTP/1.1" 200 20063
+INFO 2025-05-17 20:59:38,043 basehttp 51461 133941264623296 "GET /admin/jsi18n/ HTTP/1.1" 200 3342
+INFO 2025-05-17 20:59:42,009 basehttp 51461 133941264623296 "GET /admin/base/property/3/change/ HTTP/1.1" 200 52948
+INFO 2025-05-17 20:59:42,055 basehttp 51461 133941264623296 "GET /admin/jsi18n/ HTTP/1.1" 200 3342
+INFO 2025-05-17 21:00:08,946 basehttp 51461 133941264623296 "GET /admin/base/property/ HTTP/1.1" 200 20063
+INFO 2025-05-17 21:00:08,996 basehttp 51461 133941264623296 "GET /admin/jsi18n/ HTTP/1.1" 200 3342
+INFO 2025-05-17 21:00:14,454 basehttp 51461 133941264623296 "POST /admin/base/property/ HTTP/1.1" 200 11461
+INFO 2025-05-17 21:00:15,566 basehttp 51461 133941264623296 "POST /admin/base/property/ HTTP/1.1" 302 0
+INFO 2025-05-17 21:00:15,599 basehttp 51461 133941264623296 "GET /admin/base/property/ HTTP/1.1" 200 19381
+INFO 2025-05-17 21:00:15,683 basehttp 51461 133941264623296 "GET /admin/jsi18n/ HTTP/1.1" 200 3342
+INFO 2025-05-17 21:00:20,735 basehttp 51461 133941289801408 "OPTIONS /api/accounts/profile/ HTTP/1.1" 200 0
+INFO 2025-05-17 21:00:20,744 basehttp 51461 133941289801408 "GET /api/accounts/profile/ HTTP/1.1" 200 594
+INFO 2025-05-17 21:00:20,856 basehttp 51461 133941289801408 "GET /api/properties/?page=1&ordering=-created_at HTTP/1.1" 200 5275
+INFO 2025-05-17 21:00:20,906 basehttp 51461 133941281408704 "GET /media/uploads/2025/05/17/dummy_imgs_wozqbR7.png HTTP/1.1" 304 0
+INFO 2025-05-17 21:00:30,815 basehttp 51461 133941289801408 "OPTIONS /api/properties/the-third-property/ HTTP/1.1" 200 0
+INFO 2025-05-17 21:00:30,817 basehttp 51461 133941298194112 "OPTIONS /api/properties/the-third-property/ HTTP/1.1" 200 0
+INFO 2025-05-17 21:00:31,021 basehttp 51461 133941298194112 "GET /api/properties/the-third-property/ HTTP/1.1" 200 2875
+INFO 2025-05-17 21:00:31,087 basehttp 51461 133941281408704 "GET /media/uploads/2025/05/17/d.jpeg HTTP/1.1" 304 0
+INFO 2025-05-17 21:00:31,218 basehttp 51461 133941289801408 "GET /api/properties/the-third-property/ HTTP/1.1" 200 2875

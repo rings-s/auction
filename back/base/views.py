@@ -54,6 +54,35 @@ class MediaListCreateView(generics.ListCreateAPIView):
         context = super().get_serializer_context()
         context.update({"request": self.request})
         return context
+    
+    def create(self, request, *args, **kwargs):
+        try:
+            # Log the incoming data for debugging
+            print(f"Media create - FILES: {request.FILES}")
+            print(f"Media create - DATA: {request.data}")
+            
+            # If the model field is sent without app_label, add "base." prefix
+            content_type_str = request.data.get('content_type_str')
+            if content_type_str and '.' not in content_type_str:
+                # List known content types to help with debugging
+                content_types = ContentType.objects.all()
+                print(f"Available content types: {[(ct.app_label, ct.model) for ct in content_types]}")
+                
+                # For property, make sure to use base.property
+                if content_type_str.lower() == 'property':
+                    request.data['content_type_str'] = 'base.property'
+                    print(f"Updated content_type_str from '{content_type_str}' to 'base.property'")
+                    
+            # Continue with normal handling
+            return super().create(request, *args, **kwargs)
+        except Exception as e:
+            print(f"Error in MediaListCreateView.create: {str(e)}")
+            import traceback
+            print(traceback.format_exc())
+            return Response(
+                {"error": {"message": str(e)}},
+                status=status.HTTP_400_BAD_REQUEST
+            )
 
 class MediaDetailView(generics.RetrieveUpdateDestroyAPIView):
     queryset = Media.objects.select_related('content_type')
