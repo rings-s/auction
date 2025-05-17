@@ -1,0 +1,152 @@
+@import 'tailwindcss';
+@plugin '@tailwindcss/forms';
+@plugin '@tailwindcss/typography';
+
+
+:root  {
+    /* Primary: Vivid Blue */
+    --color-primary-50:  #eff6ff;
+    --color-primary-100: #dbeafe;
+    --color-primary-200: #bfdbfe;
+    --color-primary-300: #93c5fd;
+    --color-primary-400: #60a5fa;
+    --color-primary-500: #2563eb;
+    --color-primary-600: #1d4ed8;
+    --color-primary-700: #1e40af;
+    --color-primary-800: #1e3a8a;
+    --color-primary-900: #172554;
+
+    /* Secondary: Vivid Violet */
+    --color-secondary-50:  #f5f3ff;
+    --color-secondary-100: #ede9fe;
+    --color-secondary-200: #ddd6fe;
+    --color-secondary-300: #c4b5fd;
+    --color-secondary-400: #a78bfa;
+    --color-secondary-500: #8b5cf6;
+    --color-secondary-600: #7c3aed;
+    --color-secondary-700: #6d28d9;
+    --color-secondary-800: #5b21b6;
+    --color-secondary-900: #4c1d95;
+
+    /* Success: Emerald */
+    --color-success-50:  #ecfdf5;
+    --color-success-100: #d1fae5;
+    --color-success-200: #a7f3d0;
+    --color-success-300: #6ee7b7;
+    --color-success-400: #34d399;
+    --color-success-500: #10b981;
+    --color-success-600: #059669;
+    --color-success-700: #047857;
+    --color-success-800: #065f46;
+    --color-success-900: #064e3b;
+
+    /* Warning: Amber */
+    --color-warning-50:  #fffbeb;
+    --color-warning-100: #fef3c7;
+    --color-warning-200: #fde68a;
+    --color-warning-300: #fcd34d;
+    --color-warning-400: #fbbf24;
+    --color-warning-500: #f59e42;
+    --color-warning-600: #d97706;
+    --color-warning-700: #b45309;
+    --color-warning-800: #92400e;
+    --color-warning-900: #78350f;
+
+    /* Danger: Rose */
+    --color-danger-50:  #fff1f2;
+    --color-danger-100: #ffe4e6;
+    --color-danger-200: #fecdd3;
+    --color-danger-300: #fda4af;
+    --color-danger-400: #fb7185;
+    --color-danger-500: #f43f5e;
+    --color-danger-600: #e11d48;
+    --color-danger-700: #be123c;
+    --color-danger-800: #9f1239;
+    --color-danger-900: #881337;
+
+    /* Neutral/Gray: Zinc */
+    --color-gray-50:  #f8fafc;
+    --color-gray-100: #f1f5f9;
+    --color-gray-200: #e2e8f0;
+    --color-gray-300: #cbd5e1;
+    --color-gray-400: #94a3b8;
+    --color-gray-500: #64748b;
+    --color-gray-600: #475569;
+    --color-gray-700: #334155;
+    --color-gray-800: #1e293b;
+    --color-gray-900: #0f172a;
+}
+
+@theme .dark {
+    /* Primary: Vivid Blue (DARK) */
+    --color-primary-50:  #172554;
+    --color-primary-100: #1e3a8a;
+    --color-primary-200: #1e40af;
+    --color-primary-300: #2563eb;
+    --color-primary-400: #3b82f6;
+    --color-primary-500: #60a5fa;
+    --color-primary-600: #93c5fd;
+    --color-primary-700: #bfdbfe;
+    --color-primary-800: #dbeafe;
+    --color-primary-900: #eff6ff;
+
+    /* Secondary: Vivid Violet (DARK) */
+    --color-secondary-50:  #4c1d95;
+    --color-secondary-100: #5b21b6;
+    --color-secondary-200: #6d28d9;
+    --color-secondary-300: #7c3aed;
+    --color-secondary-400: #8b5cf6;
+    --color-secondary-500: #a78bfa;
+    --color-secondary-600: #c4b5fd;
+    --color-secondary-700: #ddd6fe;
+    --color-secondary-800: #ede9fe;
+    --color-secondary-900: #f5f3ff;
+
+    /* Success: Emerald (DARK) */
+    --color-success-50:  #064e3b;
+    --color-success-100: #065f46;
+    --color-success-200: #047857;
+    --color-success-300: #059669;
+    --color-success-400: #10b981;
+    --color-success-500: #34d399;
+    --color-success-600: #6ee7b7;
+    --color-success-700: #a7f3d0;
+    --color-success-800: #d1fae5;
+    --color-success-900: #ecfdf5;
+
+    /* Warning: Amber (DARK) */
+    --color-warning-50:  #78350f;
+    --color-warning-100: #92400e;
+    --color-warning-200: #b45309;
+    --color-warning-300: #d97706;
+    --color-warning-400: #f59e42;
+    --color-warning-500: #fbbf24;
+    --color-warning-600: #fcd34d;
+    --color-warning-700: #fde68a;
+    --color-warning-800: #fef3c7;
+    --color-warning-900: #fffbeb;
+
+    /* Danger: Rose (DARK) */
+    --color-danger-50:  #881337;
+    --color-danger-100: #9f1239;
+    --color-danger-200: #be123c;
+    --color-danger-300: #e11d48;
+    --color-danger-400: #f43f5e;
+    --color-danger-500: #fb7185;
+    --color-danger-600: #fda4af;
+    --color-danger-700: #fecdd3;
+    --color-danger-800: #ffe4e6;
+    --color-danger-900: #fff1f2;
+
+    /* Neutral/Gray: Zinc (DARK) */
+    --color-gray-50:  #0f172a;
+    --color-gray-100: #1e293b;
+    --color-gray-200: #334155;
+    --color-gray-300: #475569;
+    --color-gray-400: #64748b;
+    --color-gray-500: #94a3b8;
+    --color-gray-600: #cbd5e1;
+    --color-gray-700: #e2e8f0;
+    --color-gray-800: #f1f5f9;
+    --color-gray-900: #f8fafc;
+}
