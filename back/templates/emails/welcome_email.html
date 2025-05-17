@@ -1,0 +1,95 @@
+<!doctype html>
+<html>
+    <head>
+        <title>مرحباً بك في {{ company_name }}</title>
+        <style>
+            body {
+                font-family: Arial, sans-serif;
+                direction: rtl;
+                text-align: right;
+            }
+            .container {
+                max-width: 600px;
+                margin: 0 auto;
+                padding: 20px;
+            }
+            .welcome-message {
+                font-size: 18px;
+                margin: 20px 0;
+                padding: 10px;
+                background: #f2fff2;
+                color: #2e6e4c;
+                text-align: center;
+            }
+            .feature-list {
+                margin: 20px 0;
+                padding-right: 15px;
+            }
+            .btn {
+                display: block;
+                width: 200px;
+                margin: 20px auto;
+                padding: 10px;
+                background: #1a6eb5;
+                color: white;
+                text-decoration: none;
+                text-align: center;
+            }
+        </style>
+    </head>
+    <body>
+        <div class="email-container">
+            <div class="email-header">
+                <h1>منصة العقارات | أهلاً بك في منصتنا</h1>
+            </div>
+
+            <div class="email-body">
+                {% if user_name %}
+                <h2>مرحباً {{ user_name }}!</h2>
+                {% else %}
+                <h2>مرحباً بكم!</h2>
+                {% endif %}
+
+                <div class="welcome-message">
+                    <strong>تم تفعيل حسابك بنجاح!</strong><br />
+                    نحن سعداء بانضمامك إلينا.
+                </div>
+
+                <p>
+                    يمكنك الآن استخدام جميع ميزات منصتنا. إليك بعض الأشياء التي
+                    يمكنك القيام بها:
+                </p>
+
+                <ul class="feature-list">
+                    <li>استعراض العقارات المتاحة للبيع والإيجار</li>
+                    <li>المشاركة في المزادات العقارية</li>
+                    <li>تخصيص ملفك الشخصي وإعدادات الحساب</li>
+                    <li>إضافة العقارات المفضلة لديك</li>
+                    <li>التواصل مع المالكين والوكلاء العقاريين</li>
+                </ul>
+
+                {% if frontend_url %}
+                <a href="{{ frontend_url }}" class="button">تصفح المنصة الآن</a>
+                {% endif %}
+
+                <p>
+                    نتمنى لك تجربة ممتعة ومفيدة في منصتنا، ونتطلع دائماً لسماع
+                    ملاحظاتك واقتراحاتك.
+                </p>
+
+                <p>
+                    إذا كان لديك أي استفسار، لا تتردد في التواصل مع فريق الدعم
+                    الخاص بنا.
+                </p>
+            </div>
+
+            <div class="email-footer">
+                <p>
+                    جميع الحقوق محفوظة &copy; {{ current_year }} {{ company_name
+                    }}
+                </p>
+                <p>هذا بريد إلكتروني آلي، يرجى عدم الرد عليه.</p>
+            </div>
+        </div>
+    </body>
+</html>

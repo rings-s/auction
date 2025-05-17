@@ -1,0 +1,71 @@
+<!doctype html>
+<html>
+    <head>
+        <title>تنبيه: تسجيل دخول جديد</title>
+        <style>
+            body {
+                font-family: Arial, sans-serif;
+                direction: rtl;
+                text-align: right;
+            }
+            .container {
+                max-width: 600px;
+                margin: 0 auto;
+                padding: 20px;
+            }
+            .alert-box {
+                margin: 20px 0;
+                padding: 10px;
+                background: #fff0f0;
+                border-right: 4px solid #ff5555;
+            }
+            .login-details {
+                margin: 20px 0;
+                padding: 10px;
+                background: #f5f5f5;
+            }
+        </style>
+    </head>
+    <body>
+        <div class="email-container">
+            <div class="email-header">
+                <h1>{{ company_name }} | التحقق من البريد الإلكتروني</h1>
+            </div>
+
+            <div class="email-body">
+                {% if user_name %}
+                <h2>مرحباً {{ user_name }}!</h2>
+                {% else %}
+                <h2>مرحباً بكم!</h2>
+                {% endif %}
+
+                <p>شكراً لتسجيلك في {{ company_name }}.</p>
+                <p>لإكمال عملية التسجيل، يرجى استخدام رمز التحقق التالي:</p>
+
+                <div class="verification-code">{{ verification_code }}</div>
+
+                <p>أدخل هذا الرمز في صفحة التحقق لتفعيل حسابك.</p>
+
+                {% if verification_url %}
+                <a href="{{ verification_url }}" class="button"
+                    >تحقق من الحساب</a
+                >
+                {% endif %}
+
+                <p>سينتهي هذا الرمز خلال {{ expiry_hours }} ساعة.</p>
+
+                <p>
+                    إذا لم تقم بإنشاء هذا الحساب، يرجى تجاهل هذا البريد
+                    الإلكتروني.
+                </p>
+            </div>
+
+            <div class="email-footer">
+                <p>
+                    جميع الحقوق محفوظة &copy; {{ current_year }} {{ company_name
+                    }}
+                </p>
+            </div>
+        </div>
+    </body>
+</html>

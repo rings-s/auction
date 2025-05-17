@@ -33,3 +33,97 @@ WARNING 2025-05-17 04:08:42,215 basehttp 26390 123905511519936 "POST /api/accoun
 INFO 2025-05-17 04:08:50,088 basehttp 26390 123905503127232 "GET /admin/accounts/customuser/ HTTP/1.1" 200 18672
 INFO 2025-05-17 04:08:50,129 basehttp 26390 123905503127232 "GET /admin/jsi18n/ HTTP/1.1" 200 3342
 INFO 2025-05-17 04:08:50,527 basehttp 26390 123905503127232 "GET /static/admin/img/sorting-icons.svg HTTP/1.1" 304 0
+INFO 2025-05-17 12:35:48,535 autoreload 39547 136899530868544 Watching for file changes with StatReloader
+INFO 2025-05-17 12:36:43,293 basehttp 39547 136899451676352 "GET /api/auctions/? HTTP/1.1" 200 52
+INFO 2025-05-17 12:37:43,154 basehttp 39547 136899451676352 "OPTIONS /api/accounts/register/ HTTP/1.1" 200 0
+INFO 2025-05-17 12:37:44,152 serializers 39547 136899451676352 User 'rings9619@gmail.com' created successfully
+ERROR 2025-05-17 12:37:44,179 utils 39547 136899451676352 Failed to send verification email to rings9619@gmail.com: emails/verification_email.html
+Traceback (most recent call last):
+  File "/home/ahmed/tech-Savvy-projects/2025/new_ones/auction/back/accounts/utils.py", line 131, in send_email
+    html_message = render_to_string(html_template, context)
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/ahmed/tech-Savvy-projects/2025/new_ones/newprojects/lib/python3.12/site-packages/django/template/loader.py", line 61, in render_to_string
+    template = get_template(template_name, using=using)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/ahmed/tech-Savvy-projects/2025/new_ones/newprojects/lib/python3.12/site-packages/django/template/loader.py", line 19, in get_template
+    raise TemplateDoesNotExist(template_name, chain=chain)
+django.template.exceptions.TemplateDoesNotExist: emails/verification_email.html
+ERROR 2025-05-17 12:37:44,196 views 39547 136899451676352 Failed to send verification email: emails/verification_email.html
+Traceback (most recent call last):
+  File "/home/ahmed/tech-Savvy-projects/2025/new_ones/auction/back/accounts/views.py", line 70, in post
+    send_verification_email(user.email, verification_code, context)
+  File "/home/ahmed/tech-Savvy-projects/2025/new_ones/auction/back/accounts/utils.py", line 187, in send_verification_email
+    send_email(
+  File "/home/ahmed/tech-Savvy-projects/2025/new_ones/auction/back/accounts/utils.py", line 131, in send_email
+    html_message = render_to_string(html_template, context)
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/ahmed/tech-Savvy-projects/2025/new_ones/newprojects/lib/python3.12/site-packages/django/template/loader.py", line 61, in render_to_string
+    template = get_template(template_name, using=using)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/ahmed/tech-Savvy-projects/2025/new_ones/newprojects/lib/python3.12/site-packages/django/template/loader.py", line 19, in get_template
+    raise TemplateDoesNotExist(template_name, chain=chain)
+django.template.exceptions.TemplateDoesNotExist: emails/verification_email.html
+INFO 2025-05-17 12:37:44,314 basehttp 39547 136899451676352 "POST /api/accounts/register/ HTTP/1.1" 201 160
+INFO 2025-05-17 12:38:36,942 basehttp 39547 136899441186496 "GET /admin/ HTTP/1.1" 200 11262
+INFO 2025-05-17 12:38:37,447 basehttp 39547 136899431745216 "GET /static/admin/css/base.css HTTP/1.1" 304 0
+INFO 2025-05-17 12:38:37,447 basehttp 39547 136899441186496 "GET /static/admin/css/dark_mode.css HTTP/1.1" 304 0
+INFO 2025-05-17 12:38:37,501 basehttp 39547 136899441186496 "GET /static/admin/js/theme.js HTTP/1.1" 304 0
+INFO 2025-05-17 12:38:37,664 basehttp 39547 136899441186496 "GET /static/admin/css/nav_sidebar.css HTTP/1.1" 304 0
+INFO 2025-05-17 12:38:37,709 basehttp 39547 136899441186496 "GET /static/admin/css/dashboard.css HTTP/1.1" 304 0
+INFO 2025-05-17 12:38:37,749 basehttp 39547 136899441186496 "GET /static/admin/css/responsive.css HTTP/1.1" 304 0
+INFO 2025-05-17 12:38:37,938 basehttp 39547 136899441186496 "GET /static/admin/js/nav_sidebar.js HTTP/1.1" 304 0
+INFO 2025-05-17 12:38:38,107 basehttp 39547 136899441186496 "GET /static/admin/img/icon-addlink.svg HTTP/1.1" 304 0
+INFO 2025-05-17 12:38:38,110 basehttp 39547 136899431745216 "GET /static/admin/img/icon-changelink.svg HTTP/1.1" 304 0
+WARNING 2025-05-17 12:38:40,374 log 39547 136899431745216 Not Found: /favicon.ico
+WARNING 2025-05-17 12:38:40,374 basehttp 39547 136899431745216 "GET /favicon.ico HTTP/1.1" 404 2848
+INFO 2025-05-17 12:38:42,379 basehttp 39547 136899431745216 "GET /admin/accounts/customuser/ HTTP/1.1" 200 19441
+INFO 2025-05-17 12:38:42,733 basehttp 39547 136899441186496 "GET /static/admin/css/changelists.css HTTP/1.1" 304 0
+INFO 2025-05-17 12:38:42,781 basehttp 39547 136899423352512 "GET /static/admin/js/core.js HTTP/1.1" 304 0
+INFO 2025-05-17 12:38:42,794 basehttp 39547 136899423352512 "GET /static/admin/js/jquery.init.js HTTP/1.1" 304 0
+INFO 2025-05-17 12:38:42,855 basehttp 39547 136899423352512 "GET /static/admin/js/actions.js HTTP/1.1" 304 0
+INFO 2025-05-17 12:38:42,866 basehttp 39547 136899062658752 "GET /static/admin/js/urlify.js HTTP/1.1" 304 0
+INFO 2025-05-17 12:38:42,899 basehttp 39547 136899414959808 "GET /static/admin/js/admin/RelatedObjectLookups.js HTTP/1.1" 304 0
+INFO 2025-05-17 12:38:42,903 basehttp 39547 136899431745216 "GET /static/admin/js/vendor/jquery/jquery.js HTTP/1.1" 304 0
+INFO 2025-05-17 12:38:42,927 basehttp 39547 136899431745216 "GET /static/admin/js/prepopulate.js HTTP/1.1" 304 0
+INFO 2025-05-17 12:38:42,969 basehttp 39547 136899414959808 "GET /static/admin/js/vendor/xregexp/xregexp.js HTTP/1.1" 304 0
+INFO 2025-05-17 12:38:42,995 basehttp 39547 136899441186496 "GET /admin/jsi18n/ HTTP/1.1" 200 3342
+INFO 2025-05-17 12:38:43,095 basehttp 39547 136899441186496 "GET /static/admin/img/search.svg HTTP/1.1" 304 0
+INFO 2025-05-17 12:38:43,121 basehttp 39547 136899441186496 "GET /static/admin/img/icon-no.svg HTTP/1.1" 304 0
+INFO 2025-05-17 12:38:43,159 basehttp 39547 136899414959808 "GET /static/admin/img/icon-yes.svg HTTP/1.1" 304 0
+INFO 2025-05-17 12:38:43,211 basehttp 39547 136899441186496 "GET /static/admin/js/filters.js HTTP/1.1" 304 0
+INFO 2025-05-17 12:38:43,228 basehttp 39547 136899441186496 "GET /static/admin/img/tooltag-add.svg HTTP/1.1" 304 0
+INFO 2025-05-17 12:38:43,246 basehttp 39547 136899414959808 "GET /static/admin/img/icon-viewlink.svg HTTP/1.1" 304 0
+INFO 2025-05-17 12:38:48,831 basehttp 39547 136899441186496 "POST /admin/accounts/customuser/ HTTP/1.1" 200 11682
+INFO 2025-05-17 12:38:49,352 basehttp 39547 136899441186496 "GET /static/admin/js/cancel.js HTTP/1.1" 304 0
+INFO 2025-05-17 12:38:50,539 basehttp 39547 136899441186496 "POST /admin/accounts/customuser/ HTTP/1.1" 302 0
+INFO 2025-05-17 12:38:50,595 basehttp 39547 136899441186496 "GET /admin/accounts/customuser/ HTTP/1.1" 200 18806
+INFO 2025-05-17 12:38:50,751 basehttp 39547 136899441186496 "GET /admin/jsi18n/ HTTP/1.1" 200 3342
+INFO 2025-05-17 12:39:01,725 basehttp 39547 136899451676352 "GET /api/auctions/? HTTP/1.1" 200 52
+INFO 2025-05-17 12:40:21,091 serializers 39547 136899451676352 User 'rings9619@gmail.com' created successfully
+ERROR 2025-05-17 12:40:21,092 utils 39547 136899451676352 Failed to send verification email to rings9619@gmail.com: emails/verification_email.html
+Traceback (most recent call last):
+  File "/home/ahmed/tech-Savvy-projects/2025/new_ones/auction/back/accounts/utils.py", line 131, in send_email
+    html_message = render_to_string(html_template, context)
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/ahmed/tech-Savvy-projects/2025/new_ones/newprojects/lib/python3.12/site-packages/django/template/loader.py", line 61, in render_to_string
+    template = get_template(template_name, using=using)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/ahmed/tech-Savvy-projects/2025/new_ones/newprojects/lib/python3.12/site-packages/django/template/loader.py", line 19, in get_template
+    raise TemplateDoesNotExist(template_name, chain=chain)
+django.template.exceptions.TemplateDoesNotExist: emails/verification_email.html
+ERROR 2025-05-17 12:40:21,093 views 39547 136899451676352 Failed to send verification email: emails/verification_email.html
+Traceback (most recent call last):
+  File "/home/ahmed/tech-Savvy-projects/2025/new_ones/auction/back/accounts/views.py", line 70, in post
+    send_verification_email(user.email, verification_code, context)
+  File "/home/ahmed/tech-Savvy-projects/2025/new_ones/auction/back/accounts/utils.py", line 187, in send_verification_email
+    send_email(
+  File "/home/ahmed/tech-Savvy-projects/2025/new_ones/auction/back/accounts/utils.py", line 131, in send_email
+    html_message = render_to_string(html_template, context)
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/ahmed/tech-Savvy-projects/2025/new_ones/newprojects/lib/python3.12/site-packages/django/template/loader.py", line 61, in render_to_string
+    template = get_template(template_name, using=using)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/ahmed/tech-Savvy-projects/2025/new_ones/newprojects/lib/python3.12/site-packages/django/template/loader.py", line 19, in get_template
+    raise TemplateDoesNotExist(template_name, chain=chain)
+django.template.exceptions.TemplateDoesNotExist: emails/verification_email.html
+INFO 2025-05-17 12:40:21,275 basehttp 39547 136899451676352 "POST /api/accounts/register/ HTTP/1.1" 201 160
