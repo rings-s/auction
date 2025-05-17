@@ -2,7 +2,7 @@
 <script>
   import { onMount } from 'svelte';
   import { t } from '$lib/i18n/i18n';
-  import { fetchProperties } from '$lib/api/property';
+  import { getProperties } from '$lib/api/property';
   import { properties as propertiesStore } from '$lib/stores/properties';
   import PropertyCard from '$lib/components/PropertyCard.svelte';
   import PropertySearch from '$lib/components/PropertySearch.svelte';
@@ -69,15 +69,22 @@
       error = null;
 
       const apiParams = getApiParams();
-      const response = await fetchProperties(apiParams);
+      const response = await getProperties(apiParams);
 
+      // Handle different response structures
       if (response.results) {
         properties = response.results;
-        totalPages = Math.ceil(response.count / response.page_size);
-        propertiesStore.set(properties);
+        totalPages = Math.ceil(response.count / (response.page_size || 10));
+      } else if (Array.isArray(response)) {
+        properties = response;
+        totalPages = 1; // Can't determine total pages from array response
       } else {
-        throw new Error('Invalid response format');
+        // Assume it's a paginated response with data property
+        properties = response.data?.results || [];
+        totalPages = Math.ceil((response.data?.count || properties.length) / (response.data?.page_size || 10));
       }
+      
+      propertiesStore.set(properties);
     } catch (err) {
       console.error('Error loading properties:', err);
       error = err.message || $t('error.fetchFailed');
@@ -94,12 +101,19 @@
       try {
         loading = true;
         const apiParams = getApiParams();
-        const response = await fetchProperties(apiParams);
+        const response = await getProperties(apiParams);
         
+        // Add new properties to existing list
         if (response.results) {
           properties = [...properties, ...response.results];
-          propertiesStore.set(properties);
+        } else if (Array.isArray(response)) {
+          properties = [...properties, ...response];
+        } else {
+          const newProperties = response.data?.results || [];
+          properties = [...properties, ...newProperties];
         }
+        
+        propertiesStore.set(properties);
       } catch (err) {
         console.error('Error loading more properties:', err);
         currentPage--; // Revert page increment on error
@@ -154,7 +168,7 @@
           class="mt-4 inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
           on:click={loadProperties}
         >
-          {$t('error.tryAgain')}
+          {$t('auction.tryAgain')}
         </button>
       </div>
 

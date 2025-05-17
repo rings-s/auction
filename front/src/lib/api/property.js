@@ -5,10 +5,6 @@ import { refreshToken } from './auth';
 // API endpoints (with trailing slashes for Django)
 const API = {
   PROPERTIES: `${API_BASE_URL}/properties/`,
-  TYPES: {
-    PROPERTY: `${API_BASE_URL}/types/property/`,
-    BUILDING: `${API_BASE_URL}/types/building/`
-  },
   MEDIA: `${API_BASE_URL}/media/`
 };
 
@@ -57,7 +53,7 @@ async function api(endpoint, options = {}) {
       throw new Error(message);
     }
     
-    return { data, status: response.status };
+    return data.data || data;
   } catch (error) {
     console.error(`API Error (${endpoint}):`, error);
     throw error;
@@ -72,18 +68,33 @@ function parseErrorMessage(data) {
   if (typeof data === 'string') return data;
   
   // Handle DRF's error detail
+  if (data?.error?.message) return data.error.message;
   if (data?.detail) return data.detail;
   
   // Handle validation errors
   if (typeof data === 'object') {
     const errors = [];
-    for (const [field, message] of Object.entries(data)) {
-      if (typeof message === 'string') {
-        errors.push(`${field}: ${message}`);
-      } else if (Array.isArray(message)) {
-        errors.push(`${field}: ${message.join(', ')}`);
+    
+    // Handle nested error object from our custom response format
+    if (data.error && typeof data.error === 'object') {
+      for (const [field, message] of Object.entries(data.error)) {
+        if (typeof message === 'string') {
+          errors.push(`${field}: ${message}`);
+        } else if (Array.isArray(message)) {
+          errors.push(`${field}: ${message.join(', ')}`);
+        }
+      }
+    } else {
+      // Handle standard DRF validation errors
+      for (const [field, message] of Object.entries(data)) {
+        if (typeof message === 'string') {
+          errors.push(`${field}: ${message}`);
+        } else if (Array.isArray(message)) {
+          errors.push(`${field}: ${message.join(', ')}`);
+        }
       }
     }
+    
     if (errors.length) return errors.join('; ');
   }
   
@@ -116,17 +127,6 @@ function formatPropertyData(data) {
     delete formatted.country;
   }
   
-  // Convert property_type and building_type objects to IDs
-  if (formatted.property_type && !formatted.property_type_id) {
-    formatted.property_type_id = formatted.property_type.id;
-    delete formatted.property_type;
-  }
-  
-  if (formatted.building_type && !formatted.building_type_id) {
-    formatted.building_type_id = formatted.building_type.id;
-    delete formatted.building_type;
-  }
-  
   // Convert numeric fields
   ['size_sqm', 'market_value', 'minimum_bid'].forEach(field => {
     if (formatted[field]) formatted[field] = parseFloat(formatted[field]);
@@ -137,24 +137,6 @@ function formatPropertyData(data) {
   });
   
   return formatted;
-}
-
-// CRUD OPERATIONS
-
-/**
- * Get property types
- */
-export async function getPropertyTypes() {
-  const response = await api(API.TYPES.PROPERTY, { method: 'GET' });
-  return response.data;
-}
-
-/**
- * Get building types
- */
-export async function getBuildingTypes() {
-  const response = await api(API.TYPES.BUILDING, { method: 'GET' });
-  return response.data;
 }
 
 /**
@@ -172,8 +154,7 @@ export async function getProperties(filters = {}) {
   const queryString = params.toString();
   const url = queryString ? `${API.PROPERTIES}?${queryString}` : API.PROPERTIES;
   
-  const response = await api(url, { method: 'GET' });
-  return response.data;
+  return await api(url, { method: 'GET' });
 }
 
 /**
@@ -181,8 +162,15 @@ export async function getProperties(filters = {}) {
  */
 export async function getProperty(id) {
   if (!id) throw new Error('Property ID is required');
-  const response = await api(`${API.PROPERTIES}${id}/`, { method: 'GET' });
-  return response.data;
+  return await api(`${API.PROPERTIES}${id}/`, { method: 'GET' });
+}
+
+/**
+ * Get a property by slug
+ */
+export async function getPropertyBySlug(slug) {
+  if (!slug) throw new Error('Property slug is required');
+  return await api(`${API.PROPERTIES}${slug}/`, { method: 'GET' });
 }
 
 /**
@@ -190,14 +178,11 @@ export async function getProperty(id) {
  */
 export async function createProperty(propertyData) {
   const formattedData = formatPropertyData(propertyData);
-  console.log('Creating property:', formattedData);
   
-  const response = await api(API.PROPERTIES, {
+  return await api(API.PROPERTIES, {
     method: 'POST',
     body: JSON.stringify(formattedData)
   });
-  
-  return response;
 }
 
 /**
@@ -207,12 +192,11 @@ export async function updateProperty(id, propertyData) {
   if (!id) throw new Error('Property ID is required');
   
   const formattedData = formatPropertyData(propertyData);
-  const response = await api(`${API.PROPERTIES}${id}/`, {
+  
+  return await api(`${API.PROPERTIES}${id}/`, {
     method: 'PATCH',
     body: JSON.stringify(formattedData)
   });
-  
-  return response;
 }
 
 /**
@@ -232,24 +216,16 @@ export async function uploadPropertyMedia(propertyId, file, isPrimary = false) {
   
   const formData = new FormData();
   formData.append('file', file);
-  formData.append('content_type_str', 'property'); // Key field for Django ContentType
+  formData.append('content_type_str', 'property');
   formData.append('object_id', propertyId);
   formData.append('is_primary', isPrimary ? 'true' : 'false');
   formData.append('media_type', file.type.startsWith('image/') ? 'image' : 'document');
   formData.append('name', file.name);
   
-  console.log(`Uploading media for property ${propertyId}`, {
-    file: file.name,
-    type: file.type,
-    isPrimary
-  });
-  
-  const response = await api(API.MEDIA, {
+  return await api(API.MEDIA, {
     method: 'POST',
     body: formData
   });
-  
-  return response.data;
 }
 
 /**

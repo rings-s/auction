@@ -9,7 +9,6 @@
   import MediaUploader from '$lib/components/MediaUploader.svelte';
   import RoomManager from '$lib/components/RoomManager.svelte';
   import TagSelector from '$lib/components/TagSelector.svelte';
-  import { API_BASE_URL } from '$lib/constants';
   
   // Constants
   const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
@@ -17,8 +16,8 @@
   // Property form data structure - aligned with backend model
   let propertyData = {
     title: '',
-    property_type_id: null,
-    building_type_id: null,
+    property_type: '',
+    building_type: '',
     deed_number: '',
     description: '',
     size_sqm: '',
@@ -97,165 +96,32 @@
   let propertyTypes = [];
   let buildingTypes = [];
   let rooms = [];
-  let fetchingData = true;
   let validationErrors = {};
-  let debugInfo = { lastRequest: null, lastResponse: null };
+  
+  // Property types options
+  $: propertyTypeOptions = [
+    { value: 'residential', label: $locale === 'ar' ? 'سكني' : 'Residential' },
+    { value: 'commercial', label: $locale === 'ar' ? 'تجاري' : 'Commercial' },
+    { value: 'industrial', label: $locale === 'ar' ? 'صناعي' : 'Industrial' },
+    { value: 'land', label: $locale === 'ar' ? 'أرض' : 'Land' },
+    { value: 'agricultural', label: $locale === 'ar' ? 'زراعي' : 'Agricultural' },
+    { value: 'mixed_use', label: $locale === 'ar' ? 'متعدد الاستخدامات' : 'Mixed Use' }
+  ];
+  
+  // Building types options
+  $: buildingTypeOptions = [
+    { value: 'apartment', label: $locale === 'ar' ? 'شقة' : 'Apartment' },
+    { value: 'villa', label: $locale === 'ar' ? 'فيلا' : 'Villa' },
+    { value: 'house', label: $locale === 'ar' ? 'منزل' : 'House' },
+    { value: 'office', label: $locale === 'ar' ? 'مكتب' : 'Office' },
+    { value: 'retail', label: $locale === 'ar' ? 'محل تجاري' : 'Retail' },
+    { value: 'warehouse', label: $locale === 'ar' ? 'مستودع' : 'Warehouse' },
+    { value: 'other', label: $locale === 'ar' ? 'أخرى' : 'Other' }
+  ];
   
   // Multi-step form management
   let currentStep = 1;
   const totalSteps = 4;
-  
-  // Improved fetch function with error handling and authentication
-  async function fetchWithAuth(url, options = {}) {
-    const token = localStorage.getItem('accessToken');
-    if (!token) {
-      console.error('No access token available');
-      return null;
-    }
-    
-    const headers = {
-      'Authorization': `Bearer ${token}`,
-      'Content-Type': 'application/json',
-      ...options.headers
-    };
-    
-    try {
-      console.log(`Fetching ${url}`);
-      const response = await fetch(url, { ...options, headers });
-      
-      console.log(`Response status: ${response.status}`);
-      
-      if (response.status === 401) {
-        console.log('Token expired, refreshing...');
-        // Handle token refresh logic here if needed
-        return null;
-      }
-      
-      const contentType = response.headers.get('content-type');
-      if (contentType && contentType.includes('application/json')) {
-        const data = await response.json();
-        console.log('Response data:', data);
-        return { status: response.status, data };
-      } else {
-        const text = await response.text();
-        console.log('Response text:', text);
-        return { status: response.status, text };
-      }
-    } catch (err) {
-      console.error(`Fetch error for ${url}:`, err);
-      return { status: 0, error: err.message };
-    }
-  }
-  
-  // Fetch reference data on component mount with improved error handling
-  onMount(async () => {
-    try {
-      fetchingData = true;
-      
-      // Fetch property types with better error handling
-      const propertyTypesResult = await fetchWithAuth(`${API_BASE_URL}/types/property/`);
-      
-      if (propertyTypesResult && propertyTypesResult.status === 200) {
-        const data = propertyTypesResult.data;
-        
-        // Handle different response structures
-        if (Array.isArray(data)) {
-          propertyTypes = data;
-        } else if (data.results && Array.isArray(data.results)) {
-          propertyTypes = data.results;
-        } else {
-          // For other structures, try to extract the data
-          console.log('Property types data structure:', data);
-          propertyTypes = [];
-          
-          // Try to extract property types from the response
-          if (typeof data === 'object') {
-            // If it's a direct object with properties like id and name
-            if (data.id && data.name) {
-              propertyTypes = [data];
-            }
-            // If it's a collection of property types
-            else if (Object.values(data).some(v => typeof v === 'object' && v.id && v.name)) {
-              propertyTypes = Object.values(data).filter(v => typeof v === 'object' && v.id && v.name);
-            }
-          }
-        }
-        
-        // Log the processed property types for debugging
-        console.log('Processed property types:', propertyTypes);
-        
-        // If still empty, add a message to the UI
-        if (propertyTypes.length === 0) {
-          error = 'No property types found. API response format may be unexpected.';
-        }
-      } else {
-        console.error('Failed to fetch property types:', propertyTypesResult);
-        error = `Failed to load property types. Status: ${propertyTypesResult ? propertyTypesResult.status : 'unknown'}`;
-      }
-      
-      // Fetch building types with same improved error handling
-      const buildingTypesResult = await fetchWithAuth(`${API_BASE_URL}/types/building/`);
-      
-      if (buildingTypesResult && buildingTypesResult.status === 200) {
-        const data = buildingTypesResult.data;
-        
-        // Handle different response structures
-        if (Array.isArray(data)) {
-          buildingTypes = data;
-        } else if (data.results && Array.isArray(data.results)) {
-          buildingTypes = data.results;
-        } else {
-          // For other structures, try to extract the data
-          console.log('Building types data structure:', data);
-          buildingTypes = [];
-          
-          // Try to extract building types from the response
-          if (typeof data === 'object') {
-            // If it's a direct object with properties like id and name
-            if (data.id && data.name) {
-              buildingTypes = [data];
-            }
-            // If it's a collection of building types
-            else if (Object.values(data).some(v => typeof v === 'object' && v.id && v.name)) {
-              buildingTypes = Object.values(data).filter(v => typeof v === 'object' && v.id && v.name);
-            }
-          }
-        }
-        
-        // Log the processed building types for debugging
-        console.log('Processed building types:', buildingTypes);
-      } else {
-        console.error('Failed to fetch building types:', buildingTypesResult);
-      }
-      
-      // If we don't have property types after all that, try a direct fetch
-      if (propertyTypes.length === 0) {
-        try {
-          console.log('Trying direct fetch without authentication...');
-          const directResponse = await fetch(`${API_BASE_URL}/types/property/`);
-          const directData = await directResponse.json();
-          console.log('Direct fetch response:', directData);
-          
-          // Try to extract property types
-          if (Array.isArray(directData)) {
-            propertyTypes = directData;
-          } else if (directData.results && Array.isArray(directData.results)) {
-            propertyTypes = directData.results;
-          }
-          
-          console.log('Property types after direct fetch:', propertyTypes);
-        } catch (directErr) {
-          console.error('Direct fetch failed:', directErr);
-        }
-      }
-      
-    } catch (err) {
-      console.error('Error fetching reference data:', err);
-      error = err.message || 'Failed to load property types. Please refresh the page.';
-    } finally {
-      fetchingData = false;
-    }
-  });
   
   // Event handlers
   function handleLocationChange(event) {
@@ -291,8 +157,8 @@
         validationErrors.title = $t('validation.titleTooLong');
       }
       
-      if (!propertyData.property_type_id) {
-        validationErrors.property_type_id = $t('validation.propertyTypeRequired');
+      if (!propertyData.property_type) {
+        validationErrors.property_type = $t('validation.propertyTypeRequired');
       }
       
       if (!propertyData.deed_number) {
@@ -397,7 +263,7 @@
     }
   }
   
-  // Improved form submission handler - carefully structured to match backend expectations
+  // Form submission handler
   async function handleSubmit() {
     if (!validateStep(currentStep)) {
       return;
@@ -407,113 +273,44 @@
     error = null;
     
     try {
-      // Format data for API submission - ensuring proper structure for nested data
-      const submissionData = { 
+      // Prepare location data
+      const submissionData = {
         ...propertyData,
-        // Structure location data as expected by the backend
-        location_data: {
-          city: propertyData.city,
-          state: propertyData.state,
-          country: propertyData.country || 'المملكة العربية السعودية',
-          postal_code: propertyData.postal_code || '',
-          latitude: propertyData.latitude,
-          longitude: propertyData.longitude
-        },
-        // Convert string values to proper types
-        size_sqm: parseFloat(propertyData.size_sqm),
-        market_value: parseFloat(propertyData.market_value),
-        minimum_bid: propertyData.minimum_bid ? parseFloat(propertyData.minimum_bid) : null,
-        floors: propertyData.floors ? parseInt(propertyData.floors) : null,
-        year_built: propertyData.year_built ? parseInt(propertyData.year_built) : null,
-        // Only include rooms if we have any
+        // Include rooms if we have any
         rooms: rooms.length > 0 ? rooms : undefined
       };
       
-      // Remove location fields that are now in location_data
-      delete submissionData.city;
-      delete submissionData.state;
-      delete submissionData.postal_code;
-      delete submissionData.latitude;
-      delete submissionData.longitude;
-      delete submissionData.country;
+      // Submit property data
+      const result = await createProperty(submissionData);
       
-      console.log('Submitting property data:', submissionData);
-      debugInfo.lastRequest = JSON.stringify(submissionData, null, 2);
+      // Extract property ID from response
+      createdPropertyId = result.id || (result.data && result.data.id);
       
-      // Get access token for authentication
-      const token = localStorage.getItem('accessToken');
-      if (!token) {
-        throw new Error('Authentication required: Please log in');
-      }
-      
-      // Submit directly to the API for more control over the request
-      const response = await fetch(`${API_BASE_URL}/properties/`, {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify(submissionData)
-      });
-      
-      console.log('Response status:', response.status);
-      
-      // Parse response
-      let result;
-      try {
-        result = await response.json();
-        debugInfo.lastResponse = JSON.stringify(result, null, 2);
-        console.log('Response data:', result);
-      } catch (parseError) {
-        console.error('Error parsing response:', parseError);
-        debugInfo.lastResponse = await response.text();
-        throw new Error('Invalid response from server');
-      }
-      
-      // Handle success
-      if (response.status === 200 || response.status === 201) {
-        // Extract property ID from response for media uploads
-        createdPropertyId = result.id || result.data?.id || result.uuid || result.data?.uuid;
+      // Upload media files if available
+      if (mediaFiles.length > 0 && createdPropertyId) {
+        uploadingMedia = true;
         
-        if (!createdPropertyId && result.data) {
-          // Try to find the ID in the nested data
-          const flattenedData = JSON.stringify(result.data);
-          const idMatch = flattenedData.match(/"id":"?([^",]+)"?/);
-          if (idMatch) createdPropertyId = idMatch[1];
-        }
-        
-        console.log('Created property ID:', createdPropertyId);
-        
-        // Upload media files if available
-        if (mediaFiles.length > 0 && createdPropertyId) {
-          uploadingMedia = true;
+        try {
+          await uploadPropertyMediaBatch(
+            createdPropertyId, 
+            mediaFiles,
+            (completed, total) => {
+              uploadProgress = Math.round((completed / total) * 100);
+            }
+          );
           
-          try {
-            await uploadPropertyMediaBatch(
-              createdPropertyId, 
-              mediaFiles,
-              (completed, total) => {
-                uploadProgress = Math.round((completed / total) * 100);
-              }
-            );
-            
-            success = $t('property.createSuccess');
-          } catch (mediaError) {
-            console.error('Media upload error:', mediaError);
-            success = $t('property.createSuccessMediaFailed');
-          } finally {
-            uploadingMedia = false;
-          }
-        } else {
           success = $t('property.createSuccess');
+        } catch (mediaError) {
+          console.error('Media upload error:', mediaError);
+          success = $t('property.createSuccessMediaFailed');
+        } finally {
+          uploadingMedia = false;
         }
-        
-        showSuccessModal = true;
       } else {
-        // Handle API errors
-        const errorMessage = result.error || result.detail || 'Unknown error creating property';
-        throw new Error(errorMessage);
+        success = $t('property.createSuccess');
       }
+      
+      showSuccessModal = true;
     } catch (err) {
       console.error('Error creating property:', err);
       error = err.message || $t('property.createFailed');
@@ -528,20 +325,6 @@
   
   // Check if user has permission to create properties
   $: isAuthorized = $user && ($user.role === 'owner' || $user.role === 'appraiser' || $user.is_staff);
-  
-  // Improved property type selection handler
-  function handlePropertyTypeChange(event) {
-    const value = event.target.value;
-    propertyData.property_type_id = value ? parseInt(value) : null;
-    console.log('Selected property type ID:', propertyData.property_type_id);
-  }
-  
-  // Improved building type selection handler
-  function handleBuildingTypeChange(event) {
-    const value = event.target.value;
-    propertyData.building_type_id = value ? parseInt(value) : null;
-    console.log('Selected building type ID:', propertyData.building_type_id);
-  }
 </script>
 
 <svelte:head>
@@ -626,566 +409,532 @@
         </div>
       </div>
       
-      <!-- Loading state for reference data -->
-      {#if fetchingData}
-        <div class="bg-white dark:bg-gray-800 shadow-xl rounded-xl overflow-hidden p-8 max-w-4xl mx-auto text-center">
-          <div class="animate-spin rounded-full h-16 w-16 border-t-2 border-b-2 border-primary-500 mx-auto"></div>
-          <p class="mt-6 text-lg text-gray-600 dark:text-gray-300 font-medium">{$t('common.loading')}</p>
-        </div>
-      {:else}
-        <!-- Form Container with refined styling -->
-        <div class="bg-white dark:bg-gray-800 shadow-xl rounded-xl overflow-hidden max-w-4xl mx-auto transition-all duration-300">
-          <!-- Card header with step title and icon -->
-          <div class="bg-gradient-to-r from-gray-50 to-white dark:from-gray-800 dark:to-gray-750 p-6 border-b border-gray-200 dark:border-gray-700">
-            <h2 class="text-xl font-bold text-gray-900 dark:text-white flex items-center">
-              {#if currentStep === 1}
-                <svg class="w-6 h-6 mr-2 text-primary-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
-                </svg>
-                {$t('property.basicInfo')}
-              {:else if currentStep === 2}
-                <svg class="w-6 h-6 mr-2 text-primary-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path>
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path>
-                </svg>
-                {$t('property.location')}
-              {:else if currentStep === 3}
-                <svg class="w-6 h-6 mr-2 text-primary-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"></path>
-                </svg>
-                {$t('property.details')}
-              {:else if currentStep === 4}
-                <svg class="w-6 h-6 mr-2 text-primary-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                </svg>
-                {$t('property.financial')}
-              {/if}
-            </h2>
-            <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">
-              {#if currentStep === 1}
-                {$t('property.basicInfoDesc')}
-              {:else if currentStep === 2}
-                {$t('property.locationDesc')}
-              {:else if currentStep === 3}
-                {$t('property.detailsDesc')}
-              {:else if currentStep === 4}
-                {$t('property.financialDesc')}
-              {/if}
-            </p>
-          </div>
-          
-          <div class="p-6 sm:p-8">
-            <!-- Step 1: Basic Information -->
+      <!-- Form Container with refined styling -->
+      <div class="bg-white dark:bg-gray-800 shadow-xl rounded-xl overflow-hidden max-w-4xl mx-auto transition-all duration-300">
+        <!-- Card header with step title and icon -->
+        <div class="bg-gradient-to-r from-gray-50 to-white dark:from-gray-800 dark:to-gray-750 p-6 border-b border-gray-200 dark:border-gray-700">
+          <h2 class="text-xl font-bold text-gray-900 dark:text-white flex items-center">
             {#if currentStep === 1}
-              <div class="space-y-8 animate-fadeIn">
-                <div class="grid grid-cols-1 gap-y-6 gap-x-4 sm:grid-cols-6">
-                  <!-- Property Title -->
-                  <div class="sm:col-span-4">
-                    <label for="title" class="block text-sm font-medium text-gray-700 dark:text-gray-300">
-                      {$t('property.title')} *
-                    </label>
-                    <div class="mt-1 relative rounded-md shadow-sm">
-                      <input 
-                        type="text" 
-                        id="title" 
-                        bind:value={propertyData.title} 
-                        class="shadow-sm focus:ring-primary-500 focus:border-primary-500 block w-full sm:text-sm border-gray-300 dark:border-gray-700 rounded-md dark:bg-gray-800 dark:text-white"
-                        class:border-red-500={validationErrors.title}
-                        placeholder={$t('property.titlePlaceholder')}
-                      />
-                      {#if validationErrors.title}
-                        <div class="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
-                          <svg class="h-5 w-5 text-red-500" fill="currentColor" viewBox="0 0 20 20">
-                            <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clip-rule="evenodd" />
-                          </svg>
-                        </div>
-                      {/if}
-                    </div>
+              <svg class="w-6 h-6 mr-2 text-primary-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+              </svg>
+              {$t('property.basicInfo')}
+            {:else if currentStep === 2}
+              <svg class="w-6 h-6 mr-2 text-primary-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path>
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path>
+              </svg>
+              {$t('property.location')}
+            {:else if currentStep === 3}
+              <svg class="w-6 h-6 mr-2 text-primary-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"></path>
+              </svg>
+              {$t('property.details')}
+            {:else if currentStep === 4}
+              <svg class="w-6 h-6 mr-2 text-primary-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+              </svg>
+              {$t('property.financial')}
+            {/if}
+          </h2>
+          <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">
+            {#if currentStep === 1}
+              {$t('property.basicInfoDesc')}
+            {:else if currentStep === 2}
+              {$t('property.locationDesc')}
+            {:else if currentStep === 3}
+              {$t('property.detailsDesc')}
+            {:else if currentStep === 4}
+              {$t('property.financialDesc')}
+            {/if}
+          </p>
+        </div>
+        
+        <div class="p-6 sm:p-8">
+          <!-- Step 1: Basic Information -->
+          {#if currentStep === 1}
+            <div class="space-y-8 animate-fadeIn">
+              <div class="grid grid-cols-1 gap-y-6 gap-x-4 sm:grid-cols-6">
+                <!-- Property Title -->
+                <div class="sm:col-span-4">
+                  <label for="title" class="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                    {$t('property.title')} *
+                  </label>
+                  <div class="mt-1 relative rounded-md shadow-sm">
+                    <input 
+                      type="text" 
+                      id="title" 
+                      bind:value={propertyData.title} 
+                      class="shadow-sm focus:ring-primary-500 focus:border-primary-500 block w-full sm:text-sm border-gray-300 dark:border-gray-700 rounded-md dark:bg-gray-800 dark:text-white"
+                      class:border-red-500={validationErrors.title}
+                      placeholder={$t('property.titlePlaceholder')}
+                    />
                     {#if validationErrors.title}
-                      <p class="mt-1 text-sm text-red-600 dark:text-red-500">{validationErrors.title}</p>
-                    {/if}
-                  </div>
-                  
-                  <!-- Property Type - IMPROVED: Better handling of property types -->
-                  <div class="sm:col-span-3">
-                    <label for="property_type_id" class="block text-sm font-medium text-gray-700 dark:text-gray-300">
-                      {$t('property.propertyType')} *
-                    </label>
-                    <div class="mt-1 relative rounded-md shadow-sm">
-                      <select 
-                        id="property_type_id" 
-                        on:change={handlePropertyTypeChange}
-                        class="shadow-sm focus:ring-primary-500 focus:border-primary-500 block w-full sm:text-sm border-gray-300 dark:border-gray-700 rounded-md dark:bg-gray-800 dark:text-white"
-                        class:border-red-500={validationErrors.property_type_id}
-                      >
-                        <option value="">{$t('common.select')}</option>
-                        {#if propertyTypes.length > 0}
-                          {#each propertyTypes as type}
-                            <option value={type.id}>
-                              {type.name || type.title || `Type ${type.id}`}
-                            </option>
-                          {/each}
-                        {:else}
-                          <option value="" disabled>No property types available</option>
-                        {/if}
-                      </select>
-                      {#if validationErrors.property_type_id}
-                        <div class="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
-                          <svg class="h-5 w-5 text-red-500" fill="currentColor" viewBox="0 0 20 20">
-                            <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clip-rule="evenodd" />
-                          </svg>
-                        </div>
-                      {/if}
-                    </div>
-                    {#if validationErrors.property_type_id}
-                      <p class="mt-1 text-sm text-red-600 dark:text-red-500">{validationErrors.property_type_id}</p>
-                    {/if}
-                    
-                    <!-- Debug info for property types -->
-                    {#if propertyTypes.length === 0}
-                      <div class="mt-2 p-2 bg-blue-50 dark:bg-blue-900/20 text-xs text-blue-800 dark:text-blue-200 rounded">
-                        <p>Debug: No property types loaded. Check API: <code>{API_BASE_URL}/types/property/</code></p>
+                      <div class="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
+                        <svg class="h-5 w-5 text-red-500" fill="currentColor" viewBox="0 0 20 20">
+                          <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clip-rule="evenodd" />
+                        </svg>
                       </div>
                     {/if}
                   </div>
-                  
-                  <!-- Building Type - IMPROVED: Better handling of building types -->
-                  <div class="sm:col-span-3">
-                    <label for="building_type_id" class="block text-sm font-medium text-gray-700 dark:text-gray-300">
-                      {$t('property.buildingType')}
-                    </label>
-                    <div class="mt-1">
-                      <select 
-                        id="building_type_id" 
-                        on:change={handleBuildingTypeChange}
-                        class="shadow-sm focus:ring-primary-500 focus:border-primary-500 block w-full sm:text-sm border-gray-300 dark:border-gray-700 rounded-md dark:bg-gray-800 dark:text-white"
-                      >
-                        <option value="">{$t('common.select')}</option>
-                        {#if buildingTypes.length > 0}
-                          {#each buildingTypes as type}
-                            <option value={type.id}>
-                              {type.name || type.title || `Type ${type.id}`}
-                            </option>
-                          {/each}
-                        {:else}
-                          <option value="" disabled>No building types available</option>
-                        {/if}
-                      </select>
-                    </div>
-                    
-                    <!-- Debug info for building types -->
-                    {#if buildingTypes.length === 0}
-                      <div class="mt-2 p-2 bg-blue-50 dark:bg-blue-900/20 text-xs text-blue-800 dark:text-blue-200 rounded">
-                        <p>Debug: No building types loaded. Check API: <code>{API_BASE_URL}/types/building/</code></p>
+                  {#if validationErrors.title}
+                    <p class="mt-1 text-sm text-red-600 dark:text-red-500">{validationErrors.title}</p>
+                  {/if}
+                </div>
+                
+                <!-- Property Type -->
+                <div class="sm:col-span-3">
+                  <label for="property_type" class="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                    {$t('property.propertyType')} *
+                  </label>
+                  <div class="mt-1 relative rounded-md shadow-sm">
+                    <select 
+                      id="property_type" 
+                      bind:value={propertyData.property_type}
+                      class="shadow-sm focus:ring-primary-500 focus:border-primary-500 block w-full sm:text-sm border-gray-300 dark:border-gray-700 rounded-md dark:bg-gray-800 dark:text-white"
+                      class:border-red-500={validationErrors.property_type}
+                    >
+                      <option value="">{$t('common.select')}</option>
+                      {#each propertyTypeOptions as option}
+                        <option value={option.value}>{option.label}</option>
+                      {/each}
+                    </select>
+                    {#if validationErrors.property_type}
+                      <div class="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
+                        <svg class="h-5 w-5 text-red-500" fill="currentColor" viewBox="0 0 20 20">
+                          <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clip-rule="evenodd" />
+                        </svg>
                       </div>
                     {/if}
                   </div>
-                  
-                  <!-- Deed Number -->
-                  <div class="sm:col-span-3">
-                    <label for="deed_number" class="block text-sm font-medium text-gray-700 dark:text-gray-300">
-                      {$t('property.deedNumber')} *
-                    </label>
-                    <div class="mt-1 relative rounded-md shadow-sm">
-                      <input 
-                        type="text" 
-                        id="deed_number" 
-                        bind:value={propertyData.deed_number} 
-                        class="shadow-sm focus:ring-primary-500 focus:border-primary-500 block w-full sm:text-sm border-gray-300 dark:border-gray-700 rounded-md dark:bg-gray-800 dark:text-white"
-                        class:border-red-500={validationErrors.deed_number}
-                        placeholder={$t('property.deedNumberPlaceholder')}
-                      />
-                      {#if validationErrors.deed_number}
-                        <div class="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
-                          <svg class="h-5 w-5 text-red-500" fill="currentColor" viewBox="0 0 20 20">
-                            <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clip-rule="evenodd" />
-                          </svg>
-                        </div>
-                      {/if}
-                    </div>
+                  {#if validationErrors.property_type}
+                    <p class="mt-1 text-sm text-red-600 dark:text-red-500">{validationErrors.property_type}</p>
+                  {/if}
+                </div>
+                
+                <!-- Building Type -->
+                <div class="sm:col-span-3">
+                  <label for="building_type" class="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                    {$t('property.buildingType')}
+                  </label>
+                  <div class="mt-1">
+                    <select 
+                      id="building_type" 
+                      bind:value={propertyData.building_type}
+                      class="shadow-sm focus:ring-primary-500 focus:border-primary-500 block w-full sm:text-sm border-gray-300 dark:border-gray-700 rounded-md dark:bg-gray-800 dark:text-white"
+                    >
+                      <option value="">{$t('common.select')}</option>
+                      {#each buildingTypeOptions as option}
+                        <option value={option.value}>{option.label}</option>
+                      {/each}
+                    </select>
+                  </div>
+                </div>
+                
+                <!-- Deed Number -->
+                <div class="sm:col-span-3">
+                  <label for="deed_number" class="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                    {$t('property.deedNumber')} *
+                  </label>
+                  <div class="mt-1 relative rounded-md shadow-sm">
+                    <input 
+                      type="text" 
+                      id="deed_number" 
+                      bind:value={propertyData.deed_number} 
+                      class="shadow-sm focus:ring-primary-500 focus:border-primary-500 block w-full sm:text-sm border-gray-300 dark:border-gray-700 rounded-md dark:bg-gray-800 dark:text-white"
+                      class:border-red-500={validationErrors.deed_number}
+                      placeholder={$t('property.deedNumberPlaceholder')}
+                    />
                     {#if validationErrors.deed_number}
-                      <p class="mt-1 text-sm text-red-600 dark:text-red-500">{validationErrors.deed_number}</p>
-                    {/if}
-                    <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">
-                      {$t('property.deedNumberHelp')}
-                    </p>
-                  </div>
-                  
-                  <!-- Description -->
-                  <div class="sm:col-span-6">
-                    <label for="description" class="block text-sm font-medium text-gray-700 dark:text-gray-300">
-                      {$t('property.description')} *
-                    </label>
-                    <div class="mt-1">
-                      <textarea 
-                        id="description" 
-                        bind:value={propertyData.description} 
-                        rows="4" 
-                        class="shadow-sm focus:ring-primary-500 focus:border-primary-500 block w-full sm:text-sm border-gray-300 dark:border-gray-700 rounded-md dark:bg-gray-800 dark:text-white"
-                        class:border-red-500={validationErrors.description}
-                        placeholder={$t('property.descriptionPlaceholder')}
-                      ></textarea>
-                      {#if validationErrors.description}
-                        <p class="mt-1 text-sm text-red-600 dark:text-red-500">{validationErrors.description}</p>
-                      {/if}
-                    </div>
-                  </div>
-                </div>
-              </div>
-            {/if}
-            
-            <!-- Step 2: Location Information -->
-            {#if currentStep === 2}
-              <div class="space-y-8 animate-fadeIn">
-                <LocationPicker
-                  bind:address={propertyData.address}
-                  bind:city={propertyData.city}
-                  bind:state={propertyData.state}
-                  bind:postalCode={propertyData.postal_code}
-                  bind:country={propertyData.country}
-                  bind:latitude={propertyData.latitude}
-                  bind:longitude={propertyData.longitude}
-                  on:locationChange={handleLocationChange}
-                />
-                
-                <div class="space-y-3">
-                  {#if validationErrors.address}
-                    <p class="text-sm text-red-600 dark:text-red-500">{validationErrors.address}</p>
-                  {/if}
-                  
-                  {#if validationErrors.city}
-                    <p class="text-sm text-red-600 dark:text-red-500">{validationErrors.city}</p>
-                  {/if}
-                  
-                  {#if validationErrors.state}
-                    <p class="text-sm text-red-600 dark:text-red-500">{validationErrors.state}</p>
-                  {/if}
-                </div>
-              </div>
-            {/if}
-            
-            <!-- Step 3: Property Details -->
-            {#if currentStep === 3}
-              <div class="space-y-8 animate-fadeIn">
-                <div class="grid grid-cols-1 gap-y-6 gap-x-4 sm:grid-cols-6">
-                  <!-- Size -->
-                  <div class="sm:col-span-2">
-                    <label for="size_sqm" class="block text-sm font-medium text-gray-700 dark:text-gray-300">
-                      {$t('property.size')} ({$t('property.sqm')}) *
-                    </label>
-                    <div class="mt-1 relative rounded-md shadow-sm">
-                      <input 
-                        type="number" 
-                        id="size_sqm" 
-                        bind:value={propertyData.size_sqm} 
-                        min="1" 
-                        step="0.01" 
-                        class="shadow-sm focus:ring-primary-500 focus:border-primary-500 block w-full sm:text-sm border-gray-300 dark:border-gray-700 rounded-md dark:bg-gray-800 dark:text-white"
-                        class:border-red-500={validationErrors.size_sqm}
-                      />
-                      {#if validationErrors.size_sqm}
-                        <div class="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
-                          <svg class="h-5 w-5 text-red-500" fill="currentColor" viewBox="0 0 20 20">
-                            <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clip-rule="evenodd" />
-                          </svg>
-                        </div>
-                      {/if}
-                    </div>
-                    {#if validationErrors.size_sqm}
-                      <p class="mt-1 text-sm text-red-600 dark:text-red-500">{validationErrors.size_sqm}</p>
-                    {/if}
-                  </div>
-                  
-                  <!-- Floors -->
-                  <div class="sm:col-span-2">
-                    <label for="floors" class="block text-sm font-medium text-gray-700 dark:text-gray-300">
-                      {$t('property.floors')}
-                    </label>
-                    <div class="mt-1">
-                      <input 
-                        type="number" 
-                        id="floors" 
-                        bind:value={propertyData.floors} 
-                        min="1" 
-                        step="1" 
-                        class="shadow-sm focus:ring-primary-500 focus:border-primary-500 block w-full sm:text-sm border-gray-300 dark:border-gray-700 rounded-md dark:bg-gray-800 dark:text-white"
-                        class:border-red-500={validationErrors.floors}
-                      />
-                      {#if validationErrors.floors}
-                        <p class="mt-1 text-sm text-red-600 dark:text-red-500">{validationErrors.floors}</p>
-                      {/if}
-                    </div>
-                  </div>
-                  
-                  <!-- Year Built -->
-                  <div class="sm:col-span-2">
-                    <label for="year_built" class="block text-sm font-medium text-gray-700 dark:text-gray-300">
-                      {$t('property.yearBuilt')}
-                    </label>
-                    <div class="mt-1">
-                      <input 
-                        type="number" 
-                        id="year_built" 
-                        bind:value={propertyData.year_built} 
-                        min="1800" 
-                        max="2025" 
-                        step="1" 
-                        class="shadow-sm focus:ring-primary-500 focus:border-primary-500 block w-full sm:text-sm border-gray-300 dark:border-gray-700 rounded-md dark:bg-gray-800 dark:text-white"
-                        class:border-red-500={validationErrors.year_built}
-                      />
-                      {#if validationErrors.year_built}
-                        <p class="mt-1 text-sm text-red-600 dark:text-red-500">{validationErrors.year_built}</p>
-                      {/if}
-                    </div>
-                  </div>
-                  
-                  <!-- Features with properly translated values -->
-                  <div class="sm:col-span-6 mt-2">
-                    <TagSelector
-                      title={$t('property.features')}
-                      tags={availableFeatures}
-                      selectedTags={propertyData.features}
-                      on:change={handleFeaturesChange}
-                      variant="pill"
-                    />
-                  </div>
-                  
-                  <!-- Amenities with properly translated values -->
-                  <div class="sm:col-span-6 mt-2">
-                    <TagSelector
-                      title={$t('property.amenities')}
-                      tags={availableAmenities}
-                      selectedTags={propertyData.amenities}
-                      on:change={handleAmenitiesChange}
-                      variant="pill"
-                    />
-                  </div>
-                  
-                  <!-- Rooms with proper localization -->
-                  <div class="sm:col-span-6 mt-4">
-                    <div class="bg-gray-50 dark:bg-gray-700 p-6 rounded-lg shadow-inner">
-                      <RoomManager
-                        bind:rooms
-                        availableFeatures={availableRoomFeatures}
-                        on:change={handleRoomsChange}
-                      />
-                    </div>
-                  </div>
-                </div>
-              </div>
-            {/if}
-            
-            <!-- Step 4: Financial Information & Media Upload -->
-            {#if currentStep === 4}
-              <div class="space-y-8 animate-fadeIn">
-                <div class="grid grid-cols-1 gap-y-6 gap-x-4 sm:grid-cols-6">
-                  <!-- Market Value -->
-                  <div class="sm:col-span-3">
-                    <label for="market_value" class="block text-sm font-medium text-gray-700 dark:text-gray-300">
-                      {$t('property.marketValue')} *
-                    </label>
-                    <div class="mt-1 relative rounded-md shadow-sm">
-                      <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                        <span class="text-gray-500 sm:text-sm">$</span>
-                      </div>
-                      <input 
-                        type="number" 
-                        id="market_value" 
-                        bind:value={propertyData.market_value} 
-                        min="1" 
-                        step="0.01" 
-                        class="pl-7 shadow-sm focus:ring-primary-500 focus:border-primary-500 block w-full sm:text-sm border-gray-300 dark:border-gray-700 rounded-md dark:bg-gray-800 dark:text-white"
-                        class:border-red-500={validationErrors.market_value}
-                      />
-                      {#if validationErrors.market_value}
-                        <div class="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
-                          <svg class="h-5 w-5 text-red-500" fill="currentColor" viewBox="0 0 20 20">
-                            <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clip-rule="evenodd" />
-                          </svg>
-                        </div>
-                      {/if}
-                    </div>
-                    {#if validationErrors.market_value}
-                      <p class="mt-1 text-sm text-red-600 dark:text-red-500">{validationErrors.market_value}</p>
-                    {/if}
-                  </div>
-                  
-                  <!-- Minimum Bid -->
-                  <div class="sm:col-span-3">
-                    <label for="minimum_bid" class="block text-sm font-medium text-gray-700 dark:text-gray-300">
-                      {$t('property.minimumBid')}
-                    </label>
-                    <div class="mt-1 relative rounded-md shadow-sm">
-                      <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                        <span class="text-gray-500 sm:text-sm">$</span>
-                      </div>
-                      <input 
-                        type="number" 
-                        id="minimum_bid" 
-                        bind:value={propertyData.minimum_bid} 
-                        min="1" 
-                        step="0.01" 
-                        class="pl-7 shadow-sm focus:ring-primary-500 focus:border-primary-500 block w-full sm:text-sm border-gray-300 dark:border-gray-700 rounded-md dark:bg-gray-800 dark:text-white"
-                        class:border-red-500={validationErrors.minimum_bid}
-                      />
-                    </div>
-                    {#if validationErrors.minimum_bid}
-                      <p class="mt-1 text-sm text-red-600 dark:text-red-500">{validationErrors.minimum_bid}</p>
-                    {/if}
-                  </div>
-                  
-                  <!-- Publishing Options with elegantly styled cards -->
-                  <div class="sm:col-span-6">
-                    <fieldset class="bg-gradient-to-br from-gray-50 to-white dark:from-gray-700 dark:to-gray-750 p-6 rounded-lg shadow-sm">
-                      <legend class="text-base font-medium text-gray-700 dark:text-gray-300 px-3 py-1 bg-white dark:bg-gray-800 rounded-md shadow-sm border border-gray-200 dark:border-gray-600">
-                        {$t('property.publishingOptions')}
-                      </legend>
-                      <div class="mt-4 space-y-4">
-                        <div class="flex items-start">
-                          <div class="flex items-center h-5">
-                            <input 
-                              id="is_published" 
-                              type="checkbox" 
-                              bind:checked={propertyData.is_published} 
-                              class="focus:ring-primary-500 h-5 w-5 text-primary-600 border-gray-300 rounded dark:border-gray-600 dark:bg-gray-700"
-                            />
-                          </div>
-                          <div class="ml-3 text-sm">
-                            <label for="is_published" class="font-medium text-gray-700 dark:text-gray-300">
-                              {$t('property.published')}
-                            </label>
-                            <p class="text-gray-500 dark:text-gray-400">
-                              {$t('property.publishedHelp')}
-                            </p>
-                          </div>
-                        </div>
-                        
-                        <div class="flex items-start">
-                          <div class="flex items-center h-5">
-                            <input 
-                              id="is_featured" 
-                              type="checkbox" 
-                              bind:checked={propertyData.is_featured} 
-                              class="focus:ring-primary-500 h-5 w-5 text-primary-600 border-gray-300 rounded dark:border-gray-600 dark:bg-gray-700"
-                            />
-                          </div>
-                          <div class="ml-3 text-sm">
-                            <label for="is_featured" class="font-medium text-gray-700 dark:text-gray-300">
-                              {$t('property.featured')}
-                            </label>
-                            <p class="text-gray-500 dark:text-gray-400">
-                              {$t('property.featuredHelp')}
-                            </p>
-                          </div>
-                        </div>
-                      </div>
-                    </fieldset>
-                  </div>
-                  
-                  <!-- Media Upload -->
-                  <div class="sm:col-span-6 mt-2">
-                    <div class="bg-gradient-to-br from-gray-50 to-white dark:from-gray-700 dark:to-gray-750 p-6 rounded-lg shadow-sm">
-                      <h3 class="text-lg font-medium text-gray-900 dark:text-white flex items-center">
-                        <svg class="w-5 h-5 mr-2 text-primary-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+                      <div class="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
+                        <svg class="h-5 w-5 text-red-500" fill="currentColor" viewBox="0 0 20 20">
+                          <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clip-rule="evenodd" />
                         </svg>
-                        {$t('property.mediaUpload')}
-                      </h3>
-                      <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">
-                        {$t('property.mediaUploadDesc')}
-                      </p>
-                      
-                      <div class="mt-4">
-                        <MediaUploader
-                          maxFiles={10}
-                          maxSize={MAX_FILE_SIZE}
-                          allowedTypes={['image/jpeg', 'image/png', 'image/gif', 'application/pdf']}
-                          on:change={handleMediaChange}
-                        />
                       </div>
-                    </div>
+                    {/if}
+                  </div>
+                  {#if validationErrors.deed_number}
+                    <p class="mt-1 text-sm text-red-600 dark:text-red-500">{validationErrors.deed_number}</p>
+                  {/if}
+                  <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                    {$t('property.deedNumberHelp')}
+                  </p>
+                </div>
+                
+                <!-- Description -->
+                <div class="sm:col-span-6">
+                  <label for="description" class="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                    {$t('property.description')} *
+                  </label>
+                  <div class="mt-1">
+                    <textarea 
+                      id="description" 
+                      bind:value={propertyData.description} 
+                      rows="4" 
+                      class="shadow-sm focus:ring-primary-500 focus:border-primary-500 block w-full sm:text-sm border-gray-300 dark:border-gray-700 rounded-md dark:bg-gray-800 dark:text-white"
+                      class:border-red-500={validationErrors.description}
+                      placeholder={$t('property.descriptionPlaceholder')}
+                    ></textarea>
+                    {#if validationErrors.description}
+                      <p class="mt-1 text-sm text-red-600 dark:text-red-500">{validationErrors.description}</p>
+                    {/if}
                   </div>
                 </div>
               </div>
-            {/if}
-            
-            <!-- Form Navigation with smooth transitions and clear visual feedback -->
-            <div class="mt-10 pt-5 border-t border-gray-200 dark:border-gray-700">
-              <div class="flex justify-between">
-                <button
-                  type="button"
-                  on:click={goToPrevStep}
-                  disabled={currentStep === 1 || loading}
-                  class="py-2 px-4 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 border border-gray-300 dark:bg-gray-700 dark:text-gray-200 dark:hover:bg-gray-600 dark:border-gray-600 disabled:opacity-50 transition-all duration-200 transform hover:-translate-x-1"
-                >
-                  <span class="flex items-center">
-                    <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path>
-                    </svg>
-                    {$t('common.previous')}
-                  </span>
-                </button>
+            </div>
+          {/if}
+          
+          <!-- Step 2: Location Information -->
+          {#if currentStep === 2}
+            <div class="space-y-8 animate-fadeIn">
+              <LocationPicker
+                bind:address={propertyData.address}
+                bind:city={propertyData.city}
+                bind:state={propertyData.state}
+                bind:postalCode={propertyData.postal_code}
+                bind:country={propertyData.country}
+                bind:latitude={propertyData.latitude}
+                bind:longitude={propertyData.longitude}
+                on:locationChange={handleLocationChange}
+              />
+              
+              <div class="space-y-3">
+                {#if validationErrors.address}
+                  <p class="text-sm text-red-600 dark:text-red-500">{validationErrors.address}</p>
+                {/if}
                 
-                {#if currentStep < totalSteps}
-                  <button
-                    type="button"
-                    on:click={goToNextStep}
-                    class="ml-3 inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-gradient-to-r from-primary-500 to-primary-600 hover:from-primary-600 hover:to-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 transition-all duration-200 transform hover:translate-x-1"
-                  >
-                    <span class="flex items-center">
-                      {$t('common.next')}
-                      <svg class="w-4 h-4 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
-                      </svg>
-                    </span>
-                  </button>
-                {:else}
-                  <button
-                    type="button"
-                    on:click={handleSubmit}
-                    disabled={loading}
-                    class="ml-3 inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-gradient-to-r from-success-500 to-success-600 hover:from-success-600 hover:to-success-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-success-500 disabled:opacity-50 transition-all duration-200"
-                  >
-                    {#if loading}
-                      <svg class="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                      </svg>
-                      {$t('common.processing')}
-                    {:else}
-                      <span class="flex items-center">
-                        <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
-                        </svg>
-                        {$t('property.create')}
-                      </span>
-                    {/if}
-                  </button>
+                {#if validationErrors.city}
+                  <p class="text-sm text-red-600 dark:text-red-500">{validationErrors.city}</p>
+                {/if}
+                
+                {#if validationErrors.state}
+                  <p class="text-sm text-red-600 dark:text-red-500">{validationErrors.state}</p>
                 {/if}
               </div>
             </div>
-            
+          {/if}
           
-            <!-- Error Message with clear visual styling -->
-            {#if error}
-              <div class="mt-6 bg-red-50 border-l-4 border-red-400 p-4 dark:bg-red-900/20 dark:border-red-600 rounded-md shadow-md">
-                <div class="flex">
-                  <div class="flex-shrink-0">
-                    <svg class="h-5 w-5 text-red-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
-                      <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd" />
-                    </svg>
+          <!-- Step 3: Property Details -->
+          {#if currentStep === 3}
+            <div class="space-y-8 animate-fadeIn">
+              <div class="grid grid-cols-1 gap-y-6 gap-x-4 sm:grid-cols-6">
+                <!-- Size -->
+                <div class="sm:col-span-2">
+                  <label for="size_sqm" class="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                    {$t('property.size')} ({$t('property.sqm')}) *
+                  </label>
+                  <div class="mt-1 relative rounded-md shadow-sm">
+                    <input 
+                      type="number" 
+                      id="size_sqm" 
+                      bind:value={propertyData.size_sqm} 
+                      min="1" 
+                      step="0.01" 
+                      class="shadow-sm focus:ring-primary-500 focus:border-primary-500 block w-full sm:text-sm border-gray-300 dark:border-gray-700 rounded-md dark:bg-gray-800 dark:text-white"
+                      class:border-red-500={validationErrors.size_sqm}
+                    />
+                    {#if validationErrors.size_sqm}
+                      <div class="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
+                        <svg class="h-5 w-5 text-red-500" fill="currentColor" viewBox="0 0 20 20">
+                          <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clip-rule="evenodd" />
+                        </svg>
+                      </div>
+                    {/if}
                   </div>
-                  <div class="ml-3">
-                    <p class="text-sm text-red-700 dark:text-red-200">
-                      {error}
-                    </p>
+                  {#if validationErrors.size_sqm}
+                    <p class="mt-1 text-sm text-red-600 dark:text-red-500">{validationErrors.size_sqm}</p>
+                  {/if}
+                </div>
+                
+                <!-- Floors -->
+                <div class="sm:col-span-2">
+                  <label for="floors" class="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                    {$t('property.floors')}
+                  </label>
+                  <div class="mt-1">
+                    <input 
+                      type="number" 
+                      id="floors" 
+                      bind:value={propertyData.floors} 
+                      min="1" 
+                      step="1" 
+                      class="shadow-sm focus:ring-primary-500 focus:border-primary-500 block w-full sm:text-sm border-gray-300 dark:border-gray-700 rounded-md dark:bg-gray-800 dark:text-white"
+                      class:border-red-500={validationErrors.floors}
+                    />
+                    {#if validationErrors.floors}
+                      <p class="mt-1 text-sm text-red-600 dark:text-red-500">{validationErrors.floors}</p>
+                    {/if}
+                  </div>
+                </div>
+                
+                <!-- Year Built -->
+                <div class="sm:col-span-2">
+                  <label for="year_built" class="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                    {$t('property.yearBuilt')}
+                  </label>
+                  <div class="mt-1">
+                    <input 
+                      type="number" 
+                      id="year_built" 
+                      bind:value={propertyData.year_built} 
+                      min="1800" 
+                      max="2025" 
+                      step="1" 
+                      class="shadow-sm focus:ring-primary-500 focus:border-primary-500 block w-full sm:text-sm border-gray-300 dark:border-gray-700 rounded-md dark:bg-gray-800 dark:text-white"
+                      class:border-red-500={validationErrors.year_built}
+                    />
+                    {#if validationErrors.year_built}
+                      <p class="mt-1 text-sm text-red-600 dark:text-red-500">{validationErrors.year_built}</p>
+                    {/if}
+                  </div>
+                </div>
+                
+                <!-- Features with properly translated values -->
+                <div class="sm:col-span-6 mt-2">
+                  <TagSelector
+                    title={$t('property.features')}
+                    tags={availableFeatures}
+                    selectedTags={propertyData.features}
+                    on:change={handleFeaturesChange}
+                    variant="pill"
+                  />
+                </div>
+                
+                <!-- Amenities with properly translated values -->
+                <div class="sm:col-span-6 mt-2">
+                  <TagSelector
+                    title={$t('property.amenities')}
+                    tags={availableAmenities}
+                    selectedTags={propertyData.amenities}
+                    on:change={handleAmenitiesChange}
+                    variant="pill"
+                  />
+                </div>
+                
+                <!-- Rooms with proper localization -->
+                <div class="sm:col-span-6 mt-4">
+                  <div class="bg-gray-50 dark:bg-gray-700 p-6 rounded-lg shadow-inner">
+                    <RoomManager
+                      bind:rooms
+                      availableFeatures={availableRoomFeatures}
+                      on:change={handleRoomsChange}
+                    />
                   </div>
                 </div>
               </div>
-            {/if}
+            </div>
+          {/if}
+          
+          <!-- Step 4: Financial Information & Media Upload -->
+          {#if currentStep === 4}
+            <div class="space-y-8 animate-fadeIn">
+              <div class="grid grid-cols-1 gap-y-6 gap-x-4 sm:grid-cols-6">
+                <!-- Market Value -->
+                <div class="sm:col-span-3">
+                  <label for="market_value" class="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                    {$t('property.marketValue')} *
+                  </label>
+                  <div class="mt-1 relative rounded-md shadow-sm">
+                    <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                      <span class="text-gray-500 sm:text-sm">$</span>
+                    </div>
+                    <input 
+                      type="number" 
+                      id="market_value" 
+                      bind:value={propertyData.market_value} 
+                      min="1" 
+                      step="0.01" 
+                      class="pl-7 shadow-sm focus:ring-primary-500 focus:border-primary-500 block w-full sm:text-sm border-gray-300 dark:border-gray-700 rounded-md dark:bg-gray-800 dark:text-white"
+                      class:border-red-500={validationErrors.market_value}
+                    />
+                    {#if validationErrors.market_value}
+                      <div class="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
+                        <svg class="h-5 w-5 text-red-500" fill="currentColor" viewBox="0 0 20 20">
+                          <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clip-rule="evenodd" />
+                        </svg>
+                      </div>
+                    {/if}
+                  </div>
+                  {#if validationErrors.market_value}
+                    <p class="mt-1 text-sm text-red-600 dark:text-red-500">{validationErrors.market_value}</p>
+                  {/if}
+                </div>
+                
+                <!-- Minimum Bid -->
+                <div class="sm:col-span-3">
+                  <label for="minimum_bid" class="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                    {$t('property.minimumBid')}
+                  </label>
+                  <div class="mt-1 relative rounded-md shadow-sm">
+                    <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                      <span class="text-gray-500 sm:text-sm">$</span>
+                    </div>
+                    <input 
+                      type="number" 
+                      id="minimum_bid" 
+                      bind:value={propertyData.minimum_bid} 
+                      min="1" 
+                      step="0.01" 
+                      class="pl-7 shadow-sm focus:ring-primary-500 focus:border-primary-500 block w-full sm:text-sm border-gray-300 dark:border-gray-700 rounded-md dark:bg-gray-800 dark:text-white"
+                      class:border-red-500={validationErrors.minimum_bid}
+                    />
+                  </div>
+                  {#if validationErrors.minimum_bid}
+                    <p class="mt-1 text-sm text-red-600 dark:text-red-500">{validationErrors.minimum_bid}</p>
+                  {/if}
+                </div>
+                
+                <!-- Publishing Options with elegantly styled cards -->
+                <div class="sm:col-span-6">
+                  <fieldset class="bg-gradient-to-br from-gray-50 to-white dark:from-gray-700 dark:to-gray-750 p-6 rounded-lg shadow-sm">
+                    <legend class="text-base font-medium text-gray-700 dark:text-gray-300 px-3 py-1 bg-white dark:bg-gray-800 rounded-md shadow-sm border border-gray-200 dark:border-gray-600">
+                      {$t('property.publishingOptions')}
+                    </legend>
+                    <div class="mt-4 space-y-4">
+                      <div class="flex items-start">
+                        <div class="flex items-center h-5">
+                          <input 
+                            id="is_published" 
+                            type="checkbox" 
+                            bind:checked={propertyData.is_published} 
+                            class="focus:ring-primary-500 h-5 w-5 text-primary-600 border-gray-300 rounded dark:border-gray-600 dark:bg-gray-700"
+                          />
+                        </div>
+                        <div class="ml-3 text-sm">
+                          <label for="is_published" class="font-medium text-gray-700 dark:text-gray-300">
+                            {$t('property.published')}
+                          </label>
+                          <p class="text-gray-500 dark:text-gray-400">
+                            {$t('property.publishedHelp')}
+                          </p>
+                        </div>
+                      </div>
+                      
+                      <div class="flex items-start">
+                        <div class="flex items-center h-5">
+                          <input 
+                            id="is_featured" 
+                            type="checkbox" 
+                            bind:checked={propertyData.is_featured} 
+                            class="focus:ring-primary-500 h-5 w-5 text-primary-600 border-gray-300 rounded dark:border-gray-600 dark:bg-gray-700"
+                          />
+                        </div>
+                        <div class="ml-3 text-sm">
+                          <label for="is_featured" class="font-medium text-gray-700 dark:text-gray-300">
+                            {$t('property.featured')}
+                          </label>
+                          <p class="text-gray-500 dark:text-gray-400">
+                            {$t('property.featuredHelp')}
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                  </fieldset>
+                </div>
+                
+                <!-- Media Upload -->
+                <div class="sm:col-span-6 mt-2">
+                  <div class="bg-gradient-to-br from-gray-50 to-white dark:from-gray-700 dark:to-gray-750 p-6 rounded-lg shadow-sm">
+                    <h3 class="text-lg font-medium text-gray-900 dark:text-white flex items-center">
+                      <svg class="w-5 h-5 mr-2 text-primary-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+                      </svg>
+                      {$t('property.mediaUpload')}
+                    </h3>
+                    <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">
+                      {$t('property.mediaUploadDesc')}
+                    </p>
+                    
+                    <div class="mt-4">
+                      <MediaUploader
+                        maxFiles={10}
+                        maxSize={MAX_FILE_SIZE}
+                        allowedTypes={['image/jpeg', 'image/png', 'image/gif', 'application/pdf']}
+                        on:change={handleMediaChange}
+                      />
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          {/if}
+          
+          <!-- Form Navigation with smooth transitions and clear visual feedback -->
+          <div class="mt-10 pt-5 border-t border-gray-200 dark:border-gray-700">
+            <div class="flex justify-between">
+              <button
+                type="button"
+                on:click={goToPrevStep}
+                disabled={currentStep === 1 || loading}
+                class="py-2 px-4 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 border border-gray-300 dark:bg-gray-700 dark:text-gray-200 dark:hover:bg-gray-600 dark:border-gray-600 disabled:opacity-50 transition-all duration-200 transform hover:-translate-x-1"
+              >
+                <span class="flex items-center">
+                  <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path>
+                  </svg>
+                  {$t('common.previous')}
+                </span>
+              </button>
+              
+              {#if currentStep < totalSteps}
+                <button
+                  type="button"
+                  on:click={goToNextStep}
+                  class="ml-3 inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-gradient-to-r from-primary-500 to-primary-600 hover:from-primary-600 hover:to-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 transition-all duration-200 transform hover:translate-x-1"
+                >
+                  <span class="flex items-center">
+                    {$t('common.next')}
+                    <svg class="w-4 h-4 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
+                    </svg>
+                  </span>
+                </button>
+              {:else}
+                <button
+                  type="button"
+                  on:click={handleSubmit}
+                  disabled={loading}
+                  class="ml-3 inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-gradient-to-r from-success-500 to-success-600 hover:from-success-600 hover:to-success-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-success-500 disabled:opacity-50 transition-all duration-200"
+                >
+                  {#if loading}
+                    <svg class="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                      <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                      <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
+                    {$t('common.processing')}
+                  {:else}
+                    <span class="flex items-center">
+                      <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                      </svg>
+                      {$t('property.create')}
+                    </span>
+                  {/if}
+                </button>
+              {/if}
+            </div>
           </div>
+        
+        
+          <!-- Error Message with clear visual styling -->
+          {#if error}
+            <div class="mt-6 bg-red-50 border-l-4 border-red-400 p-4 dark:bg-red-900/20 dark:border-red-600 rounded-md shadow-md">
+              <div class="flex">
+                <div class="flex-shrink-0">
+                  <svg class="h-5 w-5 text-red-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                    <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd" />
+                  </svg>
+                </div>
+                <div class="ml-3">
+                  <p class="text-sm text-red-700 dark:text-red-200">
+                    {error}
+                  </p>
+                </div>
+              </div>
+            </div>
+          {/if}
         </div>
-      {/if}
+      </div>
     {/if}
     
     <!-- Success Modal with polished design and animations -->
