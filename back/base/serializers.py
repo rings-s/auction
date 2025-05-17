@@ -41,7 +41,12 @@ class MediaSerializer(serializers.ModelSerializer):
         read_only_fields = ['file_size', 'dimensions', 'created_at', 'updated_at', 'content_type_model']
 
     def get_url(self, obj):
-        return obj.file.url if obj.file else None
+        if obj.file:
+            request = self.context.get('request')
+            if request:
+                return request.build_absolute_uri(obj.file.url)
+            return obj.file.url
+        return None
 
     def get_file_size(self, obj):
         return obj.file_size
@@ -54,7 +59,7 @@ class MediaSerializer(serializers.ModelSerializer):
         content_type_str = data.pop('content_type_str', None)
         if content_type_str and not data.get('content_type'):
             try:
-                app_label, model = content_type_str.lower().split('.') if '.' in content_type_str else ('properties', content_type_str.lower())
+                app_label, model = content_type_str.lower().split('.') if '.' in content_type_str else ('base', content_type_str.lower())
                 content_type = ContentType.objects.get(app_label=app_label, model=model)
                 data['content_type'] = content_type
             except (ContentType.DoesNotExist, ValueError):
@@ -62,8 +67,7 @@ class MediaSerializer(serializers.ModelSerializer):
                     {"content_type_str": f"Invalid content type: {content_type_str}. Format should be 'app_label.model' or just 'model'"}
                 )
         return data
-
-
+    
 class RoomSerializer(serializers.ModelSerializer):
     room_type_display = serializers.CharField(source='get_room_type_display', read_only=True)
     media = serializers.SerializerMethodField()

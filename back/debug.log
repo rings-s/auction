@@ -225,3 +225,139 @@ INFO 2025-05-17 13:33:48,153 basehttp 44404 135997991941824 "GET /api/properties
 INFO 2025-05-17 13:45:16,565 basehttp 44404 135997991941824 "OPTIONS /api/auctions/? HTTP/1.1" 200 0
 INFO 2025-05-17 13:45:16,585 basehttp 44404 135997991941824 "GET /api/auctions/? HTTP/1.1" 200 52
 INFO 2025-05-17 13:45:17,288 basehttp 44404 135997991941824 "GET /api/properties/?page=1&ordering=-created_at HTTP/1.1" 200 2366
+INFO 2025-05-17 13:48:51,118 autoreload 44404 135998141253440 /home/ahmed/tech-Savvy-projects/2025/new_ones/auction/back/back/urls.py changed, reloading.
+INFO 2025-05-17 13:48:51,834 autoreload 45471 139878052812608 Watching for file changes with StatReloader
+INFO 2025-05-17 13:48:56,070 autoreload 45471 139878052812608 /home/ahmed/tech-Savvy-projects/2025/new_ones/auction/back/back/urls.py changed, reloading.
+INFO 2025-05-17 13:48:56,598 autoreload 45497 128804065101632 Watching for file changes with StatReloader
+INFO 2025-05-17 13:51:14,735 autoreload 45497 128804065101632 /home/ahmed/tech-Savvy-projects/2025/new_ones/auction/back/back/urls.py changed, reloading.
+INFO 2025-05-17 13:51:15,231 autoreload 45620 130339402839872 Watching for file changes with StatReloader
+INFO 2025-05-17 13:51:23,697 basehttp 45620 130339349456576 "GET /api/accounts/profile/ HTTP/1.1" 200 594
+INFO 2025-05-17 13:51:23,837 basehttp 45620 130339349456576 "GET /api/properties/?page=1&ordering=-created_at HTTP/1.1" 200 2366
+INFO 2025-05-17 13:51:47,623 autoreload 45620 130339402839872 /home/ahmed/tech-Savvy-projects/2025/new_ones/auction/back/back/urls.py changed, reloading.
+INFO 2025-05-17 13:51:48,577 autoreload 45656 126839126210368 Watching for file changes with StatReloader
+INFO 2025-05-17 13:51:52,147 autoreload 45656 126839126210368 /home/ahmed/tech-Savvy-projects/2025/new_ones/auction/back/back/urls.py changed, reloading.
+INFO 2025-05-17 13:51:52,903 autoreload 45661 133737350768448 Watching for file changes with StatReloader
+INFO 2025-05-17 13:51:57,109 basehttp 45661 133737271518912 "GET /api/accounts/profile/ HTTP/1.1" 200 594
+INFO 2025-05-17 13:51:57,204 basehttp 45661 133737271518912 "GET /api/properties/?page=1&ordering=-created_at HTTP/1.1" 200 2366
+INFO 2025-05-17 13:53:03,008 autoreload 45661 133737350768448 /home/ahmed/tech-Savvy-projects/2025/new_ones/auction/back/base/serializers.py changed, reloading.
+INFO 2025-05-17 13:53:04,108 autoreload 45740 124257531262784 Watching for file changes with StatReloader
+INFO 2025-05-17 13:53:05,762 autoreload 45740 124257531262784 /home/ahmed/tech-Savvy-projects/2025/new_ones/auction/back/base/serializers.py changed, reloading.
+INFO 2025-05-17 13:53:06,691 autoreload 45746 138047402981184 Watching for file changes with StatReloader
+INFO 2025-05-17 13:53:08,141 autoreload 45746 138047402981184 /home/ahmed/tech-Savvy-projects/2025/new_ones/auction/back/base/serializers.py changed, reloading.
+INFO 2025-05-17 13:53:08,841 autoreload 45748 137264868947776 Watching for file changes with StatReloader
+INFO 2025-05-17 13:53:10,529 autoreload 45748 137264868947776 /home/ahmed/tech-Savvy-projects/2025/new_ones/auction/back/base/serializers.py changed, reloading.
+INFO 2025-05-17 13:53:11,177 autoreload 45754 124351871506240 Watching for file changes with StatReloader
+INFO 2025-05-17 13:53:39,220 autoreload 45754 124351871506240 /home/ahmed/tech-Savvy-projects/2025/new_ones/auction/back/base/views.py changed, reloading.
+INFO 2025-05-17 13:53:39,774 autoreload 45783 132491719874368 Watching for file changes with StatReloader
+INFO 2025-05-17 13:53:42,180 autoreload 45783 132491719874368 /home/ahmed/tech-Savvy-projects/2025/new_ones/auction/back/base/views.py changed, reloading.
+INFO 2025-05-17 13:53:42,952 autoreload 45789 138895367112512 Watching for file changes with StatReloader
+INFO 2025-05-17 13:53:47,168 autoreload 45789 138895367112512 /home/ahmed/tech-Savvy-projects/2025/new_ones/auction/back/base/views.py changed, reloading.
+INFO 2025-05-17 13:53:47,689 autoreload 45795 126106028287808 Watching for file changes with StatReloader
+INFO 2025-05-17 13:53:53,921 autoreload 45795 126106028287808 /home/ahmed/tech-Savvy-projects/2025/new_ones/auction/back/base/views.py changed, reloading.
+INFO 2025-05-17 13:53:54,487 autoreload 45801 139961642985280 Watching for file changes with StatReloader
+INFO 2025-05-17 13:53:59,960 autoreload 45801 139961642985280 /home/ahmed/tech-Savvy-projects/2025/new_ones/auction/back/base/views.py changed, reloading.
+INFO 2025-05-17 13:54:00,800 autoreload 45844 125933267228480 Watching for file changes with StatReloader
+INFO 2025-05-17 13:54:04,121 autoreload 45844 125933267228480 /home/ahmed/tech-Savvy-projects/2025/new_ones/auction/back/base/views.py changed, reloading.
+INFO 2025-05-17 13:54:04,839 autoreload 45863 128590652983104 Watching for file changes with StatReloader
+INFO 2025-05-17 13:54:08,211 autoreload 45863 128590652983104 /home/ahmed/tech-Savvy-projects/2025/new_ones/auction/back/base/views.py changed, reloading.
+INFO 2025-05-17 13:54:09,171 autoreload 45869 126465411237696 Watching for file changes with StatReloader
+INFO 2025-05-17 13:54:13,011 autoreload 45869 126465411237696 /home/ahmed/tech-Savvy-projects/2025/new_ones/auction/back/base/views.py changed, reloading.
+INFO 2025-05-17 13:54:13,688 autoreload 45875 136911272408896 Watching for file changes with StatReloader
+INFO 2025-05-17 13:54:22,141 autoreload 45875 136911272408896 /home/ahmed/tech-Savvy-projects/2025/new_ones/auction/back/base/views.py changed, reloading.
+INFO 2025-05-17 13:54:22,688 autoreload 45881 136143658334016 Watching for file changes with StatReloader
+INFO 2025-05-17 13:54:28,122 autoreload 45881 136143658334016 /home/ahmed/tech-Savvy-projects/2025/new_ones/auction/back/base/views.py changed, reloading.
+INFO 2025-05-17 13:54:28,895 autoreload 45906 139346166974272 Watching for file changes with StatReloader
+INFO 2025-05-17 13:54:30,384 autoreload 45906 139346166974272 /home/ahmed/tech-Savvy-projects/2025/new_ones/auction/back/base/views.py changed, reloading.
+INFO 2025-05-17 13:54:31,535 autoreload 45908 134045310641984 Watching for file changes with StatReloader
+INFO 2025-05-17 13:54:33,763 autoreload 45908 134045310641984 /home/ahmed/tech-Savvy-projects/2025/new_ones/auction/back/base/views.py changed, reloading.
+INFO 2025-05-17 13:54:34,503 autoreload 45914 127680673081152 Watching for file changes with StatReloader
+INFO 2025-05-17 13:54:38,959 autoreload 45914 127680673081152 /home/ahmed/tech-Savvy-projects/2025/new_ones/auction/back/base/views.py changed, reloading.
+INFO 2025-05-17 13:54:39,737 autoreload 45921 128058812344128 Watching for file changes with StatReloader
+INFO 2025-05-17 13:54:44,184 autoreload 45921 128058812344128 /home/ahmed/tech-Savvy-projects/2025/new_ones/auction/back/base/views.py changed, reloading.
+INFO 2025-05-17 13:54:44,934 autoreload 45927 137843654195008 Watching for file changes with StatReloader
+INFO 2025-05-17 13:54:52,379 autoreload 45927 137843654195008 /home/ahmed/tech-Savvy-projects/2025/new_ones/auction/back/base/views.py changed, reloading.
+INFO 2025-05-17 13:54:53,448 autoreload 45934 140181393913664 Watching for file changes with StatReloader
+INFO 2025-05-17 13:54:54,931 autoreload 45934 140181393913664 /home/ahmed/tech-Savvy-projects/2025/new_ones/auction/back/base/views.py changed, reloading.
+INFO 2025-05-17 13:54:55,912 autoreload 45940 131983258842944 Watching for file changes with StatReloader
+INFO 2025-05-17 13:54:57,128 autoreload 45940 131983258842944 /home/ahmed/tech-Savvy-projects/2025/new_ones/auction/back/base/views.py changed, reloading.
+INFO 2025-05-17 13:54:57,853 autoreload 45961 132494208964416 Watching for file changes with StatReloader
+INFO 2025-05-17 13:55:08,450 autoreload 45961 132494208964416 /home/ahmed/tech-Savvy-projects/2025/new_ones/auction/back/base/views.py changed, reloading.
+INFO 2025-05-17 13:55:09,322 autoreload 45971 138561012045632 Watching for file changes with StatReloader
+INFO 2025-05-17 13:55:10,551 autoreload 45971 138561012045632 /home/ahmed/tech-Savvy-projects/2025/new_ones/auction/back/base/views.py changed, reloading.
+INFO 2025-05-17 13:55:11,324 autoreload 45973 131593222113088 Watching for file changes with StatReloader
+INFO 2025-05-17 13:55:23,906 autoreload 45973 131593222113088 /home/ahmed/tech-Savvy-projects/2025/new_ones/auction/back/base/views.py changed, reloading.
+INFO 2025-05-17 13:55:25,077 autoreload 45979 127167990130496 Watching for file changes with StatReloader
+INFO 2025-05-17 13:55:33,384 autoreload 45979 127167990130496 /home/ahmed/tech-Savvy-projects/2025/new_ones/auction/back/base/views.py changed, reloading.
+INFO 2025-05-17 13:55:33,969 autoreload 46004 128350804776768 Watching for file changes with StatReloader
+INFO 2025-05-17 13:55:43,494 autoreload 46004 128350804776768 /home/ahmed/tech-Savvy-projects/2025/new_ones/auction/back/base/views.py changed, reloading.
+INFO 2025-05-17 13:55:44,279 autoreload 46010 134662228846400 Watching for file changes with StatReloader
+INFO 2025-05-17 13:55:45,621 autoreload 46010 134662228846400 /home/ahmed/tech-Savvy-projects/2025/new_ones/auction/back/base/views.py changed, reloading.
+INFO 2025-05-17 13:55:46,418 autoreload 46013 131590319863616 Watching for file changes with StatReloader
+INFO 2025-05-17 13:55:49,798 autoreload 46013 131590319863616 /home/ahmed/tech-Savvy-projects/2025/new_ones/auction/back/base/views.py changed, reloading.
+INFO 2025-05-17 13:55:50,688 autoreload 46019 125918362273600 Watching for file changes with StatReloader
+INFO 2025-05-17 13:55:53,157 autoreload 46019 125918362273600 /home/ahmed/tech-Savvy-projects/2025/new_ones/auction/back/base/views.py changed, reloading.
+INFO 2025-05-17 13:55:54,114 autoreload 46026 137568958027584 Watching for file changes with StatReloader
+INFO 2025-05-17 13:55:58,562 autoreload 46026 137568958027584 /home/ahmed/tech-Savvy-projects/2025/new_ones/auction/back/base/views.py changed, reloading.
+INFO 2025-05-17 13:55:59,356 autoreload 46052 124544600729408 Watching for file changes with StatReloader
+INFO 2025-05-17 13:56:01,536 autoreload 46052 124544600729408 /home/ahmed/tech-Savvy-projects/2025/new_ones/auction/back/base/views.py changed, reloading.
+INFO 2025-05-17 13:56:02,164 autoreload 46054 133860822423360 Watching for file changes with StatReloader
+INFO 2025-05-17 13:56:11,840 autoreload 46054 133860822423360 /home/ahmed/tech-Savvy-projects/2025/new_ones/auction/back/base/views.py changed, reloading.
+INFO 2025-05-17 13:56:12,641 autoreload 46064 132497369401152 Watching for file changes with StatReloader
+INFO 2025-05-17 13:56:15,101 autoreload 46064 132497369401152 /home/ahmed/tech-Savvy-projects/2025/new_ones/auction/back/base/views.py changed, reloading.
+INFO 2025-05-17 13:56:15,734 autoreload 46071 134336376956736 Watching for file changes with StatReloader
+INFO 2025-05-17 13:56:17,939 autoreload 46071 134336376956736 /home/ahmed/tech-Savvy-projects/2025/new_ones/auction/back/base/views.py changed, reloading.
+INFO 2025-05-17 13:56:18,604 autoreload 46073 129443560232768 Watching for file changes with StatReloader
+INFO 2025-05-17 13:56:26,201 autoreload 46073 129443560232768 /home/ahmed/tech-Savvy-projects/2025/new_ones/auction/back/base/views.py changed, reloading.
+INFO 2025-05-17 13:56:27,085 autoreload 46101 129025406629696 Watching for file changes with StatReloader
+INFO 2025-05-17 13:56:29,303 autoreload 46101 129025406629696 /home/ahmed/tech-Savvy-projects/2025/new_ones/auction/back/base/views.py changed, reloading.
+INFO 2025-05-17 13:56:30,175 autoreload 46108 137334209656640 Watching for file changes with StatReloader
+INFO 2025-05-17 13:56:34,694 autoreload 46108 137334209656640 /home/ahmed/tech-Savvy-projects/2025/new_ones/auction/back/base/views.py changed, reloading.
+INFO 2025-05-17 13:56:35,481 autoreload 46114 126242022405952 Watching for file changes with StatReloader
+INFO 2025-05-17 13:56:36,693 autoreload 46114 126242022405952 /home/ahmed/tech-Savvy-projects/2025/new_ones/auction/back/base/views.py changed, reloading.
+INFO 2025-05-17 13:56:37,456 autoreload 46116 131300698584896 Watching for file changes with StatReloader
+INFO 2025-05-17 13:57:19,199 basehttp 46116 131300618921664 "GET /api/properties/?page=1&ordering=-created_at HTTP/1.1" 200 2408
+INFO 2025-05-17 13:57:19,293 basehttp 46116 131300609480384 "GET /media/uploads/2025/05/17/dummy_imgs.png HTTP/1.1" 200 1785
+INFO 2025-05-17 13:57:20,373 basehttp 46116 131300618921664 "GET /api/properties/?page=1&ordering=-created_at HTTP/1.1" 200 2408
+INFO 2025-05-17 13:57:26,106 basehttp 46116 131300618921664 "GET /api/properties/?page=1&ordering=-created_at HTTP/1.1" 200 2408
+INFO 2025-05-17 13:57:32,295 basehttp 46116 131300618921664 "GET /api/properties/?page=1&ordering=-created_at HTTP/1.1" 200 2408
+INFO 2025-05-17 13:57:34,457 basehttp 46116 131300618921664 "GET /api/properties/?page=1&ordering=-created_at HTTP/1.1" 200 2408
+INFO 2025-05-17 13:57:38,051 basehttp 46116 131300618921664 "GET /api/properties/?page=1&ordering=-created_at HTTP/1.1" 200 2408
+INFO 2025-05-17 13:57:41,664 basehttp 46116 131300618921664 "GET /api/properties/?page=1&ordering=-created_at HTTP/1.1" 200 2408
+INFO 2025-05-17 13:59:44,408 basehttp 46116 131300618921664 "GET /api/accounts/profile/ HTTP/1.1" 200 594
+INFO 2025-05-17 13:59:44,466 basehttp 46116 131300618921664 "GET /api/properties/?page=1&ordering=-created_at HTTP/1.1" 200 2408
+INFO 2025-05-17 13:59:48,465 basehttp 46116 131300618921664 "GET /api/properties/the-property-title/ HTTP/1.1" 200 2356
+INFO 2025-05-17 13:59:48,611 basehttp 46116 131300598990528 "GET /api/properties/the-property-title/ HTTP/1.1" 200 2356
+INFO 2025-05-17 14:00:00,302 basehttp 46116 131300598990528 "GET /api/accounts/profile/ HTTP/1.1" 200 594
+INFO 2025-05-17 14:01:43,733 basehttp 46116 131300598990528 "POST /api/properties/ HTTP/1.1" 201 1301
+WARNING 2025-05-17 14:01:43,748 log 46116 131300598990528 Bad Request: /api/media/
+WARNING 2025-05-17 14:01:43,749 basehttp 46116 131300598990528 "POST /api/media/ HTTP/1.1" 400 44
+INFO 2025-05-17 14:01:45,421 basehttp 46116 131300598990528 "OPTIONS /api/properties/2/ HTTP/1.1" 200 0
+INFO 2025-05-17 14:01:45,425 basehttp 46116 131300618921664 "OPTIONS /api/properties/2/ HTTP/1.1" 200 0
+INFO 2025-05-17 14:01:45,620 basehttp 46116 131300598990528 "GET /api/properties/2/ HTTP/1.1" 200 1301
+INFO 2025-05-17 14:01:45,786 basehttp 46116 131300618921664 "GET /api/properties/2/ HTTP/1.1" 200 1301
+INFO 2025-05-17 14:01:48,208 basehttp 46116 131300618921664 "GET /api/properties/?page=1&ordering=-created_at HTTP/1.1" 200 3710
+INFO 2025-05-17 14:01:48,224 basehttp 46116 131300609480384 "GET /media/uploads/2025/05/17/dummy_imgs.png HTTP/1.1" 304 0
+INFO 2025-05-17 14:02:40,488 basehttp 46116 131300618921664 "GET /api/accounts/profile/ HTTP/1.1" 200 594
+INFO 2025-05-17 14:02:40,636 basehttp 46116 131300618921664 "GET /api/properties/?page=1&ordering=-created_at HTTP/1.1" 200 3710
+INFO 2025-05-17 14:02:54,233 basehttp 46116 131300618921664 "GET /api/accounts/profile/ HTTP/1.1" 200 594
+INFO 2025-05-17 14:02:54,300 basehttp 46116 131300618921664 "GET /api/properties/?page=1&ordering=-created_at HTTP/1.1" 200 3710
+INFO 2025-05-17 14:05:10,656 basehttp 46116 131300590597824 "GET /admin/base/property/ HTTP/1.1" 200 19238
+INFO 2025-05-17 14:05:10,707 basehttp 46116 131300590597824 "GET /admin/jsi18n/ HTTP/1.1" 200 3342
+INFO 2025-05-17 14:05:19,311 basehttp 46116 131300590597824 "GET /admin/base/property/2/change/ HTTP/1.1" 200 47516
+INFO 2025-05-17 14:05:19,360 basehttp 46116 131300590597824 "GET /admin/jsi18n/ HTTP/1.1" 200 3342
+INFO 2025-05-17 14:05:35,806 basehttp 46116 131300590597824 "GET /admin/base/property/ HTTP/1.1" 200 19238
+INFO 2025-05-17 14:11:46,813 basehttp 46116 131300598990528 "OPTIONS /api/properties/the-second-property/ HTTP/1.1" 200 0
+INFO 2025-05-17 14:11:46,815 basehttp 46116 131300582205120 "OPTIONS /api/properties/the-second-property/ HTTP/1.1" 200 0
+INFO 2025-05-17 14:11:46,933 basehttp 46116 131300598990528 "GET /api/properties/the-second-property/ HTTP/1.1" 200 1301
+INFO 2025-05-17 14:11:47,132 basehttp 46116 131300582205120 "GET /api/properties/the-second-property/ HTTP/1.1" 200 1301
+INFO 2025-05-17 14:12:23,476 basehttp 46116 131300582205120 "GET /api/properties/?page=1&ordering=-created_at HTTP/1.1" 200 3710
+INFO 2025-05-17 14:12:26,603 basehttp 46116 131300582205120 "GET /api/properties/the-property-title/ HTTP/1.1" 200 2356
+INFO 2025-05-17 14:12:26,736 basehttp 46116 131300598990528 "GET /api/properties/the-property-title/ HTTP/1.1" 200 2357
+INFO 2025-05-17 14:13:04,459 basehttp 46116 131300598990528 "GET /api/auctions/? HTTP/1.1" 200 52
+INFO 2025-05-17 14:13:05,688 basehttp 46116 131300598990528 "GET /api/auctions/? HTTP/1.1" 200 52
+INFO 2025-05-17 14:13:08,888 basehttp 46116 131300598990528 "OPTIONS /api/auctions/?auction_type=sealed HTTP/1.1" 200 0
+INFO 2025-05-17 14:13:09,037 basehttp 46116 131300598990528 "GET /api/auctions/?auction_type=sealed HTTP/1.1" 200 52
+INFO 2025-05-17 14:13:11,826 basehttp 46116 131300598990528 "OPTIONS /api/auctions/?status=live&auction_type=sealed HTTP/1.1" 200 0
+INFO 2025-05-17 14:13:11,877 basehttp 46116 131300598990528 "GET /api/auctions/?status=live&auction_type=sealed HTTP/1.1" 200 52
+INFO 2025-05-17 14:13:13,672 basehttp 46116 131300598990528 "OPTIONS /api/auctions/?status=scheduled&auction_type=sealed HTTP/1.1" 200 0
+INFO 2025-05-17 14:13:13,685 basehttp 46116 131300598990528 "GET /api/auctions/?status=scheduled&auction_type=sealed HTTP/1.1" 200 52

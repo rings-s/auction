@@ -26,10 +26,20 @@ class LocationListCreateView(generics.ListCreateAPIView):
     filterset_fields = ['city', 'state', 'country']
     search_fields = ['city', 'state', 'country']
 
+    def get_serializer_context(self):
+        context = super().get_serializer_context()
+        context.update({"request": self.request})
+        return context
+
 class LocationDetailView(generics.RetrieveUpdateDestroyAPIView):
     queryset = Location.objects.all()
     serializer_class = LocationSerializer
     permission_classes = [IsVerifiedUser, IsAdminUser]
+
+    def get_serializer_context(self):
+        context = super().get_serializer_context()
+        context.update({"request": self.request})
+        return context
 
 # Media Views
 class MediaListCreateView(generics.ListCreateAPIView):
@@ -40,6 +50,11 @@ class MediaListCreateView(generics.ListCreateAPIView):
     filterset_fields = ['media_type', 'is_primary']
     search_fields = ['name']
 
+    def get_serializer_context(self):
+        context = super().get_serializer_context()
+        context.update({"request": self.request})
+        return context
+
 class MediaDetailView(generics.RetrieveUpdateDestroyAPIView):
     queryset = Media.objects.select_related('content_type')
     serializer_class = MediaSerializer
@@ -48,6 +63,11 @@ class MediaDetailView(generics.RetrieveUpdateDestroyAPIView):
         if self.request.method in SAFE_METHODS:
             return [IsAuthenticated()]
         return [IsObjectOwner()]
+
+    def get_serializer_context(self):
+        context = super().get_serializer_context()
+        context.update({"request": self.request})
+        return context
 
 # Property Views
 class PropertyListCreateView(generics.ListCreateAPIView):
@@ -71,6 +91,11 @@ class PropertyListCreateView(generics.ListCreateAPIView):
     def perform_create(self, serializer):
         serializer.save(owner=self.request.user)
 
+    def get_serializer_context(self):
+        context = super().get_serializer_context()
+        context.update({"request": self.request})
+        return context
+
 class PropertyDetailView(generics.RetrieveUpdateDestroyAPIView):
     serializer_class = PropertySerializer
     lookup_field = 'pk'
@@ -92,6 +117,11 @@ class PropertyDetailView(generics.RetrieveUpdateDestroyAPIView):
         serializer = self.get_serializer(instance)
         return Response(serializer.data)
 
+    def get_serializer_context(self):
+        context = super().get_serializer_context()
+        context.update({"request": self.request})
+        return context
+
 class PropertySlugDetailView(PropertyDetailView):
     lookup_field = 'slug'
 
@@ -110,6 +140,11 @@ class RoomListCreateView(generics.ListCreateAPIView):
             return [IsAppraiserOrDataEntry()]
         return [IsAuthenticated()]
 
+    def get_serializer_context(self):
+        context = super().get_serializer_context()
+        context.update({"request": self.request})
+        return context
+
 class RoomDetailView(generics.RetrieveUpdateDestroyAPIView):
     queryset = Room.objects.select_related('property')
     serializer_class = RoomSerializer
@@ -118,7 +153,10 @@ class RoomDetailView(generics.RetrieveUpdateDestroyAPIView):
         if self.request.method in SAFE_METHODS:
             return [IsAuthenticated()]
         return [IsAppraiserOrDataEntry()]
-
+    def get_serializer_context(self):
+        context = super().get_serializer_context()
+        context.update({"request": self.request})
+        return context
 # Auction Views
 class AuctionListCreateView(generics.ListCreateAPIView):
     serializer_class = AuctionSerializer
@@ -137,6 +175,11 @@ class AuctionListCreateView(generics.ListCreateAPIView):
         if self.request.method == 'POST':
             return [IsPropertyOwnerOrAppraiser()]
         return [AllowAny()]
+
+    def get_serializer_context(self):
+        context = super().get_serializer_context()
+        context.update({"request": self.request})
+        return context
 
 class AuctionDetailView(generics.RetrieveUpdateDestroyAPIView):
     serializer_class = AuctionSerializer
@@ -158,6 +201,11 @@ class AuctionDetailView(generics.RetrieveUpdateDestroyAPIView):
         serializer = self.get_serializer(instance)
         return Response(serializer.data)
 
+    def get_serializer_context(self):
+        context = super().get_serializer_context()
+        context.update({"request": self.request})
+        return context
+
 class AuctionSlugDetailView(AuctionDetailView):
     lookup_field = 'slug'
 
@@ -172,6 +220,11 @@ class BidListCreateView(generics.ListCreateAPIView):
     def get_queryset(self):
         return Bid.objects.select_related('auction', 'bidder')
 
+    def get_serializer_context(self):
+        context = super().get_serializer_context()
+        context.update({"request": self.request})
+        return context
+
 class BidDetailView(generics.RetrieveUpdateDestroyAPIView):
     queryset = Bid.objects.select_related('auction', 'bidder')
     serializer_class = BidSerializer
@@ -180,3 +233,8 @@ class BidDetailView(generics.RetrieveUpdateDestroyAPIView):
         if self.request.method in SAFE_METHODS:
             return [IsAuthenticated()]
         return [IsObjectOwner()]
+
+    def get_serializer_context(self):
+        context = super().get_serializer_context()
+        context.update({"request": self.request})
+        return context

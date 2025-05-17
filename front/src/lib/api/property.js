@@ -210,6 +210,7 @@ export async function deleteProperty(id) {
 /**
  * Upload media for a property
  */
+
 export async function uploadPropertyMedia(propertyId, file, isPrimary = false) {
   if (!propertyId) throw new Error('Property ID is required');
   if (!file) throw new Error('File is required');
@@ -219,13 +220,62 @@ export async function uploadPropertyMedia(propertyId, file, isPrimary = false) {
   formData.append('content_type_str', 'property');
   formData.append('object_id', propertyId);
   formData.append('is_primary', isPrimary ? 'true' : 'false');
-  formData.append('media_type', file.type.startsWith('image/') ? 'image' : 'document');
+  
+  // Determine media type based on file MIME type
+  let mediaType = 'document';
+  if (file.type.startsWith('image/')) {
+    mediaType = 'image';
+  } else if (file.type.startsWith('video/')) {
+    mediaType = 'video';
+  }
+  formData.append('media_type', mediaType);
+  
   formData.append('name', file.name);
   
-  return await api(API.MEDIA, {
-    method: 'POST',
-    body: formData
-  });
+  const token = localStorage.getItem('accessToken');
+  if (!token) {
+    throw new Error('Authentication required');
+  }
+  
+  try {
+    const response = await fetch(API.MEDIA, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${token}`
+        // Do NOT set Content-Type here - browser will set it with boundary for FormData
+      },
+      body: formData
+    });
+    
+    if (response.status === 401) {
+      // Try to refresh token and retry
+      const newToken = await refreshToken();
+      const retryResponse = await fetch(API.MEDIA, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${newToken}`
+        },
+        body: formData
+      });
+      
+      if (!retryResponse.ok) {
+        const errorData = await retryResponse.json();
+        throw new Error(errorData.error?.message || 'Failed to upload media');
+      }
+      
+      return await retryResponse.json();
+    }
+    
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.error?.message || 'Failed to upload media');
+    }
+    
+    return await response.json();
+  } catch (error) {
+    console.error('Media upload error:', error);
+    throw error;
+  }
 }
 
 /**

@@ -27,6 +27,44 @@
     };
     return classes[status] || classes.available;
   };
+  
+  // Helper function to get image URL from any property data format
+  function getImageUrl(property) {
+    if (!property) return '/images/property-placeholder.jpg';
+    
+    // Check main_image property
+    if (property.main_image) {
+      // Could be direct URL or nested object
+      if (typeof property.main_image === 'string') {
+        return property.main_image;
+      }
+      
+      // Check for url property first
+      if (property.main_image.url) {
+        return property.main_image.url;
+      }
+      
+      // Then check for file property
+      if (property.main_image.file) {
+        return property.main_image.file;
+      }
+    }
+    
+    // Try media array (first item that's an image)
+    if (property.media && property.media.length > 0) {
+      const firstImage = property.media.find(m => 
+        m.media_type === 'image' || 
+        (m.url && typeof m.url === 'string')
+      );
+      
+      if (firstImage) {
+        return firstImage.url || firstImage.file || '/images/property-placeholder.jpg';
+      }
+    }
+    
+    // Default placeholder
+    return '/images/property-placeholder.jpg';
+  }
 </script>
 
 <a 
@@ -37,7 +75,7 @@
     <!-- Image Section -->
     <div class="relative h-56">
       <img 
-        src={property.main_image?.url || '/images/property-placeholder.jpg'} 
+        src={getImageUrl(property)} 
         alt={property.title}
         class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
       />
@@ -72,7 +110,7 @@
       <!-- Price and Type -->
       <div class="mb-3 flex justify-between items-center">
         <span class="inline-block bg-gray-100 dark:bg-gray-700 rounded-full px-3 py-1 text-sm font-semibold text-gray-700 dark:text-gray-300">
-          {property.property_type?.name || ''}
+          {property.property_type?.name || property.property_type_display || ''}
         </span>
         <span class="text-xl font-bold text-gray-900 dark:text-white">
           {formatCurrency(property.market_value)}
