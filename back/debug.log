@@ -127,3 +127,101 @@ Traceback (most recent call last):
     raise TemplateDoesNotExist(template_name, chain=chain)
 django.template.exceptions.TemplateDoesNotExist: emails/verification_email.html
 INFO 2025-05-17 12:40:21,275 basehttp 39547 136899451676352 "POST /api/accounts/register/ HTTP/1.1" 201 160
+INFO 2025-05-17 13:12:34,728 autoreload 39547 136899530868544 /home/ahmed/tech-Savvy-projects/2025/new_ones/auction/back/back/settings.py changed, reloading.
+INFO 2025-05-17 13:12:35,640 autoreload 43058 140309979711296 Watching for file changes with StatReloader
+INFO 2025-05-17 13:12:49,352 autoreload 43058 140309979711296 /home/ahmed/tech-Savvy-projects/2025/new_ones/auction/back/back/settings.py changed, reloading.
+INFO 2025-05-17 13:12:50,025 autoreload 43084 127794656982848 Watching for file changes with StatReloader
+INFO 2025-05-17 13:22:15,302 autoreload 43084 127794656982848 /home/ahmed/tech-Savvy-projects/2025/new_ones/auction/back/back/settings.py changed, reloading.
+INFO 2025-05-17 13:22:16,281 autoreload 43579 137687940683584 Watching for file changes with StatReloader
+WARNING 2025-05-17 13:23:34,372 log 43579 137687793137344 Bad Request: /api/accounts/register/
+WARNING 2025-05-17 13:23:34,373 basehttp 43579 137687793137344 "POST /api/accounts/register/ HTTP/1.1" 400 77
+WARNING 2025-05-17 13:23:48,069 log 43579 137687793137344 Bad Request: /api/accounts/register/
+WARNING 2025-05-17 13:23:48,070 basehttp 43579 137687793137344 "POST /api/accounts/register/ HTTP/1.1" 400 77
+WARNING 2025-05-17 13:24:22,537 log 43579 137687793137344 Bad Request: /api/accounts/register/
+WARNING 2025-05-17 13:24:22,538 basehttp 43579 137687793137344 "POST /api/accounts/register/ HTTP/1.1" 400 77
+INFO 2025-05-17 13:24:46,981 autoreload 43579 137687940683584 /home/ahmed/tech-Savvy-projects/2025/new_ones/auction/back/back/settings.py changed, reloading.
+INFO 2025-05-17 13:24:47,809 autoreload 43749 132761470846784 Watching for file changes with StatReloader
+INFO 2025-05-17 13:24:56,343 autoreload 43749 132761470846784 /home/ahmed/tech-Savvy-projects/2025/new_ones/auction/back/back/settings.py changed, reloading.
+INFO 2025-05-17 13:24:57,005 autoreload 43774 129570554701632 Watching for file changes with StatReloader
+WARNING 2025-05-17 13:25:02,196 log 43774 129570475861696 Bad Request: /api/accounts/register/
+WARNING 2025-05-17 13:25:02,197 basehttp 43774 129570475861696 "POST /api/accounts/register/ HTTP/1.1" 400 77
+INFO 2025-05-17 13:25:12,913 basehttp 43774 129570465371840 "GET /admin/ HTTP/1.1" 200 11625
+INFO 2025-05-17 13:25:13,060 basehttp 43774 129570465371840 "GET /static/admin/img/icon-deletelink.svg HTTP/1.1" 304 0
+INFO 2025-05-17 13:25:15,262 basehttp 43774 129570465371840 "GET /admin/accounts/customuser/ HTTP/1.1" 200 19441
+INFO 2025-05-17 13:25:15,315 basehttp 43774 129570465371840 "GET /admin/jsi18n/ HTTP/1.1" 200 3342
+INFO 2025-05-17 13:25:22,990 autoreload 43774 129570554701632 /home/ahmed/tech-Savvy-projects/2025/new_ones/auction/back/back/settings.py changed, reloading.
+INFO 2025-05-17 13:25:23,764 autoreload 43843 124450106509120 Watching for file changes with StatReloader
+INFO 2025-05-17 13:25:25,170 autoreload 43843 124450106509120 /home/ahmed/tech-Savvy-projects/2025/new_ones/auction/back/back/settings.py changed, reloading.
+INFO 2025-05-17 13:25:25,923 autoreload 43849 127668763674432 Watching for file changes with StatReloader
+INFO 2025-05-17 13:26:04,059 autoreload 43849 127668763674432 /home/ahmed/tech-Savvy-projects/2025/new_ones/auction/back/back/settings.py changed, reloading.
+INFO 2025-05-17 13:26:04,707 autoreload 43888 134713622792000 Watching for file changes with StatReloader
+INFO 2025-05-17 13:26:11,058 basehttp 43888 134713541912256 "POST /admin/accounts/customuser/ HTTP/1.1" 200 11682
+INFO 2025-05-17 13:26:12,273 basehttp 43888 134713541912256 "POST /admin/accounts/customuser/ HTTP/1.1" 302 0
+INFO 2025-05-17 13:26:12,332 basehttp 43888 134713541912256 "GET /admin/accounts/customuser/ HTTP/1.1" 200 18806
+INFO 2025-05-17 13:26:12,411 basehttp 43888 134713541912256 "GET /admin/jsi18n/ HTTP/1.1" 200 3342
+INFO 2025-05-17 13:26:44,922 serializers 43888 134713452783296 User 'rings9619@gmail.com' created successfully
+INFO 2025-05-17 13:26:48,734 utils 43888 134713452783296 Email sent: Verify Your Email Address to rings9619@gmail.com
+INFO 2025-05-17 13:26:48,734 views 43888 134713452783296 Verification email sent to rings9619@gmail.com
+INFO 2025-05-17 13:26:48,826 basehttp 43888 134713452783296 "POST /api/accounts/register/ HTTP/1.1" 201 138
+INFO 2025-05-17 13:27:17,364 basehttp 43888 134713452783296 "OPTIONS /api/accounts/verify-email/ HTTP/1.1" 200 0
+INFO 2025-05-17 13:27:17,598 views 43888 134713452783296 Email verification successful for user 4
+INFO 2025-05-17 13:27:17,601 basehttp 43888 134713452783296 "POST /api/accounts/verify-email/ HTTP/1.1" 200 1128
+INFO 2025-05-17 13:27:26,509 basehttp 43888 134713452783296 "OPTIONS /api/accounts/login/ HTTP/1.1" 200 0
+INFO 2025-05-17 13:27:27,354 middleware 43888 134713452783296 Login: rings9619@gmail.com from IP: 127.0.0.1, UA: 'Mozilla/5.0 (Linux; Android 6.0; Nexus 5 Build/MRA...'
+INFO 2025-05-17 13:27:27,355 views 43888 134713452783296 Successful login for user: rings9619@gmail.com
+INFO 2025-05-17 13:27:27,359 basehttp 43888 134713452783296 "POST /api/accounts/login/ HTTP/1.1" 200 1088
+INFO 2025-05-17 13:27:33,549 basehttp 43888 134713452783296 "OPTIONS /api/properties/?page=1&ordering=-created_at HTTP/1.1" 200 0
+INFO 2025-05-17 13:27:33,689 basehttp 43888 134713452783296 "GET /api/properties/?page=1&ordering=-created_at HTTP/1.1" 200 52
+INFO 2025-05-17 13:27:42,976 basehttp 43888 134713452783296 "OPTIONS /api/accounts/profile/ HTTP/1.1" 200 0
+INFO 2025-05-17 13:27:42,999 basehttp 43888 134713452783296 "GET /api/accounts/profile/ HTTP/1.1" 200 595
+INFO 2025-05-17 13:27:52,028 basehttp 43888 134713541912256 "GET /admin/accounts/customuser/ HTTP/1.1" 200 19440
+INFO 2025-05-17 13:27:52,074 basehttp 43888 134713541912256 "GET /admin/jsi18n/ HTTP/1.1" 200 3342
+INFO 2025-05-17 13:28:12,055 basehttp 43888 134713541912256 "GET /admin/accounts/customuser/4/change/ HTTP/1.1" 200 60597
+INFO 2025-05-17 13:28:12,105 basehttp 43888 134713541912256 "GET /admin/jsi18n/ HTTP/1.1" 200 3342
+INFO 2025-05-17 13:28:12,525 basehttp 43888 134713541912256 "GET /static/admin/js/SelectBox.js HTTP/1.1" 304 0
+INFO 2025-05-17 13:28:12,612 basehttp 43888 134713541912256 "GET /static/admin/js/SelectFilter2.js HTTP/1.1" 304 0
+INFO 2025-05-17 13:28:12,908 basehttp 43888 134713541912256 "GET /static/admin/img/selector-icons.svg HTTP/1.1" 304 0
+INFO 2025-05-17 13:28:23,322 basehttp 43888 134713541912256 "POST /admin/accounts/customuser/4/change/ HTTP/1.1" 302 0
+INFO 2025-05-17 13:28:23,351 basehttp 43888 134713541912256 "GET /admin/accounts/customuser/ HTTP/1.1" 200 19672
+INFO 2025-05-17 13:28:23,443 basehttp 43888 134713541912256 "GET /admin/jsi18n/ HTTP/1.1" 200 3342
+INFO 2025-05-17 13:28:27,569 basehttp 43888 134713452783296 "GET /api/accounts/profile/ HTTP/1.1" 200 594
+INFO 2025-05-17 13:30:47,162 basehttp 43888 134713452783296 "OPTIONS /api/properties/ HTTP/1.1" 200 0
+INFO 2025-05-17 13:30:47,312 basehttp 43888 134713452783296 "POST /api/properties/ HTTP/1.1" 201 1428
+INFO 2025-05-17 13:30:47,366 basehttp 43888 134713452783296 "OPTIONS /api/media/ HTTP/1.1" 200 0
+WARNING 2025-05-17 13:30:47,468 log 43888 134713452783296 Bad Request: /api/media/
+WARNING 2025-05-17 13:30:47,469 basehttp 43888 134713452783296 "POST /api/media/ HTTP/1.1" 400 44
+INFO 2025-05-17 13:30:49,639 basehttp 43888 134713452783296 "OPTIONS /api/properties/1/ HTTP/1.1" 200 0
+INFO 2025-05-17 13:30:49,645 basehttp 43888 134713461176000 "OPTIONS /api/properties/1/ HTTP/1.1" 200 0
+INFO 2025-05-17 13:30:49,827 basehttp 43888 134713452783296 "GET /api/properties/1/ HTTP/1.1" 200 1428
+INFO 2025-05-17 13:30:50,022 basehttp 43888 134713461176000 "GET /api/properties/1/ HTTP/1.1" 200 1428
+INFO 2025-05-17 13:31:14,770 basehttp 43888 134713461176000 "GET /api/properties/?page=1&ordering=-created_at HTTP/1.1" 200 1480
+INFO 2025-05-17 13:31:31,470 basehttp 43888 134713541912256 "GET /admin/base/property/ HTTP/1.1" 200 18410
+INFO 2025-05-17 13:31:31,521 basehttp 43888 134713541912256 "GET /admin/jsi18n/ HTTP/1.1" 200 3342
+INFO 2025-05-17 13:31:33,399 basehttp 43888 134713541912256 "GET /admin/base/property/1/change/ HTTP/1.1" 200 47919
+INFO 2025-05-17 13:31:33,442 basehttp 43888 134713541912256 "GET /admin/jsi18n/ HTTP/1.1" 200 3342
+INFO 2025-05-17 13:31:44,565 basehttp 43888 134713541912256 "POST /admin/base/property/1/change/ HTTP/1.1" 302 0
+INFO 2025-05-17 13:31:44,592 basehttp 43888 134713541912256 "GET /admin/base/property/ HTTP/1.1" 200 18624
+INFO 2025-05-17 13:31:44,670 basehttp 43888 134713541912256 "GET /admin/jsi18n/ HTTP/1.1" 200 3342
+INFO 2025-05-17 13:31:48,560 basehttp 43888 134713461176000 "GET /api/accounts/profile/ HTTP/1.1" 200 594
+INFO 2025-05-17 13:31:48,630 basehttp 43888 134713461176000 "GET /api/properties/?page=1&ordering=-created_at HTTP/1.1" 200 2366
+INFO 2025-05-17 13:31:59,281 basehttp 43888 134713541912256 "GET /admin/base/property/1/change/ HTTP/1.1" 200 50385
+INFO 2025-05-17 13:31:59,322 basehttp 43888 134713541912256 "GET /admin/jsi18n/ HTTP/1.1" 200 3342
+INFO 2025-05-17 13:32:35,136 autoreload 43888 134713622792000 /home/ahmed/tech-Savvy-projects/2025/new_ones/auction/back/back/urls.py changed, reloading.
+INFO 2025-05-17 13:32:35,730 autoreload 44400 127362027542336 Watching for file changes with StatReloader
+INFO 2025-05-17 13:32:38,984 autoreload 44400 127362027542336 /home/ahmed/tech-Savvy-projects/2025/new_ones/auction/back/back/urls.py changed, reloading.
+INFO 2025-05-17 13:32:39,492 autoreload 44402 138220856190784 Watching for file changes with StatReloader
+INFO 2025-05-17 13:32:40,679 autoreload 44402 138220856190784 /home/ahmed/tech-Savvy-projects/2025/new_ones/auction/back/back/urls.py changed, reloading.
+INFO 2025-05-17 13:32:41,375 autoreload 44404 135998141253440 Watching for file changes with StatReloader
+INFO 2025-05-17 13:32:44,553 basehttp 44404 135997991941824 "GET /api/accounts/profile/ HTTP/1.1" 200 594
+INFO 2025-05-17 13:32:44,649 basehttp 44404 135997991941824 "GET /api/properties/?page=1&ordering=-created_at HTTP/1.1" 200 2366
+INFO 2025-05-17 13:33:00,298 basehttp 44404 135997991941824 "OPTIONS /api/properties/the-property-title/ HTTP/1.1" 200 0
+INFO 2025-05-17 13:33:00,301 basehttp 44404 135997982500544 "OPTIONS /api/properties/the-property-title/ HTTP/1.1" 200 0
+INFO 2025-05-17 13:33:00,480 basehttp 44404 135997991941824 "GET /api/properties/the-property-title/ HTTP/1.1" 200 2314
+INFO 2025-05-17 13:33:00,716 basehttp 44404 135997982500544 "GET /api/properties/the-property-title/ HTTP/1.1" 200 2314
+INFO 2025-05-17 13:33:44,057 basehttp 44404 135997982500544 "GET /api/accounts/profile/ HTTP/1.1" 200 594
+INFO 2025-05-17 13:33:47,277 basehttp 44404 135997982500544 "GET /api/accounts/profile/ HTTP/1.1" 200 594
+INFO 2025-05-17 13:33:47,791 basehttp 44404 135997982500544 "GET /api/properties/the-property-title/ HTTP/1.1" 200 2314
+INFO 2025-05-17 13:33:48,153 basehttp 44404 135997991941824 "GET /api/properties/the-property-title/ HTTP/1.1" 200 2314
+INFO 2025-05-17 13:45:16,565 basehttp 44404 135997991941824 "OPTIONS /api/auctions/? HTTP/1.1" 200 0
+INFO 2025-05-17 13:45:16,585 basehttp 44404 135997991941824 "GET /api/auctions/? HTTP/1.1" 200 52
+INFO 2025-05-17 13:45:17,288 basehttp 44404 135997991941824 "GET /api/properties/?page=1&ordering=-created_at HTTP/1.1" 200 2366

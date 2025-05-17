@@ -40,6 +40,9 @@ DEBUG = os.getenv('DEBUG', 'True').lower() == 'true'
 
 ALLOWED_HOSTS = os.getenv('ALLOWED_HOSTS', 'localhost,127.0.0.1').split(',')
 
+# Company details - used in templates and emails
+COMPANY_NAME = os.getenv('COMPANY_NAME', 'Real Estate Auctions')
+
 # Application definition
 
 INSTALLED_APPS = [
@@ -76,11 +79,13 @@ ROOT_URLCONF = 'back.urls'
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [os.path.join(BASE_DIR, 'templates')],
+        'DIRS': [os.path.join(BASE_DIR, 'templates')],  # Changed for consistency
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
+                'django.template.context_processors.debug',  # Added debug context
                 'django.template.context_processors.request',
+                'django.template.context_processors.media',  # Added media context
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
             ],
@@ -233,8 +238,9 @@ DEFAULT_FROM_EMAIL = os.getenv('DEFAULT_FROM_EMAIL', EMAIL_HOST_USER)
 # Frontend URL for email links
 FRONTEND_URL = os.getenv('FRONTEND_URL', 'http://localhost:5137')
 
+# Replace SITE_NAME with COMPANY_NAME for consistency
 # Site configuration
-SITE_NAME = os.getenv('SITE_NAME', 'Auction Platform')
+COMPANY_NAME = os.getenv('COMPANY_NAME', 'Real Estate Auctions')
 VERIFICATION_TOKEN_EXPIRATION_HOURS = int(os.getenv('VERIFICATION_TOKEN_EXPIRATION_HOURS', 24))
 
 
