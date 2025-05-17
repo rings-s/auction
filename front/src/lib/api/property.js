@@ -480,6 +480,7 @@ export async function addPropertyRoom(propertyId, roomData) {
   });
 }
 
+
 /**
  * Update a property room
  */
@@ -609,3 +610,5 @@ export async function getPropertiesByType(propertyType) {
 export async function getPropertyStats() {
   return await api(`${API_BASE_URL}/property-stats/`, { method: 'GET' });
 }
+
+

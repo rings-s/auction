@@ -264,6 +264,8 @@
   }
   
   // Form submission handler
+  // In front/src/routes/properties/create/+page.svelte
+
   async function handleSubmit() {
     if (!validateStep(currentStep)) {
       return;
@@ -273,20 +275,45 @@
     error = null;
     
     try {
-      // Prepare location data
-      const submissionData = {
-        ...propertyData,
-        // Include rooms if we have any
-        rooms: rooms.length > 0 ? rooms : undefined
+      // Step 1: Create the property without rooms first
+      const propertySubmissionData = {
+        ...propertyData
+        // Don't include rooms here
       };
       
       // Submit property data
-      const result = await createProperty(submissionData);
+      const result = await createProperty(propertySubmissionData);
       
       // Extract property ID from response
       createdPropertyId = result.id || (result.data && result.data.id);
       
-      // Upload media files if available
+      // Step 2: If we have rooms and a property ID, create rooms separately
+      if (rooms.length > 0 && createdPropertyId) {
+        try {
+          // Create each room for the property
+          await Promise.all(rooms.map(room => {
+            // Clean up room data before submission
+            const roomData = { ...room };
+            // Remove temporary IDs
+            if (roomData.id && roomData.id.toString().startsWith('temp-')) {
+              delete roomData.id;
+            }
+            // Ensure property ID is set
+            roomData.property = createdPropertyId;
+            
+            // Call API to create room
+            return addPropertyRoom(createdPropertyId, roomData);
+          }));
+          
+          console.log('All rooms created successfully');
+        } catch (roomError) {
+          console.error('Error creating rooms:', roomError);
+          // Still consider it a success, but with warning
+          success = $t('property.createSuccessRoomsFailed');
+        }
+      }
+      
+      // Handle media files upload
       if (mediaFiles.length > 0 && createdPropertyId) {
         uploadingMedia = true;
         
