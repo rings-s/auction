@@ -11,6 +11,9 @@ npm-debug.log*
 .npm
 .npmrc
 
+# Frontend Node.js dependencies
+front/node_modules/
+
 # Build output
 /dist
 /build
@@ -30,12 +33,22 @@ npm-debug.log*
 
 # OS generated files
 .DS_Store
-.DS_Store?
 ._*
 .Spotlight-V100
 .Trashes
 ehthumbs.db
 Thumbs.db
+
+# Database files
+*.sqlite3
+*.db
+*.sqlite
+
+# Database migrations
+migrations/
+migrations/*
+*.sql
+*.migration
 
 # SvelteKit specific
 .svelte-kit/
