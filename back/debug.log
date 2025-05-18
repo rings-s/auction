@@ -755,3 +755,33 @@ INFO 2025-05-18 05:10:50,088 basehttp 11274 130152645256896 "GET /api/accounts/p
 INFO 2025-05-18 05:10:50,523 basehttp 11274 130152645256896 "GET /api/properties/4/ HTTP/1.1" 200 3715
 INFO 2025-05-18 05:10:50,691 basehttp 11274 130152626374336 "GET /api/properties/4/ HTTP/1.1" 200 3715
 INFO 2025-05-18 05:11:10,853 basehttp 11274 130152626374336 "GET /api/properties/?page=1&ordering=-created_at HTTP/1.1" 200 8992
+INFO 2025-05-18 05:24:06,992 basehttp 11274 130152617981632 "GET /admin/ HTTP/1.1" 200 13018
+WARNING 2025-05-18 05:24:21,547 log 11274 130152617981632 Not Found: /favicon.ico
+WARNING 2025-05-18 05:24:21,547 basehttp 11274 130152617981632 "GET /favicon.ico HTTP/1.1" 404 2678
+INFO 2025-05-18 05:24:41,588 basehttp 11274 130152617981632 "GET /admin/base/property/ HTTP/1.1" 200 20086
+INFO 2025-05-18 05:24:41,980 basehttp 11274 130152617981632 "GET /admin/jsi18n/ HTTP/1.1" 200 3342
+INFO 2025-05-18 05:24:44,627 basehttp 11274 130152617981632 "GET /admin/base/property/4/change/ HTTP/1.1" 200 55998
+INFO 2025-05-18 05:24:44,666 basehttp 11274 130152617981632 "GET /admin/jsi18n/ HTTP/1.1" 200 3342
+INFO 2025-05-18 05:24:44,748 basehttp 11274 130152634767040 "GET /static/admin/js/admin/DateTimeShortcuts.js HTTP/1.1" 304 0
+INFO 2025-05-18 05:24:44,754 basehttp 11274 130152626374336 "GET /static/admin/css/forms.css HTTP/1.1" 304 0
+INFO 2025-05-18 05:24:44,755 basehttp 11274 130152634767040 "GET /static/admin/js/calendar.js HTTP/1.1" 304 0
+INFO 2025-05-18 05:24:44,761 basehttp 11274 130152626374336 "GET /static/admin/js/prepopulate_init.js HTTP/1.1" 304 0
+INFO 2025-05-18 05:24:44,789 basehttp 11274 130152617981632 "GET /static/admin/js/inlines.js HTTP/1.1" 304 0
+INFO 2025-05-18 05:24:44,895 basehttp 11274 130152626374336 "GET /static/admin/css/widgets.css HTTP/1.1" 304 0
+INFO 2025-05-18 05:24:44,906 basehttp 11274 130152626374336 "GET /static/admin/js/change_form.js HTTP/1.1" 304 0
+INFO 2025-05-18 05:24:45,060 basehttp 11274 130152626374336 "GET /static/admin/img/inline-delete.svg HTTP/1.1" 304 0
+INFO 2025-05-18 05:24:45,116 basehttp 11274 130152626374336 "GET /static/admin/img/icon-calendar.svg HTTP/1.1" 304 0
+INFO 2025-05-18 05:25:22,814 basehttp 11274 130152626374336 "POST /admin/base/property/4/change/ HTTP/1.1" 302 0
+INFO 2025-05-18 05:25:22,850 basehttp 11274 130152626374336 "GET /admin/base/property/ HTTP/1.1" 200 20307
+INFO 2025-05-18 05:25:22,923 basehttp 11274 130152626374336 "GET /admin/jsi18n/ HTTP/1.1" 200 3342
+INFO 2025-05-18 05:25:29,382 basehttp 11274 130152270919360 "OPTIONS /api/properties/the-property-title-latest/ HTTP/1.1" 200 0
+INFO 2025-05-18 05:25:29,387 basehttp 11274 130152262526656 "OPTIONS /api/properties/the-property-title-latest/ HTTP/1.1" 200 0
+INFO 2025-05-18 05:25:29,548 basehttp 11274 130152262526656 "GET /api/properties/the-property-title-latest/ HTTP/1.1" 200 4052
+INFO 2025-05-18 05:25:29,713 basehttp 11274 130152270919360 "GET /api/properties/the-property-title-latest/ HTTP/1.1" 200 4052
+INFO 2025-05-18 05:26:25,239 basehttp 11274 130152626374336 "GET /admin/base/property/4/change/ HTTP/1.1" 200 58533
+INFO 2025-05-18 05:26:25,277 basehttp 11274 130152626374336 "GET /admin/jsi18n/ HTTP/1.1" 200 3342
+INFO 2025-05-18 05:26:35,968 basehttp 11274 130152626374336 "GET /admin/base/property/ HTTP/1.1" 200 20086
+INFO 2025-05-18 05:33:03,855 autoreload 11274 130152724686656 /home/ahmed/tech-Savvy-projects/2025/new_ones/auction/back/base/models.py changed, reloading.
+INFO 2025-05-18 05:33:06,795 autoreload 15047 133609546217280 Watching for file changes with StatReloader
+INFO 2025-05-18 05:33:09,409 autoreload 15047 133609546217280 /home/ahmed/tech-Savvy-projects/2025/new_ones/auction/back/base/models.py changed, reloading.
+INFO 2025-05-18 05:33:10,006 autoreload 15072 123517811406656 Watching for file changes with StatReloader
