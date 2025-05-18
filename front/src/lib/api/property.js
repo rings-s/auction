@@ -281,6 +281,9 @@ export async function deleteProperty(id) {
 /**
  * Upload a single media file for a property
  */
+/**
+ * Upload a single media file for a property
+ */
 export async function uploadPropertyMedia(propertyId, file, isPrimary = false) {
   if (!propertyId) throw new Error('Property ID is required');
   if (!file) throw new Error('File is required');
@@ -294,13 +297,16 @@ export async function uploadPropertyMedia(propertyId, file, isPrimary = false) {
   formData.append('object_id', propertyId);
   formData.append('is_primary', isPrimary ? 'true' : 'false');
   
-  // Determine media type based on file MIME type
+  // Determine media type based on file MIME type - improved handling for PDFs
   let mediaType = 'document';
   if (file.type.startsWith('image/')) {
     mediaType = 'image';
   } else if (file.type.startsWith('video/')) {
     mediaType = 'video';
+  } else if (file.type === 'application/pdf' || file.name.toLowerCase().endsWith('.pdf')) {
+    mediaType = 'document';
   }
+  
   formData.append('media_type', mediaType);
   
   // Set name if file has one
@@ -370,6 +376,7 @@ export async function uploadPropertyMedia(propertyId, file, isPrimary = false) {
     throw error;
   }
 }
+
 
 /**
  * Upload multiple media files for a property
@@ -456,6 +463,7 @@ export async function deletePropertyMedia(mediaId) {
     method: 'DELETE'
   });
 }
+
 
 /**
  * Add a room to a property

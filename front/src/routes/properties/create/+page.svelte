@@ -4,7 +4,7 @@
   import { goto } from '$app/navigation';
   import { t, locale } from '$lib/i18n/i18n'; 
   import { user } from '$lib/stores/user';
-  import { createProperty, uploadPropertyMediaBatch } from '$lib/api/property';
+  import { createProperty, uploadPropertyMediaBatch, addPropertyRoom } from '$lib/api/property';
   import LocationPicker from '$lib/components/LocationPicker.svelte';
   import MediaUploader from '$lib/components/MediaUploader.svelte';
   import RoomManager from '$lib/components/RoomManager.svelte';
@@ -264,7 +264,6 @@
   }
   
   // Form submission handler
-  // In front/src/routes/properties/create/+page.svelte
 
   async function handleSubmit() {
     if (!validateStep(currentStep)) {
@@ -291,20 +290,28 @@
       if (rooms.length > 0 && createdPropertyId) {
         try {
           // Create each room for the property
-          await Promise.all(rooms.map(room => {
-            // Clean up room data before submission
-            const roomData = { ...room };
-            // Remove temporary IDs
-            if (roomData.id && roomData.id.toString().startsWith('temp-')) {
-              delete roomData.id;
+          const roomPromises = rooms.map(async (room) => {
+            try {
+              // Clean up room data before submission
+              const roomData = { ...room };
+              // Remove temporary IDs
+              if (roomData.id && roomData.id.toString().startsWith('temp-')) {
+                delete roomData.id;
+              }
+              // Ensure property ID is set
+              roomData.property = createdPropertyId;
+              
+              // Call API to create room
+              const result = await addPropertyRoom(createdPropertyId, roomData);
+              console.log('Room created successfully:', result);
+              return result;
+            } catch (roomError) {
+              console.error('Error creating room:', roomData, roomError);
+              throw roomError;
             }
-            // Ensure property ID is set
-            roomData.property = createdPropertyId;
-            
-            // Call API to create room
-            return addPropertyRoom(createdPropertyId, roomData);
-          }));
-          
+          });
+
+          await Promise.all(roomPromises);
           console.log('All rooms created successfully');
         } catch (roomError) {
           console.error('Error creating rooms:', roomError);
@@ -345,6 +352,7 @@
       loading = false;
     }
   }
+
   
   function viewCreatedProperty() {
     goto(`/properties/${createdPropertyId}`);

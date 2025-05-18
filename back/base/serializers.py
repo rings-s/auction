@@ -99,7 +99,7 @@ class MediaSerializer(serializers.ModelSerializer):
                 print(f"Error resolving content_type_str '{content_type_str}': {str(e)}")
                 raise serializers.ValidationError({
                     "content_type_str": f"Invalid content type format: {content_type_str}. "
-                                        f"Use format 'app_label.model' or just 'model'. Error: {str(e)}"
+                                    f"Use format 'app_label.model' or just 'model'. Error: {str(e)}"
                 })
         
         # Ensure both content_type and object_id are present
@@ -124,13 +124,12 @@ class MediaSerializer(serializers.ModelSerializer):
                     data['media_type'] = 'image'
                 elif file.content_type.startswith('video/'):
                     data['media_type'] = 'video'
-                elif file.content_type.startswith('application/pdf'):
+                elif file.content_type.startswith('application/pdf') or file.name.lower().endswith('.pdf'):
                     data['media_type'] = 'document'
                 else:
                     data['media_type'] = 'other'
         
         return data
-
     def create(self, validated_data):
         """Create a new media instance with proper error handling"""
         try:

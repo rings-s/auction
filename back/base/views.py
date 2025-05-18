@@ -4,6 +4,7 @@ from rest_framework import generics, filters, status
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated, AllowAny, SAFE_METHODS
 from django_filters.rest_framework import DjangoFilterBackend
+from django.contrib.contenttypes.models import ContentType
 
 from .models import Media, Property, Room, Auction, Bid, Location
 from .serializers import (
@@ -68,10 +69,11 @@ class MediaListCreateView(generics.ListCreateAPIView):
                 content_types = ContentType.objects.all()
                 print(f"Available content types: {[(ct.app_label, ct.model) for ct in content_types]}")
                 
-                # For property, make sure to use base.property
-                if content_type_str.lower() == 'property':
-                    request.data['content_type_str'] = 'base.property'
-                    print(f"Updated content_type_str from '{content_type_str}' to 'base.property'")
+                # For any model in the base app, add the base. prefix
+                base_app_models = ['property', 'room', 'auction', 'bid', 'location', 'media']
+                if content_type_str.lower() in base_app_models:
+                    request.data['content_type_str'] = f'base.{content_type_str.lower()}'
+                    print(f"Updated content_type_str from '{content_type_str}' to 'base.{content_type_str.lower()}'")
                     
             # Continue with normal handling
             return super().create(request, *args, **kwargs)
