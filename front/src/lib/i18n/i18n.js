@@ -13,9 +13,8 @@ function getInitialLocale() {
   if (browser) {
     const savedLocale = localStorage.getItem('locale');
     if (savedLocale) return savedLocale;
-    
     const browserLang = navigator.language.split('-')[0];
-    if (browserLang === 'ar') return 'ar';
+    return browserLang === 'ar' ? 'ar' : 'en';
   }
   return 'en'; // Default to English
 }
@@ -23,7 +22,7 @@ function getInitialLocale() {
 // Current locale store
 export const locale = writable(getInitialLocale());
 
-// Set direction based on locale
+// Set language and direction attributes
 if (browser) {
   locale.subscribe(value => {
     document.documentElement.lang = value;
@@ -36,6 +35,22 @@ if (browser) {
 // Translation dictionaries
 const translations = {
   en: {
+    common: {
+      step: 'Step',
+      of: 'of',
+      previous: 'Previous',
+      next: 'Next',
+      loading: 'Loading...',
+      processing: 'Processing...',
+      select: 'Select',
+      save: 'Save',
+      cancel: 'Cancel',
+      edit: 'Edit',
+      delete: 'Delete',
+      confirm: 'Confirm',
+      back: 'Back'
+    },
+
     validation: {
       titleRequired: 'Title is required',
       propertyTypeRequired: 'Property type is required',
@@ -60,10 +75,11 @@ const translations = {
       countryTooLong: 'Country cannot exceed 100 characters',
       invalidSizeRange: 'Size must be greater than 0',
       invalidMarketValueRange: 'Market value must be greater than 0',
-      invalidMinimumBidRange: 'Minimum bid must be greater than 0'
+      invalidMinimumBidRange: 'Minimum bid must be greater than 0',
+      invalidFloorsFormat: 'Invalid floors format',
+      invalidYearFormat: 'Invalid year format'
     },
-    
-    // File Upload
+
     fileUpload: {
       dropZoneLabel: 'Drop zone for file upload',
       selectedFilesList: 'Selected files',
@@ -73,9 +89,6 @@ const translations = {
       tooManyFiles: 'Too many files (max {max})',
       removeFile: 'Remove file {name}'
     },
-    
-    // Navigation
-
 
     nav: {
       home: 'Home',
@@ -95,8 +108,7 @@ const translations = {
         mixedUse: 'Mixed Use'
       }
     },
-    
-    // Search
+
     search: {
       keyword: 'Search by keyword',
       keywordPlaceholder: 'Property name, location, etc.',
@@ -119,9 +131,35 @@ const translations = {
         sizeDesc: 'Size: Large to Small'
       }
     },
-    
-    // Property
+
+    location: {
+      title: 'Location',
+      locationDesc: 'Select the property location on the map',
+      address: 'Address',
+      city: 'City',
+      state: 'State/Region',
+      postalCode: 'Postal Code',
+      country: 'Country',
+      latitude: 'Latitude',
+      longitude: 'Longitude',
+      detect: 'Detect Location',
+      detectHelp: 'Use your current location for the property',
+      detectButton: 'Detect My Location',
+      useMap: 'Use Map',
+      enterManually: 'Enter Manually',
+      mapContainer: 'Location Map',
+      searchPlaceholder: 'Search for a location...',
+      mapInitFailed: 'Failed to initialize map',
+      mapLoadFailed: 'Failed to load map',
+      geolocationNotSupported: 'Geolocation is not supported',
+      detectionSuccess: 'Location detected successfully',
+      detectionFailed: 'Failed to detect location',
+      searchFailed: 'Search failed',
+      geocodingFailed: 'Failed to convert coordinates to address'
+    },
+
     property: {
+      title: 'Property',
       featured: 'Featured',
       rooms: 'Rooms',
       viewDetails: 'View Details',
@@ -160,6 +198,23 @@ const translations = {
       startAddingRooms: 'Start Adding Rooms',
       roomAdded: 'Room successfully added',
       level: 'Level',
+      coordinates: 'Coordinates',
+      clickToInteract: 'Click on the map to interact',
+      noImages: 'No images',
+      noImagesInfo: 'No images have been uploaded for this property yet',
+      gallery: 'Gallery',
+      addressInfo: 'Address Information',
+      tab: {
+        overview: 'Overview',
+        rooms: 'Rooms & Features',
+        location: 'Location',
+        gallery: 'Gallery',
+        auctions: 'Auctions'
+      },
+      keyFeatures: 'Key Features',
+      featuresAndAmenities: 'Features & Amenities',
+      nearbyServices: 'Nearby Services',
+      nearbyServicesInfo: 'Nearby services information not currently available',
       buildingTypes: {
         apartment: 'Apartment',
         villa: 'Villa',
@@ -182,14 +237,7 @@ const translations = {
       featuredHelp: 'Show this property in featured listings',
       detectLocation: 'Detect Current Location',
       detectLocationHelp: 'Use your current location for this property',
-      detect: 'Detect Location',
-      geolocationNotSupported: 'Geolocation is not supported by your browser',
-      locationDetected: 'Location detected successfully',
-      locationDetectionFailed: 'Failed to detect location',
-      latitude: 'Latitude',
-      longitude: 'Longitude',
       roomName: 'Room Name',
-      roomFeatures: 'Room Features',
       addRoom: 'Add Room',
       noRooms: 'No rooms added yet',
       addRoomHelp: 'Use the form above to add rooms to this property',
@@ -202,15 +250,9 @@ const translations = {
       dragDrop: 'or drag and drop',
       fileTypes: 'PNG, JPG, GIF up to 10MB',
       selectedFiles: 'Selected Files',
-      cancel: 'Cancel',
-      create: 'Create Property',
       minimumBid: 'Minimum Bid',
-      titleRequired: 'Property title is required',
-      deedNumberRequired: 'Deed number is required',
-      marketValueRequired: 'Market value is required',
       createSuccess: 'Property created successfully',
       createFailed: 'Failed to create property',
-      select: 'Select',
       commaSeparated: 'comma separated',
       addressInfoDesc: 'Detailed location information',
       sqm: 'sq.m',
@@ -219,10 +261,25 @@ const translations = {
       messagePlaceholder: 'I am interested in this property and would like more information...',
       sendMessage: 'Send Message',
       loginToContact: 'Please login to contact the owner',
+      titlePlaceholder: 'Enter property title',
+      deedNumberPlaceholder: 'Enter deed number',
+      descriptionPlaceholder: 'Detailed property description',
+      unauthorizedMessage: 'You must be registered as a property owner or appraiser to add properties',
+      propertyCreatedMessage: 'Property created successfully and ready for display',
+      createSuccessMediaFailed: 'Property created successfully but some images failed to upload'
     },
-    
-    // Auction
+
+    properties: {
+      title: 'Properties',
+      subtitle: 'Browse available properties for sale and auction',
+      noResults: 'No properties found',
+      tryAdjusting: 'Try adjusting your filters or check back later',
+      backToProperties: 'Back to Properties'
+    },
+
     auction: {
+      title: 'Auctions',
+      subtitle: 'Browse and bid on available property auctions',
       featured: 'Featured',
       currentBid: 'Current Bid',
       bids: 'Bids',
@@ -291,9 +348,6 @@ const translations = {
       createSuccess: 'Auction created successfully',
       createFailed: 'Failed to create auction',
       create: 'Create Auction',
-      cancel: 'Cancel',
-      title: 'Auctions',
-      subtitle: 'Browse and bid on available property auctions',
       filterByStatus: 'Filter by Status',
       filterByType: 'Filter by Type',
       allStatuses: 'All Statuses',
@@ -321,7 +375,6 @@ const translations = {
       bidPlaced: 'Your bid has been placed successfully!'
     },
 
-    // Auth
     auth: {
       login: 'Login to your account',
       email: 'Email address',
@@ -348,7 +401,6 @@ const translations = {
       resendCode: 'Resend code',
       updateProfile: 'Update your profile',
       update: 'Update',
-      cancel: 'Cancel',
       logOut: 'Log out',
       userRole: 'User Role',
       roleUser: 'Regular User',
@@ -362,10 +414,9 @@ const translations = {
       newPassword: 'New Password',
       enterNewPassword: 'Enter your new password',
       verificationCodeResent: 'Verification code has been resent to your email',
-      registrationSuccess: 'Registration successful! Please check your email for verification instructions.',
+      registrationSuccess: 'Registration successful! Please check your email for verification instructions.'
     },
 
-    // Profile
     profile: {
       myProfile: 'My Profile',
       personalInfo: 'Personal Information',
@@ -406,7 +457,6 @@ const translations = {
       commaSeparated: 'comma separated'
     },
 
-    // Errors
     error: {
       generic: 'An error occurred',
       notFound: 'Page not found',
@@ -433,7 +483,6 @@ const translations = {
       resendVerificationFailed: 'Failed to resend verification code'
     },
 
-    // Footer
     footer: {
       about: 'About Us',
       aboutText: 'We are a leading real estate auction platform connecting buyers and sellers for residential, commercial, and land properties.',
@@ -444,31 +493,15 @@ const translations = {
       cookies: 'Cookie Policy',
       contact: 'Contact Us',
       rights: 'All rights reserved.'
-    },
+    }
+  },
+
+  ar: {
     common: {
       step: 'الخطوة',
       of: 'من',
-      previous: 'السابق',
-      next: 'التالي',
       loading: 'جاري التحميل...',
       processing: 'جاري المعالجة...',
-      select: 'اختر'
-    },
-
-    // Properties
-    properties: {
-      title: 'Properties',
-      subtitle: 'Browse available properties for sale and auction',
-      noResults: 'No properties found',
-      tryAdjusting: 'Try adjusting your filters or check back later',
-      backToProperties: 'Back to Properties'
-    }
-  },
-  
-  ar: {
-    // Common elements
-    common: {
-      loading: 'جاري التحميل...',
       select: 'اختر',
       save: 'حفظ',
       cancel: 'إلغاء',
@@ -479,7 +512,7 @@ const translations = {
       next: 'التالي',
       previous: 'السابق'
     },
-    
+
     validation: {
       titleRequired: 'العنوان مطلوب',
       propertyTypeRequired: 'نوع العقار مطلوب',
@@ -506,10 +539,9 @@ const translations = {
       invalidMarketValueRange: 'يجب أن تكون القيمة السوقية أكبر من 0',
       invalidMinimumBidRange: 'يجب أن يكون الحد الأدنى للمزايدة أكبر من 0',
       invalidFloorsFormat: 'صيغة عدد الطوابق غير صحيحة',
-      invalidYearFormat: 'صيغة سنة البناء غير صحيحة',
+      invalidYearFormat: 'صيغة سنة البناء غير صحيحة'
     },
-    
-    // File Upload
+
     fileUpload: {
       dropZoneLabel: 'منطقة إسقاط لتحميل الملف',
       selectedFilesList: 'الملفات المحددة',
@@ -519,8 +551,7 @@ const translations = {
       tooManyFiles: 'عدد كبير جدًا من الملفات (الحد الأقصى {max})',
       removeFile: 'إزالة الملف {name}'
     },
-    
-    // Navigation
+
     nav: {
       home: 'الرئيسية',
       properties: 'العقارات',
@@ -539,8 +570,7 @@ const translations = {
         mixedUse: 'متعدد الاستخدامات'
       }
     },
-    
-    // Search
+
     search: {
       keyword: 'بحث بالكلمات المفتاحية',
       keywordPlaceholder: 'اسم العقار، الموقع، إلخ',
@@ -563,11 +593,37 @@ const translations = {
         sizeDesc: 'المساحة: من الأكبر إلى الأصغر'
       }
     },
-    
-    // Property
+
+    location: {
+      title: 'الموقع',
+      locationDesc: 'حدد موقع العقار على الخريطة',
+      address: 'العنوان',
+      city: 'المدينة',
+      state: 'المنطقة',
+      postalCode: 'الرمز البريدي',
+      country: 'الدولة',
+      latitude: 'خط العرض',
+      longitude: 'خط الطول',
+      detect: 'تحديد الموقع',
+      detectHelp: 'استخدم موقعك الحالي لتحديد موقع العقار',
+      detectButton: 'تحديد موقعي',
+      useMap: 'استخدم الخريطة',
+      enterManually: 'إدخال يدوي',
+      mapContainer: 'خريطة الموقع',
+      searchPlaceholder: 'ابحث عن موقع...',
+      mapInitFailed: 'فشل تهيئة الخريطة',
+      mapLoadFailed: 'فشل تحميل الخريطة',
+      geolocationNotSupported: 'تحديد الموقع غير مدعوم',
+      detectionSuccess: 'تم تحديد موقعك بنجاح',
+      detectionFailed: 'فشل تحديد الموقع',
+      searchFailed: 'فشل البحث',
+      geocodingFailed: 'فشل تحويل الإحداثيات إلى عنوان'
+    },
+
     property: {
+      title: 'العقار',
       featured: 'مميز',
-      rooms: 'غرف',
+      rooms: 'الغرف',
       viewDetails: 'عرض التفاصيل',
       features: 'المميزات',
       amenities: 'المرافق',
@@ -604,6 +660,23 @@ const translations = {
       startAddingRooms: 'البدء بإضافة الغرف',
       roomAdded: 'تمت إضافة الغرفة بنجاح',
       level: 'مستوى',
+      coordinates: 'الإحداثيات',
+      clickToInteract: 'انقر على الخريطة للتفاعل',
+      noImages: 'لا توجد صور',
+      noImagesInfo: 'لم يتم تحميل صور لهذا العقار بعد',
+      gallery: 'معرض الصور',
+      addressInfo: 'معلومات العنوان',
+      tab: {
+        overview: 'نظرة عامة',
+        rooms: 'الغرف والميزات',
+        location: 'الموقع',
+        gallery: 'معرض الصور',
+        auctions: 'المزادات'
+      },
+      keyFeatures: 'الميزات الرئيسية',
+      featuresAndAmenities: 'الميزات والمرافق',
+      nearbyServices: 'الخدمات القريبة',
+      nearbyServicesInfo: 'معلومات عن الخدمات القريبة غير متوفرة حاليًا',
       buildingTypes: {
         apartment: 'شقة',
         villa: 'فيلا',
@@ -626,14 +699,7 @@ const translations = {
       featuredHelp: 'إظهار هذا العقار في القوائم المميزة',
       detectLocation: 'اكتشاف الموقع الحالي',
       detectLocationHelp: 'استخدم موقعك الحالي لهذا العقار',
-      detect: 'اكتشاف الموقع',
-      geolocationNotSupported: 'تحديد الموقع الجغرافي غير مدعوم من متصفحك',
-      locationDetected: 'تم اكتشاف الموقع بنجاح',
-      locationDetectionFailed: 'فشل في اكتشاف الموقع',
-      latitude: 'خط العرض',
-      longitude: 'خط الطول',
       roomName: 'اسم الغرفة',
-      roomFeatures: 'ميزات الغرفة',
       addRoom: 'إضافة غرفة',
       noRooms: 'لم تتم إضافة غرف بعد',
       addRoomHelp: 'استخدم النموذج أعلاه لإضافة غرف إلى هذا العقار',
@@ -646,15 +712,9 @@ const translations = {
       dragDrop: 'أو اسحب وأفلت',
       fileTypes: 'PNG, JPG, GIF حتى 10MB',
       selectedFiles: 'الملفات المحددة',
-      cancel: 'إلغاء',
-      create: 'إنشاء العقار',
       minimumBid: 'الحد الأدنى للمزايدة',
-      titleRequired: 'عنوان العقار مطلوب',
-      deedNumberRequired: 'رقم الصك مطلوب',
-      marketValueRequired: 'القيمة السوقية مطلوبة',
       createSuccess: 'تم إنشاء العقار بنجاح',
       createFailed: 'فشل في إنشاء العقار',
-      select: 'اختر',
       commaSeparated: 'مفصولة بفواصل',
       addressInfoDesc: 'معلومات تفصيلية عن الموقع',
       sqm: 'متر مربع',
@@ -663,10 +723,25 @@ const translations = {
       messagePlaceholder: 'أنا مهتم بهذا العقار وأود الحصول على مزيد من المعلومات...',
       sendMessage: 'إرسال رسالة',
       loginToContact: 'يرجى تسجيل الدخول للتواصل مع المالك',
+      titlePlaceholder: 'أدخل عنوان العقار',
+      deedNumberPlaceholder: 'أدخل رقم صك الملكية',
+      descriptionPlaceholder: 'وصف تفصيلي للعقار',
+      unauthorizedMessage: 'يجب أن تكون مسجلاً كمالك عقار أو مقيم عقاري لإضافة عقارات',
+      propertyCreatedMessage: 'تم إنشاء العقار بنجاح وهو جاهز للعرض',
+      createSuccessMediaFailed: 'تم إنشاء العقار بنجاح ولكن فشل تحميل بعض الصور'
     },
-    
-    // Auction
+
+    properties: {
+      title: 'العقارات',
+      subtitle: 'تصفح العقارات المتاحة للبيع والمزاد',
+      noResults: 'لم يتم العثور على عقارات',
+      tryAdjusting: 'حاول تعديل عوامل التصفية أو تحقق لاحقًا',
+      backToProperties: 'العودة إلى العقارات'
+    },
+
     auction: {
+      title: 'المزادات',
+      subtitle: 'تصفح وزايد على المزادات العقارية المتاحة',
       featured: 'مميز',
       currentBid: 'المزايدة الحالية',
       bids: 'مزايدات',
@@ -735,9 +810,6 @@ const translations = {
       createSuccess: 'تم إنشاء المزاد بنجاح',
       createFailed: 'فشل في إنشاء المزاد',
       create: 'إنشاء مزاد',
-      cancel: 'إلغاء',
-      title: 'المزادات',
-      subtitle: 'تصفح وزايد على المزادات العقارية المتاحة',
       filterByStatus: 'تصفية حسب الحالة',
       filterByType: 'تصفية حسب النوع',
       allStatuses: 'جميع الحالات',
@@ -765,7 +837,6 @@ const translations = {
       bidPlaced: 'تم تقديم مزايدتك بنجاح!'
     },
 
-    // Auth
     auth: {
       login: 'تسجيل الدخول إلى حسابك',
       email: 'البريد الإلكتروني',
@@ -792,7 +863,6 @@ const translations = {
       resendCode: 'إعادة إرسال الرمز',
       updateProfile: 'تحديث ملفك الشخصي',
       update: 'تحديث',
-      cancel: 'إلغاء',
       logOut: 'تسجيل الخروج',
       userRole: 'دور المستخدم',
       roleUser: 'مستخدم عادي',
@@ -809,7 +879,6 @@ const translations = {
       registrationSuccess: 'تم التسجيل بنجاح! يرجى التحقق من بريدك الإلكتروني للحصول على تعليمات التحقق.'
     },
 
-    // Profile
     profile: {
       myProfile: 'ملفي الشخصي',
       personalInfo: 'المعلومات الشخصية',
@@ -850,7 +919,6 @@ const translations = {
       commaSeparated: 'مفصولة بفواصل'
     },
 
-    // Errors
     error: {
       generic: 'حدث خطأ',
       notFound: 'الصفحة غير موجودة',
@@ -877,7 +945,6 @@ const translations = {
       resendVerificationFailed: 'فشل في إعادة إرسال رمز التحقق'
     },
 
-    // Footer
     footer: {
       about: 'من نحن',
       aboutText: 'نحن منصة رائدة لمزادات العقارات تربط المشترين والبائعين للعقارات السكنية والتجارية والأراضي.',
@@ -888,79 +955,6 @@ const translations = {
       cookies: 'سياسة ملفات تعريف الارتباط',
       contact: 'اتصل بنا',
       rights: 'جميع الحقوق محفوظة.'
-    },
-
-    // Property
-    // Location picker translations
-    location: {
-      title: 'الموقع',
-      locationDesc: 'حدد موقع العقار على الخريطة',
-      address: 'العنوان',
-      city: 'المدينة',
-      state: 'المنطقة',
-      postalCode: 'الرمز البريدي',
-      country: 'الدولة',
-      latitude: 'خط العرض',
-      longitude: 'خط الطول',
-      detect: 'تحديد الموقع',
-      detectHelp: 'استخدم موقعك الحالي لتحديد موقع العقار',
-      detectButton: 'تحديد موقعي',
-      useMap: 'استخدم الخريطة',
-      enterManually: 'إدخال يدوي',
-      mapContainer: 'خريطة الموقع',
-      searchPlaceholder: 'ابحث عن موقع...',
-      mapInitFailed: 'فشل تهيئة الخريطة',
-      mapLoadFailed: 'فشل تحميل الخريطة',
-      geolocationNotSupported: 'تحديد الموقع غير مدعوم',
-      detectionSuccess: 'تم تحديد موقعك بنجاح',
-      detectionFailed: 'فشل تحديد الموقع',
-      searchFailed: 'فشل البحث',
-      geocodingFailed: 'فشل تحويل الإحداثيات إلى عنوان'
-    },
-
-    property: {
-      title: 'العقار',
-      featured: 'مميز',
-      rooms: 'الغرف',
-      viewDetails: 'عرض التفاصيل',
-      features: 'المميزات',
-      amenities: 'المرافق',
-      location: 'الموقع',
-      next: 'التالي',
-      previous: 'السابق',
-      size: 'المساحة',
-      floors: 'الطوابق',
-      yearBuilt: 'سنة البناء',
-      marketValue: 'القيمة السوقية',
-      
-      // Property creation form
-      basicInfo: 'المعلومات الأساسية',
-      propertyType: 'نوع العقار',
-      buildingType: 'نوع المبنى',
-      deedNumber: 'رقم الصك',
-      description: 'الوصف',
-      details: 'تفاصيل العقار',
-      detailsDesc: 'الحجم، البناء، والميزات الخاصة',
-      roomsDesc: 'تحديد الغرف داخل هذا العقار',
-      financial: 'المعلومات المالية',
-      financialDesc: 'القيمة السوقية ومعلومات المزايدة',
-      createProperty: 'إضافة عقار جديد',
-      createPropertyDesc: 'قم بإدخال تفاصيل العقار الجديد',
-      titlePlaceholder: 'أدخل عنوان العقار',
-      deedNumberPlaceholder: 'أدخل رقم صك الملكية',
-      descriptionPlaceholder: 'وصف تفصيلي للعقار',
-      unauthorizedMessage: 'يجب أن تكون مسجلاً كمالك عقار أو مقيم عقاري لإضافة عقارات',
-      propertyCreatedMessage: 'تم إنشاء العقار بنجاح وهو جاهز للعرض',
-      createSuccessMediaFailed: 'تم إنشاء العقار بنجاح ولكن فشل تحميل بعض الصور'
-    },
-
-    // Properties
-    properties: {
-      title: 'العقارات',
-      subtitle: 'تصفح العقارات المتاحة للبيع والمزاد',
-      noResults: 'لم يتم العثور على عقارات',
-      tryAdjusting: 'حاول تعديل عوامل التصفية أو تحقق لاحقًا',
-      backToProperties: 'العودة إلى العقارات'
     }
   }
 };
@@ -969,23 +963,16 @@ const translations = {
 export const t = derived(
   locale,
   ($locale) => (key) => {
-    // Split the key by dots to access nested properties
     const keys = key.split('.');
     let value = translations[$locale];
-    
-    // Navigate through the nested properties
     for (const k of keys) {
       if (value && value[k] !== undefined) {
         value = value[k];
       } else {
         console.warn(`Translation key not found: ${key} in locale ${$locale}`);
-        return key; // Return the key itself if translation is not found
+        return key;
       }
     }
-    
     return value;
   }
 );
-
-
-
