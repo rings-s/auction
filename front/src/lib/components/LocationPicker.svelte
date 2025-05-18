@@ -293,6 +293,14 @@
           setTimeout(() => map.invalidateSize(true), 300);
         }
       });
+      
+      // Automatically try to detect location when map is initialized
+      if (!latitude && !longitude && !readonly) {
+        // Add a short delay to ensure map is fully initialized
+        setTimeout(() => {
+          detectLocation();
+        }, 1000);
+      }
     } catch (error) {
       console.error('Error initializing map:', error);
       locationError = $t('location.mapInitFailed');
@@ -301,7 +309,7 @@
   
   async function detectLocation() {
     if (!navigator.geolocation) {
-      locationError = $t('location.geolocationNotSupported');
+      locationError = $t('location.geolocationNotSupported') || 'Geolocation is not supported by your browser.';
       return;
     }
     
@@ -310,28 +318,58 @@
     locationSuccess = '';
     
     try {
+      // Use a promise with a longer timeout for better reliability
       const position = await new Promise((resolve, reject) => {
-        navigator.geolocation.getCurrentPosition(resolve, reject, {
-          enableHighAccuracy: true,
-          timeout: 5000,
-          maximumAge: 0
-        });
+        const timeoutId = setTimeout(() => {
+          reject(new Error('Geolocation request timed out. Please check your browser settings.'));
+        }, 10000); // 10 second timeout
+        
+        navigator.geolocation.getCurrentPosition(
+          (position) => {
+            clearTimeout(timeoutId);
+            resolve(position);
+          },
+          (error) => {
+            clearTimeout(timeoutId);
+            reject(error);
+          },
+          {
+            enableHighAccuracy: true,
+            timeout: 8000,
+            maximumAge: 0
+          }
+        );
       });
       
       const { latitude: lat, longitude: lng } = position.coords;
+      console.log('Location detected:', lat, lng);
       
       if (map && marker) {
+        // Update map view and marker
         map.setView([lat, lng], zoom);
         marker.setLatLng([lat, lng]);
       }
       
+      // Update coordinates
       updateCoordinates(lat, lng);
+      
+      // Perform reverse geocoding to get address details
       await reverseGeocode(lat, lng);
       
-      locationSuccess = $t('location.detectionSuccess');
+      locationSuccess = $t('location.detectionSuccess') || 'Location detected successfully!';
     } catch (error) {
       console.error('Geolocation error:', error);
-      locationError = $t('location.detectionFailed');
+      
+      // Provide more helpful error messages based on error code
+      if (error.code === 1) {
+        locationError = $t('location.permissionDenied') || 'Location permission denied. Please allow location access in your browser settings.';
+      } else if (error.code === 2) {
+        locationError = $t('location.positionUnavailable') || 'Unable to determine your location. Try again or enter your location manually.';
+      } else if (error.code === 3) {
+        locationError = $t('location.timeout') || 'Location request timed out. Please try again.';
+      } else {
+        locationError = $t('location.detectionFailed') || 'Failed to detect location: ' + (error.message || 'Unknown error');
+      }
     } finally {
       locationLoading = false;
     }
@@ -339,38 +377,85 @@
   
   async function reverseGeocode(lat, lng) {
     try {
+      console.log('Reverse geocoding coordinates:', lat, lng);
+      
+      // Use OpenStreetMap Nominatim for reverse geocoding with proper error handling
       const response = await fetch(
-        `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&addressdetails=1`
+        `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&addressdetails=1&accept-language=en`,
+        {
+          headers: {
+            'Accept-Language': 'en' // Request English results for consistency
+          }
+        }
       );
       
-      if (!response.ok) throw new Error('Geocoding failed');
+      if (!response.ok) {
+        throw new Error(`Geocoding failed with status: ${response.status}`);
+      }
       
       const data = await response.json();
       
-      if (data.address) {
-        address = [
-          data.address.road,
-          data.address.house_number,
-          data.address.suburb
-        ].filter(Boolean).join(', ');
-        
-        city = data.address.city || data.address.town || data.address.village || '';
-        state = data.address.state || '';
-        postalCode = data.address.postcode || '';
-        
-        dispatch('locationChange', {
-          latitude,
-          longitude,
-          address,
-          city,
-          state,
-          postalCode,
-          country
-        });
+      if (!data || !data.address) {
+        throw new Error('No address data returned from geocoding service');
       }
+      
+      console.log('Geocoding result:', data);
+      
+      // Extract address components with fallbacks for better reliability
+      address = [
+        data.address.road || data.address.street || '',
+        data.address.house_number || '',
+        data.address.suburb || data.address.neighbourhood || ''
+      ].filter(Boolean).join(', ');
+      
+      // Set city with fallbacks
+      city = data.address.city || 
+             data.address.town || 
+             data.address.village || 
+             data.address.hamlet || 
+             data.address.county ||
+             '';
+      
+      // Set state with fallbacks
+      state = data.address.state || 
+              data.address.province || 
+              data.address.region || 
+              '';
+      
+      // Set postal code
+      postalCode = data.address.postcode || '';
+      
+      // Set country (keep default if not provided)
+      if (data.address.country) {
+        country = data.address.country;
+      }
+      
+      // Dispatch event to update parent component
+      dispatch('locationChange', {
+        latitude,
+        longitude,
+        address,
+        city,
+        state,
+        postalCode,
+        country
+      });
+      
+      console.log('Location fields updated:', { address, city, state, postalCode, country });
     } catch (error) {
       console.error('Reverse geocoding error:', error);
-      locationError = $t('location.geocodingFailed');
+      locationError = $t('location.geocodingFailed') || 'Failed to get address details from coordinates';
+      
+      // Even if geocoding fails, still update coordinates
+      dispatch('locationChange', {
+        latitude,
+        longitude,
+        address,
+        city,
+        state,
+        postalCode,
+        country
+      });
     }
   }
   
@@ -400,7 +485,7 @@
         <div class="p-2 bg-white dark:bg-gray-800 rounded-lg shadow">
           <input
             type="text"
-            placeholder="${$t('location.searchPlaceholder')}"
+            placeholder="${$t('location.searchPlaceholder') || 'Search for a location...'}"
             class="w-64 px-3 py-2 text-sm border rounded-md focus:ring-2 focus:ring-primary-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
           />
         </div>
@@ -431,7 +516,7 @@
             }
           } catch (error) {
             console.error('Search error:', error);
-            locationError = $t('location.searchFailed');
+            locationError = $t('location.searchFailed') || 'Location search failed';
           }
         }
       });
@@ -451,10 +536,10 @@
 <div class="space-y-6">
   <div>
     <h3 class="text-lg font-medium leading-6 text-gray-900 dark:text-white">
-      {$t('location.title')}
+      {$t('location.title') || 'Location'}
     </h3>
     <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">
-      {$t('location.locationDesc')}
+      {$t('location.locationDesc') || 'Provide the property location details'}
     </p>
   </div>
   
@@ -483,7 +568,7 @@
             d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7"
           />
         </svg>
-        {$t('location.useMap')}
+        {$t('location.useMap') || 'Use Map'}
       </button>
       <button
         type="button"
@@ -508,7 +593,7 @@
             d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
           />
         </svg>
-        {$t('location.enterManually')}
+        {$t('location.enterManually') || 'Enter Manually'}
       </button>
     </div>
   {/if}
@@ -521,7 +606,7 @@
         for="address"
         class="block text-sm font-medium text-gray-700 dark:text-gray-300 required"
       >
-        {$t('location.address')} *
+        {$t('location.address') || 'Address'} *
       </label>
       <div class="mt-1">
         <input
@@ -542,7 +627,7 @@
         for="city"
         class="block text-sm font-medium text-gray-700 dark:text-gray-300 required"
       >
-        {$t('location.city')} *
+        {$t('location.city') || 'City'} *
       </label>
       <div class="mt-1">
         <input
@@ -563,7 +648,7 @@
         for="state"
         class="block text-sm font-medium text-gray-700 dark:text-gray-300 required"
       >
-        {$t('location.state')} *
+        {$t('location.state') || 'State/Region'} *
       </label>
       <div class="mt-1">
         <input
@@ -584,7 +669,7 @@
         for="postal_code"
         class="block text-sm font-medium text-gray-700 dark:text-gray-300"
       >
-        {$t('location.postalCode')}
+        {$t('location.postalCode') || 'Postal Code'}
       </label>
       <div class="mt-1">
         <input
@@ -604,7 +689,7 @@
         for="country"
         class="block text-sm font-medium text-gray-700 dark:text-gray-300"
       >
-        {$t('location.country')}
+        {$t('location.country') || 'Country'}
       </label>
       <div class="mt-1">
         <input
@@ -626,10 +711,10 @@
         <div class="flex items-center justify-between">
           <div>
             <h4 class="text-sm font-medium text-gray-900 dark:text-white">
-              {$t('location.detect')}
+              {$t('location.detect') || 'Detect My Location'}
             </h4>
             <p class="text-xs text-gray-500 dark:text-gray-400">
-              {$t('location.detectHelp')}
+              {$t('location.detectHelp') || 'Use your device location to automatically fill address fields'}
             </p>
           </div>
           <button
@@ -659,28 +744,31 @@
                   d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
                 />
               </svg>
+            {:else}
+              <svg
+                class="h-4 w-4 mr-1"
+                xmlns="http://www.w3.org/2000/svg"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+              >
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"
+                />
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"
+                />
+              </svg>
             {/if}
-            <svg
-              class="h-4 w-4 mr-1"
-              xmlns="http://www.w3.org/2000/svg"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
-            >
-              <path
-                stroke-linecap="round"
-                stroke-linejoin="round"
-                stroke-width="2"
-                d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"
-              />
-              <path
-                stroke-linecap="round"
-                stroke-linejoin="round"
-                stroke-width="2"
-                d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"
-              />
-            </svg>
-            {$t('location.detectButton')}
+            {locationLoading 
+              ? ($t('location.detecting') || 'Detecting...') 
+              : ($t('location.detectButton') || 'Detect Location')}
           </button>
         </div>
         
@@ -708,7 +796,7 @@
           id="leaflet-map-container"
           class="w-full h-full" 
           style="min-height: 400px; height: 400px; position: relative; display: block; visibility: visible;"
-          aria-label={$t('location.mapContainer')}
+          aria-label={$t('location.mapContainer') || 'Map container'}
         ></div>
       </div>
       
@@ -719,7 +807,7 @@
             for="latitude"
             class="block text-sm font-medium text-gray-700 dark:text-gray-300"
           >
-            {$t('location.latitude')}
+            {$t('location.latitude') || 'Latitude'}
           </label>
           <div class="mt-1">
             <input
@@ -739,7 +827,7 @@
             for="longitude"
             class="block text-sm font-medium text-gray-700 dark:text-gray-300"
           >
-            {$t('location.longitude')}
+            {$t('location.longitude') || 'Longitude'}
           </label>
           <div class="mt-1">
             <input

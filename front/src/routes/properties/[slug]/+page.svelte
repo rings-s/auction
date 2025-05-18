@@ -7,7 +7,7 @@
   import { user } from '$lib/stores/user';
   import { getPropertyBySlug } from '$lib/api/property';
   import { fade, fly, slide } from 'svelte/transition';
-  import { quintOut } from 'svelte/easing';
+  import { quintOut, cubicOut } from 'svelte/easing';
   import TagSelector from '$lib/components/TagSelector.svelte';
   
   // State variables
@@ -20,6 +20,22 @@
   let mapElement;
   let map;
   let marker;
+  let activeMediaType = 'image'; // Default to image for gallery filter
+  let touchStartX = 0;
+  let touchEndX = 0;
+  let isImagesLoading = true;
+  let imagesLoaded = 0;
+  let thumbnailsContainer;
+  
+  // Filter media by type
+  $: filteredMedia = property?.media?.filter(item => item.media_type === activeMediaType) || [];
+  $: images = property?.media?.filter(item => item.media_type === 'image') || [];
+  $: videos = property?.media?.filter(item => item.media_type === 'video') || [];
+  $: documents = property?.media?.filter(item => item.media_type === 'document') || [];
+  $: otherFiles = property?.media?.filter(item => item.media_type === 'other') || [];
+  
+  // Get main image
+  $: mainImage = property?.main_image || (images.length > 0 ? images.find(img => img.is_primary) || images[0] : null);
   
   // Tabs management
   let activeTab = 'overview';
@@ -29,6 +45,14 @@
     { id: 'location', label: 'Location', icon: 'map-pin' },
     { id: 'gallery', label: 'Gallery', icon: 'image' },
     { id: 'auctions', label: 'Auctions', icon: 'gavel' }
+  ];
+  
+  // Gallery tabs
+  const mediaTabs = [
+    { id: 'image', label: 'Photos' },
+    { id: 'video', label: 'Videos' },
+    { id: 'document', label: 'Documents' },
+    { id: 'other', label: 'Other Files' }
   ];
   
   // Sticky header control
@@ -48,11 +72,21 @@
     (property?.owner?.id === $user.id)
   );
   
+  // Track image loading progress
+  function handleImageLoad() {
+    imagesLoaded++;
+    if (imagesLoaded >= images.length) {
+      isImagesLoading = false;
+    }
+  }
+
   // Load property data
   async function loadProperty() {
     try {
       loading = true;
       error = null;
+      imagesLoaded = 0;
+      isImagesLoading = true;
       
       const response = await getPropertyBySlug(slug);
       property = response;
@@ -85,6 +119,15 @@
     }).format(value);
   }
   
+  // Format file size
+  function formatFileSize(bytes) {
+    if (!bytes) return '0 Bytes';
+    const k = 1024;
+    const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+  }
+  
   // Switch tabs with smooth transitions
   async function setActiveTab(tabId) {
     if (activeTab === tabId) return;
@@ -107,6 +150,12 @@
         });
       }
     }
+  }
+  
+  // Switch media type for gallery
+  function setActiveMediaType(mediaType) {
+    activeMediaType = mediaType;
+    activeImageIndex = 0; // Reset active index when changing media types
   }
   
   // Initialize map with property location
@@ -208,23 +257,51 @@
   }
   
   // Gallery navigation functions
-  function showImage(index) {
+  function showMedia(index) {
     activeImageIndex = index;
+    
+    // Scroll thumbnails to keep active thumbnail visible
+    if (thumbnailsContainer && showFullScreenGallery) {
+      const thumbnailWidth = 72; // 16px width + 2px border*2 + 4px margin*2
+      thumbnailsContainer.scrollTo({
+        left: index * thumbnailWidth - thumbnailsContainer.clientWidth / 2 + thumbnailWidth / 2,
+        behavior: 'smooth'
+      });
+    }
   }
   
   function toggleGallery() {
     showFullScreenGallery = !showFullScreenGallery;
+    document.body.style.overflow = showFullScreenGallery ? 'hidden' : '';
   }
   
-  function nextImage() {
-    if (property?.media?.length) {
-      activeImageIndex = (activeImageIndex + 1) % property.media.length;
+  function nextMedia() {
+    if (filteredMedia.length) {
+      activeImageIndex = (activeImageIndex + 1) % filteredMedia.length;
+      showMedia(activeImageIndex);
     }
   }
   
-  function prevImage() {
-    if (property?.media?.length) {
-      activeImageIndex = (activeImageIndex - 1 + property.media.length) % property.media.length;
+  function prevMedia() {
+    if (filteredMedia.length) {
+      activeImageIndex = (activeImageIndex - 1 + filteredMedia.length) % filteredMedia.length;
+      showMedia(activeImageIndex);
+    }
+  }
+  
+  // Touch events for swipe on gallery
+  function handleTouchStart(e) {
+    touchStartX = e.touches[0].clientX;
+  }
+  
+  function handleTouchEnd(e) {
+    touchEndX = e.changedTouches[0].clientX;
+    if (touchStartX - touchEndX > 50) {
+      // Swipe left
+      nextMedia();
+    } else if (touchEndX - touchStartX > 50) {
+      // Swipe right
+      prevMedia();
     }
   }
   
@@ -238,15 +315,97 @@
     // Implement contact functionality here
   }
   
+  // Render media item
+  function renderMediaItem(item) {
+    if (!item) return null;
+    
+    switch (item.media_type) {
+      case 'image':
+        return `<img src="${item.url}" alt="${item.name || 'Property image'}" class="mx-auto max-h-[80vh] object-contain" />`;
+      case 'video':
+        return `<video controls class="mx-auto max-h-[80vh]">
+                  <source src="${item.url}" type="video/mp4">
+                  Your browser does not support the video tag.
+                </video>`;
+      case 'document':
+        if (item.url.endsWith('.pdf')) {
+          return `<iframe src="${item.url}" class="w-full h-[80vh]" frameborder="0"></iframe>`;
+        } else {
+          return `<div class="text-center text-white">
+                    <svg class="mx-auto h-20 w-20 text-gray-200" fill="currentColor" viewBox="0 0 24 24">
+                      <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8l-6-6zm-1 5V3.5L18.5 9H13v-2z"/>
+                    </svg>
+                    <p class="mt-4 text-lg">Document: ${item.name}</p>
+                    <a href="${item.url}" target="_blank" class="mt-2 inline-block px-4 py-2 bg-white text-gray-900 rounded-md hover:bg-gray-200 transition-colors">
+                      Open Document
+                    </a>
+                  </div>`;
+        }
+      default:
+        return `<div class="text-center text-white">
+                  <svg class="mx-auto h-20 w-20 text-gray-200" fill="currentColor" viewBox="0 0 24 24">
+                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8l-6-6zm-1 5V3.5L18.5 9H13v-2z"/>
+                  </svg>
+                  <p class="mt-4 text-lg">File: ${item.name}</p>
+                  <a href="${item.url}" download class="mt-2 inline-block px-4 py-2 bg-white text-gray-900 rounded-md hover:bg-gray-200 transition-colors">
+                    Download File
+                  </a>
+                </div>`;
+    }
+  }
+  
+  // Get media thumbnail
+  function getMediaThumbnail(item) {
+    if (!item) return '';
+    
+    switch (item.media_type) {
+      case 'image':
+        return item.url;
+      case 'video':
+        return '/images/video-thumbnail.jpg'; // Replace with actual thumbnail or placeholder
+      case 'document':
+        if (item.url.endsWith('.pdf')) {
+          return '/images/pdf-thumbnail.jpg'; // Replace with actual PDF icon
+        } else {
+          return '/images/document-thumbnail.jpg'; // Replace with actual document icon
+        }
+      default:
+        return '/images/file-thumbnail.jpg'; // Replace with actual file icon
+    }
+  }
+  
+  // Get media icon based on type
+  function getMediaTypeIcon(type) {
+    switch (type) {
+      case 'image':
+        return `<svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                </svg>`;
+      case 'video':
+        return `<svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                </svg>`;
+      case 'document':
+        return `<svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
+                </svg>`;
+      default:
+        return `<svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                </svg>`;
+    }
+  }
+  
   // Keyboard shortcuts for gallery
   function handleKeydown(event) {
     if (showFullScreenGallery) {
       if (event.key === 'ArrowRight' || event.key === 'ArrowDown') {
-        nextImage();
+        nextMedia();
       } else if (event.key === 'ArrowLeft' || event.key === 'ArrowUp') {
-        prevImage();
+        prevMedia();
       } else if (event.key === 'Escape') {
         showFullScreenGallery = false;
+        document.body.style.overflow = '';
       }
     }
   }
@@ -287,6 +446,7 @@
         map.remove();
         mapInitialized = false;
       }
+      document.body.style.overflow = '';
     };
   });
 </script>
@@ -380,12 +540,12 @@
               {/if}
               
               <span class="inline-flex items-center px-2.5 py-0.5 rounded-md text-sm font-medium bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-200">
-                {property.property_type_display}
+                {property.property_type_display || property.property_type?.name}
               </span>
               
-              {#if property.building_type_display}
+              {#if property.building_type_display || property.building_type?.name}
                 <span class="inline-flex items-center px-2.5 py-0.5 rounded-md text-sm font-medium bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-200">
-                  {property.building_type_display}
+                  {property.building_type_display || property.building_type?.name}
                 </span>
               {/if}
             </div>
@@ -396,13 +556,15 @@
             </h1>
             
             <!-- Location -->
-            <p class="mt-2 text-base sm:text-lg text-gray-500 dark:text-gray-400 flex items-center">
-              <svg class="w-5 h-5 mr-1 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path>
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path>
+            <p class="mt-4 text-base sm:text-lg text-gray-500 dark:text-gray-400 flex items-center gap-2">
+              <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                  d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                  d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
               </svg>
               {property.location?.address}, {property.location?.city}, {property.location?.state}
-            </p>
+            </p>            
           </div>
           
           <!-- Price and Action Buttons -->
@@ -471,31 +633,58 @@
           transition:fade={{ duration: 200 }}
         >
           <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
-            <!-- Main Image -->
+            <!-- Main Image and Gallery Preview - REFACTORED -->
             <div class="md:col-span-2">
-              <div class="relative rounded-xl overflow-hidden shadow-md aspect-video">
-                {#if property.media && property.media.length > 0}
+              <div class="relative rounded-xl overflow-hidden shadow-lg aspect-video bg-gray-100 dark:bg-gray-750">
+                {#if isImagesLoading && images.length > 0}
+                  <div class="absolute inset-0 flex items-center justify-center bg-gray-100 dark:bg-gray-750">
+                    <div class="animate-pulse flex flex-col items-center">
+                      <div class="rounded-full bg-gray-300 dark:bg-gray-600 h-12 w-12 mb-2"></div>
+                      <div class="text-gray-500 dark:text-gray-400">{$t('common.loading')}</div>
+                    </div>
+                  </div>
+                {/if}
+                
+                {#if mainImage}
                   <img 
-                    src={property.media[0]?.url || '/images/property-placeholder.jpg'} 
+                    src={mainImage.url} 
                     alt={property.title}
-                    class="w-full h-full object-cover"
+                    class="w-full h-full object-cover object-center transition-opacity duration-300 hover:opacity-95"
                     on:click={toggleGallery}
+                    on:load={handleImageLoad}
                   />
+                  
+                  <!-- Gradient overlay at bottom -->
+                  <div class="absolute inset-x-0 bottom-0 h-24 bg-gradient-to-t from-black/60 to-transparent pointer-events-none"></div>
                   
                   <!-- Gallery Overlay Button -->
                   <button 
-                    class="absolute bottom-4 right-4 bg-white dark:bg-gray-800 rounded-full p-2 shadow-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+                    class="absolute bottom-4 right-4 bg-white/90 dark:bg-gray-800/90 rounded-full p-2 shadow-lg hover:bg-white dark:hover:bg-gray-700 transition-colors z-10"
                     on:click={toggleGallery}
                     aria-label="View gallery"
                   >
-                    <svg class="h-5 w-5 text-gray-600 dark:text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <svg class="h-5 w-5 text-gray-700 dark:text-gray-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5v-4m0 4h-4m4 0l-5-5" />
                     </svg>
                   </button>
                   
                   <!-- Image Counter -->
-                  <div class="absolute bottom-4 left-4 bg-black bg-opacity-50 text-white text-sm px-2 py-1 rounded-md">
-                    {property.media.length} {$t('property.photos')}
+                  <div class="absolute bottom-4 left-4 bg-black/70 backdrop-blur-sm text-white text-sm px-3 py-1.5 rounded-md flex items-center z-10">
+                    <svg class="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                    </svg>
+                    {images.length} {$t('property.photos')}
+                  </div>
+                {:else if videos.length > 0}
+                  <div class="w-full h-full bg-black flex items-center justify-center">
+                    <video 
+                      src={videos[0].url} 
+                      controls 
+                      class="max-h-full max-w-full"
+                      poster={videos[0].thumbnail}
+                    >
+                      Your browser does not support the video tag.
+                    </video>
                   </div>
                 {:else}
                   <div class="flex items-center justify-center h-full bg-gray-100 dark:bg-gray-700">
@@ -506,9 +695,42 @@
                 {/if}
               </div>
               
+              <!-- Thumbnail Preview Gallery - NEW -->
+              {#if images.length > 1}
+                <div class="mt-4 relative">
+                  <div class="overflow-x-auto scrollbar-thin py-2">
+                    <div class="flex gap-2">
+                      {#each images.slice(0, Math.min(6, images.length)) as image, idx}
+                        <button
+                          class={`flex-shrink-0 h-16 w-24 rounded-md overflow-hidden border-2 transition-all ${idx === activeImageIndex ? 'border-primary-500 dark:border-primary-400' : 'border-transparent'}`}
+                          on:click={() => { activeImageIndex = idx; toggleGallery(); }}
+                        >
+                          <img src={image.url} alt={image.name || `Property image ${idx+1}`} class="h-full w-full object-cover" loading="lazy" />
+                        </button>
+                      {/each}
+                      
+                      {#if images.length > 6}
+                        <button
+                          class="flex-shrink-0 h-16 w-24 rounded-md overflow-hidden border-2 border-transparent bg-gray-100 dark:bg-gray-750 flex items-center justify-center group"
+                          on:click={toggleGallery}
+                        >
+                          <div class="text-center">
+                            <span class="block text-sm font-semibold text-gray-800 dark:text-gray-200 group-hover:text-primary-600 dark:group-hover:text-primary-400">+{images.length - 6}</span>
+                            <span class="text-xs text-gray-500 dark:text-gray-400">More</span>
+                          </div>
+                        </button>
+                      {/if}
+                    </div>
+                  </div>
+                </div>
+              {/if}
+              
               <!-- Description -->
-              <div class="mt-6">
-                <h2 class="text-xl font-bold text-gray-900 dark:text-white mb-4">
+              <div class="mt-8">
+                <h2 class="text-xl font-bold text-gray-900 dark:text-white mb-4 flex items-center">
+                  <svg class="w-5 h-5 mr-2 text-primary-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
                   {$t('property.description')}
                 </h2>
                 <div class="prose dark:prose-invert max-w-none">
@@ -519,7 +741,10 @@
               <!-- Key Features -->
               {#if (property.features && property.features.length > 0) || (property.amenities && property.amenities.length > 0)}
                 <div class="mt-8">
-                  <h2 class="text-xl font-bold text-gray-900 dark:text-white mb-4">
+                  <h2 class="text-xl font-bold text-gray-900 dark:text-white mb-4 flex items-center">
+                    <svg class="w-5 h-5 mr-2 text-primary-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z" />
+                    </svg>
                     {$t('property.keyFeatures')}
                   </h2>
                   
@@ -566,7 +791,7 @@
             
             <!-- Sidebar -->
             <div class="md:col-span-1">
-              <!-- Property Details Card -->
+              <!-- Property Details Card - REFACTORED -->
               <div class="bg-gray-50 dark:bg-gray-750 rounded-xl shadow-sm overflow-hidden">
                 <div class="p-5">
                   <h2 class="text-lg font-bold text-gray-900 dark:text-white mb-4 flex items-center">
@@ -576,11 +801,11 @@
                     {$t('property.propertyDetails')}
                   </h2>
                   
-                  <!-- Details Grid -->
+                  <!-- Details Grid - REFACTORED with nicer cards -->
                   <div class="space-y-4">
                     <div class="grid grid-cols-2 gap-4">
                       <!-- Size -->
-                      <div class="bg-white dark:bg-gray-800 p-3 rounded-lg flex flex-col items-center">
+                      <div class="bg-white dark:bg-gray-800 p-3 rounded-lg flex flex-col items-center shadow-sm hover:shadow-md transition-shadow">
                         <svg class="w-6 h-6 text-primary-500 mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5v-4m0 4h-4m4 0l-5-5" />
                         </svg>
@@ -589,7 +814,7 @@
                       </div>
                       
                       <!-- Floors -->
-                      <div class="bg-white dark:bg-gray-800 p-3 rounded-lg flex flex-col items-center">
+                      <div class="bg-white dark:bg-gray-800 p-3 rounded-lg flex flex-col items-center shadow-sm hover:shadow-md transition-shadow">
                         <svg class="w-6 h-6 text-primary-500 mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
                         </svg>
@@ -598,7 +823,7 @@
                       </div>
                       
                       <!-- Rooms -->
-                      <div class="bg-white dark:bg-gray-800 p-3 rounded-lg flex flex-col items-center">
+                      <div class="bg-white dark:bg-gray-800 p-3 rounded-lg flex flex-col items-center shadow-sm hover:shadow-md transition-shadow">
                         <svg class="w-6 h-6 text-primary-500 mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 5a1 1 0 011-1h14a1 1 0 011 1v2a1 1 0 01-1 1H5a1 1 0 01-1-1V5zM4 13a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H5a1 1 0 01-1-1v-6zM16 13a1 1 0 011-1h2a1 1 0 011 1v6a1 1 0 01-1 1h-2a1 1 0 01-1-1v-6z" />
                         </svg>
@@ -607,7 +832,7 @@
                       </div>
                       
                       <!-- Year Built -->
-                      <div class="bg-white dark:bg-gray-800 p-3 rounded-lg flex flex-col items-center">
+                      <div class="bg-white dark:bg-gray-800 p-3 rounded-lg flex flex-col items-center shadow-sm hover:shadow-md transition-shadow">
                         <svg class="w-6 h-6 text-primary-500 mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
                         </svg>
@@ -623,15 +848,15 @@
                     </div>
                     
                     <!-- Financial Info -->
-                    <div class="mt-4 bg-white dark:bg-gray-800 p-4 rounded-lg">
+                    <div class="mt-4 bg-gradient-to-r from-primary-50 to-primary-100 dark:from-primary-900/20 dark:to-primary-900/30 p-4 rounded-lg">
                       <div class="flex justify-between items-baseline">
-                        <span class="text-gray-500 dark:text-gray-400">{$t('property.marketValue')}</span>
+                        <span class="text-gray-600 dark:text-gray-300">{$t('property.marketValue')}</span>
                         <span class="text-xl text-primary-600 dark:text-primary-400 font-bold">{formatCurrency(property.market_value)}</span>
                       </div>
                       
                       {#if property.minimum_bid}
                         <div class="flex justify-between items-baseline mt-2">
-                          <span class="text-gray-500 dark:text-gray-400">{$t('property.minimumBid')}</span>
+                          <span class="text-gray-600 dark:text-gray-300">{$t('property.minimumBid')}</span>
                           <span class="text-lg text-gray-900 dark:text-white font-semibold">{formatCurrency(property.minimum_bid)}</span>
                         </div>
                       {/if}
@@ -781,6 +1006,30 @@
                             <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-secondary-100 text-secondary-800 dark:bg-secondary-900 dark:text-secondary-200">
                               {feature}
                             </span>
+                          {/each}
+                        </div>
+                      </div>
+                    {/if}
+                    
+                    <!-- Room Media Thumbnails -->
+                    {#if room.media && room.media.length > 0}
+                      <div class="mt-3 pt-3 border-t border-gray-200 dark:border-gray-700">
+                        <h5 class="text-xs font-medium text-gray-500 dark:text-gray-400 mb-2">
+                          {$t('property.gallery')}
+                        </h5>
+                        <div class="flex space-x-2 overflow-x-auto pb-2">
+                          {#each room.media as mediaItem}
+                            {#if mediaItem.media_type === 'image'}
+                              <div class="flex-shrink-0 w-16 h-16 rounded-md overflow-hidden">
+                                <img src={mediaItem.url} alt={mediaItem.name} class="w-full h-full object-cover" />
+                              </div>
+                            {:else if mediaItem.media_type === 'video'}
+                              <div class="flex-shrink-0 w-16 h-16 rounded-md overflow-hidden bg-black relative">
+                                <svg class="absolute inset-0 m-auto w-6 h-6 text-white" fill="currentColor" viewBox="0 0 20 20">
+                                  <path d="M4 4a2 2 0 00-2 2v8a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2H4zm6 10a1 1 0 100-2 1 1 0 000 2z" />
+                                </svg>
+                              </div>
+                            {/if}
                           {/each}
                         </div>
                       </div>
@@ -939,6 +1188,15 @@
                       <span class="text-gray-500 dark:text-gray-400 w-24 flex-shrink-0">{$t('property.country')}:</span>
                       <span class="text-gray-800 dark:text-gray-200 flex-grow">{property.location.country}</span>
                     </div>
+                    
+                    {#if property.location.latitude && property.location.longitude}
+                      <div class="flex pt-2 border-t border-gray-200 dark:border-gray-700">
+                        <span class="text-gray-500 dark:text-gray-400 w-24 flex-shrink-0">{$t('property.coordinates')}:</span>
+                        <span class="text-gray-800 dark:text-gray-200 flex-grow">
+                          {property.location.latitude}, {property.location.longitude}
+                        </span>
+                      </div>
+                    {/if}
                   </div>
                   
                   <!-- Nearby Services Placeholder -->
@@ -959,7 +1217,7 @@
           </div>
         </div>
         
-        <!-- Gallery Tab -->
+        <!-- Gallery Tab - REFACTORED -->
         <div 
           id="tab-gallery"
           class="p-6" 
@@ -973,23 +1231,97 @@
             {$t('property.gallery')}
           </h2>
           
-          {#if property.media && property.media.length > 0}
-            <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-              {#each property.media as image, index}
+          <!-- Media Type Tabs - REFACTORED -->
+          <div class="flex overflow-x-auto mb-6 bg-gray-50 dark:bg-gray-750 rounded-lg p-1">
+            {#each mediaTabs as tab}
+              <button 
+                class={`py-2 px-4 font-medium text-sm whitespace-nowrap rounded-md flex items-center
+                  ${activeMediaType === tab.id 
+                    ? 'bg-white dark:bg-gray-800 text-primary-600 dark:text-primary-400 shadow-sm' 
+                    : 'bg-transparent text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-200'
+                  } transition-colors duration-200 mx-1`}
+                on:click={() => setActiveMediaType(tab.id)}
+                aria-selected={activeMediaType === tab.id}
+                disabled={property?.media?.filter(item => item.media_type === tab.id).length === 0}
+                class:opacity-50={property?.media?.filter(item => item.media_type === tab.id).length === 0}
+              >
+                {@html getMediaTypeIcon(tab.id)}
+                <span class="ml-2">{tab.label}</span>
+                <span class="ml-1.5 bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 px-1.5 py-0.5 rounded-full text-xs">
+                  {property?.media?.filter(item => item.media_type === tab.id).length || 0}
+                </span>
+              </button>
+            {/each}
+          </div>
+          
+          {#if filteredMedia.length > 0}
+            <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-5">
+              {#each filteredMedia as mediaItem, index}
                 <div 
-                  class="aspect-w-4 aspect-h-3 rounded-lg overflow-hidden shadow-md group transition-transform hover:scale-[1.02] cursor-pointer"
+                  class="rounded-lg overflow-hidden shadow-md group relative transition-all hover:shadow-lg hover:-translate-y-1 cursor-pointer border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800"
                   on:click={() => { activeImageIndex = index; toggleGallery(); }}
                 >
-                  <img 
-                    src={image.url} 
-                    alt={`${property.title} - Image ${index+1}`}
-                    class="object-cover w-full h-full transition-transform duration-300 group-hover:scale-110"
-                    loading="lazy"
-                  />
-                  <div class="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-30 transition-opacity flex items-center justify-center opacity-0 group-hover:opacity-100">
-                    <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0zM10 7v3m0 0v3m0-3h3m-3 0H7" />
-                    </svg>
+                  <!-- Media Preview based on type -->
+                  <div class="aspect-w-4 aspect-h-3 bg-gray-100 dark:bg-gray-700 relative">
+                    {#if mediaItem.media_type === 'image'}
+                      <img 
+                        src={mediaItem.url} 
+                        alt={mediaItem.name || `${property.title} - Image ${index+1}`}
+                        class="object-cover w-full h-full transition-transform duration-300 group-hover:scale-105"
+                        loading="lazy"
+                      />
+                      <!-- Dark overlay on hover -->
+                      <div class="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-30 transition-opacity"></div>
+                    {:else if mediaItem.media_type === 'video'}
+                      <div class="w-full h-full flex items-center justify-center bg-black">
+                        <svg class="w-12 h-12 text-white opacity-80 group-hover:opacity-100 transition-opacity" fill="currentColor" viewBox="0 0 20 20">
+                          <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM9.555 7.168A1 1 0 008 8v4a1 1 0 001.555.832l3-2a1 1 0 000-1.664l-3-2z" clip-rule="evenodd" />
+                        </svg>
+                      </div>
+                    {:else if mediaItem.media_type === 'document'}
+                      <div class="w-full h-full flex items-center justify-center bg-blue-50 dark:bg-blue-900/20">
+                        <svg class="w-12 h-12 text-blue-500 dark:text-blue-400 group-hover:scale-110 transition-transform" fill="currentColor" viewBox="0 0 20 20">
+                          <path d="M4 4a2 2 0 00-2 2v8a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2H4zm2 3a1 1 0 011-1h6a1 1 0 110 2H7a1 1 0 01-1-1zm1 3a1 1 0 100 2h6a1 1 0 100-2H7z" />
+                        </svg>
+                      </div>
+                    {:else}
+                      <div class="w-full h-full flex items-center justify-center bg-gray-100 dark:bg-gray-800">
+                        <svg class="w-12 h-12 text-gray-400 group-hover:text-gray-500 transition-colors" fill="currentColor" viewBox="0 0 20 20">
+                          <path d="M4 4a2 2 0 00-2 2v8a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2H4zm12 12H4V6h12v10z" />
+                        </svg>
+                      </div>
+                    {/if}
+                    
+                    <!-- View icon overlay -->
+                    <div class="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                      <div class="bg-black bg-opacity-50 rounded-full p-3 backdrop-blur-sm">
+                        <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                        </svg>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <!-- Media Info -->
+                  <div class="p-3">
+                    <h3 class="text-sm font-medium text-gray-900 dark:text-white truncate">
+                      {mediaItem.name || `${activeMediaType} ${index+1}`}
+                    </h3>
+                    
+                    <div class="flex justify-between items-center mt-1">
+                      {#if mediaItem.dimensions}
+                        <span class="text-xs text-gray-500 dark:text-gray-400">
+                          {mediaItem.dimensions.width}×{mediaItem.dimensions.height}
+                        </span>
+                      {/if}
+                      
+                      {#if mediaItem.file_size}
+                        <span class="text-xs text-gray-500 dark:text-gray-400">
+                          {formatFileSize(mediaItem.file_size)}
+                        </span>
+                      {/if}
+                    </div>
                   </div>
                 </div>
               {/each}
@@ -1142,64 +1474,131 @@
   </div>
 </div>
 
-<!-- Full Screen Gallery Modal -->
-{#if showFullScreenGallery && property?.media?.length > 0}
+<!-- Full Screen Gallery Modal - REFACTORED -->
+{#if showFullScreenGallery && filteredMedia.length > 0}
   <div 
-    class="fixed inset-0 bg-black bg-opacity-90 z-50 flex items-center justify-center p-4 animate-fadeIn"
+    class="fixed inset-0 bg-black bg-opacity-95 z-50 flex flex-col items-center justify-center p-4 animate-fadeIn"
     on:click={toggleGallery}
+    on:touchstart={handleTouchStart}
+    on:touchend={handleTouchEnd}
   >
-    <div class="relative w-full max-w-6xl mx-auto">
+    <!-- Header with title and close button -->
+    <div class="w-full max-w-6xl flex items-center justify-between mb-4 text-white">
+      <h3 class="text-xl font-medium">
+        {filteredMedia[activeImageIndex]?.name || `${property.title} - ${activeMediaType} ${activeImageIndex + 1}/${filteredMedia.length}`}
+      </h3>
+      
       <!-- Close Button -->
       <button 
-        class="absolute top-4 right-4 text-white hover:text-gray-300 focus:outline-none z-10"
+        class="rounded-full bg-black bg-opacity-50 hover:bg-opacity-70 p-2 focus:outline-none transition-colors"
         on:click={toggleGallery}
         aria-label="Close gallery"
       >
-        <svg class="h-8 w-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
         </svg>
       </button>
+    </div>
+    
+    <div class="relative w-full max-w-6xl mx-auto flex-grow flex items-center justify-center">
+      <!-- Main Media Item - Now with Fade transition -->
+      <div 
+        class="transition-opacity duration-300 w-full h-full flex items-center justify-center"
+        on:click={(e) => e.stopPropagation()}
+        in:fade={{ duration: 200 }}
+      >
+        {@html renderMediaItem(filteredMedia[activeImageIndex])}
+      </div>
       
-      <div class="relative w-full">
-        <!-- Main Image -->
-        <div 
-          class="animate-fadeIn"
-          on:click={(e) => e.stopPropagation()}
+      <!-- Navigation Controls - Enhanced with better UI -->
+      {#if filteredMedia.length > 1}
+        <button 
+          class="absolute left-4 top-1/2 transform -translate-y-1/2 bg-black bg-opacity-50 rounded-full p-3 text-white hover:bg-opacity-80 focus:outline-none focus:ring-2 focus:ring-white focus:ring-opacity-50 transition-all backdrop-blur-sm"
+          on:click={(e) => { e.stopPropagation(); prevMedia(); }}
+          aria-label="Previous item"
         >
-          <img 
-            src={property.media[activeImageIndex]?.url} 
-            alt={`${property.title} - Image ${activeImageIndex + 1}`}
-            class="mx-auto max-h-[80vh] object-contain"
-          />
-        </div>
-        
-        <!-- Navigation Controls -->
-        {#if property.media.length > 1}
-          <button 
-            class="absolute left-2 top-1/2 transform -translate-y-1/2 bg-black bg-opacity-50 rounded-full p-3 text-white hover:bg-opacity-70 focus:outline-none"
-            on:click={(e) => { e.stopPropagation(); prevImage(); }}
-            aria-label="Previous image"
-          >
-            <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
-            </svg>
-          </button>
-          <button 
-            class="absolute right-2 top-1/2 transform -translate-y-1/2 bg-black bg-opacity-50 rounded-full p-3 text-white hover:bg-opacity-70 focus:outline-none"
-            on:click={(e) => { e.stopPropagation(); nextImage(); }}
-            aria-label="Next image"
-          >
-            <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
-            </svg>
-          </button>
-        {/if}
+          <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
+          </svg>
+        </button>
+        <button 
+          class="absolute right-4 top-1/2 transform -translate-y-1/2 bg-black bg-opacity-50 rounded-full p-3 text-white hover:bg-opacity-80 focus:outline-none focus:ring-2 focus:ring-white focus:ring-opacity-50 transition-all backdrop-blur-sm"
+          on:click={(e) => { e.stopPropagation(); nextMedia(); }}
+          aria-label="Next item"
+        >
+          <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+          </svg>
+        </button>
+      {/if}
+    </div>
+    
+    <!-- Media Info and Counter -->
+    <div class="w-full max-w-6xl text-center mt-2 mb-2 text-white flex items-center justify-center space-x-4">
+      <!-- Counter info -->
+      <div class="px-3 py-1 bg-black bg-opacity-50 rounded-md text-sm backdrop-blur-sm">
+        {activeImageIndex + 1} / {filteredMedia.length}
       </div>
       
-      <!-- Image Counter -->
-      <div class="text-center mt-4 text-white">
-        {activeImageIndex + 1} / {property.media.length}
+      <!-- File size if available -->
+      {#if filteredMedia[activeImageIndex]?.file_size}
+        <div class="px-3 py-1 bg-black bg-opacity-50 rounded-md text-sm backdrop-blur-sm">
+          {formatFileSize(filteredMedia[activeImageIndex].file_size)}
+        </div>
+      {/if}
+      
+      <!-- Media type badge -->
+      <div class="px-3 py-1 bg-black bg-opacity-50 rounded-md text-sm flex items-center backdrop-blur-sm">
+        <span class="capitalize">{activeMediaType}</span>
       </div>
+    </div>
+    
+    <!-- Thumbnails for quick navigation - REFACTORED -->
+    {#if filteredMedia.length > 1}
+      <div class="w-full max-w-6xl mt-2">
+        <div 
+          class="flex justify-center overflow-x-auto pb-2 px-2 scrollbar-thin scrollbar-thumb-gray-600 scrollbar-track-transparent"
+          bind:this={thumbnailsContainer}
+        >
+          {#each filteredMedia as item, index}
+            <button
+              class={`relative mx-1 rounded-lg overflow-hidden flex-shrink-0 h-16 w-16 border-2 transition-all ${activeImageIndex === index ? 'border-primary-500 scale-110 z-10' : 'border-transparent opacity-60 hover:opacity-100'}`}
+              on:click|stopPropagation={() => showMedia(index)}
+              aria-label={`View media ${index + 1}`}
+            >
+              <div class="h-full w-full bg-gray-800 flex items-center justify-center overflow-hidden">
+                {#if item.media_type === 'image'}
+                  <img src={item.url} alt={item.name} class="w-full h-full object-cover" loading="lazy" />
+                {:else if item.media_type === 'video'}
+                  <svg class="w-6 h-6 text-white" fill="currentColor" viewBox="0 0 20 20">
+                    <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM9.555 7.168A1 1 0 008 8v4a1 1 0 001.555.832l3-2a1 1 0 000-1.664l-3-2z" clip-rule="evenodd" />
+                  </svg>
+                {:else if item.media_type === 'document'}
+                  <svg class="w-6 h-6 text-blue-400" fill="currentColor" viewBox="0 0 20 20">
+                    <path d="M4 4a2 2 0 00-2 2v8a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2H4zm2 3a1 1 0 011-1h6a1 1 0 110 2H7a1 1 0 01-1-1zm1 3a1 1 0 100 2h6a1 1 0 100-2H7z" />
+                  </svg>
+                {:else}
+                  <svg class="w-6 h-6 text-gray-400" fill="currentColor" viewBox="0 0 20 20">
+                    <path fill-rule="evenodd" d="M4 4a2 2 0 00-2 2v8a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2H4zm12 12H4V6h12v10z" clip-rule="evenodd" />
+                  </svg>
+                {/if}
+              </div>
+              
+              <!-- Index number overlay -->
+              <span class="absolute bottom-0 right-0 bg-black bg-opacity-70 text-white text-xs px-1 rounded-tl-md">
+                {index + 1}
+              </span>
+            </button>
+          {/each}
+        </div>
+      </div>
+    {/if}
+    
+    <!-- Keyboard shortcuts guide -->
+    <div class="text-gray-400 text-xs mt-4 text-center">
+      <span class="hidden sm:inline">Use arrow keys to navigate</span>
+      <span class="sm:hidden">Swipe to navigate</span>
+      | Press ESC to close
     </div>
   </div>
 {/if}
@@ -1221,6 +1620,25 @@
   
   .scrollbar-hide::-webkit-scrollbar {
     display: none; /* Chrome, Safari, Opera */
+  }
+  
+  /* Custom scrollbar styling */
+  .scrollbar-thin {
+    scrollbar-width: thin;
+  }
+  
+  .scrollbar-thin::-webkit-scrollbar {
+    width: 5px;
+    height: 5px;
+  }
+  
+  .scrollbar-thin::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  
+  .scrollbar-thin::-webkit-scrollbar-thumb {
+    background-color: rgba(107, 114, 128, 0.5);
+    border-radius: 9999px;
   }
   
   /* Tooltip styling */
@@ -1326,21 +1744,6 @@
   }
   
   /* Responsive aspect ratios */
-  .aspect-w-3 {
-    position: relative;
-    padding-bottom: 66.666667%;
-  }
-  
-  .aspect-h-2 {
-    position: absolute;
-    height: 100%;
-    width: 100%;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-  }
-  
   .aspect-w-4 {
     position: relative;
     padding-bottom: 75%;
@@ -1368,5 +1771,23 @@
   
   :global(.dark .leaflet-container) {
     background: #333;
+  }
+  
+  /* Line clamp for truncating text */
+  .line-clamp-2 {
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+  
+  /* Add transition for image loading */
+  img.loaded {
+    animation: imgFadeIn 0.5s ease-in-out;
+  }
+  
+  @keyframes imgFadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
   }
 </style>
