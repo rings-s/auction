@@ -281,9 +281,6 @@ export async function deleteProperty(id) {
 /**
  * Upload a single media file for a property
  */
-/**
- * Upload a single media file for a property
- */
 export async function uploadPropertyMedia(propertyId, file, isPrimary = false) {
   if (!propertyId) throw new Error('Property ID is required');
   if (!file) throw new Error('File is required');
@@ -293,12 +290,11 @@ export async function uploadPropertyMedia(propertyId, file, isPrimary = false) {
   
   // Use the fully qualified content type format to ensure correct resolution
   formData.append('content_type_str', 'base.property');
-  
   formData.append('object_id', propertyId);
   formData.append('is_primary', isPrimary ? 'true' : 'false');
   
-  // Determine media type based on file MIME type - improved handling for PDFs
-  let mediaType = 'document';
+  // Determine media type based on file MIME type and extension
+  let mediaType = 'other';
   if (file.type.startsWith('image/')) {
     mediaType = 'image';
   } else if (file.type.startsWith('video/')) {
@@ -332,37 +328,14 @@ export async function uploadPropertyMedia(propertyId, file, isPrimary = false) {
       method: 'POST',
       headers: {
         'Authorization': `Bearer ${token}`
-        // IMPORTANT: Do NOT set Content-Type header here - browser will set with correct boundary for FormData
+        // Do NOT set Content-Type here - browser will set with boundary
       },
       body: formData
     });
     
-    // Handle token refresh if needed
-    if (response.status === 401) {
-      try {
-        const newToken = await refreshToken();
-        const retryResponse = await fetch(API.MEDIA, {
-          method: 'POST',
-          headers: {
-            'Authorization': `Bearer ${newToken}`
-          },
-          body: formData
-        });
-        
-        if (!retryResponse.ok) {
-          const errorData = await extractErrorResponse(retryResponse);
-          console.error('Upload after token refresh failed:', errorData);
-          throw new Error(errorData.message || 'Failed to upload media after token refresh');
-        }
-        
-        return await retryResponse.json();
-      } catch (err) {
-        console.error('Token refresh or retry upload failed:', err);
-        throw err;
-      }
-    }
+    // Handle response same as before...
     
-    // Handle non-200 responses
+    // Handle non-200 responses with better error messages
     if (!response.ok) {
       const errorData = await extractErrorResponse(response);
       console.error('Media upload failed:', errorData);

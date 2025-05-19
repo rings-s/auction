@@ -1,143 +1,258 @@
-<!-- src/routes/auctions/+page.svelte -->
+<!-- src/routes/auctions/+page.svelte (Refactored) -->
 <script>
-    import { onMount } from 'svelte';
-    import { t } from '$lib/i18n/i18n';
-    import { fetchAuctions } from '$lib/api/auction';
-    import { auctions as auctionsStore } from '$lib/stores/auctions';
-    import AuctionCard from '$lib/components/AuctionCard.svelte';
+  import { onMount } from 'svelte';
+  import { t } from '$lib/i18n/i18n';
+  import { fetchAuctions } from '$lib/api/auction';
+  import { auctions as auctionsStore } from '$lib/stores/auctions';
+  import AuctionCard from '$lib/components/AuctionCard.svelte';
+  import Breadcrumb from '$lib/components/Breadcrumb.svelte';
+  import FilterPanel from '$lib/components/FilterPanel.svelte';
+  import LoadingSkeleton from '$lib/components/LoadingSkeleton.svelte';
+  import EmptyState from '$lib/components/EmptyState.svelte';
+  import Button from '$lib/components/Button.svelte';
   
-    let auctions = [];
-    let loading = true;
-    let error = '';
-    let filters = {
-      status: 'all',
-      type: 'all',
-    };
+  let auctions = [];
+  let loading = true;
+  let error = '';
+  let filters = {
+    status: 'all',
+    type: 'all',
+    sortBy: 'newest'
+  };
+  let page = 1;
+  let hasMore = false;
   
-    async function loadAuctions() {
-      try {
+  // Define breadcrumb items
+  const breadcrumbItems = [
+    { label: $t('nav.home'), href: '/' },
+    { label: $t('nav.auctions'), href: '/auctions', active: true }
+  ];
+
+  // Sorting options
+  const sortOptions = [
+    { value: 'newest', label: $t('search.sortOptions.newest') },
+    { value: 'endingSoon', label: $t('auction.endingSoon') },
+    { value: 'priceAsc', label: $t('search.sortOptions.priceAsc') },
+    { value: 'priceDesc', label: $t('search.sortOptions.priceDesc') }
+  ];
+  
+  // Status filter options
+  const statusOptions = [
+    { value: 'all', label: $t('auctions.allStatuses') },
+    { value: 'live', label: $t('auction.statusLive') },
+    { value: 'scheduled', label: $t('auction.statusScheduled') },
+    { value: 'ended', label: $t('auction.statusEnded') },
+    { value: 'completed', label: $t('auction.statusCompleted') }
+  ];
+  
+  // Type filter options
+  const typeOptions = [
+    { value: 'all', label: $t('auctions.allTypes') },
+    { value: 'sealed', label: $t('auction.typeSealed') },
+    { value: 'reserve', label: $t('auction.typeReserve') },
+    { value: 'no_reserve', label: $t('auction.typeNoReserve') }
+  ];
+  
+  async function loadAuctions(reset = false) {
+    try {
+      if (reset) {
+        page = 1;
         loading = true;
-        error = '';
-  
-        const apiFilters = {};
-        if (filters.status !== 'all') {
-          apiFilters.status = filters.status;
-        }
-        if (filters.type !== 'all') {
-          apiFilters.auction_type = filters.type;
-        }
-  
-        const response = await fetchAuctions(apiFilters);
-        auctions = response.results || [];
-        auctionsStore.set(auctions);
-        
-      } catch (err) {
-        console.error('Error loading auctions:', err);
-        error = err.message || $t('error.fetchFailed');
-      } finally {
-        loading = false;
+      } else {
+        // Show loading more indicator instead of full screen loader
+        hasMore = true;
       }
+      error = '';
+      
+      const apiFilters = {
+        page: page,
+        limit: 9,  // Items per page
+      };
+      
+      // Add filters
+      if (filters.status !== 'all') {
+        apiFilters.status = filters.status;
+      }
+      if (filters.type !== 'all') {
+        apiFilters.auction_type = filters.type;
+      }
+      
+      // Add sorting
+      if (filters.sortBy) {
+        apiFilters.sort = filters.sortBy;
+      }
+      
+      const response = await fetchAuctions(apiFilters);
+      
+      if (reset) {
+        auctions = response.results || [];
+      } else {
+        auctions = [...auctions, ...(response.results || [])];
+      }
+      
+      // Update pagination
+      hasMore = response.has_next || false;
+      
+      // Update global store
+      auctionsStore.set(auctions);
+      
+    } catch (err) {
+      console.error('Error loading auctions:', err);
+      error = err.message || $t('error.fetchFailed');
+    } finally {
+      loading = false;
     }
+  }
   
-    function updateFilter(field, value) {
-      filters[field] = value;
-      loadAuctions();
+  function updateFilter(field, value) {
+    filters[field] = value;
+    loadAuctions(true); // Reset pagination when filter changes
+  }
+  
+  function loadMore() {
+    if (hasMore) {
+      page += 1;
+      loadAuctions(false);
     }
+  }
   
-    onMount(() => {
-      loadAuctions();
-    });
-  </script>
-  
-  <svelte:head>
-    <title>{$t('nav.auctions')} | Real Estate Platform</title>
-  </svelte:head>
-  
-  <div class="bg-gray-50 dark:bg-gray-900 py-8">
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-      <!-- Hero section -->
-      <div class="text-center mb-12">
-        <h1 class="text-3xl font-extrabold text-gray-900 dark:text-white sm:text-4xl">
-          {$t('auctions.title')}
-        </h1>
-        <p class="mt-3 max-w-2xl mx-auto text-xl text-gray-500 dark:text-gray-400">
-          {$t('auctions.subtitle')}
-        </p>
-      </div>
-  
-      <!-- Filter controls -->
-      <div class="mb-8 bg-white dark:bg-gray-800 rounded-lg shadow p-4">
-        <div class="flex flex-wrap gap-4">
-          <div>
-            <label for="status-filter" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-              {$t('auctions.filterByStatus')}
-            </label>
-            <select
-              id="status-filter"
-              value={filters.status}
-              on:change={(e) => updateFilter('status', e.target.value)}
-              class="block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm rounded-md dark:bg-gray-700 dark:border-gray-600 dark:text-white"
-            >
-              <option value="all">{$t('auctions.allStatuses')}</option>
-              <option value="live">{$t('auction.statusLive')}</option>
-              <option value="scheduled">{$t('auction.statusScheduled')}</option>
-              <option value="ended">{$t('auction.statusEnded')}</option>
-              <option value="completed">{$t('auction.statusCompleted')}</option>
-            </select>
-          </div>
-          <div>
-            <label for="type-filter" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-              {$t('auctions.filterByType')}
-            </label>
-            <select
-              id="type-filter"
-              value={filters.type}
-              on:change={(e) => updateFilter('type', e.target.value)}
-              class="block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm rounded-md dark:bg-gray-700 dark:border-gray-600 dark:text-white"
-            >
-              <option value="all">{$t('auctions.allTypes')}</option>
-              <option value="sealed">{$t('auction.typeSealed')}</option>
-              <option value="reserve">{$t('auction.typeReserve')}</option>
-              <option value="no_reserve">{$t('auction.typeNoReserve')}</option>
-            </select>
-          </div>
+  onMount(() => {
+    loadAuctions(true);
+  });
+</script>
+
+<svelte:head>
+  <title>{$t('nav.auctions')} | Real Estate Platform</title>
+  <meta name="description" content={$t('auctions.subtitle')} />
+</svelte:head>
+
+<div class="bg-gray-50 dark:bg-gray-900 min-h-screen py-8 px-4 sm:px-6 lg:px-8">
+  <div class="max-w-7xl mx-auto">
+    <!-- Breadcrumbs -->
+    <Breadcrumb items={breadcrumbItems} class="mb-6" />
+    
+    <!-- Hero section -->
+    <div class="text-center mb-12">
+      <h1 class="text-3xl font-extrabold text-gray-900 dark:text-white sm:text-4xl md:text-5xl">
+        {$t('auctions.title')}
+      </h1>
+      <p class="mt-4 max-w-2xl mx-auto text-xl text-gray-500 dark:text-gray-400">
+        {$t('auctions.subtitle')}
+      </p>
+    </div>
+    
+    <!-- Filter controls -->
+    <div class="mb-8 bg-white dark:bg-gray-800 rounded-lg shadow p-6">
+      <div class="md:flex md:items-center md:justify-between mb-4">
+        <h2 class="text-lg font-medium text-gray-900 dark:text-white mb-4 md:mb-0">
+          {$t('search.filterAndSort')}
+        </h2>
+        
+        <!-- Sort Dropdown -->
+        <div class="flex items-center space-x-2">
+          <label for="sort-by" class="text-sm font-medium text-gray-700 dark:text-gray-300">
+            {$t('search.sort')}
+          </label>
+          <select
+            id="sort-by"
+            value={filters.sortBy}
+            on:change={(e) => updateFilter('sortBy', e.target.value)}
+            class="block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm rounded-md dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+            aria-label={$t('search.sort')}
+          >
+            {#each sortOptions as option}
+              <option value={option.value}>{option.label}</option>
+            {/each}
+          </select>
         </div>
       </div>
+      
+      <!-- Filter Panels -->
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <!-- Status Filter -->
+        <FilterPanel 
+          title={$t('auctions.filterByStatus')} 
+          options={statusOptions}
+          value={filters.status}
+          onChange={(value) => updateFilter('status', value)}
+        />
+        
+        <!-- Type Filter -->
+        <FilterPanel 
+          title={$t('auctions.filterByType')} 
+          options={typeOptions}
+          value={filters.type}
+          onChange={(value) => updateFilter('type', value)}
+        />
+        
+        <!-- Price Range Filter could be added here -->
+      </div>
+    </div>
   
-      <!-- Auction listings -->
-      {#if loading}
-        <div class="flex justify-center py-24">
-          <div class="animate-spin rounded-full h-16 w-16 border-t-2 border-b-2 border-primary-500"></div>
-        </div>
-      {:else if error}
-        <div class="bg-red-50 dark:bg-red-900/20 p-6 rounded-lg text-red-800 dark:text-red-200 max-w-3xl mx-auto my-12">
-          <h2 class="text-xl font-semibold mb-2">{$t('error.title')}</h2>
-          <p>{error}</p>
-        </div>
-      {:else if auctions.length === 0}
-        <div class="text-center py-16 bg-white dark:bg-gray-800 rounded-lg shadow">
-          <svg xmlns="http://www.w3.org/2000/svg" class="h-16 w-16 mx-auto text-gray-400 dark:text-gray-500 mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-          </svg>
-          <h3 class="text-lg font-medium text-gray-900 dark:text-gray-100 mb-1">{$t('auctions.noResults')}</h3>
-          <p class="text-gray-500 dark:text-gray-400">{$t('auctions.tryAdjusting')}</p>
-        </div>
-      {:else}
+    <!-- Auction listings -->
+    {#if loading && page === 1}
       <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {#each auctions as auction}
+        {#each Array(6) as _, i}
+          <LoadingSkeleton type="auctionCard" />
+        {/each}
+      </div>
+    {:else if error}
+      <div class="bg-red-50 dark:bg-red-900/20 p-6 rounded-lg text-red-800 dark:text-red-200 max-w-3xl mx-auto my-12">
+        <h2 class="text-xl font-semibold mb-2">{$t('error.title')}</h2>
+        <p>{error}</p>
+        <Button 
+          variant="primary"
+          onClick={() => loadAuctions(true)}
+          class="mt-4"
+        >
+          {$t('auction.tryAgain')}
+        </Button>
+      </div>
+    {:else if auctions.length === 0}
+      <EmptyState
+        icon="auction"
+        title={$t('auctions.noResults')}
+        description={$t('auctions.tryAdjusting')}
+        actionLabel={$t('properties.browseProperties')}
+        actionUrl="/properties"
+      />
+    {:else}
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        {#each auctions as auction (auction.id)}
           <AuctionCard {auction} />
         {/each}
       </div>
-    {/if}
-    
-    {#if auctions.length > 0 && !loading}
-      <div class="mt-12 text-center">
-        <a 
-          href="/properties" 
-          class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-primary-600 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500"
+      
+      <!-- Loading more indicator -->
+      {#if page > 1 && loading}
+        <div class="flex justify-center my-8">
+          <div class="animate-spin rounded-full h-10 w-10 border-t-2 border-b-2 border-primary-500"></div>
+        </div>
+      {/if}
+      
+      <!-- Load More Button -->
+      {#if hasMore && !loading}
+        <div class="mt-12 text-center">
+          <Button
+            variant="secondary"
+            onClick={loadMore}
+            aria-label={$t('auctions.loadMore')}
+          >
+            {$t('auctions.loadMore')}
+          </Button>
+        </div>
+      {/if}
+      
+      <!-- Create New Auction CTA -->
+      <div class="mt-16 text-center">
+        <p class="mb-4 text-gray-600 dark:text-gray-400">{$t('auctions.createNewPrompt')}</p>
+        <Button
+          variant="primary"
+          href="/auctions/create"
+          aria-label={$t('auction.createAuction')}
         >
-          {$t('auctions.browseProperties')}
-        </a>
+          {$t('auction.createAuction')}
+        </Button>
       </div>
     {/if}
   </div>

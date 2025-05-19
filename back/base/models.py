@@ -91,10 +91,16 @@ class Media(BaseModel):
                         ContentFile(output.read()),
                         save=False
                     )
-            except Exception:
-                pass  # Handle gracefully if not an image or processing fails
+            except Exception as e:
+                print(f"Image processing error: {e}")
+                # Handle gracefully if not an image or processing fails
+        # For document files, ensure we don't try to process them as images
+        elif self.media_type == 'document' and self.file and not self.pk:
+            # Log the document file but don't try to process it
+            print(f"Saving document file: {self.file.name}")
                 
         super().save(*args, **kwargs)
+                    
 
     def get_dimensions(self):
         """Get image dimensions if media is an image"""

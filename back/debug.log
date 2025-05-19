@@ -785,3 +785,142 @@ INFO 2025-05-18 05:33:03,855 autoreload 11274 130152724686656 /home/ahmed/tech-S
 INFO 2025-05-18 05:33:06,795 autoreload 15047 133609546217280 Watching for file changes with StatReloader
 INFO 2025-05-18 05:33:09,409 autoreload 15047 133609546217280 /home/ahmed/tech-Savvy-projects/2025/new_ones/auction/back/base/models.py changed, reloading.
 INFO 2025-05-18 05:33:10,006 autoreload 15072 123517811406656 Watching for file changes with StatReloader
+INFO 2025-05-18 22:27:04,866 autoreload 10604 132517881767744 Watching for file changes with StatReloader
+INFO 2025-05-18 22:27:54,122 basehttp 10604 132517802796736 "OPTIONS /api/accounts/profile/ HTTP/1.1" 200 0
+WARNING 2025-05-18 22:27:54,210 log 10604 132517802796736 Unauthorized: /api/accounts/profile/
+WARNING 2025-05-18 22:27:54,211 basehttp 10604 132517802796736 "GET /api/accounts/profile/ HTTP/1.1" 401 172
+INFO 2025-05-18 22:27:54,260 basehttp 10604 132517802796736 "OPTIONS /api/accounts/token/refresh/ HTTP/1.1" 200 0
+INFO 2025-05-18 22:27:54,309 basehttp 10604 132517802796736 "POST /api/accounts/token/refresh/ HTTP/1.1" 200 269
+INFO 2025-05-18 22:27:54,410 basehttp 10604 132517802796736 "GET /api/accounts/profile/ HTTP/1.1" 200 594
+INFO 2025-05-18 22:27:54,495 basehttp 10604 132517802796736 "OPTIONS /api/auctions/? HTTP/1.1" 200 0
+INFO 2025-05-18 22:27:54,520 basehttp 10604 132517802796736 "GET /api/auctions/? HTTP/1.1" 200 52
+INFO 2025-05-18 22:28:11,714 basehttp 10604 132517802796736 "GET /api/auctions/? HTTP/1.1" 200 52
+INFO 2025-05-18 22:28:13,185 basehttp 10604 132517802796736 "OPTIONS /api/properties/?page=1&ordering=-created_at HTTP/1.1" 200 0
+INFO 2025-05-18 22:28:13,441 basehttp 10604 132517802796736 "GET /api/properties/?page=1&ordering=-created_at HTTP/1.1" 200 9329
+INFO 2025-05-18 22:28:13,544 basehttp 10604 132517724157632 "GET /media/uploads/2025/05/17/dummy_imgs_wozqbR7.png HTTP/1.1" 304 0
+INFO 2025-05-18 22:28:13,562 basehttp 10604 132517724157632 "GET /media/uploads/2025/05/17/dummy_imgs.png HTTP/1.1" 304 0
+INFO 2025-05-18 22:28:13,582 basehttp 10604 132517715764928 "GET /media/uploads/2025/05/18/dummy_imgs.png HTTP/1.1" 304 0
+INFO 2025-05-18 22:28:23,929 basehttp 10604 132517802796736 "GET /api/accounts/profile/ HTTP/1.1" 200 594
+INFO 2025-05-18 22:31:51,831 basehttp 10604 132517802796736 "OPTIONS /api/properties/ HTTP/1.1" 200 0
+INFO 2025-05-18 22:31:51,996 basehttp 10604 132517802796736 "POST /api/properties/ HTTP/1.1" 201 1412
+INFO 2025-05-18 22:31:52,048 basehttp 10604 132517802796736 "OPTIONS /api/rooms/ HTTP/1.1" 200 0
+INFO 2025-05-18 22:31:52,200 basehttp 10604 132517802796736 "POST /api/rooms/ HTTP/1.1" 201 581
+INFO 2025-05-18 22:31:52,250 basehttp 10604 132517802796736 "OPTIONS /api/media/ HTTP/1.1" 200 0
+INFO 2025-05-18 22:31:52,444 basehttp 10604 132517802796736 "POST /api/media/ HTTP/1.1" 201 452
+INFO 2025-05-18 22:31:52,932 basehttp 10604 132517802796736 "POST /api/media/ HTTP/1.1" 201 477
+INFO 2025-05-18 22:31:53,352 basehttp 10604 132517802796736 "POST /api/media/ HTTP/1.1" 201 500
+INFO 2025-05-18 22:31:55,851 basehttp 10604 132517802796736 "OPTIONS /api/properties/5/ HTTP/1.1" 200 0
+INFO 2025-05-18 22:31:55,854 basehttp 10604 132517707372224 "OPTIONS /api/properties/5/ HTTP/1.1" 200 0
+INFO 2025-05-18 22:31:56,060 basehttp 10604 132517707372224 "GET /api/properties/5/ HTTP/1.1" 200 3872
+INFO 2025-05-18 22:31:56,471 basehttp 10604 132517724157632 "GET /media/uploads/2025/05/18/d_MGfE8Ty.jpeg HTTP/1.1" 200 1058
+INFO 2025-05-18 22:31:56,484 basehttp 10604 132517715764928 "GET /media/uploads/2025/05/18/dummy_imgs_fO0VDgS.png HTTP/1.1" 200 1785
+INFO 2025-05-18 22:31:56,500 basehttp 10604 132517802796736 "GET /api/properties/5/ HTTP/1.1" 200 3872
+INFO 2025-05-18 22:32:14,861 basehttp 10604 132517715764928 "GET /media/uploads/2025/05/18/Alsadig_Mohammed_Nageeb_CV_1.pdf HTTP/1.1" 200 134102
+INFO 2025-05-18 22:34:49,325 autoreload 10604 132517881767744 /home/ahmed/tech-Savvy-projects/2025/new_ones/auction/back/base/models.py changed, reloading.
+INFO 2025-05-18 22:34:50,232 autoreload 11513 129026843379520 Watching for file changes with StatReloader
+INFO 2025-05-18 22:35:00,506 autoreload 11513 129026843379520 /home/ahmed/tech-Savvy-projects/2025/new_ones/auction/back/base/models.py changed, reloading.
+INFO 2025-05-18 22:35:00,995 autoreload 11521 124338287060800 Watching for file changes with StatReloader
+INFO 2025-05-18 22:35:11,293 autoreload 11521 124338287060800 /home/ahmed/tech-Savvy-projects/2025/new_ones/auction/back/base/models.py changed, reloading.
+INFO 2025-05-18 22:35:12,226 autoreload 11531 135681150146368 Watching for file changes with StatReloader
+INFO 2025-05-18 22:36:08,781 autoreload 11531 135681150146368 /home/ahmed/tech-Savvy-projects/2025/new_ones/auction/back/base/serializers.py changed, reloading.
+INFO 2025-05-18 22:36:09,414 autoreload 11579 132764292884288 Watching for file changes with StatReloader
+INFO 2025-05-18 22:36:10,905 autoreload 11579 132764292884288 /home/ahmed/tech-Savvy-projects/2025/new_ones/auction/back/base/serializers.py changed, reloading.
+INFO 2025-05-18 22:36:11,687 autoreload 11581 136154838644544 Watching for file changes with StatReloader
+INFO 2025-05-18 22:36:19,126 autoreload 11581 136154838644544 /home/ahmed/tech-Savvy-projects/2025/new_ones/auction/back/base/serializers.py changed, reloading.
+INFO 2025-05-18 22:36:19,838 autoreload 11602 129929113806656 Watching for file changes with StatReloader
+INFO 2025-05-18 22:36:24,349 autoreload 11602 129929113806656 /home/ahmed/tech-Savvy-projects/2025/new_ones/auction/back/base/serializers.py changed, reloading.
+INFO 2025-05-18 22:36:24,947 autoreload 11606 125650290526016 Watching for file changes with StatReloader
+INFO 2025-05-18 22:36:31,496 autoreload 11606 125650290526016 /home/ahmed/tech-Savvy-projects/2025/new_ones/auction/back/base/serializers.py changed, reloading.
+INFO 2025-05-18 22:36:32,357 autoreload 11611 126836387350336 Watching for file changes with StatReloader
+INFO 2025-05-18 22:36:47,216 autoreload 11611 126836387350336 /home/ahmed/tech-Savvy-projects/2025/new_ones/auction/back/base/serializers.py changed, reloading.
+INFO 2025-05-18 22:36:47,834 autoreload 11639 131383889098560 Watching for file changes with StatReloader
+INFO 2025-05-18 22:36:54,206 autoreload 11639 131383889098560 /home/ahmed/tech-Savvy-projects/2025/new_ones/auction/back/base/serializers.py changed, reloading.
+INFO 2025-05-18 22:36:54,980 autoreload 11645 139386123884352 Watching for file changes with StatReloader
+INFO 2025-05-18 22:37:49,716 basehttp 11645 139386042705600 "GET /api/properties/5/ HTTP/1.1" 200 3872
+INFO 2025-05-18 22:37:49,908 basehttp 11645 139386033264320 "GET /api/properties/5/ HTTP/1.1" 200 3872
+INFO 2025-05-18 22:38:00,822 basehttp 11645 139386033264320 "GET /api/properties/5/ HTTP/1.1" 200 3872
+INFO 2025-05-18 22:38:00,960 basehttp 11645 139386042705600 "GET /api/properties/5/ HTTP/1.1" 200 3872
+INFO 2025-05-18 22:38:38,696 basehttp 11645 139386042705600 "GET /api/properties/?page=1&ordering=-created_at HTTP/1.1" 200 13202
+INFO 2025-05-18 22:38:47,855 basehttp 11645 139386033264320 "OPTIONS /api/properties/the-property-title-latest/ HTTP/1.1" 200 0
+INFO 2025-05-18 22:38:47,857 basehttp 11645 139386042705600 "OPTIONS /api/properties/the-property-title-latest/ HTTP/1.1" 200 0
+INFO 2025-05-18 22:38:48,158 basehttp 11645 139386042705600 "GET /api/properties/the-property-title-latest/ HTTP/1.1" 200 4052
+INFO 2025-05-18 22:38:48,287 basehttp 11645 139386023823040 "GET /media/uploads/2025/05/18/d.jpeg HTTP/1.1" 304 0
+INFO 2025-05-18 22:38:48,392 basehttp 11645 139386033264320 "GET /api/properties/the-property-title-latest/ HTTP/1.1" 200 4052
+INFO 2025-05-19 01:05:20,332 basehttp 11645 139386042705600 "OPTIONS /api/accounts/profile/ HTTP/1.1" 200 0
+WARNING 2025-05-19 01:05:20,342 log 11645 139386042705600 Unauthorized: /api/accounts/profile/
+WARNING 2025-05-19 01:05:20,343 basehttp 11645 139386042705600 "GET /api/accounts/profile/ HTTP/1.1" 401 172
+INFO 2025-05-19 01:05:20,389 basehttp 11645 139386042705600 "OPTIONS /api/accounts/token/refresh/ HTTP/1.1" 200 0
+INFO 2025-05-19 01:05:20,455 basehttp 11645 139386042705600 "POST /api/accounts/token/refresh/ HTTP/1.1" 200 269
+INFO 2025-05-19 01:05:20,516 basehttp 11645 139386042705600 "GET /api/accounts/profile/ HTTP/1.1" 200 594
+INFO 2025-05-19 01:09:40,807 basehttp 11645 139386042705600 "OPTIONS /api/properties/ HTTP/1.1" 200 0
+INFO 2025-05-19 01:09:40,957 basehttp 11645 139386042705600 "POST /api/properties/ HTTP/1.1" 201 1312
+INFO 2025-05-19 01:09:41,005 basehttp 11645 139386042705600 "OPTIONS /api/rooms/ HTTP/1.1" 200 0
+INFO 2025-05-19 01:09:41,007 basehttp 11645 139386033264320 "OPTIONS /api/rooms/ HTTP/1.1" 200 0
+INFO 2025-05-19 01:09:41,152 basehttp 11645 139386033264320 "POST /api/rooms/ HTTP/1.1" 201 404
+INFO 2025-05-19 01:09:41,264 basehttp 11645 139386042705600 "POST /api/rooms/ HTTP/1.1" 201 438
+INFO 2025-05-19 01:09:41,313 basehttp 11645 139386042705600 "OPTIONS /api/media/ HTTP/1.1" 200 0
+INFO 2025-05-19 01:09:41,538 basehttp 11645 139386042705600 "POST /api/media/ HTTP/1.1" 201 461
+INFO 2025-05-19 01:09:42,014 basehttp 11645 139386042705600 "POST /api/media/ HTTP/1.1" 201 463
+INFO 2025-05-19 01:09:44,539 basehttp 11645 139386042705600 "OPTIONS /api/properties/6/ HTTP/1.1" 200 0
+INFO 2025-05-19 01:09:44,542 basehttp 11645 139386033264320 "OPTIONS /api/properties/6/ HTTP/1.1" 200 0
+INFO 2025-05-19 01:09:45,198 basehttp 11645 139386033264320 "GET /api/properties/6/ HTTP/1.1" 200 3537
+INFO 2025-05-19 01:09:45,318 basehttp 11645 139386023823040 "GET /media/uploads/2025/05/19/dummy_imgs.png HTTP/1.1" 200 1785
+INFO 2025-05-19 01:09:45,386 basehttp 11645 139386042705600 "GET /api/properties/6/ HTTP/1.1" 200 3537
+INFO 2025-05-19 01:10:03,186 basehttp 11645 139386023823040 "GET /media/uploads/2025/05/19/walframeguidance.pdf HTTP/1.1" 200 335795
+INFO 2025-05-19 01:10:11,546 basehttp 11645 139386023823040 "GET /media/uploads/2025/05/19/walframeguidance.pdf HTTP/1.1" 304 0
+INFO 2025-05-19 01:10:21,433 basehttp 11645 139386023823040 "GET /media/uploads/2025/05/19/walframeguidance.pdf HTTP/1.1" 304 0
+INFO 2025-05-19 01:10:29,369 basehttp 11645 139386023823040 "GET /media/uploads/2025/05/19/walframeguidance.pdf HTTP/1.1" 304 0
+INFO 2025-05-19 01:10:38,995 basehttp 11645 139386015430336 "GET /admin/ HTTP/1.1" 200 13388
+WARNING 2025-05-19 01:10:39,690 log 11645 139386015430336 Not Found: /favicon.ico
+WARNING 2025-05-19 01:10:39,696 basehttp 11645 139386015430336 "GET /favicon.ico HTTP/1.1" 404 2678
+INFO 2025-05-19 01:10:41,657 basehttp 11645 139386015430336 "GET /admin/base/property/ HTTP/1.1" 200 21739
+INFO 2025-05-19 01:10:41,779 basehttp 11645 139386015430336 "GET /admin/jsi18n/ HTTP/1.1" 200 3342
+INFO 2025-05-19 01:10:44,536 basehttp 11645 139386015430336 "GET /admin/base/property/6/change/ HTTP/1.1" 200 57849
+INFO 2025-05-19 01:10:44,574 basehttp 11645 139386015430336 "GET /admin/jsi18n/ HTTP/1.1" 200 3342
+INFO 2025-05-19 01:10:59,535 basehttp 11645 139386015430336 "POST /admin/base/property/6/change/ HTTP/1.1" 302 0
+INFO 2025-05-19 01:10:59,567 basehttp 11645 139386015430336 "GET /admin/base/property/ HTTP/1.1" 200 21954
+INFO 2025-05-19 01:10:59,642 basehttp 11645 139386015430336 "GET /admin/jsi18n/ HTTP/1.1" 200 3342
+INFO 2025-05-19 01:11:02,913 basehttp 11645 139386023823040 "GET /media/uploads/2025/05/19/walframeguidance.pdf HTTP/1.1" 304 0
+INFO 2025-05-19 01:17:44,459 basehttp 11645 139386023823040 "GET /api/accounts/profile/ HTTP/1.1" 200 594
+INFO 2025-05-19 01:17:44,770 basehttp 11645 139386023823040 "GET /api/properties/6/ HTTP/1.1" 200 3553
+INFO 2025-05-19 01:17:44,836 basehttp 11645 139386042705600 "GET /media/uploads/2025/05/19/dummy_imgs.png HTTP/1.1" 304 0
+INFO 2025-05-19 01:17:45,032 basehttp 11645 139386015430336 "GET /api/properties/6/ HTTP/1.1" 200 3553
+INFO 2025-05-19 01:20:58,307 basehttp 11645 139386015430336 "GET /api/accounts/profile/ HTTP/1.1" 200 594
+INFO 2025-05-19 01:20:58,666 basehttp 11645 139386015430336 "GET /api/properties/6/ HTTP/1.1" 200 3553
+INFO 2025-05-19 01:20:58,702 basehttp 11645 139386042705600 "GET /media/uploads/2025/05/19/dummy_imgs.png HTTP/1.1" 304 0
+INFO 2025-05-19 01:20:58,862 basehttp 11645 139386023823040 "GET /api/properties/6/ HTTP/1.1" 200 3553
+INFO 2025-05-19 01:23:51,806 basehttp 11645 139386023823040 "GET /api/accounts/profile/ HTTP/1.1" 200 594
+INFO 2025-05-19 01:23:52,232 basehttp 11645 139386023823040 "GET /api/properties/6/ HTTP/1.1" 200 3553
+INFO 2025-05-19 01:23:52,316 basehttp 11645 139386042705600 "GET /media/uploads/2025/05/19/dummy_imgs.png HTTP/1.1" 304 0
+INFO 2025-05-19 01:23:52,801 basehttp 11645 139386015430336 "GET /api/properties/6/ HTTP/1.1" 200 3553
+INFO 2025-05-19 01:29:25,474 basehttp 11645 139386042705600 "GET /api/accounts/profile/ HTTP/1.1" 200 594
+INFO 2025-05-19 01:29:25,750 basehttp 11645 139386042705600 "GET /api/properties/6/ HTTP/1.1" 200 3553
+INFO 2025-05-19 01:29:25,894 basehttp 11645 139386023823040 "GET /api/properties/6/ HTTP/1.1" 200 3554
+INFO 2025-05-19 01:29:26,415 basehttp 11645 139386023823040 "GET /api/accounts/profile/ HTTP/1.1" 200 594
+INFO 2025-05-19 01:29:26,584 basehttp 11645 139386023823040 "GET /api/properties/6/ HTTP/1.1" 200 3554
+INFO 2025-05-19 01:29:26,825 basehttp 11645 139386042705600 "GET /api/properties/6/ HTTP/1.1" 200 3554
+INFO 2025-05-19 01:29:33,123 basehttp 11645 139386042705600 "GET /api/accounts/profile/ HTTP/1.1" 200 594
+INFO 2025-05-19 01:29:33,277 basehttp 11645 139386042705600 "GET /api/properties/6/ HTTP/1.1" 200 3554
+INFO 2025-05-19 01:29:33,496 basehttp 11645 139386023823040 "GET /api/properties/6/ HTTP/1.1" 200 3554
+INFO 2025-05-19 01:29:34,366 basehttp 11645 139386023823040 "GET /api/accounts/profile/ HTTP/1.1" 200 594
+INFO 2025-05-19 01:29:34,519 basehttp 11645 139386023823040 "GET /api/properties/6/ HTTP/1.1" 200 3554
+INFO 2025-05-19 01:29:34,670 basehttp 11645 139386042705600 "GET /api/properties/6/ HTTP/1.1" 200 3554
+INFO 2025-05-19 01:29:38,706 basehttp 11645 139386042705600 "GET /api/accounts/profile/ HTTP/1.1" 200 594
+INFO 2025-05-19 01:29:38,933 basehttp 11645 139386042705600 "GET /api/properties/6/ HTTP/1.1" 200 3554
+INFO 2025-05-19 01:29:39,101 basehttp 11645 139386023823040 "GET /api/properties/6/ HTTP/1.1" 200 3554
+INFO 2025-05-19 01:31:13,004 basehttp 11645 139386023823040 "GET /api/accounts/profile/ HTTP/1.1" 200 594
+INFO 2025-05-19 01:31:13,180 basehttp 11645 139386023823040 "GET /api/properties/6/ HTTP/1.1" 200 3554
+INFO 2025-05-19 01:31:13,348 basehttp 11645 139386042705600 "GET /api/properties/6/ HTTP/1.1" 200 3554
+INFO 2025-05-19 01:31:14,550 basehttp 11645 139386042705600 "GET /api/accounts/profile/ HTTP/1.1" 200 594
+INFO 2025-05-19 01:31:14,786 basehttp 11645 139386042705600 "GET /api/properties/6/ HTTP/1.1" 200 3554
+INFO 2025-05-19 01:31:14,965 basehttp 11645 139386023823040 "GET /api/properties/6/ HTTP/1.1" 200 3554
+INFO 2025-05-19 01:31:21,045 basehttp 11645 139386023823040 "GET /api/accounts/profile/ HTTP/1.1" 200 594
+INFO 2025-05-19 01:31:21,230 basehttp 11645 139386023823040 "GET /api/properties/6/ HTTP/1.1" 200 3554
+INFO 2025-05-19 01:31:21,460 basehttp 11645 139386042705600 "GET /api/properties/6/ HTTP/1.1" 200 3554
+INFO 2025-05-19 01:31:22,236 basehttp 11645 139386042705600 "GET /api/accounts/profile/ HTTP/1.1" 200 594
+INFO 2025-05-19 01:31:22,408 basehttp 11645 139386042705600 "GET /api/properties/6/ HTTP/1.1" 200 3554
+INFO 2025-05-19 01:31:22,576 basehttp 11645 139386023823040 "GET /api/properties/6/ HTTP/1.1" 200 3554
+INFO 2025-05-19 01:31:25,058 basehttp 11645 139386023823040 "GET /api/accounts/profile/ HTTP/1.1" 200 594
+INFO 2025-05-19 01:31:25,234 basehttp 11645 139386023823040 "GET /api/properties/6/ HTTP/1.1" 200 3554
+INFO 2025-05-19 01:31:25,415 basehttp 11645 139386042705600 "GET /api/properties/6/ HTTP/1.1" 200 3554
+INFO 2025-05-19 22:02:03,979 autoreload 7389 125369070831424 Watching for file changes with StatReloader

@@ -115,24 +115,48 @@ class MediaSerializer(serializers.ModelSerializer):
         if 'file' not in data and self.instance is None:
             raise serializers.ValidationError({"file": "File is required for new media uploads."})
             
-        # Validate media_type based on file extension
-        if 'file' in data and 'media_type' not in data:
-            # Auto-detect media type from file if not provided
+        # Validate and set media_type based on file
+        if 'file' in data:
             file = data['file']
-            if hasattr(file, 'content_type'):
-                if file.content_type.startswith('image/'):
-                    data['media_type'] = 'image'
-                elif file.content_type.startswith('video/'):
-                    data['media_type'] = 'video'
-                elif file.content_type.startswith('application/pdf') or file.name.lower().endswith('.pdf'):
-                    data['media_type'] = 'document'
-                else:
-                    data['media_type'] = 'other'
+            
+            # If media_type is explicitly set, use it
+            if 'media_type' in data:
+                print(f"Using explicitly provided media_type: {data['media_type']}")
+            # Otherwise detect from file
+            else:
+                if hasattr(file, 'content_type'):
+                    if file.content_type.startswith('image/'):
+                        data['media_type'] = 'image'
+                    elif file.content_type.startswith('video/'):
+                        data['media_type'] = 'video'
+                    elif file.content_type == 'application/pdf' or str(file.name).lower().endswith('.pdf'):
+                        data['media_type'] = 'document'
+                        print(f"Setting media_type to 'document' for PDF file: {file.name}")
+                    else:
+                        data['media_type'] = 'other'
+                        
+                # Fallback to extension detection
+                elif hasattr(file, 'name'):
+                    filename = str(file.name).lower()
+                    if filename.endswith(('.jpg', '.jpeg', '.png', '.gif')):
+                        data['media_type'] = 'image'
+                    elif filename.endswith('.pdf'):
+                        data['media_type'] = 'document'
+                        print(f"Setting media_type to 'document' based on filename: {filename}")
+                    elif filename.endswith(('.mp4', '.avi', '.mov')):
+                        data['media_type'] = 'video'
+                    else:
+                        data['media_type'] = 'other'
+                
+                print(f"Detected media_type: {data['media_type']} for file: {file.name}")
         
         return data
+
     def create(self, validated_data):
         """Create a new media instance with proper error handling"""
         try:
+            print(f"Creating media with validated data: media_type={validated_data.get('media_type')}, file={validated_data.get('file').name if 'file' in validated_data else None}")
+            
             # Check that content_type and object_id point to a valid object
             content_type = validated_data.get('content_type')
             object_id = validated_data.get('object_id')
@@ -152,9 +176,7 @@ class MediaSerializer(serializers.ModelSerializer):
             
             # Proceed with creation
             instance = super().create(validated_data)
-            
-            # For image files, handle various processing tasks like thumbnails 
-            # (already handled in the model's save method)
+            print(f"Media created successfully: id={instance.id}, media_type={instance.media_type}")
             
             return instance
             
