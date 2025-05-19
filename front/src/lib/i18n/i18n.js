@@ -50,6 +50,15 @@ const translations = {
       confirm: 'Confirm',
       back: 'Back'
     },
+    share: {
+      facebook: 'Share on Facebook',
+      twitter: 'Share on Twitter',
+      linkedin: 'Share on LinkedIn',
+      whatsapp: 'Share on WhatsApp',
+      email: 'Share via Email',
+      copyLink: 'Copy Link',
+      linkCopied: 'Link copied!'
+    },
 
     validation: {
       titleRequired: 'Title is required',

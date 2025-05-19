@@ -266,3 +266,100 @@ export async function fetchUserBids() {
     throw error;
   }
 }
+
+
+
+
+// Update an existing auction
+export async function updateAuction(id, auctionData) {
+  try {
+    const token = localStorage.getItem('accessToken');
+    
+    if (!token) {
+      throw new Error('Authentication required');
+    }
+    
+    const response = await fetch(`${AUCTION_URL}/${id}/`, {
+      method: 'PUT',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(auctionData)
+    });
+    
+    if (response.status === 401) {
+      // Try to refresh token and retry
+      const newToken = await refreshToken();
+      const retryResponse = await fetch(`${AUCTION_URL}/${id}/`, {
+        method: 'PUT',
+        headers: {
+          'Authorization': `Bearer ${newToken}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(auctionData)
+      });
+      
+      if (!retryResponse.ok) {
+        const errorData = await retryResponse.json();
+        throw new Error(errorData.error?.message || 'Failed to update auction');
+      }
+      
+      return await retryResponse.json();
+    }
+    
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.error?.message || 'Failed to update auction');
+    }
+    
+    return await response.json();
+  } catch (error) {
+    console.error('Error updating auction:', error);
+    throw error;
+  }
+}
+
+// Delete an auction
+export async function deleteAuction(id) {
+  try {
+    const token = localStorage.getItem('accessToken');
+    
+    if (!token) {
+      throw new Error('Authentication required');
+    }
+    
+    const response = await fetch(`${AUCTION_URL}/${id}/`, {
+      method: 'DELETE',
+      headers: {
+        'Authorization': `Bearer ${token}`
+      }
+    });
+    
+    if (response.status === 401) {
+      // Try to refresh token and retry
+      const newToken = await refreshToken();
+      const retryResponse = await fetch(`${AUCTION_URL}/${id}/`, {
+        method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${newToken}`
+        }
+      });
+      
+      if (!retryResponse.ok) {
+        throw new Error('Failed to delete auction');
+      }
+      
+      return true;
+    }
+    
+    if (!response.ok) {
+      throw new Error('Failed to delete auction');
+    }
+    
+    return true;
+  } catch (error) {
+    console.error('Error deleting auction:', error);
+    throw error;
+  }
+}
