@@ -82,7 +82,7 @@
           {#if action}
             <div class="mt-4">
               {#if action.href}
-                
+                <a
                   href={action.href}
                   class="text-sm font-medium {styles.text} hover:underline focus:outline-none focus:underline"
                 >

@@ -436,6 +436,7 @@ const translations = {
       startDateRequired: 'Start date is required',
       endDateRequired: 'End date is required',
       createNewPrompt: 'Have a property to auction? Create a new auction listing:',
+      
     },
 
     auth: {
@@ -952,6 +953,7 @@ const translations = {
       startDateRequired: 'تاريخ البدء مطلوب',
       endDateRequired: 'تاريخ الانتهاء مطلوب',
       createNewPrompt: 'هل لديك عقار للبيع بالمزاد؟ أنشئ قائمة مزاد جديدة:',
+      
 
     },
 
