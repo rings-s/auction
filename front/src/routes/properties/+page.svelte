@@ -1,17 +1,30 @@
 <!-- src/routes/properties/+page.svelte -->
 <script>
-  import { onMount } from 'svelte';
-  import { t } from '$lib/i18n/i18n';
+  import { onMount, onDestroy } from 'svelte';
+  import { fade, slide, fly } from 'svelte/transition';
+  import { t, locale } from '$lib/i18n/i18n';
+  import { user } from '$lib/stores/user';
   import { getProperties } from '$lib/api/property';
   import { properties as propertiesStore } from '$lib/stores/properties';
+  
+  // Components
   import PropertyCard from '$lib/components/PropertyCard.svelte';
   import PropertySearch from '$lib/components/PropertySearch.svelte';
+  import Button from '$lib/components/Button.svelte';
+  import LoadingSkeleton from '$lib/components/LoadingSkeleton.svelte';
+  import EmptyState from '$lib/components/EmptyState.svelte';
 
+  // State
   let properties = [];
   let loading = true;
   let error = null;
   let currentPage = 1;
   let totalPages = 1;
+  let loadingMore = false;
+  let debounceTimer;
+  let showMobileFilters = false;
+  
+  // Search parameters
   let searchParams = {
     query: '',
     propertyType: '',
@@ -22,15 +35,20 @@
     maxSize: '',
     sort: 'newest'
   };
+  
+  // Computed value for RTL mode
+  $: isRTL = $locale === 'ar';
+  
+  // Check permissions for creating properties
+  $: canCreateProperty = $user && ($user.role === 'owner' || $user.role === 'appraiser' || $user.is_staff || $user.is_superuser);
 
   // Convert search params to API params
   function getApiParams() {
     const params = {
-      page: currentPage,
-      ordering: getSortOrder(searchParams.sort)
+      page: currentPage
     };
 
-    // Only add params that have values
+    // Add filters that have values
     if (searchParams.query) params.search = searchParams.query;
     if (searchParams.propertyType) params.property_type = searchParams.propertyType;
     if (searchParams.city) params.location__city = searchParams.city;
@@ -38,90 +56,108 @@
     if (searchParams.maxPrice) params.market_value__lte = searchParams.maxPrice;
     if (searchParams.minSize) params.size_sqm__gte = searchParams.minSize;
     if (searchParams.maxSize) params.size_sqm__lte = searchParams.maxSize;
+    
+    // Handle sort ordering
+    switch(searchParams.sort) {
+      case 'newest':
+        params.ordering = '-created_at';
+        break;
+      case 'priceAsc':
+        params.ordering = 'market_value';
+        break;
+      case 'priceDesc':
+        params.ordering = '-market_value';
+        break;
+      case 'sizeAsc':
+        params.ordering = 'size_sqm';
+        break;
+      case 'sizeDesc':
+        params.ordering = '-size_sqm';
+        break;
+      default:
+        params.ordering = '-created_at';
+    }
 
     return params;
   }
 
-  // Get sort order parameter
-  function getSortOrder(sort) {
-    const sortMap = {
-      newest: '-created_at',
-      oldest: 'created_at',
-      priceAsc: 'market_value',
-      priceDesc: '-market_value',
-      sizeAsc: 'size_sqm',
-      sizeDesc: '-size_sqm'
-    };
-    return sortMap[sort] || '-created_at';
-  }
-
-  // Handle search
+  // Handle search submission
   async function handleSearch(event) {
-    searchParams = event.detail;
+    if (event) {
+      searchParams = event.detail;
+    }
     currentPage = 1; // Reset to first page on new search
     await loadProperties();
   }
 
   // Load properties
-  async function loadProperties() {
+  async function loadProperties(reset = true) {
     try {
-      loading = true;
+      if (reset) {
+        loading = true;
+        currentPage = 1;
+      } else {
+        loadingMore = true;
+      }
+      
       error = null;
-
       const apiParams = getApiParams();
       const response = await getProperties(apiParams);
 
-      // Handle different response structures
       if (response.results) {
-        properties = response.results;
+        if (reset) {
+          properties = response.results;
+        } else {
+          properties = [...properties, ...response.results];
+        }
         totalPages = Math.ceil(response.count / (response.page_size || 10));
       } else if (Array.isArray(response)) {
-        properties = response;
-        totalPages = 1; // Can't determine total pages from array response
+        if (reset) {
+          properties = response;
+        } else {
+          properties = [...properties, ...response];
+        }
+        totalPages = 1;
       } else {
-        // Assume it's a paginated response with data property
-        properties = response.data?.results || [];
-        totalPages = Math.ceil((response.data?.count || properties.length) / (response.data?.page_size || 10));
+        const results = response.data?.results || [];
+        if (reset) {
+          properties = results;
+        } else {
+          properties = [...properties, ...results];
+        }
+        totalPages = Math.ceil((response.data?.count || results.length) / (response.data?.page_size || 10));
       }
       
       propertiesStore.set(properties);
     } catch (err) {
       console.error('Error loading properties:', err);
       error = err.message || $t('error.fetchFailed');
-      properties = []; // Clear properties on error
+      properties = [];
     } finally {
       loading = false;
+      loadingMore = false;
     }
   }
 
   // Load more properties
-  async function loadMore() {
-    if (currentPage < totalPages && !loading) {
+  function loadMore() {
+    if (currentPage < totalPages && !loadingMore) {
       currentPage++;
-      try {
-        loading = true;
-        const apiParams = getApiParams();
-        const response = await getProperties(apiParams);
-        
-        // Add new properties to existing list
-        if (response.results) {
-          properties = [...properties, ...response.results];
-        } else if (Array.isArray(response)) {
-          properties = [...properties, ...response];
-        } else {
-          const newProperties = response.data?.results || [];
-          properties = [...properties, ...newProperties];
-        }
-        
-        propertiesStore.set(properties);
-      } catch (err) {
-        console.error('Error loading more properties:', err);
-        currentPage--; // Revert page increment on error
-      } finally {
-        loading = false;
-      }
+      loadProperties(false);
     }
   }
+
+  // Toggle mobile filters
+  function toggleMobileFilters() {
+    showMobileFilters = !showMobileFilters;
+    document.body.style.overflow = showMobileFilters ? 'hidden' : '';
+  }
+
+  // Cleanup on component destroy
+  onDestroy(() => {
+    clearTimeout(debounceTimer);
+    document.body.style.overflow = '';
+  });
 
   // Initial load
   onMount(() => {
@@ -131,87 +167,286 @@
 
 <svelte:head>
   <title>{$t('properties.title')} | Real Estate Platform</title>
+  <meta name="description" content={$t('properties.subtitle')} />
 </svelte:head>
 
-<div class="bg-gray-50 dark:bg-gray-900 min-h-screen py-8">
-  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-    <!-- Hero Section -->
-    <div class="text-center mb-12">
-      <h1 class="text-3xl font-extrabold text-gray-900 dark:text-white sm:text-4xl">
-        {$t('properties.title')}
-      </h1>
-      <p class="mt-3 max-w-2xl mx-auto text-xl text-gray-500 dark:text-gray-400">
-        {$t('properties.subtitle')}
-      </p>
+<div class="min-h-screen bg-gray-50 dark:bg-gray-900">
+  <!-- Enhanced Hero Section with Gradient Backdrop -->
+  <div class="relative bg-white dark:bg-gray-800 shadow-md">
+    <div class="absolute inset-0 bg-gradient-to-r from-primary-50 to-secondary-50 dark:from-primary-900/30 dark:to-secondary-900/30 opacity-50"></div>
+    <div class="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 md:py-12">
+      <div class="md:flex md:items-center md:justify-between">
+        <div>
+          <h1 class="text-2xl md:text-3xl font-bold text-gray-900 dark:text-white">
+            {$t('properties.title')}
+          </h1>
+          <p class="mt-2 text-sm md:text-base text-gray-600 dark:text-gray-300 max-w-2xl">
+            {$t('properties.subtitle')}
+          </p>
+        </div>
+        
+        <!-- Create Property Link -->
+        {#if canCreateProperty}
+          <div class="mt-4 md:mt-0">
+            <a 
+              href="/properties/create" 
+              class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-full shadow-md text-white bg-primary-600 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 transition-all duration-300 hover:shadow-lg transform hover:-translate-y-0.5"
+            >
+              <svg class="w-5 h-5 {isRTL ? 'ml-2' : 'mr-2'}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+              </svg>
+              {$t('property.createProperty')}
+            </a>
+          </div>
+        {/if}
+      </div>
+      
+      <!-- Mobile Filter Toggle -->
+      <div class="mt-6 md:hidden">
+        <button
+          type="button"
+          on:click={toggleMobileFilters}
+          class="flex items-center justify-center px-4 py-2 rounded-full bg-white dark:bg-gray-700 shadow-sm border border-gray-200 dark:border-gray-600 text-sm font-medium text-gray-700 dark:text-gray-100 hover:bg-gray-50 dark:hover:bg-gray-600 transition-colors"
+        >
+          <svg class="w-4 h-4 {isRTL ? 'ml-2' : 'mr-2'}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4h13M3 8h9m-9 4h6m4 0l4-4m0 0l4 4m-4-4v12" />
+          </svg>
+          <span>{$t('auction.filterAndSort')}</span>
+        </button>
+      </div>
     </div>
-
-    <!-- Search Section -->
-    <div class="mb-8">
+  </div>
+  
+  <!-- Main Content Area -->
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <!-- Search Filters - Desktop -->
+    <div class="hidden md:block mb-8">
       <PropertySearch
         {searchParams}
         on:search={handleSearch}
       />
     </div>
-
-    <!-- Loading State (Initial) -->
+    
+    <!-- Content Area -->
     {#if loading && !properties.length}
-      <div class="flex justify-center py-12">
-        <div class="animate-spin rounded-full h-16 w-16 border-t-2 border-b-2 border-primary-500"></div>
+      <!-- Loading Skeleton -->
+      <div in:fade={{ duration: 200 }} out:fade={{ duration: 150 }}>
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+          {#each Array(6) as _, i}
+            <LoadingSkeleton type="propertyCard" />
+          {/each}
+        </div>
       </div>
     
-    <!-- Error State -->
     {:else if error}
-      <div class="bg-red-50 dark:bg-red-900/20 p-6 rounded-lg text-red-800 dark:text-red-200 max-w-3xl mx-auto my-12">
-        <h2 class="text-xl font-semibold mb-2">{$t('error.title')}</h2>
-        <p>{error}</p>
-        <button
-          class="mt-4 inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
-          on:click={loadProperties}
-        >
-          {$t('auction.tryAgain')}
-        </button>
+      <!-- Error State -->
+      <div 
+        class="bg-white dark:bg-gray-800 shadow-lg rounded-xl p-8 max-w-2xl mx-auto"
+        in:fly={{ y: 20, duration: 300 }}
+        out:fade={{ duration: 200 }}
+      >
+        <div class="flex items-start {isRTL ? 'space-x-reverse' : ''} space-x-5">
+          <div class="flex-shrink-0 bg-red-100 dark:bg-red-900/30 p-3 rounded-full">
+            <svg class="h-8 w-8 text-red-600 dark:text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+            </svg>
+          </div>
+          <div>
+            <h3 class="text-xl font-bold text-gray-900 dark:text-white">{$t('error.title')}</h3>
+            <p class="mt-2 text-base text-gray-600 dark:text-gray-300">{error}</p>
+            
+            <div class="mt-6 flex flex-wrap gap-3">
+              <Button
+                variant="outline"
+                onClick={() => {
+                  searchParams = {
+                    query: '',
+                    propertyType: '',
+                    minPrice: '',
+                    maxPrice: '',
+                    city: '',
+                    minSize: '',
+                    maxSize: '',
+                    sort: 'newest'
+                  };
+                  handleSearch();
+                }}
+                size="default"
+                class="w-full sm:w-auto"
+              >
+                <svg class="w-4 h-4 {isRTL ? 'ml-2' : 'mr-2'}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                </svg>
+                {$t('search.clear')}
+              </Button>
+              
+              <Button
+                variant="primary"
+                onClick={() => loadProperties()}
+                size="default"
+                class="w-full sm:w-auto"
+              >
+                <svg class="w-4 h-4 {isRTL ? 'ml-2' : 'mr-2'}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                </svg>
+                {$t('auction.tryAgain')}
+              </Button>
+            </div>
+          </div>
+        </div>
       </div>
 
-    <!-- Empty State -->
     {:else if !properties.length}
-      <div class="text-center py-16 bg-white dark:bg-gray-800 rounded-lg shadow">
-        <svg xmlns="http://www.w3.org/2000/svg" class="h-16 w-16 mx-auto text-gray-400 dark:text-gray-500 mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
-        </svg>
-        <h3 class="text-lg font-medium text-gray-900 dark:text-gray-100 mb-1">
-          {$t('properties.noResults')}
-        </h3>
-        <p class="text-gray-500 dark:text-gray-400">
-          {$t('properties.tryAdjusting')}
-        </p>
+      <!-- Empty State -->
+      <div in:fade={{ duration: 300 }} out:fade={{ duration: 200 }}>
+        <EmptyState 
+          icon="property"
+          title={$t('properties.noResults')}
+          description={$t('properties.tryAdjusting')}
+          actionLabel={$t('properties.backToProperties')}
+          actionUrl="/properties"
+        />
       </div>
 
-    <!-- Property Grid -->
     {:else}
-      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {#each properties as property (property.id)}
-          <PropertyCard {property} />
+      <!-- Properties Grid -->
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+        {#each properties as property, index (property.id)}
+          <div in:fly={{ y: 20, duration: 300, delay: 50 * (index % 6) }} out:fade={{ duration: 200 }}>
+            <PropertyCard {property} />
+          </div>
         {/each}
       </div>
 
-      <!-- Load More -->
-      {#if currentPage < totalPages && !loading}
-        <div class="flex justify-center mt-8">
-          <button
-            class="inline-flex items-center px-6 py-3 border border-transparent text-base font-medium rounded-md shadow-sm text-white bg-primary-600 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500"
-            on:click={loadMore}
+      <!-- Load More Button -->
+      {#if currentPage < totalPages && !loadingMore}
+        <div class="mt-10 flex justify-center">
+          <Button
+            variant="outline"
+            onClick={loadMore}
+            size="large"
+            class="px-8 py-3 transition-all hover:bg-gray-50 dark:hover:bg-gray-700 rounded-full"
           >
-            {$t('properties.loadMore')}
-          </button>
+            <div class="flex items-center">
+              <span>{$t('property.loadMore')}</span>
+              <svg class="{isRTL ? 'mr-2' : 'ml-2'} w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+              </svg>
+            </div>
+          </Button>
         </div>
       {/if}
 
       <!-- Loading More Indicator -->
-      {#if loading && properties.length}
-        <div class="flex justify-center mt-8">
-          <div class="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-primary-500"></div>
+      {#if loadingMore}
+        <div class="mt-10 flex justify-center">
+          <div class="flex items-center justify-center {isRTL ? 'space-x-reverse' : ''} space-x-2 text-primary-600 dark:text-primary-400">
+            <div class="w-3 h-3 rounded-full bg-primary-600 dark:bg-primary-400 animate-bounce"></div>
+            <div class="w-3 h-3 rounded-full bg-primary-600 dark:bg-primary-400 animate-bounce delay-150"></div>
+            <div class="w-3 h-3 rounded-full bg-primary-600 dark:bg-primary-400 animate-bounce delay-300"></div>
+            <span class="{isRTL ? 'mr-2' : 'ml-2'} text-sm font-medium">{$t('common.loading')}</span>
+          </div>
         </div>
       {/if}
     {/if}
+    
+    <!-- Create Property Info Box for Non-Authorized Users -->
+    {#if !canCreateProperty && !loading && properties.length > 0 && $user}
+      <div class="mt-10 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl shadow-md p-6">
+        <div class="sm:flex sm:items-center sm:justify-between">
+          <div class="max-w-md">
+            <h3 class="text-lg font-semibold text-gray-900 dark:text-white">
+              {$t('property.createNewPrompt')}
+            </h3>
+            <p class="mt-2 text-sm text-gray-600 dark:text-gray-300">
+              {$t('property.unauthorizedMessage')}
+            </p>
+          </div>
+          <div class="mt-4 sm:mt-0 sm:ml-4">
+            <Button
+              href="/properties"
+              variant="primary"
+              size="default"
+              class="w-full sm:w-auto shadow-md hover:shadow-lg transition-all"
+            >
+              <div class="flex items-center">
+                <svg class="w-4 h-4 {isRTL ? 'ml-2' : 'mr-2'}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
+                </svg>
+                {$t('properties.backToProperties')}
+              </div>
+            </Button>
+          </div>
+        </div>
+      </div>
+    {/if}
   </div>
+  
+  <!-- Mobile Filters Drawer -->
+  {#if showMobileFilters}
+    <div class="fixed inset-0 z-40 flex md:hidden" in:fade={{ duration: 200 }} out:fade={{ duration: 150 }}>
+      <!-- Backdrop -->
+      <div class="fixed inset-0 bg-black bg-opacity-50 backdrop-blur-sm" on:click={toggleMobileFilters}></div>
+      
+      <!-- Drawer panel -->
+      <div 
+        class="relative max-w-xs w-full h-full bg-white dark:bg-gray-800 shadow-2xl flex flex-col overflow-y-auto {isRTL ? 'right-0' : 'left-0'}"
+        in:slide={{ duration: 300, axis: 'x' }}
+        out:slide={{ duration: 250, axis: 'x', easing: x => 1 - Math.pow(1 - x, 3) }}
+      >
+        <div class="px-4 py-5 flex items-center justify-between border-b border-gray-200 dark:border-gray-700">
+          <h2 class="text-lg font-semibold text-gray-900 dark:text-white flex items-center">
+            <svg class="w-5 h-5 {isRTL ? 'ml-2' : 'mr-2'}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4h13M3 8h9m-9 4h6m4 0l4-4m0 0l4 4m-4-4v12" />
+            </svg>
+            {$t('auction.filterAndSort')}
+          </h2>
+          <button
+            type="button"
+            class="rounded-full p-2 text-gray-400 hover:text-gray-500 hover:bg-gray-100 dark:text-gray-300 dark:hover:text-white dark:hover:bg-gray-700"
+            on:click={toggleMobileFilters}
+          >
+            <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
+        </div>
+        
+        <!-- Mobile Search Component -->
+        <div class="p-4 flex-1">
+          <PropertySearch
+            {searchParams}
+            on:search={(e) => {
+              handleSearch(e);
+              toggleMobileFilters();
+            }}
+          />
+        </div>
+      </div>
+    </div>
+  {/if}
 </div>
+
+<style>
+  /* RTL-specific styles */
+  :global(.rtl) {
+    direction: rtl;
+    text-align: right;
+  }
+  
+  /* Animation for badge appearance */
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(-4px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  
+  /* Scrollbar styling */
+  .scrollbar-hide {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+  
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none;
+  }
+</style>
