@@ -8,10 +8,10 @@
   import { auctions as auctionsStore } from '$lib/stores/auctions';
 
   // Components
-  import AuctionCard from '$lib/components/AuctionCard.svelte';
-  import LoadingSkeleton from '$lib/components/LoadingSkeleton.svelte';
-  import EmptyState from '$lib/components/EmptyState.svelte';
-  import Button from '$lib/components/Button.svelte';
+  import AuctionCard from '$lib/components/auction/AuctionCard.svelte';
+  import LoadingSkeleton from '$lib/components/ui/LoadingSkeleton.svelte';
+  import EmptyState from '$lib/components/ui/EmptyState.svelte';
+  import Button from '$lib/components/ui/Button.svelte';
 
   // State
   let auctions = [];

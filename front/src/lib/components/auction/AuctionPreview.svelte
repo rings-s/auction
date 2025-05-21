@@ -1,8 +1,8 @@
 <!-- src/lib/components/AuctionPreview.svelte -->
 <script>
     import { t } from '$lib/i18n/i18n';
-    import AuctionStatus from './AuctionStatus.svelte';
-    import CountdownTimer from './CountdownTimer.svelte';
+    import AuctionStatus from '../auction/AuctionStatus.svelte';
+    import CountdownTimer from '../auction/CountdownTimer.svelte';
     
     export let auction = {};
     

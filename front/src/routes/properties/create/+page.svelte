@@ -5,10 +5,10 @@
   import { t, locale } from '$lib/i18n/i18n'; 
   import { user } from '$lib/stores/user';
   import { createProperty, uploadPropertyMediaBatch, addPropertyRoom } from '$lib/api/property';
-  import LocationPicker from '$lib/components/LocationPicker.svelte';
-  import MediaUploader from '$lib/components/MediaUploader.svelte';
-  import RoomManager from '$lib/components/RoomManager.svelte';
-  import TagSelector from '$lib/components/TagSelector.svelte';
+  import LocationPicker from '$lib/components/pr  operties/LocationPicker.svelte';
+  import MediaUploader from '$lib/components/shared/MediaUploader.svelte';
+  import RoomManager from '$lib/components/properties/RoomManager.svelte';
+  import TagSelector from '$lib/components/ui/TagSelector.svelte';
   
   // Constants
   const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB

@@ -8,8 +8,8 @@
 	import { user } from '$lib/stores/user';
 	import { fetchUserProfile } from '$lib/api/auth';
 	
-	import Navbar from '$lib/components/Navbar.svelte';
-	import Footer from '$lib/components/Footer.svelte';
+	import Navbar from '$lib/components/layout/Navbar.svelte';
+	import Footer from '$lib/components/layout/Footer.svelte';
 	
 	let loading = true;
 	

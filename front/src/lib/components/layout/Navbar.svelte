@@ -4,8 +4,8 @@
   import { user } from '$lib/stores/user';
   import { t } from '$lib/i18n/i18n';
   import { theme } from '$lib/stores/theme';
-  import ThemeToggle from './ThemeToggle.svelte';
-  import LanguageSelector from './LanguageSelector.svelte';
+  import ThemeToggle from '$lib/components/ui/ThemeToggle.svelte';
+  import LanguageSelector from '../shared/LanguageSelector.svelte';
   import { onMount, afterUpdate } from 'svelte';
   import { fade, fly, slide, scale } from 'svelte/transition';
   import { spring } from 'svelte/motion';

@@ -8,11 +8,11 @@
   import { properties as propertiesStore } from '$lib/stores/properties';
   
   // Components
-  import PropertyCard from '$lib/components/PropertyCard.svelte';
-  import PropertySearch from '$lib/components/PropertySearch.svelte';
-  import Button from '$lib/components/Button.svelte';
-  import LoadingSkeleton from '$lib/components/LoadingSkeleton.svelte';
-  import EmptyState from '$lib/components/EmptyState.svelte';
+  import PropertyCard from '$lib/components/properties/PropertyCard.svelte';
+  import PropertySearch from '$lib/components/properties/PropertySearch.svelte';
+  import Button from '$lib/components/ui/Button.svelte';
+  import LoadingSkeleton from '$lib/components/ui/LoadingSkeleton.svelte';
+  import EmptyState from '$lib/components/ui/EmptyState.svelte';
 
   // State
   let properties = [];

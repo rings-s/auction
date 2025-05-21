@@ -6,14 +6,14 @@
     import { t } from '$lib/i18n/i18n';
     import { user } from '$lib/stores/user';
     import { fetchAuctionById, updateAuction, deleteAuction } from '$lib/api/auction';
-    import Breadcrumb from '$lib/components/Breadcrumb.svelte';
-    import Button from '$lib/components/Button.svelte';
-    import Alert from '$lib/components/Alert.svelte';
-    import Modal from '$lib/components/Modal.svelte';
-    import LoadingSkeleton from '$lib/components/LoadingSkeleton.svelte';
+    import Breadcrumb from '$lib/components/ui/Breadcrumb.svelte';
+    import Button from '$lib/components/ui/Button.svelte';
+    import Alert from '$lib/components/ui/Alert.svelte';
+    import Modal from '$lib/components/ui/Modal.svelte';
+    import LoadingSkeleton from '$lib/components/ui/LoadingSkeleton.svelte';
     
     // Import shared auction form component
-    import AuctionForm from '$lib/components/AuctionForm.svelte';
+    import AuctionForm from '$lib/components/auction/AuctionForm.svelte';
     
     let auction = null;
     let loading = true;

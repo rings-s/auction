@@ -5,17 +5,17 @@
   import { t } from '$lib/i18n/i18n';
   import { user } from '$lib/stores/user';
   import { fetchAuctionBySlug, placeBid } from '$lib/api/auction';
-  import Breadcrumb from '$lib/components/Breadcrumb.svelte';
-  import AuctionStatus from '$lib/components/AuctionStatus.svelte';
-  import PropertyCard from '$lib/components/PropertyCard.svelte';
-  import CountdownTimer from '$lib/components/CountdownTimer.svelte';
-  import Button from '$lib/components/Button.svelte';
-  import Tabs from '$lib/components/Tabs.svelte';
-  import Modal from '$lib/components/Modal.svelte';
-  import Alert from '$lib/components/Alert.svelte';
-  import LoadingSkeleton from '$lib/components/LoadingSkeleton.svelte';
-  import Gallery from '$lib/components/Gallery.svelte';
-  import ShareButtons from '$lib/components/ShareButtons.svelte';
+  import Breadcrumb from '$lib/components/ui/Breadcrumb.svelte';
+  import AuctionStatus from '$lib/components/auction/AuctionStatus.svelte';
+  import PropertyCard from '$lib/components/properties/PropertyCard.svelte';
+  import CountdownTimer from '$lib/components/auction/CountdownTimer.svelte';
+  import Button from '$lib/components/ui/Button.svelte';
+  import Tabs from '$lib/components/ui/Tabs.svelte';
+  import Modal from '$lib/components/ui/Modal.svelte';
+  import Alert from '$lib/components/ui/Alert.svelte';
+  import LoadingSkeleton from '$lib/components/ui/LoadingSkeleton.svelte';
+  import Gallery from '$lib/components/ui/Gallery.svelte';
+  import ShareButtons from '$lib/components/shared/ShareButtons.svelte';
   
   let auction = null;
   let property = null;

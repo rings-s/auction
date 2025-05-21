@@ -2,14 +2,14 @@
 <script>
   import { onMount } from 'svelte';
   import { t } from '$lib/i18n/i18n';
-  import { fetchProperties } from '$lib/api/property';
+  import { getProperties } from '$lib/api/property';
   import { user } from '$lib/stores/user';
-  import Tabs from '$lib/components/Tabs.svelte';
-  import FormField from '$lib/components/FormField.svelte';
-  import Switch from '$lib/components/Switch.svelte';
-  import PropertySelector from '$lib/components/PropertySelector.svelte';
-  import MediaUploader from '$lib/components/MediaUploader.svelte';
-  import Alert from '$lib/components/Alert.svelte';
+  import Tabs from '$lib/components/ui/Tabs.svelte';
+  import FormField from '$lib/components/ui/FormField.svelte';
+  import Switch from '$lib/components/ui/Switch.svelte';
+  import PropertySelector from '$lib/components/properties/PropertySelector.svelte';
+  import MediaUploader from '$lib/components/shared/MediaUploader.svelte';
+  import Alert from '$lib/components/ui/Alert.svelte';
   
   // Take initial auction data as a prop
   export let initialAuction = null;

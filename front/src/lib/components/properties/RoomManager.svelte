@@ -4,7 +4,7 @@
   import { t } from '$lib/i18n/i18n';
   import { fly, fade, slide, scale } from 'svelte/transition';
   import { quintOut, elasticOut } from 'svelte/easing';
-  import TagSelector from './TagSelector.svelte';
+  import TagSelector from '$lib/components/ui/TagSelector.svelte';
   import { clickOutside } from '$lib/actions/clickOutside';
   
   export let rooms = [];

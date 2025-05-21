@@ -5,7 +5,7 @@
     import { t } from '$lib/i18n/i18n';
     import { user } from '$lib/stores/user';
     import { createAuction } from '$lib/api/auction';
-    import AuctionForm from '$lib/components/AuctionForm.svelte';
+    import AuctionForm from '$lib/components/auction/AuctionForm.svelte';
   
     let auction;
     let activeTab = 'basic';

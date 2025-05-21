@@ -2,9 +2,9 @@
 <script>
     import { onMount, createEventDispatcher } from 'svelte';
     import { t } from '$lib/i18n/i18n';
-    import { fetchProperties } from '$lib/api/property';
+    import { getProperties } from '$lib/api/property';
     import { user } from '$lib/stores/user';
-    import Button from './Button.svelte';
+    import Button from '$lib/components/ui/Button.svelte';
     
     export let selectedPropertyId = null;
     export let error = '';
@@ -36,7 +36,12 @@
           filters.owner = 'current';
         }
         
-        const response = await fetchProperties(filters);
+        const response = await getProperties({
+          page,
+          page_size: 10,
+          is_active: true,
+          exclude_auctioned: true
+        });
         
         if (page === 1) {
           properties = response.results || [];
