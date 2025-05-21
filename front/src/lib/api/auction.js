@@ -90,7 +90,7 @@ export async function fetchAuctionBySlug(slug) {
     const token = localStorage.getItem('accessToken');
     const headers = token ? { 'Authorization': `Bearer ${token}` } : {};
     
-    // Fixed: Removed 'slug/' from the URL to match backend routes
+    // Fixed: Use correct URL structure for slug
     const response = await fetch(`${AUCTION_URL}/${slug}/`, {
       headers
     });
@@ -98,7 +98,6 @@ export async function fetchAuctionBySlug(slug) {
     if (response.status === 401 && token) {
       // Try to refresh token and retry
       const newToken = await refreshToken();
-      // Also fix the retry URL
       const retryResponse = await fetch(`${AUCTION_URL}/${slug}/`, {
         headers: { 'Authorization': `Bearer ${newToken}` }
       });
@@ -117,6 +116,61 @@ export async function fetchAuctionBySlug(slug) {
     return await response.json();
   } catch (error) {
     console.error('Error fetching auction details:', error);
+    throw error;
+  }
+}
+
+
+// Add this function to your auction.js file
+
+// Place a bid using auction slug
+export async function placeBidBySlug(slug, bidAmount) {
+  try {
+    // First get the auction to get its ID
+    const auction = await fetchAuctionBySlug(slug);
+    
+    // Then place the bid using the auction ID
+    return await placeBid(auction.id, bidAmount);
+  } catch (error) {
+    console.error('Error placing bid by slug:', error);
+    throw error;
+  }
+}
+
+// Get all bids for a specific auction by slug
+export async function fetchAuctionBidsBySlug(slug) {
+  try {
+    const token = localStorage.getItem('accessToken');
+    const headers = token ? { 'Authorization': `Bearer ${token}` } : {};
+    
+    // First get the auction to get its ID
+    const auction = await fetchAuctionBySlug(slug);
+    
+    // Then fetch bids for that auction
+    const response = await fetch(`${BID_URL}/?auction=${auction.id}&ordering=-bid_time`, {
+      headers
+    });
+    
+    if (response.status === 401 && token) {
+      const newToken = await refreshToken();
+      const retryResponse = await fetch(`${BID_URL}/?auction=${auction.id}&ordering=-bid_time`, {
+        headers: { 'Authorization': `Bearer ${newToken}` }
+      });
+      
+      if (!retryResponse.ok) {
+        throw new Error('Failed to fetch auction bids');
+      }
+      
+      return await retryResponse.json();
+    }
+    
+    if (!response.ok) {
+      throw new Error('Failed to fetch auction bids');
+    }
+    
+    return await response.json();
+  } catch (error) {
+    console.error('Error fetching auction bids:', error);
     throw error;
   }
 }
@@ -272,6 +326,41 @@ export async function fetchUserBids() {
     return await response.json();
   } catch (error) {
     console.error('Error fetching user bids:', error);
+    throw error;
+  }
+}
+
+// Get all bids for an auction
+export async function fetchAuctionBids(auctionId) {
+  try {
+    const token = localStorage.getItem('accessToken');
+    const headers = token ? { 'Authorization': `Bearer ${token}` } : {};
+    
+    const response = await fetch(`${BID_URL}/?auction=${auctionId}`, {
+      headers
+    });
+    
+    if (response.status === 401 && token) {
+      // Try to refresh token and retry
+      const newToken = await refreshToken();
+      const retryResponse = await fetch(`${BID_URL}/?auction=${auctionId}`, {
+        headers: { 'Authorization': `Bearer ${newToken}` }
+      });
+      
+      if (!retryResponse.ok) {
+        throw new Error('Failed to fetch auction bids');
+      }
+      
+      return await retryResponse.json();
+    }
+    
+    if (!response.ok) {
+      throw new Error('Failed to fetch auction bids');
+    }
+    
+    return await response.json();
+  } catch (error) {
+    console.error('Error fetching auction bids:', error);
     throw error;
   }
 }
