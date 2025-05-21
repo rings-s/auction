@@ -14,12 +14,11 @@
   
   let auctionForm;
   let isPreview = false;
-  let loading = false;
+  let loading = true;
   let submitting = false;
   let error = '';
   let success = '';
   let previewData = null;
-  let activeTab = 'basic'; // Track current active tab for validation
   
   // Define breadcrumb items
   const breadcrumbItems = [
@@ -36,7 +35,7 @@
     }
     
     // Check if user has permissions (property owner, appraiser, or admin)
-    if (!$user.is_staff && !$user.is_superuser && $user.role !== 'owner' && $user.role !== 'appraiser') {
+    if (!($user.is_staff || $user.is_superuser || $user.role === 'owner' || $user.role === 'appraiser')) {
       error = $t('property.unauthorizedMessage');
     }
     
@@ -53,7 +52,7 @@
       const validation = auctionForm.validateForm();
       if (!validation.valid) {
         error = validation.error;
-        // Switch to the tab with the error if tab is specified and exists in the form
+        // Switch to the tab with the error if tab is specified
         if (validation.tab && auctionForm) {
           auctionForm.activeTab = validation.tab;
         }
@@ -66,25 +65,23 @@
       // Create auction
       const response = await createAuction(preparedAuction);
       
-      if (response && (response.id || response.slug)) {
+      if (response) {
         success = $t('auction.createSuccess');
         
         // Show success message and redirect after a delay
         setTimeout(() => {
-          goto(`/auctions/${response.slug || response.id}`);
+          // Use slug if available, otherwise use ID
+          const redirectPath = response.slug ? 
+            `/auctions/${response.slug}` : 
+            `/auctions/${response.id}`;
+          goto(redirectPath);
         }, 1500);
       } else {
         throw new Error('Invalid response from server');
       }
     } catch (err) {
       console.error('Error creating auction:', err);
-      // Handle different error formats
-      if (err.response) {
-        const errorData = await err.response.json().catch(() => ({}));
-        error = errorData.detail || errorData.message || $t('auction.createFailed');
-      } else {
-        error = err.message || $t('auction.createFailed');
-      }
+      error = err.message || $t('auction.createFailed');
     } finally {
       submitting = false;
     }
@@ -146,7 +143,7 @@
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
                 {/if}
               </svg>
-              {isPreview ? $t('auction.exitPreview') : $t('auction.preview')}
+              {isPreview ? $t('common.edit') : $t('auction.preview')}
             </Button>
           </div>
         {/if}
@@ -166,7 +163,7 @@
       <Alert 
         type="success" 
         title={$t('auction.createSuccess')}
-        message={$t('auction.redirecting')}
+        message={$t('common.loading') + '...'}
       />
     {/if}
     
@@ -182,7 +179,7 @@
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
             </svg>
-            <span class="font-medium">{$t('auction.previewMode')}</span>
+            <span class="font-medium">{$t('common.preview')}</span>
           </div>
         </div>
         
@@ -193,12 +190,12 @@
         <Button
           variant="outline"
           onClick={togglePreview}
-          aria-label={$t('auction.exitPreview')}
+          aria-label={$t('common.edit')}
         >
           <svg class="w-5 h-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 17l-5-5m0 0l5-5m-5 5h12" />
           </svg>
-          {$t('auction.exitPreview')}
+          {$t('common.edit')}
         </Button>
         
         <Button

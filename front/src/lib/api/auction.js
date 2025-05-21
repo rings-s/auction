@@ -90,14 +90,16 @@ export async function fetchAuctionBySlug(slug) {
     const token = localStorage.getItem('accessToken');
     const headers = token ? { 'Authorization': `Bearer ${token}` } : {};
     
-    const response = await fetch(`${AUCTION_URL}/slug/${slug}/`, {
+    // Fixed: Removed 'slug/' from the URL to match backend routes
+    const response = await fetch(`${AUCTION_URL}/${slug}/`, {
       headers
     });
     
     if (response.status === 401 && token) {
       // Try to refresh token and retry
       const newToken = await refreshToken();
-      const retryResponse = await fetch(`${AUCTION_URL}/slug/${slug}/`, {
+      // Also fix the retry URL
+      const retryResponse = await fetch(`${AUCTION_URL}/${slug}/`, {
         headers: { 'Authorization': `Bearer ${newToken}` }
       });
       
@@ -126,6 +128,13 @@ export async function createAuction(auctionData) {
     
     if (!token) {
       throw new Error('Authentication required');
+    }
+    
+    // Handle auction type compatibility with backend
+    if (auctionData.auction_type === 'reserve') {
+      auctionData.auction_type = 'private';
+    } else if (auctionData.auction_type === 'no_reserve') {
+      auctionData.auction_type = 'public';
     }
     
     const response = await fetch(`${AUCTION_URL}/`, {
@@ -267,9 +276,6 @@ export async function fetchUserBids() {
   }
 }
 
-
-
-
 // Update an existing auction
 export async function updateAuction(id, auctionData) {
   try {
@@ -277,6 +283,13 @@ export async function updateAuction(id, auctionData) {
     
     if (!token) {
       throw new Error('Authentication required');
+    }
+    
+    // Handle auction type compatibility with backend
+    if (auctionData.auction_type === 'reserve') {
+      auctionData.auction_type = 'private';
+    } else if (auctionData.auction_type === 'no_reserve') {
+      auctionData.auction_type = 'public';
     }
     
     const response = await fetch(`${AUCTION_URL}/${id}/`, {

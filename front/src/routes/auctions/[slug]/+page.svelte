@@ -1,4 +1,4 @@
-<!-- src/routes/auctions/[slug]/+page.svelte (Refactored) -->
+<!-- src/routes/auctions/[slug]/+page.svelte -->
 <script>
   import { onMount, onDestroy } from 'svelte';
   import { page } from '$app/stores';
@@ -28,6 +28,7 @@
   let activeTab = 'details';
   let showBidModal = false;
   let showLoginModal = false;
+  let refreshInterval;
   
   $: slug = $page.params.slug;
   $: isLiveAuction = auction?.status === 'live';
@@ -63,7 +64,7 @@
       // Initialize bid amount to minimum bid
       bidAmount = calculateMinimumBid().toString();
       
-      // If auction has a related property, fetch its details
+      // If auction has a related property, set its details
       if (auction.related_property) {
         property = auction.related_property;
       }
@@ -98,11 +99,13 @@
       // Reset bid amount
       bidAmount = '';
       
-      // Close the modal
-      showBidModal = false;
-      
-      // Reload auction data to get updated bids
-      await loadAuctionData();
+      // Close the modal after a short delay
+      setTimeout(() => {
+        showBidModal = false;
+        
+        // Reload auction data to get updated bids
+        loadAuctionData();
+      }, 1500);
       
     } catch (err) {
       console.error('Error placing bid:', err);
@@ -130,13 +133,37 @@
   function openBidModal() {
     if ($user) {
       showBidModal = true;
+      bidError = '';
+      bidSuccess = '';
+      bidAmount = minimumBidAmount.toString();
     } else {
       showLoginModal = true;
     }
   }
   
+  function handleTimerEnd() {
+    // Reload auction data when timer ends
+    loadAuctionData();
+  }
+  
   onMount(() => {
     loadAuctionData();
+    
+    // For live auctions, set up a refresh interval to get updates
+    if (isLiveAuction) {
+      refreshInterval = setInterval(() => {
+        if (!placingBid) {
+          loadAuctionData();
+        }
+      }, 30000); // Refresh every 30 seconds
+    }
+  });
+  
+  onDestroy(() => {
+    // Clear interval on component destruction
+    if (refreshInterval) {
+      clearInterval(refreshInterval);
+    }
   });
   
   // Define tabs
@@ -149,8 +176,8 @@
 </script>
 
 <svelte:head>
-  <title>{auction?.title || $t('auction.loading')} | {$t('nav.auctions')}</title>
-  <meta name="description" content={auction?.description || $t('auction.loading')} />
+  <title>{auction?.title || $t('common.loading')} | {$t('nav.auctions')}</title>
+  <meta name="description" content={auction?.description || $t('common.loading')} />
 </svelte:head>
 
 <div class="bg-gray-50 dark:bg-gray-900 min-h-screen py-8 px-4 sm:px-6 lg:px-8">
@@ -176,7 +203,7 @@
         title={$t('error.title')}
         message={error}
         action={{
-          label: $t('auctions.backToAuctions'),
+          label: $t('auction.backToAuctions'),
           href: '/auctions'
         }}
       />
@@ -189,7 +216,7 @@
               <AuctionStatus status={auction.status} />
               <span class="inline-flex items-center px-2.5 py-0.5 rounded-md text-sm font-medium bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-200">
                 {auction.auction_type === 'sealed' ? $t('auction.typeSealed') :
-                 auction.auction_type === 'reserve' ? $t('auction.typeReserve') :
+                 auction.auction_type === 'private' ? $t('auction.typeReserve') :
                  $t('auction.typeNoReserve')}
               </span>
               {#if auction.is_featured}
@@ -202,7 +229,7 @@
               {auction.title}
             </h1>
             <p class="text-gray-600 dark:text-gray-400">
-              {$t('auction.idLabel')}: {auction.id}
+              ID: {auction.id}
             </p>
           </div>
           <div class="flex space-x-2">
@@ -210,7 +237,7 @@
               url={`/auctions/${auction.slug}`} 
               title={auction.title}
             />
-            {#if $user?.id === auction.created_by?.id || $user?.is_admin}
+            {#if $user && ($user.id === auction.created_by?.id || $user.is_staff || $user.is_superuser)}
               <Button 
                 variant="outline"
                 href={`/auctions/${auction.id}/edit`}
@@ -249,7 +276,7 @@
                 <h2 class="text-xl font-semibold text-gray-900 dark:text-white mb-4">
                   {$t('auction.description')}
                 </h2>
-                <p>{auction.description}</p>
+                <p>{auction.description || $t('auction.noDescription')}</p>
                 
                 <div class="mt-8 grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
@@ -338,14 +365,14 @@
                   <div class="space-y-4">
                     <div class="bg-gray-50 dark:bg-gray-700 p-4 rounded-lg">
                       <h4 class="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                        {$t('property.keyDetails')}
+                        {$t('property.keyFeatures')}
                       </h4>
                       <dl class="grid grid-cols-2 gap-x-4 gap-y-2">
                         <dt class="text-sm text-gray-500 dark:text-gray-400">
                           {$t('property.propertyType')}
                         </dt>
                         <dd class="text-sm font-medium text-gray-900 dark:text-white">
-                          {property.property_type_display}
+                          {property.property_type_display || property.property_type}
                         </dd>
                         <dt class="text-sm text-gray-500 dark:text-gray-400">
                           {$t('property.size')}
@@ -413,10 +440,10 @@
                       </thead>
                       <tbody class="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
                         {#each auction.bids as bid}
-                          <tr class={bid.bidder === $user?.email ? 'bg-primary-50 dark:bg-primary-900/20' : ''}>
+                          <tr class={bid.bidder?.id === $user?.id ? 'bg-primary-50 dark:bg-primary-900/20' : ''}>
                             <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-white">
-                              {bid.bidder || 'Anonymous'}
-                              {#if bid.bidder === $user?.email}
+                              {bid.bidder_info?.name || bid.bidder?.name || bid.bidder_name || 'Anonymous'}
+                              {#if bid.bidder?.id === $user?.id}
                                 <span class="ml-1 text-xs text-primary-600 dark:text-primary-400">({$t('auction.you')})</span>
                               {/if}
                             </td>
@@ -461,10 +488,10 @@
                       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                     </svg>
                     <h3 class="text-lg font-medium text-gray-900 dark:text-gray-100 mb-1">
-                      {$t('auction.noTerms')}
+                      {$t('auction.noDescription')}
                     </h3>
                     <p class="text-gray-500 dark:text-gray-400">
-                      {$t('auction.contactForTerms')}
+                      {$t('auction.contactSupport')}
                     </p>
                   </div>
                 {/if}
@@ -549,7 +576,7 @@
                   <Button
                     variant="secondary"
                     class="w-full"
-                    href="/login?redirect=/auctions/{auction.slug}"
+                    href={`/login?redirect=/auctions/${auction.slug}`}
                     aria-label={$t('auction.loginToRegister')}
                   >
                     {$t('auction.loginToRegister')}
@@ -560,9 +587,9 @@
                   variant="secondary"
                   class="w-full"
                   href="/auctions"
-                  aria-label={$t('auctions.backToAuctions')}
+                  aria-label={$t('auction.backToAuctions')}
                 >
-                  {$t('auctions.backToAuctions')}
+                  {$t('auction.backToAuctions')}
                 </Button>
               {/if}
             </div>
@@ -575,7 +602,7 @@
               <Button
                 variant="outline"
                 class="w-full"
-                href="/contact?subject=Auction%20{auction.id}"
+                href={`/contact?subject=Auction%20${auction.id}`}
                 aria-label={$t('auction.contactSupport')}
               >
                 {$t('auction.contactSupport')}
@@ -616,7 +643,7 @@
                   <dd class="text-gray-900 dark:text-white">{property.location?.city}, {property.location?.state}</dd>
                   
                   <dt class="text-gray-500 dark:text-gray-400">{$t('property.propertyType')}</dt>
-                  <dd class="text-gray-900 dark:text-white">{property.property_type_display}</dd>
+                  <dd class="text-gray-900 dark:text-white">{property.property_type_display || property.property_type}</dd>
                   
                   <dt class="text-gray-500 dark:text-gray-400">{$t('property.size')}</dt>
                   <dd class="text-gray-900 dark:text-white">{property.size_sqm} {$t('property.sqm')}</dd>
@@ -666,7 +693,7 @@
   title={$t('auction.placeBid')}
   maxWidth="sm"
 >
-  <form on:submit|preventDefault={handlePlaceBid} class="space-y-4">
+  <form on:submit|preventDefault={handlePlaceBid} class="space-y-4 p-6">
     {#if bidError}
       <Alert type="error" message={bidError} />
     {/if}
@@ -735,7 +762,7 @@
   title={$t('auction.loginRequired')}
   maxWidth="sm"
 >
-  <div class="text-center py-4">
+  <div class="text-center py-4 p-6">
     <p class="mb-6 text-gray-600 dark:text-gray-400">
       {$t('auction.loginRequiredMessage')}
     </p>

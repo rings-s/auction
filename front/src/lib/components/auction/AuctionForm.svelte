@@ -179,7 +179,6 @@
     
     try {
       // This would typically upload files to your server and get URLs back
-      // For now, we'll just add them to our media array
       const files = e.detail.files;
       
       // Simulating upload
@@ -301,13 +300,28 @@
       preparedData.registration_deadline = new Date(preparedData.registration_deadline).toISOString();
     }
     
-    // Map related_property_id to related_property for API
+    // FIX: Correctly handle related_property_id mapping to related_property
     if (preparedData.related_property_id) {
+      preparedData.related_property_id = parseInt(preparedData.related_property_id, 10);
       preparedData.related_property = preparedData.related_property_id;
     }
     
-    // Remove client-side only fields
-    delete preparedData.related_property_id;
+    // Convert numeric values to proper numbers
+    if (preparedData.starting_bid) {
+      preparedData.starting_bid = parseFloat(preparedData.starting_bid);
+    }
+    
+    if (preparedData.minimum_increment) {
+      preparedData.minimum_increment = parseFloat(preparedData.minimum_increment);
+    }
+    
+    if (preparedData.auto_extend_minutes) {
+      preparedData.auto_extend_minutes = parseInt(preparedData.auto_extend_minutes, 10);
+    }
+    
+    if (preparedData.minimum_participants) {
+      preparedData.minimum_participants = parseInt(preparedData.minimum_participants, 10);
+    }
     
     return preparedData;
   }
