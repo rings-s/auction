@@ -5,7 +5,7 @@
   import { t, locale } from '$lib/i18n/i18n'; 
   import { user } from '$lib/stores/user';
   import { createProperty, uploadPropertyMediaBatch, addPropertyRoom } from '$lib/api/property';
-  import LocationPicker from '$lib/components/pr  operties/LocationPicker.svelte';
+  import LocationPicker from '$lib/components/properties/LocationPicker.svelte';
   import MediaUploader from '$lib/components/shared/MediaUploader.svelte';
   import RoomManager from '$lib/components/properties/RoomManager.svelte';
   import TagSelector from '$lib/components/ui/TagSelector.svelte';

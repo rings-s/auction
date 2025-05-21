@@ -899,6 +899,8 @@ const translations = {
       minimumIncrement: 'الحد الأدنى للزيادة',
       bidTooLow: 'يجب أن تكون المزايدة على الأقل ${amount}',
       bidPlaced: 'تم تقديم مزايدتك بنجاح!',
+      autoExtend: 'تمديد تلقائي',
+      autoExtendHelp: 'عدد الدقائق التي يتم فيها تمديد المزاد تلقائيًا في حالة تقديم مزايدة قبل انتهاء الوقت',
       loadMore: 'تحميل المزيد',
       endingSoon: 'سينتهي قريبًا',
       biddingTips: 'نصائح المزايدة',
