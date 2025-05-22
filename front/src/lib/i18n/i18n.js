@@ -275,7 +275,22 @@ const translations = {
       descriptionPlaceholder: 'Detailed property description',
       unauthorizedMessage: 'You must be registered as a property owner or appraiser to add properties',
       propertyCreatedMessage: 'Property created successfully and ready for display',
-      createSuccessMediaFailed: 'Property created successfully but some images failed to upload'
+      createSuccessMediaFailed: 'Property created successfully but some images failed to upload',
+      pdfDocument: 'PDF Document',
+      downloadPdf: 'Download PDF',
+      document: 'Document',
+      downloadDocument: 'Download Document',
+      file: 'File',
+      downloadFile: 'Download File',
+      closeGallery: 'Close Gallery',
+      viewImage: 'View Image',
+      mediaItem: 'Media Item',
+      galleryTabs: {
+        photos: 'Photos',
+        videos: 'Videos',
+        documents: 'Documents',
+        otherFiles: 'Other Files'
+      }
     },
 
     properties: {
@@ -823,7 +838,31 @@ const translations = {
       descriptionPlaceholder: 'وصف تفصيلي للعقار',
       unauthorizedMessage: 'يجب أن تكون مسجلاً كمالك عقار أو مقيم عقاري لإضافة عقارات',
       propertyCreatedMessage: 'تم إنشاء العقار بنجاح وهو جاهز للعرض',
-      createSuccessMediaFailed: 'تم إنشاء العقار بنجاح ولكن فشل تحميل بعض الصور'
+      createSuccessMediaFailed: 'تم إنشاء العقار بنجاح ولكن فشل تحميل بعض الصور',
+      pdfDocument: 'مستند بي دي إف',
+      downloadPdf: 'تحميل ملف PDF',
+      document: 'مستند',
+      downloadDocument: 'تحميل المستند',
+      file: 'ملف',
+      downloadFile: 'تحميل الملف',
+      closeGallery: 'إغلاق المعرض',
+      viewImage: 'عرض الصورة',
+      mediaItem: 'عنصر وسائط',
+      galleryTabs: {
+        photos: 'صور',
+        videos: 'فيديوهات',
+        documents: 'مستندات',
+        otherFiles: 'ملفات أخرى'
+      },
+      loading: 'جار تحميل العقار...',
+      edit: 'تعديل العقار',
+      photos: 'صور العقار',
+      address: 'العنوان',
+      city: 'المدينة',
+      state: 'المحافظة/المنطقة',
+      postalCode: 'الرمز البريدي',
+      country: 'الدولة',
+      noAuctionsInfo: 'لا توجد مزادات متاحة لهذا العقار حالياً.'
     },
 
     properties: {

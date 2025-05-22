@@ -201,7 +201,7 @@ class Property(BaseModel):
     # Basic Information
     property_number = models.CharField(_('رقم العقار'), max_length=50, unique=True, blank=True)
     title = models.CharField(_('العنوان'), max_length=255)
-    slug = models.SlugField(_('الرابط المختصر'), max_length=255, unique=True, blank=True)
+    slug = models.SlugField(_('الرابط المختصر'), max_length=255, unique=True, blank=True, allow_unicode=True)
     property_type = models.CharField(_('نوع العقار'), max_length=20, choices=PROPERTY_TYPES)
     building_type = models.CharField(_('نوع المبنى'), max_length=20, choices=BUILDING_TYPES, null=True, blank=True)
     status = models.CharField(_('الحالة'), max_length=20, choices=STATUS_CHOICES, default='available')
@@ -275,7 +275,20 @@ class Property(BaseModel):
 
     def _generate_unique_slug(self):
         """Generate a unique slug for the property"""
-        original_slug = slugify(self.title)
+        # Handle Arabic text by using a custom approach if needed
+        # First try standard slugify
+        original_slug = slugify(self.title, allow_unicode=True)
+        
+        # If slugify produced an empty string (which can happen with only Arabic characters)
+        # create a slug from the property number or a random string
+        if not original_slug:
+            if self.property_number:
+                original_slug = f"property-{self.property_number}"
+            else:
+                # Generate a random string if no property number
+                random_str = ''.join(random.choices('abcdefghijklmnopqrstuvwxyz0123456789', k=8))
+                original_slug = f"property-{random_str}"
+        
         unique_slug = original_slug
         counter = 1
         
@@ -445,7 +458,7 @@ class Auction(BaseModel):
     ]
 
     title = models.CharField(_('العنوان'), max_length=255)
-    slug = models.SlugField(_('الرابط المختصر'), max_length=255, unique=True, blank=True)
+    slug = models.SlugField(_('الرابط المختصر'), max_length=255, unique=True, blank=True, allow_unicode=True)
     auction_type = models.CharField(_('نوع المزاد'), max_length=20, choices=AUCTION_TYPES)
     status = models.CharField(_('الحالة'), max_length=20, choices=STATUS_CHOICES, default='draft')
     description = models.TextField(_('الوصف'))
@@ -499,7 +512,7 @@ class Auction(BaseModel):
 
     def _generate_unique_slug(self):
         """Generate a unique slug for the auction"""
-        original_slug = slugify(self.title)
+        original_slug = slugify(self.title, allow_unicode=True)
         unique_slug = original_slug
         counter = 1
         

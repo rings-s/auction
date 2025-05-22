@@ -49,10 +49,10 @@
     
     // Gallery tabs
     const mediaTabs = [
-      { id: 'image', label: 'Photos' },
-      { id: 'video', label: 'Videos' },
-      { id: 'document', label: 'Documents' },
-      { id: 'other', label: 'Other Files' }
+      { id: 'image', label: $t('property.galleryTabs.photos') },
+      { id: 'video', label: $t('property.galleryTabs.videos') },
+      { id: 'document', label: $t('property.galleryTabs.documents') },
+      { id: 'other', label: $t('property.galleryTabs.otherFiles') }
     ];
     
     // Sticky header control
@@ -62,8 +62,8 @@
     let isHeaderSticky = false;
     $: isHeaderSticky = scrollY > headerHeight;
     
-    // Get slug from URL
-    $: slug = $page.params.slug;
+    // Get slug from URL and ensure it's properly decoded
+    $: slug = decodeURIComponent($page.params.slug);
     
     // Check edit permissions
     $: canEdit = $user && (
@@ -270,7 +270,10 @@
       }
     }
     
-    function toggleGallery() {
+    function toggleGallery(index = 0) {
+      if (typeof index === 'number') {
+        activeImageIndex = index;
+      }
       showFullScreenGallery = !showFullScreenGallery;
       document.body.style.overflow = showFullScreenGallery ? 'hidden' : '';
     }
@@ -329,15 +332,23 @@
                   </video>`;
         case 'document':
           if (item.url.endsWith('.pdf')) {
-            return `<iframe src="${item.url}" class="w-full h-[80vh]" frameborder="0"></iframe>`;
+            return `<div class="text-center text-white">
+                      <svg class="mx-auto h-20 w-20 text-gray-200" fill="currentColor" viewBox="0 0 24 24">
+                        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8l-6-6zm-1 5V3.5L18.5 9H13v-2z"/>
+                      </svg>
+                      <p class="mt-4 text-lg">${$t('property.pdfDocument')}: ${item.name}</p>
+                      <a href="${item.url}" download class="mt-2 inline-block px-4 py-2 bg-white text-gray-900 rounded-md hover:bg-gray-200 transition-colors">
+                        ${$t('property.downloadPdf')}
+                      </a>
+                    </div>`;
           } else {
             return `<div class="text-center text-white">
                       <svg class="mx-auto h-20 w-20 text-gray-200" fill="currentColor" viewBox="0 0 24 24">
                         <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8l-6-6zm-1 5V3.5L18.5 9H13v-2z"/>
                       </svg>
-                      <p class="mt-4 text-lg">Document: ${item.name}</p>
-                      <a href="${item.url}" target="_blank" class="mt-2 inline-block px-4 py-2 bg-white text-gray-900 rounded-md hover:bg-gray-200 transition-colors">
-                        Open Document
+                      <p class="mt-4 text-lg">${$t('property.document')}: ${item.name}</p>
+                      <a href="${item.url}" download class="mt-2 inline-block px-4 py-2 bg-white text-gray-900 rounded-md hover:bg-gray-200 transition-colors">
+                        ${$t('property.downloadDocument')}
                       </a>
                     </div>`;
           }
@@ -346,9 +357,9 @@
                     <svg class="mx-auto h-20 w-20 text-gray-200" fill="currentColor" viewBox="0 0 24 24">
                       <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8l-6-6zm-1 5V3.5L18.5 9H13v-2z"/>
                     </svg>
-                    <p class="mt-4 text-lg">File: ${item.name}</p>
+                    <p class="mt-4 text-lg">${$t('property.file')}: ${item.name}</p>
                     <a href="${item.url}" download class="mt-2 inline-block px-4 py-2 bg-white text-gray-900 rounded-md hover:bg-gray-200 transition-colors">
-                      Download File
+                      ${$t('property.downloadFile')}
                     </a>
                   </div>`;
       }
@@ -628,14 +639,14 @@
           <!-- Overview Tab -->
           <div 
             id="tab-overview"
-            class="p-6"  
+            class="p-8"  
             style="display: {activeTab === 'overview' ? 'block' : 'none'}"
             transition:fade={{ duration: 200 }}
           >
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-10">
               <!-- Main Image and Gallery Preview - REFACTORED -->
               <div class="md:col-span-2">
-                <div class="relative rounded-xl overflow-hidden shadow-lg aspect-video bg-gray-100 dark:bg-gray-750">
+                <div class="aspect-w-4 aspect-h-3 mb-6 rounded-xl overflow-hidden shadow-lg relative bg-gray-100 dark:bg-gray-800">
                   {#if isImagesLoading && images.length > 0}
                     <div class="absolute inset-0 flex items-center justify-center bg-gray-100 dark:bg-gray-750">
                       <div class="animate-pulse flex flex-col items-center">
@@ -646,13 +657,13 @@
                   {/if}
                   
                   {#if mainImage}
-                    <img 
-                      src={mainImage.url} 
-                      alt={property.title}
-                      class="w-full h-full object-cover object-center transition-opacity duration-300 hover:opacity-95"
-                      on:click={toggleGallery}
-                      on:load={handleImageLoad}
-                    />
+                      <img 
+                        src="{mainImage?.url}" 
+                        alt="{mainImage?.name || property.title}" 
+                        class="w-full h-full object-cover transition-opacity duration-300 {isImagesLoading ? 'opacity-0' : 'opacity-100 loaded'}" 
+                        on:load={handleImageLoad}
+                        on:error={(e) => { e.currentTarget.src = '/images/placeholder-property.jpg'; }}
+                      />
                     
                     <!-- Gradient overlay at bottom -->
                     <div class="absolute inset-x-0 bottom-0 h-24 bg-gradient-to-t from-black/60 to-transparent pointer-events-none"></div>
@@ -683,7 +694,8 @@
                         class="max-h-full max-w-full"
                         poster={videos[0].thumbnail}
                       >
-                        Your browser does not support the video tag.
+                        <track kind="captions" src="" label="{$t('common.captions')}" />
+                        <p>{$t('common.videoNotSupported')}</p>
                       </video>
                     </div>
                   {:else}
@@ -726,7 +738,7 @@
                 {/if}
                 
                 <!-- Description -->
-                <div class="mt-8">
+                <div class="mt-10">
                   <h2 class="text-xl font-bold text-gray-900 dark:text-white mb-4 flex items-center">
                     <svg class="w-5 h-5 mr-2 text-primary-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
@@ -734,13 +746,13 @@
                     {$t('property.description')}
                   </h2>
                   <div class="prose dark:prose-invert max-w-none">
-                    <p class="text-gray-600 dark:text-gray-300">{property.description}</p>
+                    <p class="text-gray-600 dark:text-gray-300 leading-relaxed text-base">{property.description}</p>
                   </div>
                 </div>
                 
                 <!-- Key Features -->
                 {#if (property.features && property.features.length > 0) || (property.amenities && property.amenities.length > 0)}
-                  <div class="mt-8">
+                  <div class="mt-10 pb-4">
                     <h2 class="text-xl font-bold text-gray-900 dark:text-white mb-4 flex items-center">
                       <svg class="w-5 h-5 mr-2 text-primary-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z" />
@@ -748,7 +760,7 @@
                       {$t('property.keyFeatures')}
                     </h2>
                     
-                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-8">
                       {#if property.features && property.features.length > 0}
                         <div>
                           <h3 class="text-lg font-semibold text-gray-800 dark:text-gray-200 mb-3">
@@ -792,7 +804,7 @@
               <!-- Sidebar -->
               <div class="md:col-span-1">
                 <!-- Property Details Card - REFACTORED -->
-                <div class="bg-gray-50 dark:bg-gray-750 rounded-xl shadow-sm overflow-hidden">
+                <div class="bg-gray-50 dark:bg-gray-750 rounded-xl shadow-md overflow-hidden border border-gray-100 dark:border-gray-700">
                   <div class="p-5">
                     <h2 class="text-lg font-bold text-gray-900 dark:text-white mb-4 flex items-center">
                       <svg class="w-5 h-5 mr-2 text-primary-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -802,10 +814,10 @@
                     </h2>
                     
                     <!-- Details Grid - REFACTORED with nicer cards -->
-                    <div class="space-y-4">
-                      <div class="grid grid-cols-2 gap-4">
+                    <div class="space-y-5">
+                      <div class="grid grid-cols-2 gap-5">
                         <!-- Size -->
-                        <div class="bg-white dark:bg-gray-800 p-3 rounded-lg flex flex-col items-center shadow-sm hover:shadow-md transition-shadow">
+                        <div class="bg-white dark:bg-gray-800 p-4 rounded-lg flex flex-col items-center shadow-sm hover:shadow-md transition-shadow border border-gray-100 dark:border-gray-700">
                           <svg class="w-6 h-6 text-primary-500 mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5v-4m0 4h-4m4 0l-5-5" />
                           </svg>
@@ -814,7 +826,7 @@
                         </div>
                         
                         <!-- Floors -->
-                        <div class="bg-white dark:bg-gray-800 p-3 rounded-lg flex flex-col items-center shadow-sm hover:shadow-md transition-shadow">
+                        <div class="bg-white dark:bg-gray-800 p-4 rounded-lg flex flex-col items-center shadow-sm hover:shadow-md transition-shadow border border-gray-100 dark:border-gray-700">
                           <svg class="w-6 h-6 text-primary-500 mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
                           </svg>
@@ -823,7 +835,7 @@
                         </div>
                         
                         <!-- Rooms -->
-                        <div class="bg-white dark:bg-gray-800 p-3 rounded-lg flex flex-col items-center shadow-sm hover:shadow-md transition-shadow">
+                        <div class="bg-white dark:bg-gray-800 p-4 rounded-lg flex flex-col items-center shadow-sm hover:shadow-md transition-shadow border border-gray-100 dark:border-gray-700">
                           <svg class="w-6 h-6 text-primary-500 mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 5a1 1 0 011-1h14a1 1 0 011 1v2a1 1 0 01-1 1H5a1 1 0 01-1-1V5zM4 13a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H5a1 1 0 01-1-1v-6zM16 13a1 1 0 011-1h2a1 1 0 011 1v6a1 1 0 01-1 1h-2a1 1 0 01-1-1v-6z" />
                           </svg>
@@ -832,7 +844,7 @@
                         </div>
                         
                         <!-- Year Built -->
-                        <div class="bg-white dark:bg-gray-800 p-3 rounded-lg flex flex-col items-center shadow-sm hover:shadow-md transition-shadow">
+                        <div class="bg-white dark:bg-gray-800 p-4 rounded-lg flex flex-col items-center shadow-sm hover:shadow-md transition-shadow border border-gray-100 dark:border-gray-700">
                           <svg class="w-6 h-6 text-primary-500 mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
                           </svg>
@@ -866,7 +878,7 @@
                 </div>
                 
                 <!-- Contact Owner Card -->
-                <div class="mt-6 bg-white dark:bg-gray-800 rounded-xl shadow-md overflow-hidden">
+                <div class="mt-8 bg-white dark:bg-gray-800 rounded-xl shadow-md overflow-hidden border border-gray-100 dark:border-gray-700">
                   <div class="p-5">
                     <h2 class="text-lg font-bold text-gray-900 dark:text-white mb-4 flex items-center">
                       <svg class="w-5 h-5 mr-2 text-primary-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -876,7 +888,7 @@
                     </h2>
                     
                     {#if $user}
-                      <form class="space-y-4">
+                      <form class="space-y-5">
                         <div>
                           <label for="name" class="block text-sm font-medium text-gray-700 dark:text-gray-300">
                             {$t('property.name')}
@@ -910,13 +922,13 @@
                         </button>
                       </form>
                     {:else}
-                      <div class="text-center py-4">
+                      <div class="text-center py-5">
                         <p class="text-gray-500 dark:text-gray-400 mb-4 text-sm">
                           {$t('property.loginToContact')}
                         </p>
                         <a 
                           href="/login" 
-                          class="inline-flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-primary-600 hover:bg-primary-700 focus:ring-2 focus:ring-primary-500 transition-colors"
+                          class="inline-flex justify-center py-2.5 px-5 border border-transparent rounded-lg shadow-md text-sm font-medium text-white bg-primary-600 hover:bg-primary-700 focus:ring-2 focus:ring-primary-500 transition-colors"
                         >
                           {$t('nav.login')}
                         </a>
@@ -1106,37 +1118,37 @@
           <!-- Location Tab -->
           <div 
             id="tab-location"
-            class="p-6" 
+            class="p-8" 
             style="display: {activeTab === 'location' ? 'block' : 'none'}"
             transition:fade={{ duration: 200 }}
           >
-            <h2 class="text-xl font-bold text-gray-900 dark:text-white mb-6 flex items-center">
-              <svg class="w-6 h-6 mr-2 text-primary-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <h2 class="text-xl font-bold text-gray-900 dark:text-white mb-8 flex items-center">
+              <svg class="w-6 h-6 mr-3 text-primary-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
               </svg>
               {$t('property.location')}
             </h2>
             
-            <div class="grid grid-cols-1 md:grid-cols-12 gap-8">
+            <div class="grid grid-cols-1 md:grid-cols-12 gap-10">
               <!-- Map Container -->
               <div class="md:col-span-8">
                 {#if property.location && (property.location.latitude || property.location.longitude)}
                   <div class="relative">
                     <div 
                       bind:this={mapElement} 
-                      class="h-96 w-full rounded-xl overflow-hidden shadow-md bg-gray-100 dark:bg-gray-700"
+                      class="h-96 w-full rounded-xl overflow-hidden shadow-lg bg-gray-100 dark:bg-gray-700 border-2 border-gray-200 dark:border-gray-600"
                     ></div>
                     
                     <!-- Map Interaction Notice -->
                     <div class="absolute bottom-4 right-4 bg-white dark:bg-gray-800 rounded-lg shadow-lg p-3 max-w-xs opacity-90">
-                      <p class="text-sm text-gray-600 dark:text-gray-300">
+                      <p class="text-sm text-gray-600 dark:text-gray-400 font-medium">
                         {$t('property.clickToInteract')}
                       </p>
                     </div>
                   </div>
                 {:else}
-                  <div class="h-96 w-full bg-gray-100 dark:bg-gray-700 rounded-xl flex items-center justify-center">
+                  <div class="h-96 w-full bg-gray-100 dark:bg-gray-700 rounded-xl flex items-center justify-center shadow-lg border-2 border-gray-200 dark:border-gray-600">
                     <div class="text-center p-8">
                       <svg class="mx-auto h-12 w-12 text-gray-400 dark:text-gray-500 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
@@ -1152,8 +1164,8 @@
               <!-- Location Details -->
               <div class="md:col-span-4">
                 {#if property.location}
-                  <div class="bg-white dark:bg-gray-800 rounded-xl shadow-md p-5 h-full">
-                    <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-4 flex items-center">
+                  <div class="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6 h-full border border-gray-100 dark:border-gray-700">
+                    <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-5 flex items-center">
                       <svg class="w-5 h-5 mr-2 text-primary-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
@@ -1161,38 +1173,38 @@
                       {$t('property.addressInfo')}
                     </h3>
                     
-                    <div class="space-y-3">
-                      <div class="flex">
-                        <span class="text-gray-500 dark:text-gray-400 w-24 flex-shrink-0">{$t('property.address')}:</span>
-                        <span class="text-gray-800 dark:text-gray-200 flex-grow">{property.location.address}</span>
-                      </div>
+                    <div class="space-y-4">
+                      <div class="flex items-center py-2 px-3 rounded-md hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
+                      <span class="text-gray-600 dark:text-gray-400 w-28 flex-shrink-0 font-medium">{$t('property.address')}:</span>
+                      <span class="text-gray-900 dark:text-gray-200 flex-grow ml-2">{property.location.address}</span>
+                    </div>
                       
-                      <div class="flex">
-                        <span class="text-gray-500 dark:text-gray-400 w-24 flex-shrink-0">{$t('property.city')}:</span>
-                        <span class="text-gray-800 dark:text-gray-200 flex-grow">{property.location.city}</span>
-                      </div>
+                      <div class="flex items-center py-2 px-3 rounded-md hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
+                      <span class="text-gray-600 dark:text-gray-400 w-28 flex-shrink-0 font-medium">{$t('property.city')}:</span>
+                      <span class="text-gray-900 dark:text-gray-200 flex-grow ml-2">{property.location.city}</span>
+                    </div>
                       
-                      <div class="flex">
-                        <span class="text-gray-500 dark:text-gray-400 w-24 flex-shrink-0">{$t('property.state')}:</span>
-                        <span class="text-gray-800 dark:text-gray-200 flex-grow">{property.location.state}</span>
-                      </div>
+                      <div class="flex items-center py-2 px-3 rounded-md hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
+                      <span class="text-gray-600 dark:text-gray-400 w-28 flex-shrink-0 font-medium">{$t('property.state')}:</span>
+                      <span class="text-gray-900 dark:text-gray-200 flex-grow ml-2">{property.location.state}</span>
+                    </div>
                       
                       {#if property.location.postal_code}
-                        <div class="flex">
-                          <span class="text-gray-500 dark:text-gray-400 w-24 flex-shrink-0">{$t('property.postalCode')}:</span>
-                          <span class="text-gray-800 dark:text-gray-200 flex-grow">{property.location.postal_code}</span>
+                        <div class="flex items-center py-2 px-3 rounded-md hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
+                          <span class="text-gray-600 dark:text-gray-400 w-28 flex-shrink-0 font-medium">{$t('property.postalCode')}:</span>
+                          <span class="text-gray-900 dark:text-gray-200 flex-grow ml-2">{property.location.postal_code}</span>
                         </div>
                       {/if}
                       
-                      <div class="flex">
-                        <span class="text-gray-500 dark:text-gray-400 w-24 flex-shrink-0">{$t('property.country')}:</span>
-                        <span class="text-gray-800 dark:text-gray-200 flex-grow">{property.location.country}</span>
-                      </div>
+                      <div class="flex items-center py-2 px-3 rounded-md hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
+                      <span class="text-gray-600 dark:text-gray-400 w-28 flex-shrink-0 font-medium">{$t('property.country')}:</span>
+                      <span class="text-gray-900 dark:text-gray-200 flex-grow ml-2">{property.location.country}</span>
+                    </div>
                       
                       {#if property.location.latitude && property.location.longitude}
-                        <div class="flex pt-2 border-t border-gray-200 dark:border-gray-700">
-                          <span class="text-gray-500 dark:text-gray-400 w-24 flex-shrink-0">{$t('property.coordinates')}:</span>
-                          <span class="text-gray-800 dark:text-gray-200 flex-grow">
+                        <div class="flex items-center py-1.5 px-2 mt-1 border-t border-gray-200 dark:border-gray-700 pt-3 rounded-md hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
+                          <span class="text-gray-600 dark:text-gray-400 w-28 flex-shrink-0 font-medium">{$t('property.coordinates')}:</span>
+                          <span class="text-gray-900 dark:text-gray-200 flex-grow ml-2 font-mono text-sm">
                             {property.location.latitude}, {property.location.longitude}
                           </span>
                         </div>
@@ -1200,14 +1212,14 @@
                     </div>
                     
                     <!-- Nearby Services Placeholder -->
-                    <div class="mt-6">
-                      <h4 class="text-base font-medium text-gray-900 dark:text-white mb-2 flex items-center">
-                        <svg class="w-4 h-4 mr-1 text-primary-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <div class="mt-7 pt-4 border-t border-gray-200 dark:border-gray-700">
+                      <h4 class="text-base font-medium text-gray-900 dark:text-white mb-3 flex items-center">
+                        <svg class="w-4 h-4 mr-2 text-primary-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                         </svg>
                         {$t('property.nearbyServices')}
                       </h4>
-                      <p class="text-sm text-gray-500 dark:text-gray-400 italic">
+                      <p class="text-sm text-gray-600 dark:text-gray-400 bg-gray-50 dark:bg-gray-750 p-3 rounded-lg">
                         {$t('property.nearbyServicesInfo')}
                       </p>
                     </div>
@@ -1241,7 +1253,6 @@
                       : 'bg-transparent text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-200'
                     } transition-colors duration-200 mx-1`}
                   on:click={() => setActiveMediaType(tab.id)}
-                  aria-selected={activeMediaType === tab.id}
                   disabled={property?.media?.filter(item => item.media_type === tab.id).length === 0}
                   class:opacity-50={property?.media?.filter(item => item.media_type === tab.id).length === 0}
                 >
@@ -1260,6 +1271,10 @@
                   <div 
                     class="rounded-lg overflow-hidden shadow-md group relative transition-all hover:shadow-lg hover:-translate-y-1 cursor-pointer border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800"
                     on:click={() => { activeImageIndex = index; toggleGallery(); }}
+                    on:keydown={(e) => { if (e.key === 'Enter' || e.key === ' ') { activeImageIndex = index; toggleGallery(); } }}
+                    role="button"
+                    tabindex="0"
+                    aria-label={`View ${mediaItem.name || 'media item'}`}
                   >
                     <!-- Media Preview based on type -->
                     <div class="aspect-w-4 aspect-h-3 bg-gray-100 dark:bg-gray-700 relative">
@@ -1280,14 +1295,14 @@
                         </div>
                       {:else if mediaItem.media_type === 'document'}
                         <div class="w-full h-full flex items-center justify-center bg-blue-50 dark:bg-blue-900/20">
-                          <svg class="w-12 h-12 text-blue-500 dark:text-blue-400 group-hover:scale-110 transition-transform" fill="currentColor" viewBox="0 0 20 20">
+                          <svg class="w-12 h-12 text-blue-400 dark:text-blue-400 group-hover:scale-110 transition-transform" fill="currentColor" viewBox="0 0 20 20">
                             <path d="M4 4a2 2 0 00-2 2v8a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2H4zm2 3a1 1 0 011-1h6a1 1 0 110 2H7a1 1 0 01-1-1zm1 3a1 1 0 100 2h6a1 1 0 100-2H7z" />
                           </svg>
                         </div>
                       {:else}
                         <div class="w-full h-full flex items-center justify-center bg-gray-100 dark:bg-gray-800">
                           <svg class="w-12 h-12 text-gray-400 group-hover:text-gray-500 transition-colors" fill="currentColor" viewBox="0 0 20 20">
-                            <path d="M4 4a2 2 0 00-2 2v8a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2H4zm12 12H4V6h12v10z" />
+                            <path fill-rule="evenodd" d="M4 4a2 2 0 00-2 2v8a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2H4zm12 12H4V6h12v10z" clip-rule="evenodd" />
                           </svg>
                         </div>
                       {/if}
@@ -1479,8 +1494,13 @@
     <div 
       class="fixed inset-0 bg-black bg-opacity-95 z-50 flex flex-col items-center justify-center p-4 animate-fadeIn"
       on:click={toggleGallery}
+      on:keydown={(e) => { if (e.key === 'Escape') toggleGallery(); }}
       on:touchstart={handleTouchStart}
       on:touchend={handleTouchEnd}
+      role="dialog"
+      tabindex="0"
+      aria-modal="true"
+      aria-label={$t('property.viewImage')}
     >
       <!-- Header with title and close button -->
       <div class="w-full max-w-6xl flex items-center justify-between mb-4 text-white">
@@ -1488,11 +1508,11 @@
           {filteredMedia[activeImageIndex]?.name || `${property.title} - ${activeMediaType} ${activeImageIndex + 1}/${filteredMedia.length}`}
         </h3>
         
-        <!-- Close Button -->
+        <!-- Close Button - Improved visibility -->
         <button 
-          class="rounded-full bg-black bg-opacity-50 hover:bg-opacity-70 p-2 focus:outline-none transition-colors"
-          on:click={toggleGallery}
-          aria-label="Close gallery"
+          class="rounded-full bg-red-600 hover:bg-red-700 p-3 focus:outline-none transition-colors shadow-lg"
+          on:click={(e) => { e.stopPropagation(); toggleGallery(); }}
+          aria-label={$t('property.closeGallery')}
         >
           <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
@@ -1502,12 +1522,17 @@
       
       <div class="relative w-full max-w-6xl mx-auto flex-grow flex items-center justify-center">
         <!-- Main Media Item - Now with Fade transition -->
-        <div 
-          class="transition-opacity duration-300 w-full h-full flex items-center justify-center"
-          on:click={(e) => e.stopPropagation()}
-          in:fade={{ duration: 200 }}
-        >
-          {@html renderMediaItem(filteredMedia[activeImageIndex])}
+        <div class="transition-opacity duration-300 w-full h-full flex items-center justify-center" in:fade={{ duration: 200 }}>
+          <div 
+            role="button"
+            tabindex="0"
+            class="w-full h-full flex items-center justify-center"
+            on:click={(e) => e.stopPropagation()}
+            on:keydown={(e) => { if (e.key === 'Enter' || e.key === ' ') e.stopPropagation(); }}
+            aria-label={filteredMedia[activeImageIndex]?.name || $t('property.mediaItem')}
+          >
+            {@html renderMediaItem(filteredMedia[activeImageIndex])}
+          </div>
         </div>
         
         <!-- Navigation Controls - Enhanced with better UI -->
@@ -1534,7 +1559,7 @@
       </div>
       
       <!-- Media Info and Counter -->
-      <div class="w-full max-w-6xl text-center mt-2 mb-2 text-white flex items-center justify-center space-x-4">
+      <div class="w-full max-w-6xl text-center mt-4 mb-4 text-white flex items-center justify-center space-x-4">
         <!-- Counter info -->
         <div class="px-3 py-1 bg-black bg-opacity-50 rounded-md text-sm backdrop-blur-sm">
           {activeImageIndex + 1} / {filteredMedia.length}

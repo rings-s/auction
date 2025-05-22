@@ -145,7 +145,8 @@ export async function fetchAuctionById(id) {
 // Fetch an auction by slug
 export async function fetchAuctionBySlug(slug) {
   if (!slug) throw new Error('Auction slug is required');
-  return await apiRequest(`${AUCTION_URL}/${slug}/`, { method: 'GET' });
+  const encodedSlug = encodeURIComponent(slug);
+  return await apiRequest(`${AUCTION_URL}/${encodedSlug}/`, { method: 'GET' });
 }
 
 // Get all bids for a specific auction by slug

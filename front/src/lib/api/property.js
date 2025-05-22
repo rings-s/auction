@@ -111,47 +111,47 @@ async function extractErrorResponse(response) {
 
 /**
  * Parse error messages from Django REST Framework
+ * @param {string | ({ error?: { message?: string }, detail?: string } & { [key: string]: string | string[] }) | null | undefined} data - The error data.
  */
 function parseErrorMessage(data) {
   // Handle string errors
   if (typeof data === 'string') return data;
   
-  // Handle DRF's error detail
-  if (data?.error?.message) return data.error.message;
-  if (data?.detail) return data.detail;
+  // Handle DRF's error detail (checking for data before accessing properties)
+  if (data && data.error && typeof data.error.message === 'string') return data.error.message;
+  if (data && typeof data.detail === 'string') return data.detail;
   
-  // Handle validation errors
-  if (typeof data === 'object') {
+  // Handle validation errors (ensure data is a non-null, non-array object)
+  if (data && typeof data === 'object' && !Array.isArray(data)) {
     const errors = [];
-    
-    // Handle nested error object from our custom response format
-    if (data.error && typeof data.error === 'object') {
-      for (const [field, message] of Object.entries(data.error)) {
-        if (typeof message === 'string') {
-          errors.push(`${field}: ${message}`);
-        } else if (Array.isArray(message)) {
-          errors.push(`${field}: ${message.join(', ')}`);
-        }
-      }
-    } else {
-      // Handle standard DRF validation errors
-      for (const [field, message] of Object.entries(data)) {
-        if (typeof message === 'string') {
-          errors.push(`${field}: ${message}`);
-        } else if (Array.isArray(message)) {
-          errors.push(`${field}: ${message.join(', ')}`);
+    for (const key in data) {
+      if (Object.prototype.hasOwnProperty.call(data, key)) {
+        // Ensure data[key] is not null or undefined before trying to join or convert to string
+        const value = data[key];
+        if (value !== null && value !== undefined) {
+          if (Array.isArray(value)) {
+            errors.push(`${key}: ${value.join(', ')}`);
+          } else {
+            errors.push(`${key}: ${String(value)}`);
+          }
         }
       }
     }
+    if (errors.length > 0) return errors.join('; ');
     
-    if (errors.length) return errors.join('; ');
+    // Fallback for empty objects or objects not matching the above structure, return generic message or stringify
+    // This handles cases where data is an empty object {} after the loop
+    if (Object.keys(data).length === 0) return 'Error: Received an empty error object.'; // Or simply return ''
+    // If it fell through, it might be an object not fitting other patterns, try to stringify non-empty objects
+    return JSON.stringify(data); 
   }
   
-  return 'An unexpected error occurred';
+  return 'An unknown error occurred'; // Fallback for other types or if data is null/undefined initially
 }
 
 /**
  * Format property data for API submission
+ * @param {any} data - The raw property data.
  */
 function formatPropertyData(data) {
   const formatted = { ...data };
@@ -191,7 +191,7 @@ function formatPropertyData(data) {
   
   // Ensure rooms have proper data types if present
   if (formatted.rooms && Array.isArray(formatted.rooms)) {
-    formatted.rooms = formatted.rooms.map(room => {
+    formatted.rooms = formatted.rooms.map(/** @param {any} room */ room => {
       const formattedRoom = { ...room };
       
       // Convert room numeric fields
@@ -212,6 +212,7 @@ function formatPropertyData(data) {
 
 /**
  * Get properties with optional filtering
+ * @param {object} [filters={}] - Optional filters to apply.
  */
 export async function getProperties(filters = {}) {
   // Build query string from filters
@@ -230,6 +231,7 @@ export async function getProperties(filters = {}) {
 
 /**
  * Get a single property by ID
+ * @param {string | number} id - The ID of the property to retrieve.
  */
 export async function getProperty(id) {
   if (!id) throw new Error('Property ID is required');
@@ -238,14 +240,26 @@ export async function getProperty(id) {
 
 /**
  * Get a property by slug
+ * @param {string} slug - The slug of the property to retrieve.
  */
 export async function getPropertyBySlug(slug) {
   if (!slug) throw new Error('Property slug is required');
-  return await api(`${API.PROPERTIES}${slug}/`, { method: 'GET' });
+  
+  try {
+    // Properly encode the slug to handle Arabic and other non-ASCII characters
+    const encodedSlug = encodeURIComponent(slug);
+    
+    // Make the API request with the encoded slug
+    return await api(`${API.PROPERTIES}${encodedSlug}/`, { method: 'GET' });
+  } catch (error) {
+    console.error('Error fetching property by slug:', error);
+    throw error;
+  }
 }
 
 /**
  * Create a new property
+ * @param {any} propertyData - The data for the new property.
  */
 export async function createProperty(propertyData) {
   const formattedData = formatPropertyData(propertyData);
@@ -258,6 +272,8 @@ export async function createProperty(propertyData) {
 
 /**
  * Update an existing property
+ * @param {string | number} id - The ID of the property to update.
+ * @param {any} propertyData - The new data for the property.
  */
 export async function updateProperty(id, propertyData) {
   if (!id) throw new Error('Property ID is required');
@@ -591,5 +607,3 @@ export async function getPropertiesByType(propertyType) {
 export async function getPropertyStats() {
   return await api(`${API_BASE_URL}/property-stats/`, { method: 'GET' });
 }
-
-

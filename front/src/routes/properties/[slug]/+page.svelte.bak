@@ -1,0 +1,700 @@
+<!-- src/routes/properties/[slug]/+page.svelte -->
+<script>
+    import { onMount, tick } from 'svelte';
+    import { page } from '$app/stores';
+    import { goto } from '$app/navigation';
+    import { t } from '$lib/i18n/i18n';
+    import { user } from '$lib/stores/user';
+    import { getPropertyBySlug } from '$lib/api/property';
+    import { fade, fly, slide } from 'svelte/transition';
+    import { quintOut, cubicOut } from 'svelte/easing';
+    import TagSelector from '$lib/components/ui/TagSelector.svelte';
+    
+    // State variables
+    let property = null;
+    let loading = true;
+    let error = null;
+    let activeImageIndex = 0;
+    let showFullScreenGallery = false;
+    let mapInitialized = false;
+    let mapElement;
+    let map;
+    let marker;
+    let activeMediaType = 'image'; // Default to image for gallery filter
+    let touchStartX = 0;
+    let touchEndX = 0;
+    let isImagesLoading = true;
+    let imagesLoaded = 0;
+    let thumbnailsContainer;
+    
+    // Filter media by type
+    $: filteredMedia = property?.media?.filter(item => item.media_type === activeMediaType) || [];
+    $: images = property?.media?.filter(item => item.media_type === 'image') || [];
+    $: videos = property?.media?.filter(item => item.media_type === 'video') || [];
+    $: documents = property?.media?.filter(item => item.media_type === 'document') || [];
+    $: otherFiles = property?.media?.filter(item => item.media_type === 'other') || [];
+    
+    // Get main image
+    $: mainImage = property?.main_image || (images.length > 0 ? images.find(img => img.is_primary) || images[0] : null);
+    
+    // Tabs management
+    let activeTab = 'overview';
+    const tabs = [
+      { id: 'overview', label: 'Overview', icon: 'home' },
+      { id: 'rooms', label: 'Rooms & Features', icon: 'layout' },
+      { id: 'location', label: 'Location', icon: 'map-pin' },
+      { id: 'gallery', label: 'Gallery', icon: 'image' },
+      { id: 'auctions', label: 'Auctions', icon: 'gavel' }
+    ];
+    
+    // Gallery tabs
+    const mediaTabs = [
+      { id: 'image', label: 'Photos' },
+      { id: 'video', label: 'Videos' },
+      { id: 'document', label: 'Documents' },
+      { id: 'other', label: 'Other Files' }
+    ];
+    
+    // Sticky header control
+    let scrollY = 0;
+    let headerHeight = 0;
+    let headerElement;
+    let isHeaderSticky = false;
+    $: isHeaderSticky = scrollY > headerHeight;
+    
+    // Get slug from URL
+    $: slug = $page.params.slug;
+    
+    // Check edit permissions
+    $: canEdit = $user && (
+      $user.is_staff || 
+      ($user.role === 'appraiser') || 
+      (property?.owner?.id === $user.id)
+    );
+    
+    // Track image loading progress
+    function handleImageLoad() {
+      imagesLoaded++;
+      if (imagesLoaded >= images.length) {
+        isImagesLoading = false;
+      }
+    }
+  
+    // Load property data
+    async function loadProperty() {
+      try {
+        loading = true;
+        error = null;
+        imagesLoaded = 0;
+        isImagesLoading = true;
+        
+        const response = await getPropertyBySlug(slug);
+        property = response;
+        
+        // Initialize after data loads
+        await tick();
+        if (headerElement) {
+          headerHeight = headerElement.offsetHeight;
+        }
+        
+        // Initialize map if location tab is active
+        if (activeTab === 'location' && property?.location?.latitude && property?.location?.longitude) {
+          initializeMap();
+        }
+      } catch (err) {
+        console.error('Error loading property:', err);
+        error = err.message || $t('error.fetchFailed');
+      } finally {
+        loading = false;
+      }
+    }
+    
+    // Format currency display
+    function formatCurrency(value) {
+      if (!value) return '$0';
+      return new Intl.NumberFormat('en-US', {
+        style: 'currency',
+        currency: 'USD',
+        maximumFractionDigits: 0
+      }).format(value);
+    }
+    
+    // Format file size
+    function formatFileSize(bytes) {
+      if (!bytes) return '0 Bytes';
+      const k = 1024;
+      const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+      const i = Math.floor(Math.log(bytes) / Math.log(k));
+      return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+    }
+    
+    // Switch tabs with smooth transitions
+    async function setActiveTab(tabId) {
+      if (activeTab === tabId) return;
+      activeTab = tabId;
+      
+      // Initialize map if switching to location tab
+      if (tabId === 'location' && property?.location?.latitude && property?.location?.longitude) {
+        await tick();
+        initializeMap();
+      }
+      
+      // Scroll to tab content on mobile
+      if (window.innerWidth < 768) {
+        const tabContent = document.getElementById(`tab-${tabId}`);
+        if (tabContent) {
+          const offset = isHeaderSticky ? 60 : 0;
+          window.scrollTo({
+            top: tabContent.offsetTop - offset,
+            behavior: 'smooth'
+          });
+        }
+      }
+    }
+    
+    // Switch media type for gallery
+    function setActiveMediaType(mediaType) {
+      activeMediaType = mediaType;
+      activeImageIndex = 0; // Reset active index when changing media types
+    }
+    
+    // Initialize map with property location
+    function initializeMap() {
+      if (typeof window === 'undefined' || !property?.location || mapInitialized) return;
+      
+      // Load Leaflet if not already loaded
+      if (!window.L) {
+        const cssLink = document.createElement('link');
+        cssLink.rel = 'stylesheet';
+        cssLink.href = 'https://unpkg.com/leaflet@1.9.3/dist/leaflet.css';
+        document.head.appendChild(cssLink);
+        
+        const script = document.createElement('script');
+        script.src = 'https://unpkg.com/leaflet@1.9.3/dist/leaflet.js';
+        script.onload = createMap;
+        document.head.appendChild(script);
+      } else {
+        createMap();
+      }
+    }
+    
+    // Create the map with property location
+    function createMap() {
+      if (!mapElement || !property?.location) return;
+      
+      const lat = property.location.latitude || 0;
+      const lng = property.location.longitude || 0;
+      
+      // Don't create map if coordinates are missing
+      if (!lat || !lng) return;
+      
+      // Initialize the map
+      map = L.map(mapElement, {
+        scrollWheelZoom: false,
+        dragging: !L.Browser.mobile
+      }).setView([lat, lng], 15);
+      
+      // Add modern map tiles
+      L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
+        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>',
+        subdomains: 'abcd',
+        maxZoom: 19
+      }).addTo(map);
+      
+      // Custom styled marker
+      const customIcon = L.divIcon({
+        className: 'custom-map-marker',
+        html: `<div class="marker-pin"></div>
+               <span class="marker-icon">
+                 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" width="14" height="14">
+                   <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/>
+                 </svg>
+               </span>`,
+        iconSize: [30, 42],
+        iconAnchor: [15, 42]
+      });
+      
+      marker = L.marker([lat, lng], { icon: customIcon }).addTo(map)
+        .bindPopup(`
+          <div class="map-popup">
+            <h3 class="text-base font-semibold">${property.title}</h3>
+            <p class="text-sm mt-1">${property.location.address}</p>
+            <p class="text-primary-600 font-bold mt-2">${formatCurrency(property.market_value)}</p>
+          </div>
+        `, { className: 'custom-popup' });
+      
+      // Add radius circle
+      L.circle([lat, lng], {
+        radius: 500,
+        fillColor: '#3b82f6',
+        fillOpacity: 0.1,
+        color: '#3b82f6',
+        weight: 1
+      }).addTo(map);
+      
+      // Enable map interaction when clicked
+      map.on('click', function() {
+        if (!map.scrollWheelZoom.enabled()) {
+          map.scrollWheelZoom.enable();
+          L.DomUtil.addClass(mapElement, 'active-map');
+        }
+      });
+      
+      // Disable interaction when clicking outside
+      document.addEventListener('click', function(e) {
+        if (mapElement && !mapElement.contains(e.target)) {
+          map.scrollWheelZoom.disable();
+          L.DomUtil.removeClass(mapElement, 'active-map');
+        }
+      });
+      
+      mapInitialized = true;
+      
+      // Fix map rendering
+      setTimeout(() => {
+        if (map) map.invalidateSize();
+      }, 400);
+    }
+    
+    // Gallery navigation functions
+    function showMedia(index) {
+      activeImageIndex = index;
+      
+      // Scroll thumbnails to keep active thumbnail visible
+      if (thumbnailsContainer && showFullScreenGallery) {
+        const thumbnailWidth = 72; // 16px width + 2px border*2 + 4px margin*2
+        thumbnailsContainer.scrollTo({
+          left: index * thumbnailWidth - thumbnailsContainer.clientWidth / 2 + thumbnailWidth / 2,
+          behavior: 'smooth'
+        });
+      }
+    }
+    
+    // Show full screen gallery
+    function toggleFullScreenGallery(index) {
+      activeImageIndex = index || 0;
+      showFullScreenGallery = !showFullScreenGallery;
+      
+      // When opening gallery, prevent body scrolling
+      if (showFullScreenGallery) {
+        document.body.style.overflow = 'hidden';
+      } else {
+        document.body.style.overflow = '';
+      }
+      
+      // Focus management for keyboard navigation
+      if (showFullScreenGallery) {
+        setTimeout(() => {
+          const galleryElement = document.querySelector('.fullscreen-gallery');
+          if (galleryElement) {
+            galleryElement.focus();
+          }
+        }, 100);
+      }
+    }
+    
+    // Handle clicks outside of gallery content to close
+    function handleGalleryBackdropClick(event) {
+      // Only close if clicking directly on the backdrop (not on gallery content)
+      if (event.target.classList.contains('fullscreen-gallery-backdrop')) {
+        toggleFullScreenGallery();
+      }
+    }
+    
+    function nextMedia() {
+      if (filteredMedia.length) {
+        activeImageIndex = (activeImageIndex + 1) % filteredMedia.length;
+        showMedia(activeImageIndex);
+      }
+    }
+    
+    function prevMedia() {
+      if (filteredMedia.length) {
+        activeImageIndex = (activeImageIndex - 1 + filteredMedia.length) % filteredMedia.length;
+        showMedia(activeImageIndex);
+      }
+    }
+    
+    // Touch events for swipe on gallery
+    function handleTouchStart(e) {
+      touchStartX = e.touches[0].clientX;
+    }
+    
+    function handleTouchEnd(e) {
+      touchEndX = e.changedTouches[0].clientX;
+      if (touchStartX - touchEndX > 50) {
+        // Swipe left
+        nextMedia();
+      } else if (touchEndX - touchStartX > 50) {
+        // Swipe right
+        prevMedia();
+      }
+    }
+    
+    // Contact property owner
+    function contactOwner() {
+      if (!$user) {
+        goto('/login');
+        return;
+      }
+      
+      // Implement contact functionality here
+    }
+    
+    // Get media thumbnail
+    function getMediaThumbnail(item) {
+      if (!item) return '';
+      
+      switch (item.media_type) {
+        case 'image':
+          return item.url;
+        case 'video':
+          return '/images/video-thumbnail.jpg'; // Replace with actual thumbnail or placeholder
+        case 'document':
+          if (item.url.endsWith('.pdf')) {
+            return '/images/pdf-thumbnail.jpg'; // Replace with actual PDF icon
+          } else {
+            return '/images/document-thumbnail.jpg'; // Replace with actual document icon
+          }
+        default:
+          return '/images/file-thumbnail.jpg'; // Replace with actual file icon
+      }
+    }
+    
+    // Get media icon based on type
+    function getMediaTypeIcon(type) {
+      switch (type) {
+        case 'image':
+          return `<svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                  </svg>`;
+        case 'video':
+          return `<svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                  </svg>`;
+        case 'document':
+          return `<svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
+                  </svg>`;
+        default:
+          return `<svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                  </svg>`;
+      }
+    }
+    
+    // Keyboard shortcuts for gallery
+    function handleKeydown(event) {
+      if (showFullScreenGallery) {
+        if (event.key === 'ArrowRight' || event.key === 'ArrowDown') {
+          nextMedia();
+        } else if (event.key === 'ArrowLeft' || event.key === 'ArrowUp') {
+          prevMedia();
+        } else if (event.key === 'Escape') {
+          showFullScreenGallery = false;
+          document.body.style.overflow = '';
+        }
+      }
+    }
+    
+    // Get icon SVG by name
+    function getIcon(name) {
+      switch(name) {
+        case 'home':
+          return `<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"></path></svg>`;
+        case 'layout':
+          return `<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 5a1 1 0 011-1h14a1 1 0 011 1v2a1 1 0 01-1 1H5a1 1 0 01-1-1V5zM4 13a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H5a1 1 0 01-1-1v-6zM16 13a1 1 0 011-1h2a1 1 0 011 1v6a1 1 0 01-1 1h-2a1 1 0 01-1-1v-6z"></path></svg>`;
+        case 'map-pin':
+          return `<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>`;
+        case 'image':
+          return `<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>`;
+        case 'gavel':
+          return `<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path></svg>`;
+        default:
+          return '';
+      }
+    }
+    
+    // Load property on mount and when slug changes
+    $: if (slug) {
+      loadProperty();
+    }
+    
+    onMount(() => {
+      loadProperty();
+      
+      // Setup keyboard listener
+      window.addEventListener('keydown', handleKeydown);
+      
+      // Cleanup on unmount
+      return () => {
+        window.removeEventListener('keydown', handleKeydown);
+        if (map) {
+          map.remove();
+          mapInitialized = false;
+        }
+        document.body.style.overflow = '';
+      };
+    });
+    
+    // Render media item
+    function renderMediaItem(item) {
+      if (!item) return null;
+      
+      switch (item.media_type) {
+        case 'image':
+          return `<img 
+                    src="${item.url}" 
+                    alt="${item.name || $t('property.propertyImage')}" 
+                    class="mx-auto max-h-[80vh] object-contain shadow-xl rounded-lg" 
+                  />`;
+        case 'video':
+          return `<div class="relative w-full max-w-4xl mx-auto aspect-video bg-black rounded-lg shadow-xl overflow-hidden">
+                    <video 
+                      src="${item.url}" 
+                      controls 
+                      class="w-full h-full">
+                      ${$t('property.browserVideoSupport')}
+                    </video>
+                  </div>`;
+        case 'document':
+          if (item.url.endsWith('.pdf')) {
+            return `<div class="bg-white dark:bg-gray-800 p-8 rounded-lg text-center max-w-xl mx-auto shadow-xl">
+                      <svg class="w-16 h-16 mx-auto text-red-500 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
+                      </svg>
+                      <h3 class="text-xl font-bold mb-2 text-gray-900 dark:text-white">${item.name || $t('property.document')}</h3>
+                      <p class="text-gray-600 dark:text-gray-300 mb-4">${item.description || $t('property.pdfDocument')}</p>
+                    </div>`;
+          }
+        default:
+          return `<div class="text-center bg-white dark:bg-gray-800 p-8 rounded-lg max-w-xl mx-auto shadow-xl">
+                    <svg class="mx-auto h-20 w-20 text-gray-500 dark:text-gray-300" fill="currentColor" viewBox="0 0 24 24">
+                      <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8l-6-6z" />
+                      <path d="M14 3v5h5M16 13H8M16 17H8" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+                    </svg>
+                    <h3 class="mt-3 text-xl font-semibold text-gray-900 dark:text-white">${item.name || $t('property.file')}</h3>
+                    <p class="text-gray-600 dark:text-gray-300 my-2">${item.description || ''}</p>
+                    <a 
+                      href="${item.url}" 
+                      download 
+                      class="mt-3 inline-block px-5 py-2.5 bg-primary-600 text-white rounded-md hover:bg-primary-700 transition-colors focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 dark:focus:ring-offset-gray-800">
+                      ${$t('property.downloadFile')}
+                    </a>
+                  </div>`;
+      }
+    }
+</script>
+
+<svelte:window bind:scrollY={scrollY} />
+
+<svelte:head>
+  <title>{property?.title || $t('property.loading')} | Real Estate Platform</title>
+  <meta name="description" content={property?.meta_description || property?.description?.substr(0, 160) || ''} />
+</svelte:head>
+
+<div class="bg-gray-50 dark:bg-gray-900 min-h-screen pb-16">
+  <!-- Property Image Section -->
+  <div class="h-auto w-full bg-gray-100 dark:bg-gray-800 overflow-hidden rounded-t-lg shadow-md">
+    {#if mainImage}
+      <div 
+        class="relative aspect-w-4 aspect-h-3 cursor-pointer group" 
+        on:click={() => toggleFullScreenGallery(images.findIndex(img => img.id === mainImage.id) || 0)}
+        on:keydown={(e) => e.key === 'Enter' && toggleFullScreenGallery(images.findIndex(img => img.id === mainImage.id) || 0)}
+        role="button"
+        tabindex="0"
+        aria-label={$t('property.viewMainImage')}
+      >
+        <img 
+          src={mainImage.url} 
+          alt={property.title} 
+          class="w-full h-full object-cover transition-all duration-300 ${isImagesLoading ? 'opacity-0' : 'opacity-100 group-hover:scale-105'}"
+          on:load={handleImageLoad}
+        />
+        
+        <!-- Zoom indicator with improved visibility -->
+        <div class="absolute right-3 bottom-3 p-2 bg-white bg-opacity-90 dark:bg-gray-800 dark:bg-opacity-90 rounded-lg shadow-lg transform transition-transform group-hover:scale-110">
+          <svg class="w-5 h-5 text-gray-800 dark:text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0zM10 7v3m0 0v3m0-3h3m-3 0H7" />
+          </svg>
+        </div>
+        
+        <!-- Semi-transparent overlay on hover -->
+        <div class="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-20 transition-all duration-300"></div>
+        
+        <!-- Loading overlay -->
+        {#if isImagesLoading}
+          <div class="absolute inset-0 flex items-center justify-center bg-gray-100 dark:bg-gray-800">
+            <div class="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary-500"></div>
+          </div>
+        {/if}
+      </div>
+    {:else}
+      <div class="aspect-w-4 aspect-h-3 flex items-center justify-center bg-gray-200 dark:bg-gray-700">
+        <div class="text-center p-4">
+          <svg class="w-16 h-16 text-gray-400 dark:text-gray-500 mx-auto mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+          </svg>
+          <p class="text-gray-500 dark:text-gray-400">{$t('property.noImagesAvailable')}</p>
+        </div>
+      </div>
+    {/if}
+  </div>
+
+  <!-- Full Screen Gallery -->
+  {#if showFullScreenGallery && filteredMedia.length > 0}
+    <!-- Add tabindex and role for accessibility -->
+    <div 
+      class="fixed inset-0 bg-black bg-opacity-90 z-50 flex items-center justify-center p-4 fullscreen-gallery-backdrop" 
+      on:click={handleGalleryBackdropClick}
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="gallery-title"
+      tabindex="-1"
+      class:fullscreen-gallery={true}
+    >
+      <div class="w-full max-w-6xl z-50 h-full flex flex-col" on:click|stopPropagation>
+        <!-- Gallery Header -->
+        <div class="flex justify-between items-center text-white p-4 bg-gray-900 bg-opacity-70 rounded-t-lg">
+          <div class="text-lg font-medium" id="gallery-title">
+            {activeMediaType === 'image' ? $t('property.photos') : 
+             activeMediaType === 'video' ? $t('property.videos') : 
+             activeMediaType === 'document' ? $t('property.documents') : $t('property.files')}
+            <span class="ml-2 px-2 py-0.5 bg-primary-500 text-white rounded-md text-sm">
+              {activeImageIndex + 1}/{filteredMedia.length}
+            </span>
+          </div>
+          
+          <button 
+            class="p-2 hover:bg-gray-700 rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-primary-500 group" 
+            on:click={() => toggleFullScreenGallery()}
+            aria-label={$t('common.close')}
+          >
+            <svg class="w-6 h-6 group-hover:scale-110 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
+        </div>
+        
+        <!-- Main Gallery Content -->
+        <div 
+          class="flex-grow flex items-center justify-center relative bg-black bg-opacity-50"
+          on:touchstart={handleTouchStart}
+          on:touchend={handleTouchEnd}
+        >
+          <!-- Previous Button -->
+          <button 
+            class="absolute left-4 p-3 bg-black bg-opacity-60 rounded-full text-white z-10 hover:bg-opacity-80 transition-all transform hover:scale-110 focus:outline-none focus:ring-2 focus:ring-primary-500"
+            on:click={prevMedia}
+            disabled={filteredMedia.length <= 1}
+            aria-label={$t('common.previous')}
+          >
+            <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
+            </svg>
+          </button>
+          
+          <!-- Media Display -->
+          <div class="w-full h-full flex items-center justify-center overflow-hidden p-4">
+            {@html renderMediaItem(filteredMedia[activeImageIndex])}
+          </div>
+          
+          <!-- Next Button -->
+          <button 
+            class="absolute right-4 p-3 bg-black bg-opacity-60 rounded-full text-white z-10 hover:bg-opacity-80 transition-all transform hover:scale-110 focus:outline-none focus:ring-2 focus:ring-primary-500"
+            on:click={nextMedia}
+            disabled={filteredMedia.length <= 1}
+            aria-label={$t('common.next')}
+          >
+            <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+            </svg>
+          </button>
+        </div>
+        
+        <!-- Thumbnails -->
+        {#if filteredMedia.length > 1}
+          <div class="pt-4 pb-2 px-2 bg-gray-900 bg-opacity-70 rounded-b-lg">
+            <div 
+              bind:this={thumbnailsContainer}
+              class="flex overflow-x-auto space-x-3 scrollbar-thin py-2"
+            >
+              {#each filteredMedia as media, i}
+                <button 
+                  class={`relative flex-shrink-0 h-18 w-28 overflow-hidden rounded-md border-2 transition-all
+                    ${i === activeImageIndex ? 'border-primary-500 shadow-md scale-110 z-10' : 'border-gray-700 opacity-70 hover:opacity-100 hover:border-gray-300'}`}
+                  on:click={() => showMedia(i)}
+                  aria-pressed={i === activeImageIndex}
+                  aria-label={$t('property.viewMedia') + ' ' + (i + 1)}
+                  style="transform-origin: center;"
+                >
+                  <img 
+                    src={getMediaThumbnail(media)} 
+                    alt={media.name || $t('property.mediaItem') + ' ' + (i + 1)}
+                    class="h-full w-full object-cover"
+                    loading="lazy"
+                  />
+                </button>
+              {/each}
+            </div>
+          </div>
+        {/if}
+      </div>
+    </div>
+  {/if}
+
+  <!-- ... (rest of the code remains the same) -->
+</script>
+
+<style>
+  /* ... (rest of the styles remain the same) */
+
+  /* Improve gallery close button */
+  .fullscreen-gallery:focus {
+    outline: none;
+  }
+</style>
+    }
+    
+    .aspect-h-3 {
+      position: absolute;
+      height: 100%;
+      width: 100%;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+    }
+    
+    .aspect-video {
+      position: relative;
+      padding-bottom: 56.25%;
+    }
+    
+    /* Leaflet dark mode styling */
+    :global(.dark .leaflet-tile) {
+      filter: invert(1) hue-rotate(180deg) brightness(0.8) contrast(0.8);
+    }
+    
+    :global(.dark .leaflet-container) {
+      background: #333;
+    }
+    
+    /* Line clamp for truncating text */
+    .line-clamp-2 {
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+    }
+    
+    /* Add transition for image loading */
+    img.loaded {
+      animation: imgFadeIn 0.5s ease-in-out;
+    }
+    
+    @keyframes imgFadeIn {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+  </style>
