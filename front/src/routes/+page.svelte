@@ -1,62 +1,94 @@
 <script>
-  import { onMount } from 'svelte';
-  import { auctions } from '$lib/stores/auctions.js';
-  import { fetchAuctions } from '$lib/api/auction.js';
+  // Microinteraction state for button hover
+  let isHovered = false;
 
-  let loading = true;
-  let error = '';
-  let data = [];
+  // Accessibility: Focus management for keyboard users
+  function handleFocus() {
+    isHovered = true;
+  }
 
-  onMount(async () => {
-    try {
-      loading = true;
-      error = '';
-      data = await fetchAuctions();
-      auctions.set(data);
-    } catch (e) {
-      error = e.message || 'Error loading auctions';
-    } finally {
-      loading = false;
-    }
-  });
+  function handleBlur() {
+    isHovered = false;
+  }
 </script>
 
-<main class="min-h-screen bg-gray-50 py-8 px-4">
-  <h1 class="text-3xl font-bold mb-8 text-center text-gray-800">Auctions</h1>
+<section class="relative flex flex-col items-center justify-center min-h-screen px-4 py-8 text-center overflow-hidden">
+  <!-- Repetitive Geometric Patterns -->
+  <div class="absolute inset-0 z-0 overflow-hidden">
+    {#each Array(10) as _, i}
+      <div
+        class="absolute w-20 h-20 bg-gradient-to-br from-pink-500 to-red-500 rounded-full opacity-30 animate-float"
+        style={`top: ${Math.random() * 100}%; left: ${Math.random() * 100}%; animation-delay: ${i * 0.5}s`}
+      ></div>
+    {/each}
+  </div>
 
-  {#if loading}
-    <div class="flex justify-center items-center h-40">
-      <span class="text-gray-500 animate-pulse">Loading auctions...</span>
-    </div>
-  {:else if error}
-    <div class="flex justify-center items-center h-40">
-      <span class="text-red-600">{error}</span>
-    </div>
-  {:else if data.length === 0}
-    <div class="flex justify-center items-center h-40">
-      <span class="text-gray-500">No auctions found.</span>
-    </div>
-  {:else}
-    <section class="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-      {#each data as auction}
-        <article class="bg-white rounded-lg shadow hover:shadow-lg transition-shadow border border-gray-100 p-6 flex flex-col justify-between">
-          <div>
-            <h2 class="text-xl font-semibold text-blue-700 mb-2 truncate" title={auction.title}>{auction.title}</h2>
-            <p class="text-gray-600 text-sm mb-4 line-clamp-2">{auction.description}</p>
-            <div class="flex flex-wrap gap-2 mb-2">
-              <span class="inline-block bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded">{auction.status}</span>
-              <span class="inline-block bg-green-100 text-green-800 text-xs px-2 py-1 rounded">{auction.auction_type}</span>
-            </div>
-            <div class="text-gray-500 text-xs mb-2">
-              Start: {auction.start_date?.slice(0, 10)}<br>
-              End: {auction.end_date?.slice(0, 10)}
-            </div>
-          </div>
-          <a class="mt-4 inline-block text-center bg-primary-600 hover:bg-primary-700 text-white font-semibold py-2 px-4 rounded transition-colors" href={"/auctions/" + auction.slug}>
-            View Auction
-          </a>
-        </article>
-      {/each}
-    </section>
-  {/if}
-</main>
+  <!-- Abstract SVG Shape with Parallax Effect -->
+  <svg
+    class="absolute top-[-10%] left-[-10%] w-[120%] h-[120%] opacity-30 animate-float-parallax"
+    xmlns="http://www.w3.org/2000/svg"
+    viewBox="0 0 1000 1000"
+    fill="currentColor"
+    aria-hidden="true"
+  >
+    <path d="M500 0C223.9 0 0 223.9 0 500s223.9 500 500 500 500-223.9 500-500S776.1 0 500 0zm0 950c-246.6 0-450-203.4-450-450S253.4 50 500 50s450 203.4 450 450-203.4 450-450 450z" />
+  </svg>
+
+  <!-- Background Gradient Overlay -->
+  <div class="absolute inset-0 bg-gradient-to-br from-blue-900 via-indigo-800 to-purple-900 opacity-90 blur-sm"></div>
+
+  <!-- Glassmorphism Card -->
+  <div class="relative z-10 p-8 bg-white/10 backdrop-blur-lg rounded-3xl shadow-lg border border-white/20 max-w-md text-center">
+    <h1 class="text-4xl font-bold text-white md:text-5xl">Discover Luxury Properties</h1>
+    <p class="mt-4 text-lg text-gray-200 leading-relaxed md:text-xl">
+      Bid on exclusive estates and unlock unparalleled opportunities in the world of real estate.
+    </p>
+
+    <!-- Bold CTA Button -->
+    <button
+      class="mt-6 px-6 py-3 text-base font-semibold text-white bg-gradient-to-r from-pink-500 to-red-500 rounded-full shadow-lg transition-transform duration-200 ease-in-out hover:scale-105 focus:outline-none focus:ring-2 focus:ring-pink-500 focus:ring-offset-2 focus:ring-offset-gray-900"
+      on:mouseenter={() => (isHovered = true)}
+      on:mouseleave={() => (isHovered = false)}
+      on:focus={handleFocus}
+      on:blur={handleBlur}
+      aria-label="Start Bidding Now"
+    >
+      {isHovered ? 'Bid Now →' : 'Get Started'}
+    </button>
+  </div>
+</section>
+
+<style>
+  /* Keyframes for SVG floating animation */
+  @keyframes float {
+    0% {
+      transform: translateY(0) rotate(0deg);
+    }
+    50% {
+      transform: translateY(-10px) rotate(5deg);
+    }
+    100% {
+      transform: translateY(0) rotate(0deg);
+    }
+  }
+
+  @keyframes float-parallax {
+    0% {
+      transform: translateY(0) scale(1);
+    }
+    50% {
+      transform: translateY(-20px) scale(1.05);
+    }
+    100% {
+      transform: translateY(0) scale(1);
+    }
+  }
+
+  .animate-float {
+    animation: float 10s infinite ease-in-out;
+  }
+
+  .animate-float-parallax {
+    animation: float-parallax 15s infinite ease-in-out;
+  }
+</style>
