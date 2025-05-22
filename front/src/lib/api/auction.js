@@ -233,55 +233,101 @@ export async function createAuction(auctionData) {
 }
 
 // Place a bid on an auction
-export async function placeBid(auctionId, bidAmount) {
+export async function placeBid(auctionId, bidAmount, maxBidAmount = null) {
   try {
     const token = localStorage.getItem('accessToken');
     
     if (!token) {
-      throw new Error('Authentication required');
+      throw new Error('Authentication required to place bid');
     }
     
-    const response = await fetch(`${BID_URL}/`, {
+    const requestData = {
+      auction: auctionId,
+      bid_amount: bidAmount
+    };
+    
+    if (maxBidAmount) {
+      requestData.max_bid_amount = maxBidAmount;
+    }
+    
+    console.log('Placing bid with data:', requestData);
+    
+    const response = await fetch(`${API_BASE_URL}/bids/`, {
       method: 'POST',
       headers: {
         'Authorization': `Bearer ${token}`,
         'Content-Type': 'application/json'
       },
-      body: JSON.stringify({
-        auction: auctionId,
-        bid_amount: bidAmount
-      })
+      body: JSON.stringify(requestData)
     });
+    
+    const responseData = await response.json();
+    console.log('Bid response:', responseData);
+    
+    if (!response.ok) {
+      // Handle different error formats
+      if (responseData.error) {
+        const errorMessage = responseData.error.message || 'Failed to place bid';
+        const errorCode = responseData.error.code;
+        
+        // Create an error with additional context
+        const error = new Error(errorMessage);
+        error.code = errorCode;
+        error.details = responseData.error.details;
+        
+        // Handle specific error codes
+        switch (errorCode) {
+          case 'AUTH_REQUIRED':
+            error.message = 'Please log in to place a bid';
+            break;
+          case 'VERIFICATION_REQUIRED':
+            error.message = 'Please verify your email address to place bids';
+            break;
+          case 'ACCOUNT_INACTIVE':
+            error.message = 'Your account is inactive. Please contact support.';
+            break;
+          case 'BID_TOO_LOW':
+            error.message = `Bid must be at least $${responseData.error.minimum_bid?.toLocaleString() || 'higher'}`;
+            break;
+          case 'AUCTION_INACTIVE':
+            error.message = 'This auction is not currently accepting bids';
+            break;
+          case 'AUCTION_ENDED':
+            error.message = 'This auction has ended';
+            break;
+          case 'SELF_BID_NOT_ALLOWED':
+            error.message = 'You cannot bid on your own auction';
+            break;
+        }
+        
+        throw error;
+      } else {
+        throw new Error('Failed to place bid');
+      }
+    }
     
     if (response.status === 401) {
       // Try to refresh token and retry
       const newToken = await refreshToken();
-      const retryResponse = await fetch(`${BID_URL}/`, {
+      const retryResponse = await fetch(`${API_BASE_URL}/bids/`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${newToken}`,
           'Content-Type': 'application/json'
         },
-        body: JSON.stringify({
-          auction: auctionId,
-          bid_amount: bidAmount
-        })
+        body: JSON.stringify(requestData)
       });
       
       if (!retryResponse.ok) {
-        const errorData = await retryResponse.json();
-        throw new Error(errorData.error?.message || 'Failed to place bid');
+        const retryData = await retryResponse.json();
+        throw new Error(retryData.error?.message || 'Failed to place bid after token refresh');
       }
       
       return await retryResponse.json();
     }
     
-    if (!response.ok) {
-      const errorData = await response.json();
-      throw new Error(errorData.error?.message || 'Failed to place bid');
-    }
+    return responseData;
     
-    return await response.json();
   } catch (error) {
     console.error('Error placing bid:', error);
     throw error;

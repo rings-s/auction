@@ -24,7 +24,6 @@
   import ShareButtons from '$lib/components/shared/ShareButtons.svelte';
   import FormField from '$lib/components/ui/FormField.svelte';
   import Gallery from '$lib/components/ui/Gallery.svelte';
-  import LiveBidding from '$lib/components/auction/LiveBidding.svelte';
   
   let auction = null;
   let property = null;
@@ -38,8 +37,8 @@
   let showBidModal = false;
   let showLoginModal = false;
   let showExtendModal = false;
+  let showRegisterModal = false;
   let refreshInterval;
-  let websocket = null;
   
   // Enhanced bidding state
   let bidAmount = '';
@@ -48,10 +47,7 @@
   let quickBidAmounts = [];
   let enableAutoBidding = false;
   let bidNotes = '';
-  
-  // Real-time updates
-  let newBidNotifications = [];
-  let lastBidCount = 0;
+  let isRegistered = false;
   
   // Auction extension
   let extensionHours = 24;
@@ -59,7 +55,11 @@
   
   $: slug = $page.params.slug;
   $: isLiveAuction = auction?.status === 'live';
-  $: canBid = isLiveAuction && $user && new Date(auction?.end_date) > new Date() && !isOwner;
+  $: isScheduledAuction = auction?.status === 'scheduled';
+  $: isActiveAuction = auction?.status === 'live' || auction?.status === 'scheduled';
+  $: canBid = isActiveAuction && $user && new Date(auction?.end_date) > new Date() && !isOwner && isRegistered;
+  $: canRegister = (isLiveAuction || isScheduledAuction) && $user && !isOwner && !isRegistered;
+  $: showBidSection = (isLiveAuction || isScheduledAuction) && $user && !isOwner;
   $: isOwner = $user && auction?.created_by?.id === $user?.id;
   $: minimumBidAmount = calculateMinimumBid();
   $: userHighestBid = getUserHighestBid();
@@ -94,86 +94,6 @@
     ];
   }
   
-  // Initialize WebSocket connection for real-time updates
-  function initializeWebSocket() {
-    if (!auction || !isLiveAuction) return;
-    
-    try {
-      const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-      const wsUrl = `${protocol}//${window.location.host}/ws/auctions/${auction.id}/`;
-      
-      websocket = new WebSocket(wsUrl);
-      
-      websocket.onopen = function(event) {
-        console.log('WebSocket connected to auction:', auction.id);
-      };
-      
-      websocket.onmessage = function(event) {
-        const data = JSON.parse(event.data);
-        handleWebSocketMessage(data);
-      };
-      
-      websocket.onerror = function(error) {
-        console.error('WebSocket error:', error);
-      };
-      
-      websocket.onclose = function(event) {
-        console.log('WebSocket closed');
-        if (isLiveAuction) {
-          setTimeout(initializeWebSocket, 5000);
-        }
-      };
-    } catch (error) {
-      console.error('Failed to initialize WebSocket:', error);
-    }
-  }
-  
-  function handleWebSocketMessage(data) {
-    if (data.type === 'auction_data' || data.type === 'auction_update') {
-      if (data.auction) {
-        auction = { ...auction, ...data.auction };
-        quickBidAmounts = generateQuickBidAmounts();
-      }
-      
-      if (data.bids) {
-        const newBidCount = data.bids.length;
-        if (newBidCount > lastBidCount && lastBidCount > 0) {
-          // New bids arrived
-          const newBids = data.bids.slice(0, newBidCount - lastBidCount);
-          newBids.forEach(bid => {
-            if (bid.bidder_info?.id !== $user?.id) {
-              addBidNotification(bid);
-            }
-          });
-        }
-        bids = data.bids;
-        lastBidCount = newBidCount;
-      }
-    } else if (data.type === 'bid_success') {
-      bidSuccess = data.message;
-      bidError = '';
-      showBidModal = false;
-      loadAuctionData();
-    } else if (data.type === 'error') {
-      bidError = data.message;
-      bidSuccess = '';
-    }
-  }
-  
-  function addBidNotification(bid) {
-    const notification = {
-      id: Date.now() + Math.random(),
-      bid,
-      timestamp: new Date()
-    };
-    
-    newBidNotifications = [notification, ...newBidNotifications.slice(0, 4)];
-    
-    setTimeout(() => {
-      newBidNotifications = newBidNotifications.filter(n => n.id !== notification.id);
-    }, 5000);
-  }
-  
   async function loadAuctionData() {
     loading = true;
     error = null;
@@ -188,8 +108,9 @@
       
       quickBidAmounts = generateQuickBidAmounts();
       
-      if (isLiveAuction) {
-        initializeWebSocket();
+      // Check if user is registered (mock check for now)
+      if ($user) {
+        isRegistered = true; // In real app, check if user is registered for this auction
       }
       
     } catch (err) {
@@ -207,20 +128,25 @@
     
     try {
       const response = await fetchAuctionBidsBySlug(slug);
-      bids = response.results || response;
-      lastBidCount = bids.length;
+      bids = Array.isArray(response) ? response : (response.results || []);
+      console.log('Loaded bids:', bids);
       
     } catch (err) {
       console.error('Error loading auction bids:', err);
+      bids = []; // Set empty array on error
     } finally {
       bidsLoading = false;
     }
   }
   
-  // Enhanced bid submission with validation
+  // Enhanced bid submission with proper error handling
   async function handleBidSubmission() {
     const bidValue = parseFloat(bidAmount);
     const maxBidValue = maxBidAmount ? parseFloat(maxBidAmount) : null;
+    
+    // Clear previous errors
+    bidError = '';
+    bidSuccess = '';
     
     // Validation
     if (isNaN(bidValue) || bidValue < minimumBidAmount) {
@@ -243,36 +169,53 @@
     }
     
     try {
-      bidError = '';
-      bidSuccess = '';
       placingBid = true;
       
-      // Use WebSocket for live auctions, API for others
-      if (websocket && websocket.readyState === WebSocket.OPEN) {
-        websocket.send(JSON.stringify({
-          type: 'place_bid',
-          amount: bidValue,
-          max_bid: maxBidValue,
-          notes: bidNotes,
-          auto_bidding: enableAutoBidding
-        }));
-      } else {
-        await placeBid(auction.id, bidValue);
-        bidSuccess = $t('auction.bidPlaced');
-        showBidModal = false;
-        await Promise.all([loadAuctionData(), loadAuctionBids()]);
+      // Check authentication token
+      const token = localStorage.getItem('accessToken');
+      if (!token) {
+        throw new Error('Please log in to place a bid');
       }
+      
+      console.log('Placing bid:', {
+        auctionId: auction.id,
+        bidValue,
+        token: token ? 'Present' : 'Missing'
+      });
+      
+      // Place bid using API
+      const bidResponse = await placeBid(auction.id, bidValue);
+      
+      console.log('Bid response:', bidResponse);
+      
+      bidSuccess = $t('auction.bidPlaced');
+      showBidModal = false;
       
       // Reset form
       bidAmount = '';
       maxBidAmount = '';
       bidNotes = '';
       enableAutoBidding = false;
+      
+      // Reload data
+      await Promise.all([loadAuctionData(), loadAuctionBids()]);
       quickBidAmounts = generateQuickBidAmounts();
       
     } catch (err) {
       console.error('Error placing bid:', err);
-      bidError = err.message || $t('error.bidFailed');
+      
+      // Handle specific error cases
+      if (err.message.includes('Authentication')) {
+        bidError = 'Please log in to place a bid';
+        showBidModal = false;
+        showLoginModal = true;
+      } else if (err.message.includes('verification')) {
+        bidError = 'Please verify your email address to place bids';
+      } else if (err.message.includes('inactive')) {
+        bidError = 'Your account is inactive. Please contact support.';
+      } else {
+        bidError = err.message || $t('error.bidFailed');
+      }
     } finally {
       placingBid = false;
     }
@@ -281,6 +224,18 @@
   // Quick bid functionality
   async function handleQuickBid(amount) {
     if (placingBid) return;
+    
+    // Check authentication first
+    if (!$user) {
+      showLoginModal = true;
+      return;
+    }
+    
+    // Check registration
+    if (!isRegistered) {
+      showRegisterModal = true;
+      return;
+    }
     
     bidAmount = amount.toString();
     await handleBidSubmission();
@@ -293,6 +248,11 @@
       return;
     }
     
+    if (!isRegistered) {
+      showRegisterModal = true;
+      return;
+    }
+    
     bidError = '';
     bidSuccess = '';
     bidAmount = minimumBidAmount.toString();
@@ -302,17 +262,29 @@
     showBidModal = true;
   }
   
-  function handleBidPlaced() {
-    loadAuctionData();
-    loadAuctionBids();
-    quickBidAmounts = generateQuickBidAmounts();
+  // Handle auction registration
+  async function handleAuctionRegistration() {
+    try {
+      // In a real app, you would call an API endpoint to register for the auction
+      // For now, we'll just set the registration status
+      isRegistered = true;
+      showRegisterModal = false;
+      bidSuccess = 'Successfully registered for auction! You can now place bids.';
+      
+      // In a real implementation:
+      // await registerForAuction(auction.id);
+      
+    } catch (err) {
+      console.error('Error registering for auction:', err);
+      bidError = 'Failed to register for auction. Please try again.';
+    }
   }
   
-  // Handle auction extension
+  // Handle auction extension (for owners)
   async function handleExtendAuction() {
     try {
       if (!extensionHours || extensionHours < 1) {
-        error = 'Please enter a valid extension time';
+        bidError = 'Please enter a valid extension time';
         return;
       }
       
@@ -332,13 +304,6 @@
       console.error('Error extending auction:', err);
       bidError = err.message || 'Failed to extend auction';
     }
-  }
-  
-  function handleAuctionEnded(event) {
-    const { winningBid, notes } = event.detail;
-    console.log('Auction ended with winner:', winningBid, 'Notes:', notes);
-    auction = { ...auction, status: 'completed' };
-    bidSuccess = `Auction completed! Winner: ${winningBid.bidder_info?.name || 'Anonymous'}`;
   }
   
   function getAllImages() {
@@ -393,44 +358,45 @@
     }).format(amount);
   }
   
+  function getTimeAgo(dateString) {
+    const now = new Date();
+    const past = new Date(dateString);
+    const diffInSeconds = Math.floor((now - past) / 1000);
+    
+    if (diffInSeconds < 60) return 'Just now';
+    if (diffInSeconds < 3600) return `${Math.floor(diffInSeconds / 60)}m ago`;
+    if (diffInSeconds < 86400) return `${Math.floor(diffInSeconds / 3600)}h ago`;
+    return `${Math.floor(diffInSeconds / 86400)}d ago`;
+  }
+  
   function handleTimerEnd() {
     loadAuctionData();
     loadAuctionBids();
-    
-    if (websocket) {
-      websocket.close();
-      websocket = null;
-    }
   }
   
   onMount(async () => {
     await loadAuctionData();
     await loadAuctionBids();
     
-    if (!isLiveAuction) {
-      refreshInterval = setInterval(async () => {
-        if (!placingBid) {
-          await Promise.all([loadAuctionData(), loadAuctionBids()]);
-          quickBidAmounts = generateQuickBidAmounts();
-        }
-      }, 30000);
-    }
+    // Set up refresh interval
+    refreshInterval = setInterval(async () => {
+      if (!placingBid) {
+        await Promise.all([loadAuctionData(), loadAuctionBids()]);
+        quickBidAmounts = generateQuickBidAmounts();
+      }
+    }, 30000); // Refresh every 30 seconds
   });
   
   onDestroy(() => {
     if (refreshInterval) {
       clearInterval(refreshInterval);
     }
-    
-    if (websocket) {
-      websocket.close();
-    }
   });
   
   const tabs = [
     { id: 'details', label: $t('auction.tabDetails') },
     { id: 'property', label: $t('auction.tabProperty') },
-    { id: 'bids', label: $t('auction.tabBids') },
+    { id: 'bids', label: `${$t('auction.tabBids')} (${bids.length})` },
     { id: 'terms', label: $t('auction.tabTerms') }
   ];
 </script>
@@ -453,34 +419,6 @@
   <div class="max-w-7xl mx-auto">
     <!-- Breadcrumbs -->
     <Breadcrumb items={breadcrumbItems} class="mb-6" />
-    
-    <!-- Bid Notifications -->
-    {#if newBidNotifications.length > 0}
-      <div class="fixed top-20 right-4 z-50 space-y-2">
-        {#each newBidNotifications as notification (notification.id)}
-          <div 
-            class="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg p-4 max-w-sm transform transition-all duration-300 ease-in-out"
-            style="animation: slideIn 0.3s ease-out;"
-          >
-            <div class="flex items-center">
-              <div class="flex-shrink-0">
-                <svg class="h-5 w-5 text-green-400" fill="currentColor" viewBox="0 0 20 20">
-                  <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" />
-                </svg>
-              </div>
-              <div class="ml-3">
-                <p class="text-sm font-medium text-gray-900 dark:text-white">
-                  New Bid: {formatCurrency(notification.bid.amount)}
-                </p>
-                <p class="text-xs text-gray-500 dark:text-gray-400">
-                  by {notification.bid.bidder_info?.name || 'Anonymous'}
-                </p>
-              </div>
-            </div>
-          </div>
-        {/each}
-      </div>
-    {/if}
     
     {#if loading}
       <div class="space-y-8">
@@ -560,23 +498,28 @@
         </div>
       </div>
       
-      <!-- Enhanced Quick Bidding Section for Live Auctions -->
-      {#if canBid && isLiveAuction}
-        <div class="mb-8 bg-gradient-to-r from-primary-500 to-blue-600 rounded-xl shadow-lg overflow-hidden">
+      <!-- PROMINENT BIDDING SECTION - Always visible when user can bid -->
+      {#if showBidSection}
+        <div class="mb-8 bg-gradient-to-r from-primary-500 to-blue-600 rounded-xl shadow-xl overflow-hidden border-4 border-primary-300">
           <div class="px-6 py-4 bg-black bg-opacity-20">
             <div class="flex items-center justify-between">
               <div>
-                <h2 class="text-xl font-bold text-white flex items-center">
-                  <span class="w-3 h-3 bg-red-500 rounded-full mr-2 animate-pulse"></span>
-                  {$t('auction.liveBidding')}
+                <h2 class="text-2xl font-bold text-white flex items-center">
+                  {#if isLiveAuction}
+                    <span class="w-3 h-3 bg-red-500 rounded-full mr-2 animate-pulse"></span>
+                    🔥 LIVE BIDDING
+                  {:else if isScheduledAuction}
+                    <span class="w-3 h-3 bg-yellow-500 rounded-full mr-2 animate-pulse"></span>
+                    ⏰ AUCTION STARTING SOON
+                  {/if}
                 </h2>
                 <p class="text-primary-100 text-sm">
                   Current: {formatCurrency(auction.current_bid || auction.starting_bid)} • 
-                  Min Bid: {formatCurrency(minimumBidAmount)}
+                  Next Bid: {formatCurrency(minimumBidAmount)}
                 </p>
               </div>
               <div class="text-right text-white">
-                <div class="text-2xl font-bold">
+                <div class="text-3xl font-bold">
                   {auction.bid_count || bids.length}
                 </div>
                 <div class="text-sm opacity-90">Total Bids</div>
@@ -584,60 +527,136 @@
             </div>
           </div>
           
-          <!-- Quick Bid Buttons -->
           <div class="p-6">
-            <div class="grid grid-cols-2 md:grid-cols-4 gap-3 mb-4">
-              {#each quickBidAmounts as option}
-                <button
-                  type="button"
-                  class="group relative overflow-hidden rounded-lg p-4 border-2 border-white border-opacity-20 hover:border-opacity-40 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-white focus:ring-opacity-50 bg-white bg-opacity-10 hover:bg-opacity-20"
-                  disabled={placingBid}
-                  on:click={() => handleQuickBid(option.amount)}
-                >
-                  <div class="flex flex-col items-center space-y-1">
-                    <span class="text-lg font-bold text-white">
-                      {formatCurrency(option.amount)}
-                    </span>
-                    <span class="text-xs text-white text-opacity-80">
-                      {option.label}
-                    </span>
-                  </div>
-                  
-                  {#if placingBid}
-                    <div class="absolute inset-0 bg-white bg-opacity-20 flex items-center justify-center">
-                      <div class="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
-                    </div>
-                  {/if}
-                </button>
-              {/each}
-            </div>
-            
-            <!-- Advanced Bid Button -->
-            <div class="flex space-x-3">
-              <Button
-                variant="secondary"
-                class="flex-1"
-                on:click={openBidModal}
-                disabled={placingBid}
-              >
-                <svg class="w-5 h-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 100 4m0-4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 100 4m0-4v2m0-6V4" />
-                </svg>
-                {$t('auction.advancedBidding')}
-              </Button>
-              
-              {#if userHighestBid}
-                <div class="flex-1 bg-white bg-opacity-10 rounded-lg p-3 text-center">
-                  <div class="text-sm text-white text-opacity-80">Your Highest Bid</div>
-                  <div class="text-lg font-bold text-white">
-                    {formatCurrency(userHighestBid.amount)}
-                  </div>
-                  <div class="text-xs text-white text-opacity-60">
-                    {userHighestBid.status === 'winning' ? '🎉 Winning!' : '⚠️ Outbid'}
+            {#if canBid}
+              <!-- LIVE/SCHEDULED BIDDING INTERFACE -->
+              <div class="space-y-6">
+                <!-- Quick Bid Buttons -->
+                <div>
+                  <h3 class="text-lg font-semibold text-white mb-3">Quick Bid Options</h3>
+                  <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
+                    {#each quickBidAmounts as option}
+                      <button
+                        type="button"
+                        class="group relative overflow-hidden rounded-lg p-4 border-2 border-white border-opacity-30 hover:border-opacity-60 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-white focus:ring-opacity-50 bg-white bg-opacity-10 hover:bg-opacity-20 disabled:opacity-50 disabled:cursor-not-allowed transform hover:scale-105"
+                        disabled={placingBid}
+                        on:click={() => handleQuickBid(option.amount)}
+                      >
+                        <div class="flex flex-col items-center space-y-1">
+                          <span class="text-xl font-bold text-white">
+                            {formatCurrency(option.amount)}
+                          </span>
+                          <span class="text-xs text-white text-opacity-80">
+                            {option.label}
+                          </span>
+                        </div>
+                        
+                        {#if placingBid}
+                          <div class="absolute inset-0 bg-white bg-opacity-20 flex items-center justify-center">
+                            <div class="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
+                          </div>
+                        {/if}
+                      </button>
+                    {/each}
                   </div>
                 </div>
-              {/if}
-            </div>
+                
+                <!-- Main Bid Button & Advanced Options -->
+                <div class="flex flex-col md:flex-row gap-4">
+                  <Button
+                    variant="secondary"
+                    size="large"
+                    class="flex-1 text-lg py-4 font-bold"
+                    on:click={openBidModal}
+                    disabled={placingBid}
+                  >
+                    <svg class="w-6 h-6 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
+                    </svg>
+                    PLACE CUSTOM BID
+                  </Button>
+                  
+                  {#if userHighestBid}
+                    <div class="flex-1 bg-white bg-opacity-15 rounded-lg p-4 text-center">
+                      <div class="text-sm text-white text-opacity-80">Your Highest Bid</div>
+                      <div class="text-xl font-bold text-white">
+                        {formatCurrency(userHighestBid.amount)}
+                      </div>
+                      <div class="text-sm text-white text-opacity-70">
+                        {userHighestBid.status === 'winning' ? '🎉 Currently Winning!' : '⚠️ You\'ve been outbid'}
+                      </div>
+                    </div>
+                  {/if}
+                </div>
+                
+                {#if isScheduledAuction}
+                  <div class="bg-yellow-500 bg-opacity-20 rounded-lg p-4 border border-yellow-400">
+                    <div class="flex items-center">
+                      <svg class="h-5 w-5 text-yellow-300 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                        <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd" />
+                      </svg>
+                      <span class="text-yellow-100 font-medium">
+                        Auction starts soon! You can place pre-bids that will be active when the auction begins.
+                      </span>
+                    </div>
+                  </div>
+                {/if}
+              </div>
+              
+            {:else if canRegister}
+              <!-- REGISTRATION REQUIRED -->
+              <div class="text-center py-8">
+                <div class="bg-white bg-opacity-15 rounded-lg p-6 mb-6">
+                  <svg class="w-16 h-16 mx-auto text-white mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z" />
+                  </svg>
+                  <h3 class="text-2xl font-bold text-white mb-2">
+                    Registration Required
+                  </h3>
+                  <p class="text-white text-opacity-80 mb-6">
+                    Register for this auction to start bidding on this amazing property
+                  </p>
+                  <Button
+                    variant="secondary"
+                    size="large"
+                    class="px-8 py-3 text-lg font-bold"
+                    on:click={() => showRegisterModal = true}
+                  >
+                    <svg class="w-5 h-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z" />
+                    </svg>
+                    REGISTER FOR AUCTION
+                  </Button>
+                </div>
+              </div>
+              
+            {:else if !$user}
+              <!-- LOGIN REQUIRED -->
+              <div class="text-center py-8">
+                <div class="bg-white bg-opacity-15 rounded-lg p-6">
+                  <svg class="w-16 h-16 mx-auto text-white mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                  </svg>
+                  <h3 class="text-2xl font-bold text-white mb-2">
+                    Sign In to Bid
+                  </h3>
+                  <p class="text-white text-opacity-80 mb-6">
+                    Create an account or sign in to participate in this auction
+                  </p>
+                  <Button
+                    variant="secondary"
+                    size="large"
+                    class="px-8 py-3 text-lg font-bold"
+                    href={`/login?redirect=/auctions/${auction.slug}`}
+                  >
+                    <svg class="w-5 h-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1" />
+                    </svg>
+                    SIGN IN TO BID
+                  </Button>
+                </div>
+              </div>
+            {/if}
           </div>
         </div>
       {/if}
@@ -665,7 +684,7 @@
                 <h2 class="text-xl font-semibold text-gray-900 dark:text-white mb-4">
                   {$t('auction.description')}
                 </h2>
-                <p>{auction.description || $t('auction.noDescription')}</p>
+                <p class="whitespace-pre-wrap">{auction.description || $t('auction.noDescription')}</p>
                 
                 <div class="mt-8 grid grid-cols-1 sm:grid-cols-2 gap-6">
                   <div class="bg-gray-50 dark:bg-gray-700 p-4 rounded-lg">
@@ -823,14 +842,145 @@
               </div>
               
             {:else if activeTab === 'bids'}
-              <!-- Enhanced LiveBidding Component -->
-              <LiveBidding 
-                {auction}
-                {isOwner}
-                onBidPlaced={handleBidPlaced}
-                on:extendAuction={() => showExtendModal = true}
-                on:auctionEnded={handleAuctionEnded}
-              />
+              <div>
+                <div class="flex justify-between items-center mb-6">
+                  <div>
+                    <h2 class="text-xl font-semibold text-gray-900 dark:text-white">
+                      {$t('auction.bidHistory')} ({bids.length})
+                    </h2>
+                    <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">
+                      All bids placed on this auction
+                    </p>
+                  </div>
+                  <div class="flex space-x-2">
+                    {#if showBidSection}
+                      <Button
+                        variant="primary"
+                        size="small"
+                        on:click={openBidModal}
+                        disabled={!canBid}
+                      >
+                        <svg class="w-4 h-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                        </svg>
+                        Place Bid
+                      </Button>
+                    {/if}
+                    <Button
+                      variant="outline"
+                      size="small"
+                      loading={bidsLoading}
+                      on:click={loadAuctionBids}
+                    >
+                      <svg class="w-4 h-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                      </svg>
+                      Refresh
+                    </Button>
+                  </div>
+                </div>
+                
+                {#if bidsLoading}
+                  <div class="py-12 text-center">
+                    <div class="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-primary-500"></div>
+                    <p class="mt-2 text-sm text-gray-500 dark:text-gray-400">Loading bids...</p>
+                  </div>
+                {:else if bids.length === 0}
+                  <div class="py-12 text-center">
+                    <svg class="w-16 h-16 mx-auto text-gray-400 dark:text-gray-500 mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
+                    </svg>
+                    <h3 class="text-lg font-medium text-gray-900 dark:text-gray-100 mb-2">
+                      {$t('auction.noBids')}
+                    </h3>
+                    <p class="text-gray-500 dark:text-gray-400 mb-6">
+                      {$t('auction.beTheFirst')}
+                    </p>
+                    {#if canBid}
+                      <Button
+                        variant="primary"
+                        on:click={openBidModal}
+                      >
+                        <svg class="w-5 h-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
+                        </svg>
+                        Place First Bid
+                      </Button>
+                    {:else if !$user}
+                      <Button
+                        variant="primary"
+                        href={`/login?redirect=/auctions/${auction.slug}`}
+                      >
+                        Sign In to Place First Bid
+                      </Button>
+                    {/if}
+                  </div>
+                {:else}
+                  <div class="space-y-4">
+                    {#each bids as bid, index (bid.id)}
+                      <div class="p-4 rounded-lg border border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors duration-150 {index === 0 ? 'bg-gradient-to-r from-green-50 to-emerald-50 dark:from-green-900/20 dark:to-emerald-900/20 border-green-200 dark:border-green-800' : ''} {bid.bidder_info?.id === $user?.id ? 'bg-gradient-to-r from-primary-50 to-blue-50 dark:from-primary-900/20 dark:to-blue-900/20 border-primary-200 dark:border-primary-800' : ''}">
+                        <div class="flex justify-between items-start">
+                          <div class="flex items-center space-x-4">
+                            <div class="flex-shrink-0">
+                              {#if index === 0}
+                                <div class="w-10 h-10 bg-gradient-to-r from-yellow-400 to-orange-500 rounded-full flex items-center justify-center">
+                                  <svg class="w-5 h-5 text-white" fill="currentColor" viewBox="0 0 20 20">
+                                    <path fill-rule="evenodd" d="M5 2a1 1 0 011 1v1h1a1 1 0 010 2H6v1a1 1 0 01-2 0V6H3a1 1 0 010-2h1V3a1 1 0 011-1zm0 10a1 1 0 011 1v1h1a1 1 0 110 2H6v1a1 1 0 11-2 0v-1H3a1 1 0 110-2h1v-1a1 1 0 011-1zM12 2a1 1 0 01.967.744L14.146 7.2 17.5 9.134a1 1 0 010 1.732L14.146 12.8l-1.179 4.456a1 1 0 01-1.934 0L9.854 12.8 6.5 10.866a1 1 0 010-1.732L9.854 7.2l1.179-4.456A1 1 0 0112 2z" clip-rule="evenodd" />
+                                  </svg>
+                                </div>
+                              {:else}
+                                <div class="w-10 h-10 bg-gray-100 dark:bg-gray-600 rounded-full flex items-center justify-center">
+                                  <span class="text-sm font-medium text-gray-600 dark:text-gray-300">
+                                    #{index + 1}
+                                  </span>
+                                </div>
+                              {/if}
+                            </div>
+                            
+                            <div>
+                              <div class="flex items-center space-x-3 mb-1">
+                                <p class="text-xl font-bold text-gray-900 dark:text-white">
+                                  {formatCurrency(bid.amount)}
+                                </p>
+                                {#if index === 0}
+                                  <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200">
+                                    🏆 Highest Bid
+                                  </span>
+                                {/if}
+                                {#if bid.bidder_info?.id === $user?.id}
+                                  <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-primary-100 text-primary-800 dark:bg-primary-900 dark:text-primary-200">
+                                    👤 Your Bid
+                                  </span>
+                                {/if}
+                              </div>
+                              <div class="flex items-center space-x-2">
+                                <p class="text-sm font-medium text-gray-700 dark:text-gray-300">
+                                  {bid.bidder_info?.name || $t('auction.anonymous')}
+                                </p>
+                                {#if bid.is_verified}
+                                  <svg class="h-4 w-4 text-green-500" fill="currentColor" viewBox="0 0 20 20">
+                                    <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" />
+                                  </svg>
+                                {/if}
+                              </div>
+                            </div>
+                          </div>
+                          
+                          <div class="text-right">
+                            <p class="text-sm text-gray-500 dark:text-gray-400 mb-1">
+                              {getTimeAgo(bid.bid_time)}
+                            </p>
+                            <p class="text-xs text-gray-400 dark:text-gray-500">
+                              {formatDateTime(bid.bid_time)}
+                            </p>
+                            <AuctionStatus status={bid.status} isCompact={true} />
+                          </div>
+                        </div>
+                      </div>
+                    {/each}
+                  </div>
+                {/if}
+              </div>
               
             {:else if activeTab === 'terms'}
               <div>
@@ -923,11 +1073,12 @@
                 {$t('auction.totalBids')}: {auction.bid_count || bids.length}
               </p>
               
+              <!-- MAIN SIDEBAR BID BUTTON -->
               {#if canBid}
                 <div class="space-y-3">
                   <Button
                     variant="primary"
-                    class="w-full text-lg py-3"
+                    class="w-full text-lg py-4 font-bold"
                     on:click={openBidModal}
                     disabled={placingBid}
                     aria-label={$t('auction.placeBid')}
@@ -938,7 +1089,7 @@
                         <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                       </svg>
                     {:else}
-                      <svg class="w-5 h-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <svg class="w-6 h-6 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
                       </svg>
                     {/if}
@@ -948,46 +1099,105 @@
                     {$t('auction.minimumBid')}: {formatCurrency(minimumBidAmount)}
                   </p>
                 </div>
+              {:else if canRegister}
+                <Button
+                  variant="secondary" 
+                  class="w-full py-3"
+                  on:click={() => showRegisterModal = true}
+                  aria-label={$t('auction.registerForAuction')}
+                >
+                  <svg class="w-5 h-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z" />
+                  </svg>
+                  {$t('auction.registerForAuction')}
+                </Button>
               {:else if auction.status === 'scheduled'}
-                {#if $user}
+                {#if isRegistered}
+                  <div class="bg-green-50 dark:bg-green-900/20 p-4 rounded-lg border border-green-200 dark:border-green-800">
+                    <div class="flex items-center">
+                      <svg class="h-5 w-5 text-green-400" fill="currentColor" viewBox="0 0 20 20">
+                        <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" />
+                      </svg>
+                      <span class="ml-2 text-sm font-medium text-green-800 dark:text-green-200">
+                        ✅ Registered for Auction
+                      </span>
+                    </div>
+                    <p class="text-xs text-green-600 dark:text-green-400 mt-1 ml-7">
+                      You can bid when the auction starts
+                    </p>
+                  </div>
+                {:else if $user}
                   <Button
-                    variant="secondary" 
-                    class="w-full"
-                    on:click={() => alert('Registration successful!')}
+                    variant="secondary"
+                    class="w-full py-3"
+                    on:click={() => showRegisterModal = true}
                     aria-label={$t('auction.registerForAuction')}
                   >
+                    <svg class="w-5 h-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z" />
+                    </svg>
                     {$t('auction.registerForAuction')}
                   </Button>
                 {:else}
                   <Button
                     variant="secondary"
-                    class="w-full"
+                    class="w-full py-3"
                     href="/login?redirect=/auctions/{auction.slug}"
                     aria-label={$t('auction.loginToRegister')}
                   >
+                    <svg class="w-5 h-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1" />
+                    </svg>
                     {$t('auction.loginToRegister')}
                   </Button>
                 {/if}
               {:else if !$user}
                 <Button
                   variant="primary"
-                  class="w-full"
+                  class="w-full py-3"
                   href="/login?redirect=/auctions/{auction.slug}"
                   aria-label={$t('auction.loginToPlaceBid')}
                 >
+                  <svg class="w-5 h-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1" />
+                  </svg>
                   {$t('auction.loginToPlaceBid')}
                 </Button>
               {:else}
                 <Button
                   variant="outline"
-                  class="w-full"
+                  class="w-full py-3"
                   href="/auctions"
                   aria-label={$t('auctions.backToAuctions')}
                 >
+                  <svg class="w-5 h-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+                  </svg>
                   {$t('auctions.backToAuctions')}
                 </Button>
               {/if}
             </div>
+            
+            <!-- Owner Controls -->
+            {#if isOwner && isActiveAuction}
+              <div class="border-t border-gray-200 dark:border-gray-700 pt-6">
+                <h3 class="text-lg font-medium text-gray-900 dark:text-white mb-3">
+                  Owner Controls
+                </h3>
+                <div class="space-y-2">
+                  <Button
+                    variant="outline"
+                    class="w-full"
+                    on:click={() => showExtendModal = true}
+                  >
+                    <svg class="w-4 h-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                    Extend Auction
+                  </Button>
+                </div>
+              </div>
+            {/if}
             
             <!-- Contact info -->
             <div class="border-t border-gray-200 dark:border-gray-700 pt-6">
@@ -1000,6 +1210,9 @@
                 href="/contact?subject=Auction%20{auction.id}"
                 aria-label={$t('auction.contactSupport')}
               >
+                <svg class="w-5 h-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+                </svg>
                 {$t('auction.contactSupport')}
               </Button>
             </div>
@@ -1071,7 +1284,7 @@
                 {$t('auction.recentActivity')}
               </h3>
               <div class="space-y-3">
-                {#each bids.slice(0, 5) as bid}
+                {#each bids.slice(0, 3) as bid}
                   <div class="flex justify-between items-center p-3 bg-gray-50 dark:bg-gray-700 rounded-lg">
                     <div>
                       <p class="text-sm font-medium text-gray-900 dark:text-white">
@@ -1086,23 +1299,21 @@
                     </div>
                     <div class="text-right">
                       <p class="text-xs text-gray-500 dark:text-gray-400">
-                        {formatDateTime(bid.bid_time)}
+                        {getTimeAgo(bid.bid_time)}
                       </p>
                       <AuctionStatus status={bid.status} isCompact={true} />
                     </div>
                   </div>
                 {/each}
                 
-                {#if bids.length > 5}
-                  <Button
-                    variant="outline"
-                    size="small"
-                    on:click={() => activeTab = 'bids'}
-                    class="w-full mt-3"
-                  >
-                    {$t('auction.viewAllBids')} ({bids.length})
-                  </Button>
-                {/if}
+                <Button
+                  variant="outline"
+                  size="small"
+                  on:click={() => activeTab = 'bids'}
+                  class="w-full mt-3"
+                >
+                  {$t('auction.viewAllBids')} ({bids.length})
+                </Button>
               </div>
             </div>
           {/if}
@@ -1150,22 +1361,22 @@
     <!-- Bid Amount Input -->
     <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
       <FormField
-        type="currency"
+        type="number"
         id="bid_amount"
         label={$t('auction.bidAmount')}
         bind:value={bidAmount}
-        currencySymbol="$"
         min={minimumBidAmount}
+        step="1"
         required={true}
         class="text-lg font-semibold"
       />
       
       <FormField
-        type="currency"
+        type="number"
         id="max_bid_amount"
         label="Maximum Auto-Bid (Optional)"
         bind:value={maxBidAmount}
-        currencySymbol="$"
+        step="1"
         helpText="Set a maximum amount for automatic bidding"
       />
     </div>
@@ -1297,6 +1508,75 @@
   </div>
 </Modal>
 
+<!-- Registration Modal -->
+<Modal
+  bind:show={showRegisterModal}
+  title="Register for Auction"
+  maxWidth="md"
+>
+  <div class="p-6">
+    <div class="bg-blue-50 dark:bg-blue-900/20 p-4 rounded-lg mb-6">
+      <h4 class="text-lg font-semibold text-blue-900 dark:text-blue-100 mb-2">
+        Auction Registration Required
+      </h4>
+      <p class="text-sm text-blue-700 dark:text-blue-300">
+        You must register for this auction before you can place bids. Registration helps ensure serious bidders and auction integrity.
+      </p>
+    </div>
+    
+    <div class="space-y-4">
+      <div class="bg-gray-50 dark:bg-gray-700 p-4 rounded-lg">
+        <h5 class="font-medium text-gray-900 dark:text-white mb-2">Registration Requirements:</h5>
+        <ul class="text-sm text-gray-600 dark:text-gray-400 space-y-1">
+          <li class="flex items-center">
+            <svg class="h-4 w-4 text-green-500 mr-2" fill="currentColor" viewBox="0 0 20 20">
+              <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" />
+            </svg>
+            Verified email address
+          </li>
+          <li class="flex items-center">
+            <svg class="h-4 w-4 text-green-500 mr-2" fill="currentColor" viewBox="0 0 20 20">
+              <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" />
+            </svg>
+            Account in good standing
+          </li>
+          <li class="flex items-center">
+            <svg class="h-4 w-4 text-green-500 mr-2" fill="currentColor" viewBox="0 0 20 20">
+              <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" />
+            </svg>
+            Agreement to terms and conditions
+          </li>
+        </ul>
+      </div>
+      
+      <div class="bg-yellow-50 dark:bg-yellow-900/20 p-4 rounded-lg border border-yellow-200 dark:border-yellow-800">
+        <p class="text-sm text-yellow-800 dark:text-yellow-200">
+          <strong>Note:</strong> Registration for this auction is free and only takes a moment. Once registered, you'll be able to place bids throughout the auction period.
+        </p>
+      </div>
+    </div>
+    
+    <div class="flex justify-end space-x-3 mt-6">
+      <Button
+        variant="outline"
+        on:click={() => showRegisterModal = false}
+      >
+        Cancel
+      </Button>
+      
+      <Button
+        variant="primary"
+        on:click={handleAuctionRegistration}
+      >
+        <svg class="w-5 h-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z" />
+        </svg>
+        Register for Auction
+      </Button>
+    </div>
+  </div>
+</Modal>
+
 <!-- Extend Auction Modal -->
 <Modal
   bind:show={showExtendModal}
@@ -1356,16 +1636,3 @@
     </div>
   </form>
 </Modal>
-
-<style>
-@keyframes slideIn {
-  from {
-    transform: translateX(100%);
-    opacity: 0;
-  }
-  to {
-    transform: translateX(0);
-    opacity: 1;
-  }
-}
-</style>
