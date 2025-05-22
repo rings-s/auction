@@ -55,6 +55,8 @@ INSTALLED_APPS = [
     'rest_framework',
     'rest_framework_simplejwt',
     'corsheaders',
+    'channels', 
+
     
     'django_filters',
     'accounts',
@@ -311,4 +313,16 @@ LOGGING = {
             'propagate': False,
         },
     },
+}
+
+
+CHANNEL_LAYERS = {
+    'default': {
+        'BACKEND': 'channels_redis.core.RedisChannelLayer',  # Use Redis in production
+        'CONFIG': {
+            "hosts": [('127.0.0.1', 6379)] if DEBUG else [os.getenv('REDIS_URL', 'redis://localhost:6379')],
+        },
+    } if not DEBUG else {
+        'BACKEND': 'channels.layers.InMemoryChannelLayer',  # Development only
+    }
 }

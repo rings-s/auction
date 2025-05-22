@@ -4084,3 +4084,758 @@ INFO 2025-05-22 06:32:04,378 basehttp 12916 132559197435584 "GET /api/bids/?auct
 INFO 2025-05-22 06:32:34,164 basehttp 12916 132559197435584 "GET /api/auctions/the-auction-title/ HTTP/1.1" 200 4717
 INFO 2025-05-22 06:32:34,274 basehttp 12916 132559167014592 "GET /api/auctions/the-auction-title/ HTTP/1.1" 200 4716
 INFO 2025-05-22 06:32:34,298 basehttp 12916 132559167014592 "GET /api/bids/?auction=2&ordering=-bid_time HTTP/1.1" 200 553
+INFO 2025-05-22 06:33:04,199 basehttp 12916 132559167014592 "GET /api/auctions/the-auction-title/ HTTP/1.1" 200 4717
+INFO 2025-05-22 06:33:04,363 basehttp 12916 132559197435584 "GET /api/auctions/the-auction-title/ HTTP/1.1" 200 4717
+INFO 2025-05-22 06:33:04,388 basehttp 12916 132559197435584 "GET /api/bids/?auction=2&ordering=-bid_time HTTP/1.1" 200 553
+INFO 2025-05-22 06:33:11,108 basehttp 12916 132559197435584 "GET /api/auctions/the-auction-title/ HTTP/1.1" 200 4717
+INFO 2025-05-22 06:33:11,296 basehttp 12916 132559197435584 "GET /api/auctions/the-auction-title/ HTTP/1.1" 200 4717
+INFO 2025-05-22 06:33:11,364 basehttp 12916 132559197435584 "GET /api/bids/?auction=2&ordering=-bid_time HTTP/1.1" 200 553
+INFO 2025-05-22 06:33:16,913 basehttp 12916 132559197435584 "GET /api/bids/?auction=2 HTTP/1.1" 200 553
+WARNING 2025-05-22 06:33:21,892 log 12916 132559197435584 Bad Request: /api/bids/
+WARNING 2025-05-22 06:33:21,893 basehttp 12916 132559197435584 "POST /api/bids/ HTTP/1.1" 400 61
+INFO 2025-05-22 06:33:26,917 basehttp 12916 132559197435584 "GET /api/bids/?auction=2 HTTP/1.1" 200 553
+WARNING 2025-05-22 06:33:27,618 log 12916 132559197435584 Bad Request: /api/bids/
+WARNING 2025-05-22 06:33:27,618 basehttp 12916 132559197435584 "POST /api/bids/ HTTP/1.1" 400 61
+WARNING 2025-05-22 06:33:28,900 log 12916 132559197435584 Bad Request: /api/bids/
+WARNING 2025-05-22 06:33:28,901 basehttp 12916 132559197435584 "POST /api/bids/ HTTP/1.1" 400 61
+INFO 2025-05-22 06:33:32,046 basehttp 12916 132559197435584 "GET /api/bids/?auction=2 HTTP/1.1" 200 553
+INFO 2025-05-22 06:33:36,911 basehttp 12916 132559197435584 "GET /api/bids/?auction=2 HTTP/1.1" 200 553
+INFO 2025-05-22 06:33:41,914 basehttp 12916 132559197435584 "GET /api/bids/?auction=2 HTTP/1.1" 200 553
+INFO 2025-05-22 06:33:46,912 basehttp 12916 132559197435584 "GET /api/bids/?auction=2 HTTP/1.1" 200 553
+INFO 2025-05-22 06:33:51,912 basehttp 12916 132559197435584 "GET /api/bids/?auction=2 HTTP/1.1" 200 553
+INFO 2025-05-22 06:33:56,918 basehttp 12916 132559197435584 "GET /api/bids/?auction=2 HTTP/1.1" 200 553
+INFO 2025-05-22 06:34:00,760 basehttp 12916 132559197435584 "GET /api/auctions/the-auction-title/ HTTP/1.1" 200 4717
+INFO 2025-05-22 06:34:01,016 basehttp 12916 132559197435584 "GET /api/auctions/the-auction-title/ HTTP/1.1" 200 4717
+INFO 2025-05-22 06:34:01,068 basehttp 12916 132559197435584 "GET /api/bids/?auction=2&ordering=-bid_time HTTP/1.1" 200 553
+INFO 2025-05-22 06:34:05,831 basehttp 12916 132559197435584 "GET /api/accounts/profile/ HTTP/1.1" 200 567
+INFO 2025-05-22 06:34:06,257 basehttp 12916 132559197435584 "GET /api/auctions/the-auction-title/ HTTP/1.1" 200 4717
+INFO 2025-05-22 06:34:06,282 basehttp 12916 132559150229184 "GET /media/uploads/2025/05/17/dummy_imgs_wozqbR7.png HTTP/1.1" 304 0
+INFO 2025-05-22 06:34:06,442 basehttp 12916 132559197435584 "GET /api/auctions/the-auction-title/ HTTP/1.1" 200 4716
+INFO 2025-05-22 06:34:06,502 basehttp 12916 132559197435584 "GET /api/bids/?auction=2&ordering=-bid_time HTTP/1.1" 200 553
+INFO 2025-05-22 06:34:30,950 basehttp 12916 132559197435584 "GET /api/bids/?auction=2 HTTP/1.1" 200 553
+WARNING 2025-05-22 06:34:33,405 log 12916 132559197435584 Bad Request: /api/bids/
+WARNING 2025-05-22 06:34:33,405 basehttp 12916 132559197435584 "POST /api/bids/ HTTP/1.1" 400 61
+INFO 2025-05-22 06:34:35,949 basehttp 12916 132559197435584 "GET /api/bids/?auction=2 HTTP/1.1" 200 553
+WARNING 2025-05-22 06:34:38,205 log 12916 132559197435584 Bad Request: /api/bids/
+WARNING 2025-05-22 06:34:38,206 basehttp 12916 132559197435584 "POST /api/bids/ HTTP/1.1" 400 61
+INFO 2025-05-22 06:34:40,955 basehttp 12916 132559197435584 "GET /api/bids/?auction=2 HTTP/1.1" 200 553
+INFO 2025-05-22 06:34:45,953 basehttp 12916 132559197435584 "GET /api/bids/?auction=2 HTTP/1.1" 200 553
+INFO 2025-05-22 06:34:48,820 basehttp 12916 132559197435584 "GET /api/auctions/the-auction-title/ HTTP/1.1" 200 4717
+INFO 2025-05-22 06:34:49,011 basehttp 12916 132559197435584 "GET /api/auctions/the-auction-title/ HTTP/1.1" 200 4717
+INFO 2025-05-22 06:34:49,036 basehttp 12916 132559197435584 "GET /api/bids/?auction=2&ordering=-bid_time HTTP/1.1" 200 553
+INFO 2025-05-22 06:34:50,892 basehttp 12916 132559197435584 "GET /api/bids/?auction=2 HTTP/1.1" 200 553
+INFO 2025-05-22 06:34:55,884 basehttp 12916 132559197435584 "GET /api/bids/?auction=2 HTTP/1.1" 200 553
+WARNING 2025-05-22 06:34:58,456 log 12916 132559197435584 Bad Request: /api/bids/
+WARNING 2025-05-22 06:34:58,457 basehttp 12916 132559197435584 "POST /api/bids/ HTTP/1.1" 400 61
+WARNING 2025-05-22 06:34:59,305 log 12916 132559197435584 Bad Request: /api/bids/
+WARNING 2025-05-22 06:34:59,306 basehttp 12916 132559197435584 "POST /api/bids/ HTTP/1.1" 400 61
+WARNING 2025-05-22 06:35:00,055 log 12916 132559197435584 Bad Request: /api/bids/
+WARNING 2025-05-22 06:35:00,056 basehttp 12916 132559197435584 "POST /api/bids/ HTTP/1.1" 400 61
+INFO 2025-05-22 06:35:00,885 basehttp 12916 132559197435584 "GET /api/bids/?auction=2 HTTP/1.1" 200 553
+WARNING 2025-05-22 06:35:00,970 log 12916 132559197435584 Bad Request: /api/bids/
+WARNING 2025-05-22 06:35:00,970 basehttp 12916 132559197435584 "POST /api/bids/ HTTP/1.1" 400 61
+WARNING 2025-05-22 06:35:01,491 log 12916 132559197435584 Bad Request: /api/bids/
+WARNING 2025-05-22 06:35:01,492 basehttp 12916 132559197435584 "POST /api/bids/ HTTP/1.1" 400 61
+WARNING 2025-05-22 06:35:01,903 log 12916 132559197435584 Bad Request: /api/bids/
+WARNING 2025-05-22 06:35:01,903 basehttp 12916 132559197435584 "POST /api/bids/ HTTP/1.1" 400 61
+WARNING 2025-05-22 06:35:02,434 log 12916 132559197435584 Bad Request: /api/bids/
+WARNING 2025-05-22 06:35:02,435 basehttp 12916 132559197435584 "POST /api/bids/ HTTP/1.1" 400 61
+WARNING 2025-05-22 06:35:03,150 log 12916 132559197435584 Bad Request: /api/bids/
+WARNING 2025-05-22 06:35:03,151 basehttp 12916 132559197435584 "POST /api/bids/ HTTP/1.1" 400 61
+INFO 2025-05-22 06:35:05,887 basehttp 12916 132559197435584 "GET /api/bids/?auction=2 HTTP/1.1" 200 553
+WARNING 2025-05-22 06:35:07,447 log 12916 132559197435584 Bad Request: /api/bids/
+WARNING 2025-05-22 06:35:07,448 basehttp 12916 132559197435584 "POST /api/bids/ HTTP/1.1" 400 61
+INFO 2025-05-22 06:35:10,884 basehttp 12916 132559197435584 "GET /api/bids/?auction=2 HTTP/1.1" 200 553
+INFO 2025-05-22 06:35:15,886 basehttp 12916 132559197435584 "GET /api/bids/?auction=2 HTTP/1.1" 200 553
+INFO 2025-05-22 06:35:20,887 basehttp 12916 132559197435584 "GET /api/bids/?auction=2 HTTP/1.1" 200 553
+INFO 2025-05-22 06:35:25,885 basehttp 12916 132559197435584 "GET /api/bids/?auction=2 HTTP/1.1" 200 553
+INFO 2025-05-22 06:35:30,888 basehttp 12916 132559197435584 "GET /api/bids/?auction=2 HTTP/1.1" 200 553
+INFO 2025-05-22 06:35:35,880 basehttp 12916 132559197435584 "GET /api/bids/?auction=2 HTTP/1.1" 200 553
+INFO 2025-05-22 06:35:40,883 basehttp 12916 132559197435584 "GET /api/bids/?auction=2 HTTP/1.1" 200 553
+INFO 2025-05-22 06:35:45,887 basehttp 12916 132559197435584 "GET /api/bids/?auction=2 HTTP/1.1" 200 553
+INFO 2025-05-22 06:35:50,884 basehttp 12916 132559197435584 "GET /api/bids/?auction=2 HTTP/1.1" 200 553
+INFO 2025-05-22 06:35:55,976 basehttp 12916 132559197435584 "GET /api/bids/?auction=2 HTTP/1.1" 200 553
+INFO 2025-05-22 06:35:58,890 basehttp 12916 132559197435584 "GET /api/auctions/the-auction-title/ HTTP/1.1" 200 4716
+INFO 2025-05-22 06:35:59,153 basehttp 12916 132559197435584 "GET /api/auctions/the-auction-title/ HTTP/1.1" 200 4716
+INFO 2025-05-22 06:35:59,183 basehttp 12916 132559197435584 "GET /api/bids/?auction=2&ordering=-bid_time HTTP/1.1" 200 553
+INFO 2025-05-22 06:36:04,325 basehttp 12916 132559197435584 "GET /api/accounts/profile/ HTTP/1.1" 200 567
+INFO 2025-05-22 06:36:05,117 basehttp 12916 132559197435584 "GET /api/auctions/the-auction-title/ HTTP/1.1" 200 4717
+INFO 2025-05-22 06:36:05,315 basehttp 12916 132559197435584 "GET /api/auctions/the-auction-title/ HTTP/1.1" 200 4717
+INFO 2025-05-22 06:36:05,376 basehttp 12916 132559197435584 "GET /api/bids/?auction=2&ordering=-bid_time HTTP/1.1" 200 553
+INFO 2025-05-22 06:36:36,210 basehttp 12916 132559197435584 "GET /api/auctions/the-auction-title/ HTTP/1.1" 200 4717
+INFO 2025-05-22 06:36:36,388 basehttp 12916 132559167014592 "GET /api/auctions/the-auction-title/ HTTP/1.1" 200 4717
+INFO 2025-05-22 06:36:36,404 basehttp 12916 132559167014592 "GET /api/bids/?auction=2&ordering=-bid_time HTTP/1.1" 200 553
+INFO 2025-05-22 06:37:06,199 basehttp 12916 132559167014592 "GET /api/auctions/the-auction-title/ HTTP/1.1" 200 4717
+INFO 2025-05-22 06:37:06,335 basehttp 12916 132559197435584 "GET /api/auctions/the-auction-title/ HTTP/1.1" 200 4717
+INFO 2025-05-22 06:37:06,356 basehttp 12916 132559197435584 "GET /api/bids/?auction=2&ordering=-bid_time HTTP/1.1" 200 553
+INFO 2025-05-22 06:37:36,192 basehttp 12916 132559197435584 "GET /api/auctions/the-auction-title/ HTTP/1.1" 200 4717
+INFO 2025-05-22 06:37:36,358 basehttp 12916 132559167014592 "GET /api/auctions/the-auction-title/ HTTP/1.1" 200 4716
+INFO 2025-05-22 06:37:36,379 basehttp 12916 132559167014592 "GET /api/bids/?auction=2&ordering=-bid_time HTTP/1.1" 200 553
+INFO 2025-05-22 06:38:06,175 basehttp 12916 132559167014592 "GET /api/auctions/the-auction-title/ HTTP/1.1" 200 4717
+INFO 2025-05-22 06:38:06,307 basehttp 12916 132559197435584 "GET /api/auctions/the-auction-title/ HTTP/1.1" 200 4717
+INFO 2025-05-22 06:38:06,322 basehttp 12916 132559197435584 "GET /api/bids/?auction=2&ordering=-bid_time HTTP/1.1" 200 553
+INFO 2025-05-22 06:38:36,175 basehttp 12916 132559197435584 "GET /api/auctions/the-auction-title/ HTTP/1.1" 200 4717
+INFO 2025-05-22 06:38:36,301 basehttp 12916 132559167014592 "GET /api/auctions/the-auction-title/ HTTP/1.1" 200 4717
+INFO 2025-05-22 06:38:36,316 basehttp 12916 132559167014592 "GET /api/bids/?auction=2&ordering=-bid_time HTTP/1.1" 200 553
+INFO 2025-05-22 06:39:06,166 basehttp 12916 132559167014592 "GET /api/auctions/the-auction-title/ HTTP/1.1" 200 4717
+INFO 2025-05-22 06:39:06,278 basehttp 12916 132559197435584 "GET /api/auctions/the-auction-title/ HTTP/1.1" 200 4717
+INFO 2025-05-22 06:39:06,303 basehttp 12916 132559197435584 "GET /api/bids/?auction=2&ordering=-bid_time HTTP/1.1" 200 553
+INFO 2025-05-22 06:40:16,175 basehttp 12916 132559197435584 "GET /api/auctions/the-auction-title/ HTTP/1.1" 200 4717
+INFO 2025-05-22 06:40:16,311 basehttp 12916 132559167014592 "GET /api/auctions/the-auction-title/ HTTP/1.1" 200 4717
+INFO 2025-05-22 06:40:16,336 basehttp 12916 132559167014592 "GET /api/bids/?auction=2&ordering=-bid_time HTTP/1.1" 200 553
+INFO 2025-05-22 06:41:16,171 basehttp 12916 132559167014592 "GET /api/auctions/the-auction-title/ HTTP/1.1" 200 4717
+INFO 2025-05-22 06:41:16,298 basehttp 12916 132559197435584 "GET /api/auctions/the-auction-title/ HTTP/1.1" 200 4717
+INFO 2025-05-22 06:41:16,313 basehttp 12916 132559197435584 "GET /api/bids/?auction=2&ordering=-bid_time HTTP/1.1" 200 553
+INFO 2025-05-22 06:42:16,209 basehttp 12916 132559197435584 "GET /api/auctions/the-auction-title/ HTTP/1.1" 200 4717
+INFO 2025-05-22 06:42:16,343 basehttp 12916 132559167014592 "GET /api/auctions/the-auction-title/ HTTP/1.1" 200 4717
+INFO 2025-05-22 06:42:16,359 basehttp 12916 132559167014592 "GET /api/bids/?auction=2&ordering=-bid_time HTTP/1.1" 200 553
+INFO 2025-05-22 06:43:16,236 basehttp 12916 132559167014592 "GET /api/auctions/the-auction-title/ HTTP/1.1" 200 4717
+INFO 2025-05-22 06:43:16,376 basehttp 12916 132559197435584 "GET /api/auctions/the-auction-title/ HTTP/1.1" 200 4717
+INFO 2025-05-22 06:43:16,412 basehttp 12916 132559197435584 "GET /api/bids/?auction=2&ordering=-bid_time HTTP/1.1" 200 553
+INFO 2025-05-22 06:43:40,613 autoreload 12916 132559346493248 /home/ahmed/tech-Savvy-projects/2025/new_ones/auction/back/base/serializers.py changed, reloading.
+INFO 2025-05-22 06:43:47,265 autoreload 27742 129229754890048 Watching for file changes with StatReloader
+INFO 2025-05-22 06:44:16,306 basehttp 27742 129229676078784 "GET /api/auctions/the-auction-title/ HTTP/1.1" 200 4717
+INFO 2025-05-22 06:44:16,466 basehttp 27742 129229593245376 "GET /api/auctions/the-auction-title/ HTTP/1.1" 200 4717
+INFO 2025-05-22 06:44:16,492 basehttp 27742 129229593245376 "GET /api/bids/?auction=2&ordering=-bid_time HTTP/1.1" 200 553
+INFO 2025-05-22 06:44:28,179 autoreload 27742 129229754890048 /home/ahmed/tech-Savvy-projects/2025/new_ones/auction/back/back/settings.py changed, reloading.
+INFO 2025-05-22 06:44:29,603 autoreload 27830 136257649424192 Watching for file changes with StatReloader
+INFO 2025-05-22 06:44:31,903 autoreload 27830 136257649424192 /home/ahmed/tech-Savvy-projects/2025/new_ones/auction/back/back/settings.py changed, reloading.
+INFO 2025-05-22 06:44:32,483 autoreload 27832 135851643037504 Watching for file changes with StatReloader
+INFO 2025-05-22 06:44:35,702 autoreload 27832 135851643037504 /home/ahmed/tech-Savvy-projects/2025/new_ones/auction/back/back/settings.py changed, reloading.
+INFO 2025-05-22 06:44:36,194 autoreload 27834 130056624707392 Watching for file changes with StatReloader
+INFO 2025-05-22 07:53:24,086 autoreload 11190 139068958562112 Watching for file changes with StatReloader
+INFO 2025-05-22 07:58:39,885 autoreload 11963 126719424587584 Watching for file changes with StatReloader
+INFO 2025-05-22 07:58:46,548 basehttp 11963 126719345288896 "OPTIONS /api/accounts/login/ HTTP/1.1" 200 0
+INFO 2025-05-22 07:58:47,399 middleware 11963 126719345288896 Login: admin@email.com from IP: 127.0.0.1, UA: 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36...'
+INFO 2025-05-22 07:58:47,419 views 11963 126719345288896 Successful login for user: admin@email.com
+INFO 2025-05-22 07:58:47,440 basehttp 11963 126719345288896 "POST /api/accounts/login/ HTTP/1.1" 200 1060
+INFO 2025-05-22 07:58:51,822 basehttp 11963 126719345288896 "OPTIONS /api/auctions/?page=1&ordering=-created_at HTTP/1.1" 200 0
+INFO 2025-05-22 07:58:52,072 basehttp 11963 126719345288896 "GET /api/auctions/?page=1&ordering=-created_at HTTP/1.1" 200 4767
+INFO 2025-05-22 07:58:53,774 basehttp 11963 126719345288896 "OPTIONS /api/auctions/the-auction-title/ HTTP/1.1" 200 0
+INFO 2025-05-22 07:58:54,153 basehttp 11963 126719345288896 "GET /api/auctions/the-auction-title/ HTTP/1.1" 200 4715
+INFO 2025-05-22 07:58:54,316 basehttp 11963 126719334799040 "GET /media/uploads/2025/05/17/d.jpeg HTTP/1.1" 304 0
+INFO 2025-05-22 07:58:54,587 basehttp 11963 126719345288896 "GET /api/auctions/the-auction-title/ HTTP/1.1" 200 4715
+INFO 2025-05-22 07:58:54,599 basehttp 11963 126719345288896 "OPTIONS /api/bids/?auction=2&ordering=-bid_time HTTP/1.1" 200 0
+INFO 2025-05-22 07:58:54,675 basehttp 11963 126719345288896 "GET /api/bids/?auction=2&ordering=-bid_time HTTP/1.1" 200 553
+INFO 2025-05-22 07:59:10,618 basehttp 11963 126719345288896 "OPTIONS /api/accounts/logout/ HTTP/1.1" 200 0
+WARNING 2025-05-22 07:59:10,625 log 11963 126719345288896 Unauthorized: /api/accounts/logout/
+WARNING 2025-05-22 07:59:10,626 basehttp 11963 126719345288896 "POST /api/accounts/logout/ HTTP/1.1" 401 58
+INFO 2025-05-22 07:59:17,578 middleware 11963 126719345288896 Login: admin@email.com from IP: 127.0.0.1, UA: 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36...'
+INFO 2025-05-22 07:59:17,579 views 11963 126719345288896 Successful login for user: admin@email.com
+INFO 2025-05-22 07:59:17,584 basehttp 11963 126719345288896 "POST /api/accounts/login/ HTTP/1.1" 200 1060
+INFO 2025-05-22 07:59:31,855 basehttp 11963 126719345288896 "GET /api/auctions/?page=1&ordering=-created_at HTTP/1.1" 200 4768
+INFO 2025-05-22 07:59:33,471 basehttp 11963 126719345288896 "GET /api/auctions/the-auction-title/ HTTP/1.1" 200 4716
+INFO 2025-05-22 07:59:33,675 basehttp 11963 126719345288896 "GET /api/auctions/the-auction-title/ HTTP/1.1" 200 4716
+INFO 2025-05-22 07:59:33,738 basehttp 11963 126719345288896 "GET /api/bids/?auction=2&ordering=-bid_time HTTP/1.1" 200 553
+INFO 2025-05-22 07:59:45,538 basehttp 11963 126719345288896 "OPTIONS /api/accounts/profile/ HTTP/1.1" 200 0
+INFO 2025-05-22 07:59:45,706 basehttp 11963 126719345288896 "GET /api/accounts/profile/ HTTP/1.1" 200 567
+INFO 2025-05-22 07:59:48,250 basehttp 11963 126719345288896 "GET /api/accounts/profile/ HTTP/1.1" 200 567
+INFO 2025-05-22 07:59:48,694 basehttp 11963 126719345288896 "GET /api/auctions/the-auction-title/ HTTP/1.1" 200 4716
+INFO 2025-05-22 07:59:49,085 basehttp 11963 126719345288896 "GET /api/auctions/the-auction-title/ HTTP/1.1" 200 4716
+INFO 2025-05-22 07:59:49,146 basehttp 11963 126719345288896 "GET /api/bids/?auction=2&ordering=-bid_time HTTP/1.1" 200 553
+INFO 2025-05-22 08:00:19,325 basehttp 11963 126719345288896 "GET /api/auctions/the-auction-title/ HTTP/1.1" 200 4717
+INFO 2025-05-22 08:00:19,461 basehttp 11963 126719117752000 "GET /api/auctions/the-auction-title/ HTTP/1.1" 200 4717
+INFO 2025-05-22 08:00:19,481 basehttp 11963 126719117752000 "GET /api/bids/?auction=2&ordering=-bid_time HTTP/1.1" 200 553
+INFO 2025-05-22 08:00:50,170 basehttp 11963 126719117752000 "GET /api/auctions/the-auction-title/ HTTP/1.1" 200 4715
+INFO 2025-05-22 08:00:50,284 basehttp 11963 126719345288896 "GET /api/auctions/the-auction-title/ HTTP/1.1" 200 4716
+INFO 2025-05-22 08:00:50,310 basehttp 11963 126719345288896 "GET /api/bids/?auction=2&ordering=-bid_time HTTP/1.1" 200 553
+INFO 2025-05-22 08:01:20,203 basehttp 11963 126719345288896 "GET /api/auctions/the-auction-title/ HTTP/1.1" 200 4717
+INFO 2025-05-22 08:01:20,346 basehttp 11963 126719117752000 "GET /api/auctions/the-auction-title/ HTTP/1.1" 200 4717
+INFO 2025-05-22 08:01:20,374 basehttp 11963 126719117752000 "GET /api/bids/?auction=2&ordering=-bid_time HTTP/1.1" 200 553
+INFO 2025-05-22 08:01:50,182 basehttp 11963 126719117752000 "GET /api/auctions/the-auction-title/ HTTP/1.1" 200 4716
+INFO 2025-05-22 08:01:50,309 basehttp 11963 126719345288896 "GET /api/auctions/the-auction-title/ HTTP/1.1" 200 4716
+INFO 2025-05-22 08:01:50,330 basehttp 11963 126719345288896 "GET /api/bids/?auction=2&ordering=-bid_time HTTP/1.1" 200 553
+INFO 2025-05-22 08:02:20,213 basehttp 11963 126719345288896 "GET /api/auctions/the-auction-title/ HTTP/1.1" 200 4717
+INFO 2025-05-22 08:02:20,386 basehttp 11963 126719117752000 "GET /api/auctions/the-auction-title/ HTTP/1.1" 200 4716
+INFO 2025-05-22 08:02:20,417 basehttp 11963 126719117752000 "GET /api/bids/?auction=2&ordering=-bid_time HTTP/1.1" 200 553
+INFO 2025-05-22 08:02:50,183 basehttp 11963 126719117752000 "GET /api/auctions/the-auction-title/ HTTP/1.1" 200 4716
+INFO 2025-05-22 08:02:50,322 basehttp 11963 126719345288896 "GET /api/auctions/the-auction-title/ HTTP/1.1" 200 4716
+INFO 2025-05-22 08:02:50,343 basehttp 11963 126719345288896 "GET /api/bids/?auction=2&ordering=-bid_time HTTP/1.1" 200 553
+INFO 2025-05-22 08:03:29,181 basehttp 11963 126719345288896 "GET /api/auctions/the-auction-title/ HTTP/1.1" 200 4717
+INFO 2025-05-22 08:03:29,314 basehttp 11963 126719117752000 "GET /api/auctions/the-auction-title/ HTTP/1.1" 200 4717
+INFO 2025-05-22 08:03:29,335 basehttp 11963 126719117752000 "GET /api/bids/?auction=2&ordering=-bid_time HTTP/1.1" 200 553
+INFO 2025-05-22 08:03:51,180 basehttp 11963 126719117752000 "GET /api/auctions/the-auction-title/ HTTP/1.1" 200 4715
+INFO 2025-05-22 08:03:51,351 basehttp 11963 126719345288896 "GET /api/auctions/the-auction-title/ HTTP/1.1" 200 4716
+INFO 2025-05-22 08:03:51,370 basehttp 11963 126719345288896 "GET /api/bids/?auction=2&ordering=-bid_time HTTP/1.1" 200 553
+INFO 2025-05-22 08:04:51,205 basehttp 11963 126719345288896 "GET /api/auctions/the-auction-title/ HTTP/1.1" 200 4716
+INFO 2025-05-22 08:04:51,345 basehttp 11963 126719117752000 "GET /api/auctions/the-auction-title/ HTTP/1.1" 200 4716
+INFO 2025-05-22 08:04:51,364 basehttp 11963 126719117752000 "GET /api/bids/?auction=2&ordering=-bid_time HTTP/1.1" 200 553
+INFO 2025-05-22 08:05:51,429 basehttp 11963 126719117752000 "GET /api/auctions/the-auction-title/ HTTP/1.1" 200 4716
+INFO 2025-05-22 08:05:51,589 basehttp 11963 126719345288896 "GET /api/auctions/the-auction-title/ HTTP/1.1" 200 4716
+INFO 2025-05-22 08:05:51,608 basehttp 11963 126719345288896 "GET /api/bids/?auction=2&ordering=-bid_time HTTP/1.1" 200 553
+INFO 2025-05-22 08:06:51,186 basehttp 11963 126719345288896 "GET /api/auctions/the-auction-title/ HTTP/1.1" 200 4716
+INFO 2025-05-22 08:06:51,309 basehttp 11963 126719117752000 "GET /api/auctions/the-auction-title/ HTTP/1.1" 200 4716
+INFO 2025-05-22 08:06:51,360 basehttp 11963 126719117752000 "GET /api/bids/?auction=2&ordering=-bid_time HTTP/1.1" 200 553
+INFO 2025-05-22 08:07:37,749 basehttp 11963 126719117752000 "GET /api/auctions/the-auction-title/ HTTP/1.1" 200 4717
+INFO 2025-05-22 08:07:38,233 basehttp 11963 126719345288896 "GET /api/auctions/the-auction-title/ HTTP/1.1" 200 4717
+INFO 2025-05-22 08:07:38,259 basehttp 11963 126719345288896 "GET /api/bids/?auction=2&ordering=-bid_time HTTP/1.1" 200 553
+INFO 2025-05-22 08:07:50,215 basehttp 11963 126719345288896 "GET /api/auctions/the-auction-title/ HTTP/1.1" 200 4716
+INFO 2025-05-22 08:07:50,349 basehttp 11963 126719117752000 "GET /api/auctions/the-auction-title/ HTTP/1.1" 200 4716
+INFO 2025-05-22 08:07:50,371 basehttp 11963 126719117752000 "GET /api/bids/?auction=2&ordering=-bid_time HTTP/1.1" 200 553
+INFO 2025-05-22 08:08:20,195 basehttp 11963 126719117752000 "GET /api/auctions/the-auction-title/ HTTP/1.1" 200 4717
+INFO 2025-05-22 08:08:20,355 basehttp 11963 126719345288896 "GET /api/auctions/the-auction-title/ HTTP/1.1" 200 4717
+INFO 2025-05-22 08:08:20,378 basehttp 11963 126719345288896 "GET /api/bids/?auction=2&ordering=-bid_time HTTP/1.1" 200 553
+INFO 2025-05-22 08:08:33,878 basehttp 11963 126719345288896 "OPTIONS /api/bids/ HTTP/1.1" 200 0
+ERROR 2025-05-22 08:08:34,059 log 11963 126719345288896 Internal Server Error: /api/bids/
+Traceback (most recent call last):
+  File "/home/ahmed/tech-Savvy-projects/2025/new_ones/auction/back/base/views.py", line 380, in create
+    serializer.is_valid(raise_exception=True)
+  File "/home/ahmed/tech-Savvy-projects/2025/new_ones/newprojects/lib/python3.12/site-packages/rest_framework/serializers.py", line 233, in is_valid
+    raise ValidationError(self.errors)
+rest_framework.exceptions.ValidationError: {'bid_amount': [ErrorDetail(string='Bid amount must be greater than 0.', code='invalid')]}
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/home/ahmed/tech-Savvy-projects/2025/new_ones/newprojects/lib/python3.12/site-packages/django/core/handlers/exception.py", line 55, in inner
+    response = get_response(request)
+               ^^^^^^^^^^^^^^^^^^^^^
+  File "/home/ahmed/tech-Savvy-projects/2025/new_ones/newprojects/lib/python3.12/site-packages/django/core/handlers/base.py", line 197, in _get_response
+    response = wrapped_callback(request, *callback_args, **callback_kwargs)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/ahmed/tech-Savvy-projects/2025/new_ones/newprojects/lib/python3.12/site-packages/django/views/decorators/csrf.py", line 65, in _view_wrapper
+    return view_func(request, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/ahmed/tech-Savvy-projects/2025/new_ones/newprojects/lib/python3.12/site-packages/django/views/generic/base.py", line 104, in view
+    return self.dispatch(request, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/ahmed/tech-Savvy-projects/2025/new_ones/newprojects/lib/python3.12/site-packages/rest_framework/views.py", line 515, in dispatch
+    response = self.handle_exception(exc)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/ahmed/tech-Savvy-projects/2025/new_ones/newprojects/lib/python3.12/site-packages/rest_framework/views.py", line 475, in handle_exception
+    self.raise_uncaught_exception(exc)
+  File "/home/ahmed/tech-Savvy-projects/2025/new_ones/newprojects/lib/python3.12/site-packages/rest_framework/views.py", line 486, in raise_uncaught_exception
+    raise exc
+  File "/home/ahmed/tech-Savvy-projects/2025/new_ones/newprojects/lib/python3.12/site-packages/rest_framework/views.py", line 512, in dispatch
+    response = handler(request, *args, **kwargs)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/ahmed/tech-Savvy-projects/2025/new_ones/newprojects/lib/python3.12/site-packages/rest_framework/generics.py", line 246, in post
+    return self.create(request, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/ahmed/tech-Savvy-projects/2025/new_ones/auction/back/base/views.py", line 399, in create
+    except serializers.ValidationError as e:
+           ^^^^^^^^^^^
+NameError: name 'serializers' is not defined. Did you mean: 'serializer'?
+ERROR 2025-05-22 08:08:34,081 basehttp 11963 126719345288896 "POST /api/bids/ HTTP/1.1" 500 122046
+INFO 2025-05-22 08:08:50,190 basehttp 11963 126719345288896 "GET /api/auctions/the-auction-title/ HTTP/1.1" 200 4716
+INFO 2025-05-22 08:08:50,355 basehttp 11963 126719117752000 "GET /api/auctions/the-auction-title/ HTTP/1.1" 200 4716
+INFO 2025-05-22 08:08:50,374 basehttp 11963 126719117752000 "GET /api/bids/?auction=2&ordering=-bid_time HTTP/1.1" 200 553
+INFO 2025-05-22 08:09:20,188 basehttp 11963 126719117752000 "GET /api/auctions/the-auction-title/ HTTP/1.1" 200 4717
+INFO 2025-05-22 08:09:20,307 basehttp 11963 126719345288896 "GET /api/auctions/the-auction-title/ HTTP/1.1" 200 4717
+INFO 2025-05-22 08:09:20,343 basehttp 11963 126719345288896 "GET /api/bids/?auction=2&ordering=-bid_time HTTP/1.1" 200 553
+INFO 2025-05-22 08:09:51,515 basehttp 11963 126719345288896 "GET /api/auctions/the-auction-title/ HTTP/1.1" 200 4716
+INFO 2025-05-22 08:09:51,656 basehttp 11963 126719117752000 "GET /api/auctions/the-auction-title/ HTTP/1.1" 200 4716
+INFO 2025-05-22 08:09:51,686 basehttp 11963 126719117752000 "GET /api/bids/?auction=2&ordering=-bid_time HTTP/1.1" 200 553
+INFO 2025-05-22 08:10:51,171 basehttp 11963 126719117752000 "GET /api/auctions/the-auction-title/ HTTP/1.1" 200 4716
+INFO 2025-05-22 08:10:51,297 basehttp 11963 126719345288896 "GET /api/auctions/the-auction-title/ HTTP/1.1" 200 4716
+INFO 2025-05-22 08:10:51,318 basehttp 11963 126719345288896 "GET /api/bids/?auction=2&ordering=-bid_time HTTP/1.1" 200 553
+INFO 2025-05-22 08:11:51,430 basehttp 11963 126719345288896 "GET /api/auctions/the-auction-title/ HTTP/1.1" 200 4716
+INFO 2025-05-22 08:11:51,721 basehttp 11963 126719117752000 "GET /api/auctions/the-auction-title/ HTTP/1.1" 200 4716
+INFO 2025-05-22 08:11:51,762 basehttp 11963 126719117752000 "GET /api/bids/?auction=2&ordering=-bid_time HTTP/1.1" 200 553
+INFO 2025-05-22 08:12:43,639 basehttp 11963 126719117752000 "GET /api/auctions/the-auction-title/ HTTP/1.1" 200 4717
+INFO 2025-05-22 08:12:43,789 basehttp 11963 126719345288896 "GET /api/auctions/the-auction-title/ HTTP/1.1" 200 4717
+INFO 2025-05-22 08:12:43,820 basehttp 11963 126719345288896 "GET /api/bids/?auction=2&ordering=-bid_time HTTP/1.1" 200 553
+INFO 2025-05-22 08:12:50,928 basehttp 11963 126719345288896 "GET /api/auctions/the-auction-title/ HTTP/1.1" 200 4716
+INFO 2025-05-22 08:12:51,422 basehttp 11963 126719117752000 "GET /api/auctions/the-auction-title/ HTTP/1.1" 200 4716
+INFO 2025-05-22 08:12:51,488 basehttp 11963 126719117752000 "GET /api/bids/?auction=2&ordering=-bid_time HTTP/1.1" 200 553
+INFO 2025-05-22 08:13:20,182 basehttp 11963 126719117752000 "GET /api/auctions/the-auction-title/ HTTP/1.1" 200 4717
+INFO 2025-05-22 08:13:20,309 basehttp 11963 126719345288896 "GET /api/auctions/the-auction-title/ HTTP/1.1" 200 4717
+INFO 2025-05-22 08:13:20,332 basehttp 11963 126719345288896 "GET /api/bids/?auction=2&ordering=-bid_time HTTP/1.1" 200 553
+INFO 2025-05-22 08:13:51,176 basehttp 11963 126719345288896 "GET /api/auctions/the-auction-title/ HTTP/1.1" 200 4716
+INFO 2025-05-22 08:13:51,313 basehttp 11963 126719117752000 "GET /api/auctions/the-auction-title/ HTTP/1.1" 200 4716
+INFO 2025-05-22 08:13:51,329 basehttp 11963 126719117752000 "GET /api/bids/?auction=2&ordering=-bid_time HTTP/1.1" 200 553
+INFO 2025-05-22 08:14:51,227 basehttp 11963 126719117752000 "GET /api/auctions/the-auction-title/ HTTP/1.1" 200 4716
+INFO 2025-05-22 08:14:51,429 basehttp 11963 126719345288896 "GET /api/auctions/the-auction-title/ HTTP/1.1" 200 4716
+INFO 2025-05-22 08:14:51,468 basehttp 11963 126719345288896 "GET /api/bids/?auction=2&ordering=-bid_time HTTP/1.1" 200 553
+INFO 2025-05-22 08:15:51,193 basehttp 11963 126719345288896 "GET /api/auctions/the-auction-title/ HTTP/1.1" 200 4716
+INFO 2025-05-22 08:15:51,326 basehttp 11963 126719117752000 "GET /api/auctions/the-auction-title/ HTTP/1.1" 200 4716
+INFO 2025-05-22 08:15:51,350 basehttp 11963 126719117752000 "GET /api/bids/?auction=2&ordering=-bid_time HTTP/1.1" 200 553
+INFO 2025-05-22 08:16:51,182 basehttp 11963 126719117752000 "GET /api/auctions/the-auction-title/ HTTP/1.1" 200 4716
+INFO 2025-05-22 08:16:51,334 basehttp 11963 126719345288896 "GET /api/auctions/the-auction-title/ HTTP/1.1" 200 4716
+INFO 2025-05-22 08:16:51,355 basehttp 11963 126719345288896 "GET /api/bids/?auction=2&ordering=-bid_time HTTP/1.1" 200 553
+INFO 2025-05-22 08:17:51,183 basehttp 11963 126719345288896 "GET /api/auctions/the-auction-title/ HTTP/1.1" 200 4716
+INFO 2025-05-22 08:17:51,334 basehttp 11963 126719117752000 "GET /api/auctions/the-auction-title/ HTTP/1.1" 200 4716
+INFO 2025-05-22 08:17:51,373 basehttp 11963 126719117752000 "GET /api/bids/?auction=2&ordering=-bid_time HTTP/1.1" 200 553
+INFO 2025-05-22 08:18:51,175 basehttp 11963 126719117752000 "GET /api/auctions/the-auction-title/ HTTP/1.1" 200 4716
+INFO 2025-05-22 08:18:51,324 basehttp 11963 126719345288896 "GET /api/auctions/the-auction-title/ HTTP/1.1" 200 4716
+INFO 2025-05-22 08:18:51,346 basehttp 11963 126719345288896 "GET /api/bids/?auction=2&ordering=-bid_time HTTP/1.1" 200 553
+INFO 2025-05-22 08:19:44,186 basehttp 11963 126719345288896 "GET /api/auctions/the-auction-title/ HTTP/1.1" 200 4717
+INFO 2025-05-22 08:19:44,906 basehttp 11963 126719117752000 "GET /api/auctions/the-auction-title/ HTTP/1.1" 200 4717
+INFO 2025-05-22 08:19:45,093 basehttp 11963 126719117752000 "GET /api/bids/?auction=2&ordering=-bid_time HTTP/1.1" 200 553
+INFO 2025-05-22 08:19:49,473 basehttp 11963 126719117752000 "GET /api/accounts/profile/ HTTP/1.1" 200 567
+INFO 2025-05-22 08:19:49,817 basehttp 11963 126719117752000 "GET /api/auctions/the-auction-title/ HTTP/1.1" 200 4717
+INFO 2025-05-22 08:19:49,963 basehttp 11963 126719117752000 "GET /api/auctions/the-auction-title/ HTTP/1.1" 200 4717
+INFO 2025-05-22 08:19:50,023 basehttp 11963 126719117752000 "GET /api/bids/?auction=2&ordering=-bid_time HTTP/1.1" 200 553
+WARNING 2025-05-22 08:19:57,813 log 11963 126719117752000 Unauthorized: /api/accounts/logout/
+WARNING 2025-05-22 08:19:57,813 basehttp 11963 126719117752000 "POST /api/accounts/logout/ HTTP/1.1" 401 58
+INFO 2025-05-22 08:20:01,787 middleware 11963 126719117752000 Login: admin@email.com from IP: 127.0.0.1, UA: 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36...'
+INFO 2025-05-22 08:20:01,787 views 11963 126719117752000 Successful login for user: admin@email.com
+INFO 2025-05-22 08:20:01,792 basehttp 11963 126719117752000 "POST /api/accounts/login/ HTTP/1.1" 200 1060
+INFO 2025-05-22 08:20:07,070 basehttp 11963 126719117752000 "OPTIONS /api/properties/?page=1&ordering=-created_at HTTP/1.1" 200 0
+INFO 2025-05-22 08:20:07,327 basehttp 11963 126719117752000 "GET /api/properties/?page=1&ordering=-created_at HTTP/1.1" 200 16772
+INFO 2025-05-22 08:20:07,514 basehttp 11963 126719334799040 "GET /media/uploads/2025/05/17/dummy_imgs.png HTTP/1.1" 304 0
+INFO 2025-05-22 08:20:07,549 basehttp 11963 126719117752000 "GET /api/auctions/?page=1&ordering=-created_at HTTP/1.1" 200 4768
+INFO 2025-05-22 08:20:09,549 basehttp 11963 126719117752000 "GET /api/auctions/the-auction-title/ HTTP/1.1" 200 4717
+INFO 2025-05-22 08:20:09,730 basehttp 11963 126719117752000 "GET /api/auctions/the-auction-title/ HTTP/1.1" 200 4717
+INFO 2025-05-22 08:20:09,799 basehttp 11963 126719117752000 "GET /api/bids/?auction=2&ordering=-bid_time HTTP/1.1" 200 553
+ERROR 2025-05-22 08:20:30,885 log 11963 126719117752000 Internal Server Error: /api/bids/
+Traceback (most recent call last):
+  File "/home/ahmed/tech-Savvy-projects/2025/new_ones/auction/back/base/views.py", line 380, in create
+    serializer.is_valid(raise_exception=True)
+  File "/home/ahmed/tech-Savvy-projects/2025/new_ones/newprojects/lib/python3.12/site-packages/rest_framework/serializers.py", line 233, in is_valid
+    raise ValidationError(self.errors)
+rest_framework.exceptions.ValidationError: {'bid_amount': [ErrorDetail(string='Bid amount must be greater than 0.', code='invalid')]}
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/home/ahmed/tech-Savvy-projects/2025/new_ones/newprojects/lib/python3.12/site-packages/django/core/handlers/exception.py", line 55, in inner
+    response = get_response(request)
+               ^^^^^^^^^^^^^^^^^^^^^
+  File "/home/ahmed/tech-Savvy-projects/2025/new_ones/newprojects/lib/python3.12/site-packages/django/core/handlers/base.py", line 197, in _get_response
+    response = wrapped_callback(request, *callback_args, **callback_kwargs)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/ahmed/tech-Savvy-projects/2025/new_ones/newprojects/lib/python3.12/site-packages/django/views/decorators/csrf.py", line 65, in _view_wrapper
+    return view_func(request, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/ahmed/tech-Savvy-projects/2025/new_ones/newprojects/lib/python3.12/site-packages/django/views/generic/base.py", line 104, in view
+    return self.dispatch(request, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/ahmed/tech-Savvy-projects/2025/new_ones/newprojects/lib/python3.12/site-packages/rest_framework/views.py", line 515, in dispatch
+    response = self.handle_exception(exc)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/ahmed/tech-Savvy-projects/2025/new_ones/newprojects/lib/python3.12/site-packages/rest_framework/views.py", line 475, in handle_exception
+    self.raise_uncaught_exception(exc)
+  File "/home/ahmed/tech-Savvy-projects/2025/new_ones/newprojects/lib/python3.12/site-packages/rest_framework/views.py", line 486, in raise_uncaught_exception
+    raise exc
+  File "/home/ahmed/tech-Savvy-projects/2025/new_ones/newprojects/lib/python3.12/site-packages/rest_framework/views.py", line 512, in dispatch
+    response = handler(request, *args, **kwargs)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/ahmed/tech-Savvy-projects/2025/new_ones/newprojects/lib/python3.12/site-packages/rest_framework/generics.py", line 246, in post
+    return self.create(request, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/ahmed/tech-Savvy-projects/2025/new_ones/auction/back/base/views.py", line 399, in create
+    except serializers.ValidationError as e:
+           ^^^^^^^^^^^
+NameError: name 'serializers' is not defined. Did you mean: 'serializer'?
+ERROR 2025-05-22 08:20:30,888 basehttp 11963 126719117752000 "POST /api/bids/ HTTP/1.1" 500 122046
+INFO 2025-05-22 08:20:39,985 basehttp 11963 126719117752000 "GET /api/auctions/the-auction-title/ HTTP/1.1" 200 4717
+INFO 2025-05-22 08:20:40,189 basehttp 11963 126719345288896 "GET /api/auctions/the-auction-title/ HTTP/1.1" 200 4717
+INFO 2025-05-22 08:20:40,206 basehttp 11963 126719345288896 "GET /api/bids/?auction=2&ordering=-bid_time HTTP/1.1" 200 553
+ERROR 2025-05-22 08:20:45,053 log 11963 126719345288896 Internal Server Error: /api/bids/
+Traceback (most recent call last):
+  File "/home/ahmed/tech-Savvy-projects/2025/new_ones/auction/back/base/views.py", line 380, in create
+    serializer.is_valid(raise_exception=True)
+  File "/home/ahmed/tech-Savvy-projects/2025/new_ones/newprojects/lib/python3.12/site-packages/rest_framework/serializers.py", line 233, in is_valid
+    raise ValidationError(self.errors)
+rest_framework.exceptions.ValidationError: {'bid_amount': [ErrorDetail(string='Bid amount must be greater than 0.', code='invalid')]}
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/home/ahmed/tech-Savvy-projects/2025/new_ones/newprojects/lib/python3.12/site-packages/django/core/handlers/exception.py", line 55, in inner
+    response = get_response(request)
+               ^^^^^^^^^^^^^^^^^^^^^
+  File "/home/ahmed/tech-Savvy-projects/2025/new_ones/newprojects/lib/python3.12/site-packages/django/core/handlers/base.py", line 197, in _get_response
+    response = wrapped_callback(request, *callback_args, **callback_kwargs)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/ahmed/tech-Savvy-projects/2025/new_ones/newprojects/lib/python3.12/site-packages/django/views/decorators/csrf.py", line 65, in _view_wrapper
+    return view_func(request, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/ahmed/tech-Savvy-projects/2025/new_ones/newprojects/lib/python3.12/site-packages/django/views/generic/base.py", line 104, in view
+    return self.dispatch(request, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/ahmed/tech-Savvy-projects/2025/new_ones/newprojects/lib/python3.12/site-packages/rest_framework/views.py", line 515, in dispatch
+    response = self.handle_exception(exc)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/ahmed/tech-Savvy-projects/2025/new_ones/newprojects/lib/python3.12/site-packages/rest_framework/views.py", line 475, in handle_exception
+    self.raise_uncaught_exception(exc)
+  File "/home/ahmed/tech-Savvy-projects/2025/new_ones/newprojects/lib/python3.12/site-packages/rest_framework/views.py", line 486, in raise_uncaught_exception
+    raise exc
+  File "/home/ahmed/tech-Savvy-projects/2025/new_ones/newprojects/lib/python3.12/site-packages/rest_framework/views.py", line 512, in dispatch
+    response = handler(request, *args, **kwargs)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/ahmed/tech-Savvy-projects/2025/new_ones/newprojects/lib/python3.12/site-packages/rest_framework/generics.py", line 246, in post
+    return self.create(request, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/ahmed/tech-Savvy-projects/2025/new_ones/auction/back/base/views.py", line 399, in create
+    except serializers.ValidationError as e:
+           ^^^^^^^^^^^
+NameError: name 'serializers' is not defined. Did you mean: 'serializer'?
+ERROR 2025-05-22 08:20:45,059 basehttp 11963 126719345288896 "POST /api/bids/ HTTP/1.1" 500 122046
+WARNING 2025-05-22 08:20:46,854 log 11963 126719345288896 Unauthorized: /api/accounts/logout/
+WARNING 2025-05-22 08:20:46,854 basehttp 11963 126719345288896 "POST /api/accounts/logout/ HTTP/1.1" 401 58
+INFO 2025-05-22 08:20:54,029 basehttp 11963 126719109359296 "GET /admin/ HTTP/1.1" 200 14952
+WARNING 2025-05-22 08:20:54,708 log 11963 126719109359296 Not Found: /favicon.ico
+WARNING 2025-05-22 08:20:54,708 basehttp 11963 126719109359296 "GET /favicon.ico HTTP/1.1" 404 2678
+INFO 2025-05-22 08:20:57,528 basehttp 11963 126719109359296 "GET /admin/base/auction/ HTTP/1.1" 200 17354
+INFO 2025-05-22 08:20:57,904 basehttp 11963 126719109359296 "GET /admin/jsi18n/ HTTP/1.1" 200 3342
+INFO 2025-05-22 08:20:59,474 basehttp 11963 126719109359296 "GET /admin/base/bid/ HTTP/1.1" 200 16779
+INFO 2025-05-22 08:20:59,514 basehttp 11963 126719109359296 "GET /admin/jsi18n/ HTTP/1.1" 200 3342
+INFO 2025-05-22 08:21:04,232 basehttp 11963 126719109359296 "POST /admin/base/bid/ HTTP/1.1" 200 11500
+INFO 2025-05-22 08:21:05,860 basehttp 11963 126719109359296 "POST /admin/base/bid/ HTTP/1.1" 302 0
+INFO 2025-05-22 08:21:05,888 basehttp 11963 126719109359296 "GET /admin/base/bid/ HTTP/1.1" 200 13859
+INFO 2025-05-22 08:21:05,961 basehttp 11963 126719109359296 "GET /admin/jsi18n/ HTTP/1.1" 200 3342
+INFO 2025-05-22 08:21:09,425 middleware 11963 126719345288896 Login: admin@email.com from IP: 127.0.0.1, UA: 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36...'
+INFO 2025-05-22 08:21:09,426 views 11963 126719345288896 Successful login for user: admin@email.com
+INFO 2025-05-22 08:21:09,432 basehttp 11963 126719345288896 "POST /api/accounts/login/ HTTP/1.1" 200 1060
+WARNING 2025-05-22 08:21:12,349 log 11963 126719345288896 Unauthorized: /api/accounts/logout/
+WARNING 2025-05-22 08:21:12,350 basehttp 11963 126719345288896 "POST /api/accounts/logout/ HTTP/1.1" 401 58
+INFO 2025-05-22 08:21:24,700 middleware 11963 126719345288896 Login: test@email.com from IP: 127.0.0.1, UA: 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36...'
+INFO 2025-05-22 08:21:24,701 views 11963 126719345288896 Successful login for user: test@email.com
+INFO 2025-05-22 08:21:24,706 basehttp 11963 126719345288896 "POST /api/accounts/login/ HTTP/1.1" 200 1067
+INFO 2025-05-22 08:21:30,310 basehttp 11963 126719345288896 "GET /api/auctions/?page=1&ordering=-created_at HTTP/1.1" 200 3771
+INFO 2025-05-22 08:21:32,079 basehttp 11963 126719345288896 "GET /api/auctions/the-auction-title/ HTTP/1.1" 200 3719
+INFO 2025-05-22 08:21:32,233 basehttp 11963 126719345288896 "GET /api/auctions/the-auction-title/ HTTP/1.1" 200 3719
+INFO 2025-05-22 08:21:32,291 basehttp 11963 126719345288896 "GET /api/bids/?auction=2&ordering=-bid_time HTTP/1.1" 200 52
+ERROR 2025-05-22 08:21:52,227 log 11963 126719345288896 Internal Server Error: /api/bids/
+Traceback (most recent call last):
+  File "/home/ahmed/tech-Savvy-projects/2025/new_ones/auction/back/base/views.py", line 380, in create
+    serializer.is_valid(raise_exception=True)
+  File "/home/ahmed/tech-Savvy-projects/2025/new_ones/newprojects/lib/python3.12/site-packages/rest_framework/serializers.py", line 233, in is_valid
+    raise ValidationError(self.errors)
+rest_framework.exceptions.ValidationError: {'bid_amount': [ErrorDetail(string='Bid amount must be greater than 0.', code='invalid')]}
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/home/ahmed/tech-Savvy-projects/2025/new_ones/newprojects/lib/python3.12/site-packages/django/core/handlers/exception.py", line 55, in inner
+    response = get_response(request)
+               ^^^^^^^^^^^^^^^^^^^^^
+  File "/home/ahmed/tech-Savvy-projects/2025/new_ones/newprojects/lib/python3.12/site-packages/django/core/handlers/base.py", line 197, in _get_response
+    response = wrapped_callback(request, *callback_args, **callback_kwargs)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/ahmed/tech-Savvy-projects/2025/new_ones/newprojects/lib/python3.12/site-packages/django/views/decorators/csrf.py", line 65, in _view_wrapper
+    return view_func(request, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/ahmed/tech-Savvy-projects/2025/new_ones/newprojects/lib/python3.12/site-packages/django/views/generic/base.py", line 104, in view
+    return self.dispatch(request, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/ahmed/tech-Savvy-projects/2025/new_ones/newprojects/lib/python3.12/site-packages/rest_framework/views.py", line 515, in dispatch
+    response = self.handle_exception(exc)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/ahmed/tech-Savvy-projects/2025/new_ones/newprojects/lib/python3.12/site-packages/rest_framework/views.py", line 475, in handle_exception
+    self.raise_uncaught_exception(exc)
+  File "/home/ahmed/tech-Savvy-projects/2025/new_ones/newprojects/lib/python3.12/site-packages/rest_framework/views.py", line 486, in raise_uncaught_exception
+    raise exc
+  File "/home/ahmed/tech-Savvy-projects/2025/new_ones/newprojects/lib/python3.12/site-packages/rest_framework/views.py", line 512, in dispatch
+    response = handler(request, *args, **kwargs)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/ahmed/tech-Savvy-projects/2025/new_ones/newprojects/lib/python3.12/site-packages/rest_framework/generics.py", line 246, in post
+    return self.create(request, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/ahmed/tech-Savvy-projects/2025/new_ones/auction/back/base/views.py", line 399, in create
+    except serializers.ValidationError as e:
+           ^^^^^^^^^^^
+NameError: name 'serializers' is not defined. Did you mean: 'serializer'?
+ERROR 2025-05-22 08:21:52,229 basehttp 11963 126719345288896 "POST /api/bids/ HTTP/1.1" 500 122044
+INFO 2025-05-22 08:22:02,505 basehttp 11963 126719345288896 "GET /api/auctions/the-auction-title/ HTTP/1.1" 200 3719
+INFO 2025-05-22 08:22:02,643 basehttp 11963 126719117752000 "GET /api/auctions/the-auction-title/ HTTP/1.1" 200 3719
+INFO 2025-05-22 08:22:02,668 basehttp 11963 126719117752000 "GET /api/bids/?auction=2&ordering=-bid_time HTTP/1.1" 200 52
+ERROR 2025-05-22 08:22:05,126 log 11963 126719117752000 Internal Server Error: /api/bids/
+Traceback (most recent call last):
+  File "/home/ahmed/tech-Savvy-projects/2025/new_ones/auction/back/base/views.py", line 380, in create
+    serializer.is_valid(raise_exception=True)
+  File "/home/ahmed/tech-Savvy-projects/2025/new_ones/newprojects/lib/python3.12/site-packages/rest_framework/serializers.py", line 233, in is_valid
+    raise ValidationError(self.errors)
+rest_framework.exceptions.ValidationError: {'bid_amount': [ErrorDetail(string='Bid amount must be greater than 0.', code='invalid')]}
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/home/ahmed/tech-Savvy-projects/2025/new_ones/newprojects/lib/python3.12/site-packages/django/core/handlers/exception.py", line 55, in inner
+    response = get_response(request)
+               ^^^^^^^^^^^^^^^^^^^^^
+  File "/home/ahmed/tech-Savvy-projects/2025/new_ones/newprojects/lib/python3.12/site-packages/django/core/handlers/base.py", line 197, in _get_response
+    response = wrapped_callback(request, *callback_args, **callback_kwargs)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/ahmed/tech-Savvy-projects/2025/new_ones/newprojects/lib/python3.12/site-packages/django/views/decorators/csrf.py", line 65, in _view_wrapper
+    return view_func(request, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/ahmed/tech-Savvy-projects/2025/new_ones/newprojects/lib/python3.12/site-packages/django/views/generic/base.py", line 104, in view
+    return self.dispatch(request, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/ahmed/tech-Savvy-projects/2025/new_ones/newprojects/lib/python3.12/site-packages/rest_framework/views.py", line 515, in dispatch
+    response = self.handle_exception(exc)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/ahmed/tech-Savvy-projects/2025/new_ones/newprojects/lib/python3.12/site-packages/rest_framework/views.py", line 475, in handle_exception
+    self.raise_uncaught_exception(exc)
+  File "/home/ahmed/tech-Savvy-projects/2025/new_ones/newprojects/lib/python3.12/site-packages/rest_framework/views.py", line 486, in raise_uncaught_exception
+    raise exc
+  File "/home/ahmed/tech-Savvy-projects/2025/new_ones/newprojects/lib/python3.12/site-packages/rest_framework/views.py", line 512, in dispatch
+    response = handler(request, *args, **kwargs)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/ahmed/tech-Savvy-projects/2025/new_ones/newprojects/lib/python3.12/site-packages/rest_framework/generics.py", line 246, in post
+    return self.create(request, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/ahmed/tech-Savvy-projects/2025/new_ones/auction/back/base/views.py", line 399, in create
+    except serializers.ValidationError as e:
+           ^^^^^^^^^^^
+NameError: name 'serializers' is not defined. Did you mean: 'serializer'?
+ERROR 2025-05-22 08:22:05,129 basehttp 11963 126719117752000 "POST /api/bids/ HTTP/1.1" 500 122044
+INFO 2025-05-22 08:22:32,775 basehttp 11963 126719117752000 "GET /api/auctions/the-auction-title/ HTTP/1.1" 200 3719
+INFO 2025-05-22 08:22:32,946 basehttp 11963 126719345288896 "GET /api/auctions/the-auction-title/ HTTP/1.1" 200 3719
+INFO 2025-05-22 08:22:32,997 basehttp 11963 126719345288896 "GET /api/bids/?auction=2&ordering=-bid_time HTTP/1.1" 200 52
+INFO 2025-05-22 08:23:02,456 basehttp 11963 126719345288896 "GET /api/auctions/the-auction-title/ HTTP/1.1" 200 3719
+INFO 2025-05-22 08:23:02,728 basehttp 11963 126719334799040 "GET /api/auctions/the-auction-title/ HTTP/1.1" 200 3718
+INFO 2025-05-22 08:23:02,747 basehttp 11963 126719334799040 "GET /api/bids/?auction=2&ordering=-bid_time HTTP/1.1" 200 52
+INFO 2025-05-22 08:23:32,615 basehttp 11963 126719334799040 "GET /api/auctions/the-auction-title/ HTTP/1.1" 200 3719
+INFO 2025-05-22 08:23:32,749 basehttp 11963 126719345288896 "GET /api/auctions/the-auction-title/ HTTP/1.1" 200 3719
+INFO 2025-05-22 08:23:32,767 basehttp 11963 126719345288896 "GET /api/bids/?auction=2&ordering=-bid_time HTTP/1.1" 200 52
+INFO 2025-05-22 08:23:58,098 autoreload 11963 126719424587584 /home/ahmed/tech-Savvy-projects/2025/new_ones/auction/back/base/views.py changed, reloading.
+INFO 2025-05-22 08:23:59,351 autoreload 14058 134249668212544 Watching for file changes with StatReloader
+INFO 2025-05-22 08:24:02,515 basehttp 14058 134249588975296 "GET /api/auctions/the-auction-title/ HTTP/1.1" 200 3719
+INFO 2025-05-22 08:24:02,652 basehttp 14058 134249579534016 "GET /api/auctions/the-auction-title/ HTTP/1.1" 200 3719
+INFO 2025-05-22 08:24:02,672 basehttp 14058 134249579534016 "GET /api/bids/?auction=2&ordering=-bid_time HTTP/1.1" 200 52
+ERROR 2025-05-22 08:24:03,758 log 14058 134249579534016 Internal Server Error: /api/bids/
+Traceback (most recent call last):
+  File "/home/ahmed/tech-Savvy-projects/2025/new_ones/auction/back/base/views.py", line 380, in create
+    serializer.is_valid(raise_exception=True)
+  File "/home/ahmed/tech-Savvy-projects/2025/new_ones/newprojects/lib/python3.12/site-packages/rest_framework/serializers.py", line 233, in is_valid
+    raise ValidationError(self.errors)
+rest_framework.exceptions.ValidationError: {'bid_amount': [ErrorDetail(string='Bid amount must be greater than 0.', code='invalid')]}
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/home/ahmed/tech-Savvy-projects/2025/new_ones/newprojects/lib/python3.12/site-packages/django/core/handlers/exception.py", line 55, in inner
+    response = get_response(request)
+               ^^^^^^^^^^^^^^^^^^^^^
+  File "/home/ahmed/tech-Savvy-projects/2025/new_ones/newprojects/lib/python3.12/site-packages/django/core/handlers/base.py", line 197, in _get_response
+    response = wrapped_callback(request, *callback_args, **callback_kwargs)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/ahmed/tech-Savvy-projects/2025/new_ones/newprojects/lib/python3.12/site-packages/django/views/decorators/csrf.py", line 65, in _view_wrapper
+    return view_func(request, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/ahmed/tech-Savvy-projects/2025/new_ones/newprojects/lib/python3.12/site-packages/django/views/generic/base.py", line 104, in view
+    return self.dispatch(request, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/ahmed/tech-Savvy-projects/2025/new_ones/newprojects/lib/python3.12/site-packages/rest_framework/views.py", line 515, in dispatch
+    response = self.handle_exception(exc)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/ahmed/tech-Savvy-projects/2025/new_ones/newprojects/lib/python3.12/site-packages/rest_framework/views.py", line 475, in handle_exception
+    self.raise_uncaught_exception(exc)
+  File "/home/ahmed/tech-Savvy-projects/2025/new_ones/newprojects/lib/python3.12/site-packages/rest_framework/views.py", line 486, in raise_uncaught_exception
+    raise exc
+  File "/home/ahmed/tech-Savvy-projects/2025/new_ones/newprojects/lib/python3.12/site-packages/rest_framework/views.py", line 512, in dispatch
+    response = handler(request, *args, **kwargs)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/ahmed/tech-Savvy-projects/2025/new_ones/newprojects/lib/python3.12/site-packages/rest_framework/generics.py", line 246, in post
+    return self.create(request, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/ahmed/tech-Savvy-projects/2025/new_ones/auction/back/base/views.py", line 399, in create
+    except serializer.ValidationError as e:
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^
+AttributeError: 'BidSerializer' object has no attribute 'ValidationError'
+ERROR 2025-05-22 08:24:03,768 basehttp 14058 134249579534016 "POST /api/bids/ HTTP/1.1" 500 122316
+INFO 2025-05-22 08:24:20,675 autoreload 14058 134249668212544 /home/ahmed/tech-Savvy-projects/2025/new_ones/auction/back/base/views.py changed, reloading.
+INFO 2025-05-22 08:24:21,973 autoreload 14117 137333604009792 Watching for file changes with StatReloader
+ERROR 2025-05-22 08:24:26,376 log 14117 137333550606016 Internal Server Error: /api/bids/
+Traceback (most recent call last):
+  File "/home/ahmed/tech-Savvy-projects/2025/new_ones/auction/back/base/views.py", line 380, in create
+    serializer.is_valid(raise_exception=True)
+  File "/home/ahmed/tech-Savvy-projects/2025/new_ones/newprojects/lib/python3.12/site-packages/rest_framework/serializers.py", line 233, in is_valid
+    raise ValidationError(self.errors)
+rest_framework.exceptions.ValidationError: {'bid_amount': [ErrorDetail(string='Bid amount must be greater than 0.', code='invalid')]}
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/home/ahmed/tech-Savvy-projects/2025/new_ones/newprojects/lib/python3.12/site-packages/django/core/handlers/exception.py", line 55, in inner
+    response = get_response(request)
+               ^^^^^^^^^^^^^^^^^^^^^
+  File "/home/ahmed/tech-Savvy-projects/2025/new_ones/newprojects/lib/python3.12/site-packages/django/core/handlers/base.py", line 197, in _get_response
+    response = wrapped_callback(request, *callback_args, **callback_kwargs)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/ahmed/tech-Savvy-projects/2025/new_ones/newprojects/lib/python3.12/site-packages/django/views/decorators/csrf.py", line 65, in _view_wrapper
+    return view_func(request, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/ahmed/tech-Savvy-projects/2025/new_ones/newprojects/lib/python3.12/site-packages/django/views/generic/base.py", line 104, in view
+    return self.dispatch(request, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/ahmed/tech-Savvy-projects/2025/new_ones/newprojects/lib/python3.12/site-packages/rest_framework/views.py", line 515, in dispatch
+    response = self.handle_exception(exc)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/ahmed/tech-Savvy-projects/2025/new_ones/newprojects/lib/python3.12/site-packages/rest_framework/views.py", line 475, in handle_exception
+    self.raise_uncaught_exception(exc)
+  File "/home/ahmed/tech-Savvy-projects/2025/new_ones/newprojects/lib/python3.12/site-packages/rest_framework/views.py", line 486, in raise_uncaught_exception
+    raise exc
+  File "/home/ahmed/tech-Savvy-projects/2025/new_ones/newprojects/lib/python3.12/site-packages/rest_framework/views.py", line 512, in dispatch
+    response = handler(request, *args, **kwargs)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/ahmed/tech-Savvy-projects/2025/new_ones/newprojects/lib/python3.12/site-packages/rest_framework/generics.py", line 246, in post
+    return self.create(request, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/ahmed/tech-Savvy-projects/2025/new_ones/auction/back/base/views.py", line 399, in create
+    except serializers.ValidationError as e:
+           ^^^^^^^^^^^
+NameError: name 'serializers' is not defined. Did you mean: 'serializer'?
+ERROR 2025-05-22 08:24:26,382 basehttp 14117 137333550606016 "POST /api/bids/ HTTP/1.1" 500 122044
+INFO 2025-05-22 08:24:32,508 basehttp 14117 137333550606016 "GET /api/auctions/the-auction-title/ HTTP/1.1" 200 3719
+INFO 2025-05-22 08:24:32,653 basehttp 14117 137333540116160 "GET /api/auctions/the-auction-title/ HTTP/1.1" 200 3719
+INFO 2025-05-22 08:24:32,673 basehttp 14117 137333540116160 "GET /api/bids/?auction=2&ordering=-bid_time HTTP/1.1" 200 52
+INFO 2025-05-22 08:24:47,168 autoreload 14117 137333604009792 /home/ahmed/tech-Savvy-projects/2025/new_ones/auction/back/base/views.py changed, reloading.
+INFO 2025-05-22 08:24:48,104 autoreload 14144 127528430421824 Watching for file changes with StatReloader
+INFO 2025-05-22 08:25:03,218 basehttp 14144 127528351033024 "GET /api/auctions/the-auction-title/ HTTP/1.1" 200 3719
+INFO 2025-05-22 08:25:03,337 basehttp 14144 127528341591744 "GET /api/auctions/the-auction-title/ HTTP/1.1" 200 3719
+INFO 2025-05-22 08:25:03,356 basehttp 14144 127528341591744 "GET /api/bids/?auction=2&ordering=-bid_time HTTP/1.1" 200 52
+INFO 2025-05-22 08:25:33,181 basehttp 14144 127528341591744 "GET /api/auctions/the-auction-title/ HTTP/1.1" 200 3718
+INFO 2025-05-22 08:25:33,336 basehttp 14144 127528351033024 "GET /api/auctions/the-auction-title/ HTTP/1.1" 200 3719
+INFO 2025-05-22 08:25:33,353 basehttp 14144 127528351033024 "GET /api/bids/?auction=2&ordering=-bid_time HTTP/1.1" 200 52
+INFO 2025-05-22 08:26:39,507 autoreload 14144 127528430421824 /home/ahmed/tech-Savvy-projects/2025/new_ones/auction/back/base/views.py changed, reloading.
+INFO 2025-05-22 08:26:40,676 autoreload 14236 126706732070720 Watching for file changes with StatReloader
+INFO 2025-05-22 08:26:51,204 basehttp 14236 126706651227840 "GET /api/auctions/the-auction-title/ HTTP/1.1" 200 3718
+INFO 2025-05-22 08:26:51,466 basehttp 14236 126706568394432 "GET /api/auctions/the-auction-title/ HTTP/1.1" 200 3717
+INFO 2025-05-22 08:26:51,534 basehttp 14236 126706568394432 "GET /api/bids/?auction=2&ordering=-bid_time HTTP/1.1" 200 52
+INFO 2025-05-22 08:27:11,979 autoreload 14236 126706732070720 /home/ahmed/tech-Savvy-projects/2025/new_ones/auction/back/base/views.py changed, reloading.
+INFO 2025-05-22 08:27:12,834 autoreload 14273 127667215583040 Watching for file changes with StatReloader
+INFO 2025-05-22 08:27:15,294 autoreload 14273 127667215583040 /home/ahmed/tech-Savvy-projects/2025/new_ones/auction/back/base/views.py changed, reloading.
+INFO 2025-05-22 08:27:16,238 autoreload 14279 127047143745344 Watching for file changes with StatReloader
+INFO 2025-05-22 08:27:24,898 autoreload 14279 127047143745344 /home/ahmed/tech-Savvy-projects/2025/new_ones/auction/back/base/views.py changed, reloading.
+INFO 2025-05-22 08:27:25,795 autoreload 14285 124984186160960 Watching for file changes with StatReloader
+INFO 2025-05-22 08:28:01,246 autoreload 14285 124984186160960 /home/ahmed/tech-Savvy-projects/2025/new_ones/auction/back/base/views.py changed, reloading.
+INFO 2025-05-22 08:28:02,458 autoreload 14495 138991990966080 Watching for file changes with StatReloader
+INFO 2025-05-22 08:28:51,194 basehttp 14495 138991910250176 "GET /api/auctions/the-auction-title/ HTTP/1.1" 200 3718
+INFO 2025-05-22 08:28:51,396 basehttp 14495 138991900808896 "GET /api/auctions/the-auction-title/ HTTP/1.1" 200 3718
+INFO 2025-05-22 08:28:51,434 basehttp 14495 138991900808896 "GET /api/bids/?auction=2&ordering=-bid_time HTTP/1.1" 200 52
+INFO 2025-05-22 08:29:01,590 autoreload 14495 138991990966080 /home/ahmed/tech-Savvy-projects/2025/new_ones/auction/back/base/serializers.py changed, reloading.
+INFO 2025-05-22 08:29:02,405 autoreload 14629 132776651556672 Watching for file changes with StatReloader
+INFO 2025-05-22 08:29:04,814 autoreload 14629 132776651556672 /home/ahmed/tech-Savvy-projects/2025/new_ones/auction/back/base/serializers.py changed, reloading.
+INFO 2025-05-22 08:29:06,218 autoreload 14655 125189260322624 Watching for file changes with StatReloader
+INFO 2025-05-22 08:29:15,186 autoreload 14655 125189260322624 /home/ahmed/tech-Savvy-projects/2025/new_ones/auction/back/base/serializers.py changed, reloading.
+INFO 2025-05-22 08:29:16,093 autoreload 14694 139441879201600 Watching for file changes with StatReloader
+INFO 2025-05-22 08:29:17,379 autoreload 14694 139441879201600 /home/ahmed/tech-Savvy-projects/2025/new_ones/auction/back/base/serializers.py changed, reloading.
+INFO 2025-05-22 08:29:18,293 autoreload 14696 131592589375296 Watching for file changes with StatReloader
+INFO 2025-05-22 08:29:19,775 autoreload 14696 131592589375296 /home/ahmed/tech-Savvy-projects/2025/new_ones/auction/back/base/serializers.py changed, reloading.
+INFO 2025-05-22 08:29:20,830 autoreload 14702 133561764861760 Watching for file changes with StatReloader
+INFO 2025-05-22 08:29:48,425 basehttp 14702 133561685370560 "GET /api/auctions/the-auction-title/ HTTP/1.1" 200 3719
+INFO 2025-05-22 08:29:48,686 basehttp 14702 133561685370560 "GET /api/auctions/the-auction-title/ HTTP/1.1" 200 3719
+INFO 2025-05-22 08:29:48,742 basehttp 14702 133561685370560 "GET /api/bids/?auction=2&ordering=-bid_time HTTP/1.1" 200 52
+INFO 2025-05-22 08:30:00,999 basehttp 14702 133561685370560 "GET /api/auctions/the-auction-title/ HTTP/1.1" 200 3719
+INFO 2025-05-22 08:30:01,427 basehttp 14702 133561685370560 "GET /api/auctions/the-auction-title/ HTTP/1.1" 200 3719
+INFO 2025-05-22 08:30:01,459 basehttp 14702 133561685370560 "GET /api/bids/?auction=2&ordering=-bid_time HTTP/1.1" 200 52
+ERROR 2025-05-22 08:30:06,434 log 14702 133561685370560 Internal Server Error: /api/bids/
+Traceback (most recent call last):
+  File "/home/ahmed/tech-Savvy-projects/2025/new_ones/auction/back/base/views.py", line 384, in create
+    logger.info(f"Bid creation attempt by user {request.user.id}: {request.data}")
+    ^^^^^^
+NameError: name 'logger' is not defined
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/home/ahmed/tech-Savvy-projects/2025/new_ones/newprojects/lib/python3.12/site-packages/django/core/handlers/exception.py", line 55, in inner
+    response = get_response(request)
+               ^^^^^^^^^^^^^^^^^^^^^
+  File "/home/ahmed/tech-Savvy-projects/2025/new_ones/newprojects/lib/python3.12/site-packages/django/core/handlers/base.py", line 197, in _get_response
+    response = wrapped_callback(request, *callback_args, **callback_kwargs)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/ahmed/tech-Savvy-projects/2025/new_ones/newprojects/lib/python3.12/site-packages/django/views/decorators/csrf.py", line 65, in _view_wrapper
+    return view_func(request, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/ahmed/tech-Savvy-projects/2025/new_ones/newprojects/lib/python3.12/site-packages/django/views/generic/base.py", line 104, in view
+    return self.dispatch(request, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/ahmed/tech-Savvy-projects/2025/new_ones/newprojects/lib/python3.12/site-packages/rest_framework/views.py", line 515, in dispatch
+    response = self.handle_exception(exc)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/ahmed/tech-Savvy-projects/2025/new_ones/newprojects/lib/python3.12/site-packages/rest_framework/views.py", line 475, in handle_exception
+    self.raise_uncaught_exception(exc)
+  File "/home/ahmed/tech-Savvy-projects/2025/new_ones/newprojects/lib/python3.12/site-packages/rest_framework/views.py", line 486, in raise_uncaught_exception
+    raise exc
+  File "/home/ahmed/tech-Savvy-projects/2025/new_ones/newprojects/lib/python3.12/site-packages/rest_framework/views.py", line 512, in dispatch
+    response = handler(request, *args, **kwargs)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/ahmed/tech-Savvy-projects/2025/new_ones/newprojects/lib/python3.12/site-packages/rest_framework/generics.py", line 246, in post
+    return self.create(request, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/ahmed/.local/share/uv/python/cpython-3.12.10-linux-x86_64-gnu/lib/python3.12/contextlib.py", line 81, in inner
+    return func(*args, **kwds)
+           ^^^^^^^^^^^^^^^^^^^
+  File "/home/ahmed/tech-Savvy-projects/2025/new_ones/auction/back/base/views.py", line 568, in create
+    logger.error(f"Unexpected error in bid creation: {str(e)}", exc_info=True)
+    ^^^^^^
+NameError: name 'logger' is not defined
+ERROR 2025-05-22 08:30:06,440 basehttp 14702 133561685370560 "POST /api/bids/ HTTP/1.1" 500 115729
+INFO 2025-05-22 08:30:31,964 basehttp 14702 133561685370560 "GET /api/auctions/the-auction-title/ HTTP/1.1" 200 3719
+INFO 2025-05-22 08:30:32,287 basehttp 14702 133561604634304 "GET /api/auctions/the-auction-title/ HTTP/1.1" 200 3719
+INFO 2025-05-22 08:30:32,404 basehttp 14702 133561604634304 "GET /api/bids/?auction=2&ordering=-bid_time HTTP/1.1" 200 52
+INFO 2025-05-22 08:30:32,509 autoreload 14702 133561764861760 /home/ahmed/tech-Savvy-projects/2025/new_ones/auction/back/base/views.py changed, reloading.
+INFO 2025-05-22 08:30:33,971 autoreload 14774 135680942450496 Watching for file changes with StatReloader
+WARNING 2025-05-22 08:30:49,091 log 14774 135680863758016 Bad Request: /api/bids/
+WARNING 2025-05-22 08:30:49,092 basehttp 14774 135680863758016 "POST /api/bids/ HTTP/1.1" 400 74
+WARNING 2025-05-22 08:30:57,468 log 14774 135680863758016 Bad Request: /api/bids/
+WARNING 2025-05-22 08:30:57,469 basehttp 14774 135680863758016 "POST /api/bids/ HTTP/1.1" 400 89
+WARNING 2025-05-22 08:30:58,040 log 14774 135680863758016 Bad Request: /api/bids/
+WARNING 2025-05-22 08:30:58,040 basehttp 14774 135680863758016 "POST /api/bids/ HTTP/1.1" 400 89
+WARNING 2025-05-22 08:30:58,608 log 14774 135680863758016 Bad Request: /api/bids/
+WARNING 2025-05-22 08:30:58,609 basehttp 14774 135680863758016 "POST /api/bids/ HTTP/1.1" 400 89
+INFO 2025-05-22 08:31:01,704 basehttp 14774 135680863758016 "GET /api/auctions/the-auction-title/ HTTP/1.1" 200 3719
+INFO 2025-05-22 08:31:01,855 basehttp 14774 135680853268160 "GET /api/auctions/the-auction-title/ HTTP/1.1" 200 3719
+INFO 2025-05-22 08:31:01,875 basehttp 14774 135680853268160 "GET /api/bids/?auction=2&ordering=-bid_time HTTP/1.1" 200 52
+WARNING 2025-05-22 08:31:11,779 log 14774 135680853268160 Bad Request: /api/bids/
+WARNING 2025-05-22 08:31:11,781 basehttp 14774 135680853268160 "POST /api/bids/ HTTP/1.1" 400 74
+WARNING 2025-05-22 08:31:25,531 log 14774 135680853268160 Bad Request: /api/bids/
+WARNING 2025-05-22 08:31:25,531 basehttp 14774 135680853268160 "POST /api/bids/ HTTP/1.1" 400 89
+WARNING 2025-05-22 08:31:25,767 log 14774 135680853268160 Bad Request: /api/bids/
+WARNING 2025-05-22 08:31:25,768 basehttp 14774 135680853268160 "POST /api/bids/ HTTP/1.1" 400 89
+WARNING 2025-05-22 08:31:26,364 log 14774 135680853268160 Bad Request: /api/bids/
+WARNING 2025-05-22 08:31:26,364 basehttp 14774 135680853268160 "POST /api/bids/ HTTP/1.1" 400 89
+WARNING 2025-05-22 08:31:27,051 log 14774 135680853268160 Bad Request: /api/bids/
+WARNING 2025-05-22 08:31:27,052 basehttp 14774 135680853268160 "POST /api/bids/ HTTP/1.1" 400 89
+INFO 2025-05-22 08:31:31,694 basehttp 14774 135680853268160 "GET /api/auctions/the-auction-title/ HTTP/1.1" 200 3719
+INFO 2025-05-22 08:31:31,848 basehttp 14774 135680863758016 "GET /api/auctions/the-auction-title/ HTTP/1.1" 200 3719
+INFO 2025-05-22 08:31:31,867 basehttp 14774 135680863758016 "GET /api/bids/?auction=2&ordering=-bid_time HTTP/1.1" 200 52
+INFO 2025-05-22 08:32:02,190 basehttp 14774 135680863758016 "GET /api/auctions/the-auction-title/ HTTP/1.1" 200 3719
+INFO 2025-05-22 08:32:02,373 basehttp 14774 135680853268160 "GET /api/auctions/the-auction-title/ HTTP/1.1" 200 3718
+INFO 2025-05-22 08:32:02,392 basehttp 14774 135680853268160 "GET /api/bids/?auction=2&ordering=-bid_time HTTP/1.1" 200 52
+INFO 2025-05-22 08:32:32,191 basehttp 14774 135680853268160 "GET /api/auctions/the-auction-title/ HTTP/1.1" 200 3719
+INFO 2025-05-22 08:32:32,346 basehttp 14774 135680863758016 "GET /api/auctions/the-auction-title/ HTTP/1.1" 200 3719
+INFO 2025-05-22 08:32:32,370 basehttp 14774 135680863758016 "GET /api/bids/?auction=2&ordering=-bid_time HTTP/1.1" 200 52
+INFO 2025-05-22 08:33:02,177 basehttp 14774 135680863758016 "GET /api/auctions/the-auction-title/ HTTP/1.1" 200 3719
+INFO 2025-05-22 08:33:02,297 basehttp 14774 135680853268160 "GET /api/auctions/the-auction-title/ HTTP/1.1" 200 3719
+INFO 2025-05-22 08:33:02,318 basehttp 14774 135680853268160 "GET /api/bids/?auction=2&ordering=-bid_time HTTP/1.1" 200 52
+INFO 2025-05-22 08:33:51,179 basehttp 14774 135680853268160 "GET /api/auctions/the-auction-title/ HTTP/1.1" 200 3718
+INFO 2025-05-22 08:33:51,325 basehttp 14774 135680863758016 "GET /api/auctions/the-auction-title/ HTTP/1.1" 200 3718
+INFO 2025-05-22 08:33:51,343 basehttp 14774 135680863758016 "GET /api/bids/?auction=2&ordering=-bid_time HTTP/1.1" 200 52
+INFO 2025-05-22 08:34:44,213 basehttp 14774 135680863758016 "GET /api/auctions/the-auction-title/ HTTP/1.1" 200 3719
+INFO 2025-05-22 08:34:44,365 basehttp 14774 135680853268160 "GET /api/auctions/the-auction-title/ HTTP/1.1" 200 3719
+INFO 2025-05-22 08:34:44,391 basehttp 14774 135680853268160 "GET /api/bids/?auction=2&ordering=-bid_time HTTP/1.1" 200 52
+INFO 2025-05-22 08:34:55,832 basehttp 14774 135680634123968 "GET /admin/base/auction/ HTTP/1.1" 200 17354
+INFO 2025-05-22 08:34:55,867 basehttp 14774 135680634123968 "GET /admin/jsi18n/ HTTP/1.1" 200 3342
+INFO 2025-05-22 08:34:58,783 basehttp 14774 135680634123968 "GET /admin/base/property/3/change/ HTTP/1.1" 200 53147
+INFO 2025-05-22 08:34:58,829 basehttp 14774 135680634123968 "GET /admin/jsi18n/ HTTP/1.1" 200 3342
+INFO 2025-05-22 08:35:02,205 basehttp 14774 135680853268160 "GET /api/auctions/the-auction-title/ HTTP/1.1" 200 3719
+INFO 2025-05-22 08:35:02,367 basehttp 14774 135680863758016 "GET /api/auctions/the-auction-title/ HTTP/1.1" 200 3719
+INFO 2025-05-22 08:35:02,403 basehttp 14774 135680863758016 "GET /api/bids/?auction=2&ordering=-bid_time HTTP/1.1" 200 52
+INFO 2025-05-22 08:35:32,167 basehttp 14774 135680863758016 "GET /api/auctions/the-auction-title/ HTTP/1.1" 200 3719
+INFO 2025-05-22 08:35:32,312 basehttp 14774 135680853268160 "GET /api/auctions/the-auction-title/ HTTP/1.1" 200 3719
+INFO 2025-05-22 08:35:32,326 basehttp 14774 135680853268160 "GET /api/bids/?auction=2&ordering=-bid_time HTTP/1.1" 200 52
+INFO 2025-05-22 08:35:34,181 basehttp 14774 135680634123968 "GET /admin/base/auction/ HTTP/1.1" 200 17354
+INFO 2025-05-22 08:35:34,219 basehttp 14774 135680634123968 "GET /admin/jsi18n/ HTTP/1.1" 200 3342
+INFO 2025-05-22 08:35:37,111 basehttp 14774 135680634123968 "GET /admin/base/auction/2/change/ HTTP/1.1" 200 36566
+INFO 2025-05-22 08:35:37,146 basehttp 14774 135680634123968 "GET /admin/jsi18n/ HTTP/1.1" 200 3342
+INFO 2025-05-22 08:35:46,194 basehttp 14774 135680634123968 "POST /admin/base/auction/2/change/ HTTP/1.1" 302 0
+INFO 2025-05-22 08:35:46,222 basehttp 14774 135680634123968 "GET /admin/base/auction/ HTTP/1.1" 200 17566
+INFO 2025-05-22 08:35:46,297 basehttp 14774 135680634123968 "GET /admin/jsi18n/ HTTP/1.1" 200 3342
+INFO 2025-05-22 08:36:02,194 basehttp 14774 135680853268160 "GET /api/auctions/the-auction-title/ HTTP/1.1" 200 3719
+INFO 2025-05-22 08:36:02,335 basehttp 14774 135680863758016 "GET /api/auctions/the-auction-title/ HTTP/1.1" 200 3719
+INFO 2025-05-22 08:36:02,353 basehttp 14774 135680863758016 "GET /api/bids/?auction=2&ordering=-bid_time HTTP/1.1" 200 52
+INFO 2025-05-22 08:36:32,190 basehttp 14774 135680863758016 "GET /api/auctions/the-auction-title/ HTTP/1.1" 200 3718
+INFO 2025-05-22 08:36:32,309 basehttp 14774 135680853268160 "GET /api/auctions/the-auction-title/ HTTP/1.1" 200 3719
+INFO 2025-05-22 08:36:32,334 basehttp 14774 135680853268160 "GET /api/bids/?auction=2&ordering=-bid_time HTTP/1.1" 200 52
+INFO 2025-05-22 08:37:51,204 basehttp 14774 135680853268160 "GET /api/auctions/the-auction-title/ HTTP/1.1" 200 3718
+INFO 2025-05-22 08:37:51,343 basehttp 14774 135680863758016 "GET /api/auctions/the-auction-title/ HTTP/1.1" 200 3718
+INFO 2025-05-22 08:37:51,366 basehttp 14774 135680863758016 "GET /api/bids/?auction=2&ordering=-bid_time HTTP/1.1" 200 52
+INFO 2025-05-22 08:38:51,180 basehttp 14774 135680863758016 "GET /api/auctions/the-auction-title/ HTTP/1.1" 200 3718
+INFO 2025-05-22 08:38:51,333 basehttp 14774 135680853268160 "GET /api/auctions/the-auction-title/ HTTP/1.1" 200 3718
+INFO 2025-05-22 08:38:51,362 basehttp 14774 135680853268160 "GET /api/bids/?auction=2&ordering=-bid_time HTTP/1.1" 200 52
+INFO 2025-05-22 08:39:51,191 basehttp 14774 135680853268160 "GET /api/auctions/the-auction-title/ HTTP/1.1" 200 3718
+INFO 2025-05-22 08:39:51,351 basehttp 14774 135680863758016 "GET /api/auctions/the-auction-title/ HTTP/1.1" 200 3718
+INFO 2025-05-22 08:39:51,370 basehttp 14774 135680863758016 "GET /api/bids/?auction=2&ordering=-bid_time HTTP/1.1" 200 52
+INFO 2025-05-22 08:40:51,184 basehttp 14774 135680863758016 "GET /api/auctions/the-auction-title/ HTTP/1.1" 200 3718
+INFO 2025-05-22 08:40:51,349 basehttp 14774 135680853268160 "GET /api/auctions/the-auction-title/ HTTP/1.1" 200 3718
+INFO 2025-05-22 08:40:51,374 basehttp 14774 135680853268160 "GET /api/bids/?auction=2&ordering=-bid_time HTTP/1.1" 200 52
+INFO 2025-05-22 08:41:51,186 basehttp 14774 135680853268160 "GET /api/auctions/the-auction-title/ HTTP/1.1" 200 3718
+INFO 2025-05-22 08:41:51,299 basehttp 14774 135680863758016 "GET /api/auctions/the-auction-title/ HTTP/1.1" 200 3718
+INFO 2025-05-22 08:41:51,322 basehttp 14774 135680863758016 "GET /api/bids/?auction=2&ordering=-bid_time HTTP/1.1" 200 52

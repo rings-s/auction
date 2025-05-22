@@ -337,6 +337,8 @@ class PropertySerializer(serializers.ModelSerializer):
         return super().update(instance, validated_data)
 
 
+# back/base/serializers.py - Updated BidSerializer
+
 class BidSerializer(serializers.ModelSerializer):
     bidder_info = serializers.SerializerMethodField()
     auction_info = serializers.SerializerMethodField()
@@ -347,7 +349,7 @@ class BidSerializer(serializers.ModelSerializer):
         fields = '__all__'
         read_only_fields = [
             'bidder', 'bid_time', 'status', 'ip_address',
-            'is_verified', 'created_at', 'updated_at'
+            'is_verified', 'created_at', 'updated_at', 'bidder_info', 'auction_info'
         ]
 
     def get_bidder_info(self, obj):
@@ -356,7 +358,8 @@ class BidSerializer(serializers.ModelSerializer):
         return {
             'id': obj.bidder.id,
             'name': obj.bidder_name,
-            'email': obj.bidder.email
+            'email': obj.bidder.email,
+            'is_verified': getattr(obj.bidder, 'is_verified', False)
         }
 
     def get_auction_info(self, obj):
@@ -365,44 +368,43 @@ class BidSerializer(serializers.ModelSerializer):
         return {
             'id': obj.auction.id,
             'title': obj.auction.title,
-            'current_bid': float(obj.auction.current_bid) if obj.auction.current_bid else None
+            'current_bid': float(obj.auction.current_bid) if obj.auction.current_bid else None,
+            'status': obj.auction.status
         }
 
-    def validate(self, data):
-        """Validate bid amount and auction requirements"""
-        auction = data.get('auction')
-        if not auction:
-            raise serializers.ValidationError({"auction": _("Auction is required.")})
-
-        # Verify auction is active
-        if not auction.can_accept_bids():
-            raise serializers.ValidationError(
-                {"auction": _("This auction is not currently accepting bids.")}
-            )
-
-        # Validate bid amount
-        bid_amount = data.get('bid_amount')
-        current_bid = auction.current_bid or auction.starting_bid
-        min_increment = auction.minimum_increment
+    def validate_bid_amount(self, value):
+        """Validate bid amount"""
+        if value <= 0:
+            raise serializers.ValidationError("Bid amount must be positive")
         
-        if bid_amount < current_bid + min_increment:
+        # Additional validation will be done in the view
+        return value
+
+    def validate_max_bid_amount(self, value):
+        """Validate max bid amount if provided"""
+        if value is not None and value <= 0:
+            raise serializers.ValidationError("Maximum bid amount must be positive")
+        return value
+
+    def validate(self, data):
+        """Cross-field validation"""
+        bid_amount = data.get('bid_amount')
+        max_bid_amount = data.get('max_bid_amount')
+        
+        if max_bid_amount and bid_amount and max_bid_amount < bid_amount:
             raise serializers.ValidationError({
-                "bid_amount": _("Bid must be at least {0} higher than current bid of {1}.").format(
-                    min_increment, current_bid
-                )
+                'max_bid_amount': 'Maximum bid amount cannot be less than current bid amount'
             })
-            
+        
         return data
 
     def create(self, validated_data):
-        """Create a new bid with automatic bidder assignment"""
-        request = self.context.get('request')
-        if request and hasattr(request, 'user'):
-            validated_data['bidder'] = request.user
-            validated_data['ip_address'] = request.META.get('REMOTE_ADDR')
-        
-        return super().create(validated_data)
-
+        """Create bid with proper error handling"""
+        try:
+            return super().create(validated_data)
+        except Exception as e:
+            logger.error(f"Error in BidSerializer.create: {str(e)}")
+            raise serializers.ValidationError(f"Failed to create bid: {str(e)}")
 
 class AuctionSerializer(serializers.ModelSerializer):
     auction_type_display = serializers.CharField(source='get_auction_type_display', read_only=True)

@@ -1,5 +1,10 @@
+import logging
 from django.utils.translation import gettext_lazy as _
 from django.utils import timezone
+from django.db import transaction
+
+# Set up logging
+logger = logging.getLogger(__name__)
 from rest_framework import generics, filters, status
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated, AllowAny, SAFE_METHODS
@@ -356,6 +361,7 @@ class AuctionDetailView(generics.RetrieveUpdateDestroyAPIView):
 class AuctionSlugDetailView(AuctionDetailView):
     lookup_field = 'slug'
 
+
 # Bid Views
 class BidListCreateView(generics.ListCreateAPIView):
     serializer_class = BidSerializer
@@ -365,12 +371,220 @@ class BidListCreateView(generics.ListCreateAPIView):
     search_fields = ['auction__title']
 
     def get_queryset(self):
-        return Bid.objects.select_related('auction', 'bidder')
+        return Bid.objects.select_related('auction', 'bidder').order_by('-bid_time')
 
     def get_serializer_context(self):
         context = super().get_serializer_context()
         context.update({"request": self.request})
         return context
+
+    @transaction.atomic
+    def create(self, request, *args, **kwargs):
+        """
+        Create a new bid with comprehensive validation and error handling
+        """
+        try:
+            # Log the incoming request data
+            logger.info(f"Bid creation attempt by user {request.user.id}: {request.data}")
+            
+            # Check if user is authenticated
+            if not request.user or not request.user.is_authenticated:
+                return Response({
+                    'error': {
+                        'code': 'AUTH_REQUIRED',
+                        'message': 'Authentication required to place bids'
+                    }
+                }, status=status.HTTP_401_UNAUTHORIZED)
+            
+            # Check if user is verified
+            if not getattr(request.user, 'is_verified', False):
+                return Response({
+                    'error': {
+                        'code': 'VERIFICATION_REQUIRED', 
+                        'message': 'Email verification required to place bids'
+                    }
+                }, status=status.HTTP_403_FORBIDDEN)
+            
+            # Check if user is active
+            if not request.user.is_active:
+                return Response({
+                    'error': {
+                        'code': 'ACCOUNT_INACTIVE',
+                        'message': 'Account is inactive'
+                    }
+                }, status=status.HTTP_403_FORBIDDEN)
+            
+            # Validate required fields
+            auction_id = request.data.get('auction')
+            bid_amount = request.data.get('bid_amount')
+            
+            if not auction_id:
+                return Response({
+                    'error': {
+                        'code': 'MISSING_AUCTION',
+                        'message': 'Auction ID is required'
+                    }
+                }, status=status.HTTP_400_BAD_REQUEST)
+            
+            if not bid_amount:
+                return Response({
+                    'error': {
+                        'code': 'MISSING_BID_AMOUNT',
+                        'message': 'Bid amount is required'
+                    }
+                }, status=status.HTTP_400_BAD_REQUEST)
+            
+            # Validate bid amount is numeric
+            try:
+                bid_amount = float(bid_amount)
+                if bid_amount <= 0:
+                    raise ValueError("Bid amount must be positive")
+            except (ValueError, TypeError):
+                return Response({
+                    'error': {
+                        'code': 'INVALID_BID_AMOUNT',
+                        'message': 'Invalid bid amount. Must be a positive number.'
+                    }
+                }, status=status.HTTP_400_BAD_REQUEST)
+            
+            # Get the auction and validate it exists
+            try:
+                auction = Auction.objects.select_related('related_property').get(id=auction_id)
+            except Auction.DoesNotExist:
+                return Response({
+                    'error': {
+                        'code': 'AUCTION_NOT_FOUND',
+                        'message': 'Auction not found'
+                    }
+                }, status=status.HTTP_404_NOT_FOUND)
+            
+            # Check if auction can accept bids
+            if not auction.can_accept_bids():
+                return Response({
+                    'error': {
+                        'code': 'AUCTION_INACTIVE',
+                        'message': 'Auction is not currently accepting bids'
+                    }
+                }, status=status.HTTP_400_BAD_REQUEST)
+            
+            # Check if auction has ended
+            if auction.end_date and timezone.now() > auction.end_date:
+                return Response({
+                    'error': {
+                        'code': 'AUCTION_ENDED',
+                        'message': 'Auction has ended'
+                    }
+                }, status=status.HTTP_400_BAD_REQUEST)
+            
+            # Check minimum bid requirement
+            current_bid = auction.current_bid if auction.current_bid else auction.starting_bid
+            minimum_required = float(current_bid) + float(auction.minimum_increment)
+            
+            if bid_amount < minimum_required:
+                return Response({
+                    'error': {
+                        'code': 'BID_TOO_LOW',
+                        'message': f'Bid must be at least ${minimum_required:,.2f}',
+                        'minimum_bid': minimum_required,
+                        'current_bid': float(current_bid),
+                        'increment': float(auction.minimum_increment)
+                    }
+                }, status=status.HTTP_400_BAD_REQUEST)
+            
+            # Check if user is bidding on their own auction
+            if hasattr(auction, 'created_by') and auction.created_by == request.user:
+                return Response({
+                    'error': {
+                        'code': 'SELF_BID_NOT_ALLOWED',
+                        'message': 'You cannot bid on your own auction'
+                    }
+                }, status=status.HTTP_403_FORBIDDEN)
+            
+            # Prepare bid data
+            bid_data = {
+                'auction': auction_id,
+                'bid_amount': bid_amount,
+                'max_bid_amount': request.data.get('max_bid_amount'),
+                'notes': request.data.get('notes', ''),
+                'status': 'pending'
+            }
+            
+            # Create serializer instance
+            serializer = self.get_serializer(data=bid_data)
+            
+            # Validate serializer
+            if not serializer.is_valid():
+                logger.error(f"Bid serializer validation errors: {serializer.errors}")
+                return Response({
+                    'error': {
+                        'code': 'VALIDATION_ERROR',
+                        'message': 'Invalid bid data',
+                        'details': serializer.errors
+                    }
+                }, status=status.HTTP_400_BAD_REQUEST)
+            
+            # Save the bid
+            try:
+                bid = serializer.save(
+                    bidder=request.user,
+                    ip_address=self.get_client_ip(request),
+                    is_verified=request.user.is_verified
+                )
+                
+                logger.info(f"Bid created successfully: ID {bid.id}, Amount ${bid.bid_amount}, User {request.user.id}")
+                
+                # Return success response
+                response_data = {
+                    'success': True,
+                    'message': 'Bid placed successfully',
+                    'bid': {
+                        'id': bid.id,
+                        'amount': float(bid.bid_amount),
+                        'auction_id': auction.id,
+                        'bidder_info': {
+                            'id': request.user.id,
+                            'name': f"{request.user.first_name} {request.user.last_name}".strip() or request.user.email,
+                            'email': request.user.email
+                        },
+                        'bid_time': bid.bid_time.isoformat(),
+                        'status': bid.status,
+                        'is_verified': bid.is_verified
+                    },
+                    'auction_update': {
+                        'current_bid': float(auction.current_bid) if auction.current_bid else float(auction.starting_bid),
+                        'bid_count': auction.bid_count,
+                        'next_minimum_bid': float(auction.current_bid or auction.starting_bid) + float(auction.minimum_increment)
+                    }
+                }
+                
+                return Response(response_data, status=status.HTTP_201_CREATED)
+                
+            except Exception as save_error:
+                logger.error(f"Error saving bid: {str(save_error)}")
+                return Response({
+                    'error': {
+                        'code': 'BID_SAVE_ERROR',
+                        'message': 'Failed to save bid. Please try again.'
+                    }
+                }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+                
+        except Exception as e:
+            logger.error(f"Unexpected error in bid creation: {str(e)}", exc_info=True)
+            return Response({
+                'error': {
+                    'code': 'INTERNAL_ERROR',
+                    'message': 'An unexpected error occurred. Please try again.'
+                }
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+    def get_client_ip(self, request):
+        """Get client IP address from request"""
+        x_forwarded_for = request.META.get('HTTP_X_FORWARDED_FOR')
+        if x_forwarded_for:
+            ip = x_forwarded_for.split(',')[0]
+        else:
+            ip = request.META.get('REMOTE_ADDR')
+        return ip
 
 class BidDetailView(generics.RetrieveUpdateDestroyAPIView):
     queryset = Bid.objects.select_related('auction', 'bidder')
