@@ -4,6 +4,7 @@ from channels.generic.websocket import AsyncWebsocketConsumer
 from channels.db import database_sync_to_async
 from django.contrib.auth import get_user_model
 from django.contrib.auth.models import AnonymousUser
+from django.utils import timezone
 from .models import Auction, Bid
 import logging
 
@@ -18,7 +19,7 @@ class AuctionConsumer(AsyncWebsocketConsumer):
         # Check if auction exists
         auction_exists = await self.auction_exists()
         if not auction_exists:
-            await self.close()
+            await self.close(code=4004)
             return
         
         # Join auction group
@@ -33,7 +34,12 @@ class AuctionConsumer(AsyncWebsocketConsumer):
         auction_data = await self.get_auction_data()
         await self.send(text_data=json.dumps(auction_data))
         
-        logger.info(f"WebSocket connected to auction {self.auction_id}")
+        # Log connection with user info
+        user_info = "Anonymous"
+        if hasattr(self.scope, 'user') and not isinstance(self.scope['user'], AnonymousUser):
+            user_info = f"{self.scope['user'].email} (ID: {self.scope['user'].id})"
+        
+        logger.info(f"WebSocket connected to auction {self.auction_id} by {user_info}")
     
     async def disconnect(self, close_code):
         # Leave auction group
@@ -41,17 +47,38 @@ class AuctionConsumer(AsyncWebsocketConsumer):
             self.auction_group_name,
             self.channel_name
         )
-        logger.info(f"WebSocket disconnected from auction {self.auction_id}")
+        
+        # Log disconnection
+        user_info = "Anonymous"
+        if hasattr(self.scope, 'user') and not isinstance(self.scope['user'], AnonymousUser):
+            user_info = f"{self.scope['user'].email} (ID: {self.scope['user'].id})"
+        
+        logger.info(f"WebSocket disconnected from auction {self.auction_id} by {user_info}")
     
     async def receive(self, text_data):
         try:
             data = json.loads(text_data)
+            message_type = data.get('type')
             
-            if data.get('type') == 'place_bid':
+            if message_type == 'place_bid':
                 await self.handle_place_bid(data)
-            elif data.get('type') == 'get_auction_data':
+            elif message_type == 'get_auction_data':
                 auction_data = await self.get_auction_data()
                 await self.send(text_data=json.dumps(auction_data))
+            elif message_type == 'join_auction':
+                # Handle auction joining/registration
+                await self.handle_join_auction(data)
+            else:
+                await self.send(text_data=json.dumps({
+                    'type': 'error',
+                    'message': f'Unknown message type: {message_type}'
+                }))
+                
+        except json.JSONDecodeError:
+            await self.send(text_data=json.dumps({
+                'type': 'error',
+                'message': 'Invalid JSON format'
+            }))
         except Exception as e:
             logger.error(f"Error in WebSocket receive: {str(e)}")
             await self.send(text_data=json.dumps({
@@ -60,26 +87,50 @@ class AuctionConsumer(AsyncWebsocketConsumer):
             }))
     
     async def handle_place_bid(self, data):
-        # Check if user is authenticated
-        if isinstance(self.scope['user'], AnonymousUser):
+        # Check if user is authenticated - consistent with accounts app
+        if not hasattr(self.scope, 'user') or isinstance(self.scope['user'], AnonymousUser):
             await self.send(text_data=json.dumps({
                 'type': 'error',
-                'message': 'Authentication required'
+                'message': 'Authentication required to place bids',
+                'code': 'AUTH_REQUIRED'
             }))
             return
         
-        user_id = self.scope['user'].id
-        amount = data.get('amount')
+        user = self.scope['user']
         
-        if not amount or not isinstance(amount, (int, float)):
+        # Check if user is verified (consistent with accounts app verification)
+        if not getattr(user, 'is_verified', False):
             await self.send(text_data=json.dumps({
                 'type': 'error',
-                'message': 'Invalid bid amount'
+                'message': 'Email verification required to place bids',
+                'code': 'VERIFICATION_REQUIRED'
+            }))
+            return
+        
+        # Check if user is active
+        if not user.is_active:
+            await self.send(text_data=json.dumps({
+                'type': 'error',
+                'message': 'Account is inactive',
+                'code': 'ACCOUNT_INACTIVE'
+            }))
+            return
+        
+        user_id = user.id
+        amount = data.get('amount')
+        max_bid = data.get('max_bid')  # For auto-bidding
+        
+        # Validate bid amount
+        if not amount or not isinstance(amount, (int, float)) or amount <= 0:
+            await self.send(text_data=json.dumps({
+                'type': 'error',
+                'message': 'Invalid bid amount',
+                'code': 'INVALID_AMOUNT'
             }))
             return
         
         # Create bid in database
-        bid_result = await self.create_bid(user_id, amount)
+        bid_result = await self.create_bid(user_id, amount, max_bid)
         
         if bid_result['success']:
             # Send update to all connected clients
@@ -87,14 +138,59 @@ class AuctionConsumer(AsyncWebsocketConsumer):
                 self.auction_group_name,
                 {
                     'type': 'auction_update',
-                    'auction': await self.get_auction_data()
+                    'auction': await self.get_auction_data(),
+                    'new_bid': bid_result.get('bid_data')
                 }
             )
+            
+            # Send success confirmation to bidder
+            await self.send(text_data=json.dumps({
+                'type': 'bid_success',
+                'message': 'Bid placed successfully',
+                'bid': bid_result.get('bid_data')
+            }))
         else:
             # Send error back to client
             await self.send(text_data=json.dumps({
                 'type': 'error',
-                'message': bid_result['message']
+                'message': bid_result['message'],
+                'code': bid_result.get('code', 'BID_FAILED')
+            }))
+    
+    async def handle_join_auction(self, data):
+        # Handle auction registration/joining
+        if not hasattr(self.scope, 'user') or isinstance(self.scope['user'], AnonymousUser):
+            await self.send(text_data=json.dumps({
+                'type': 'error',
+                'message': 'Authentication required to join auction',
+                'code': 'AUTH_REQUIRED'
+            }))
+            return
+        
+        user = self.scope['user']
+        
+        # Check if user is verified
+        if not getattr(user, 'is_verified', False):
+            await self.send(text_data=json.dumps({
+                'type': 'error',
+                'message': 'Email verification required to join auction',
+                'code': 'VERIFICATION_REQUIRED'
+            }))
+            return
+        
+        # Add user to auction participants (you might want to implement this)
+        join_result = await self.join_auction(user.id)
+        
+        if join_result['success']:
+            await self.send(text_data=json.dumps({
+                'type': 'join_success',
+                'message': 'Successfully joined auction'
+            }))
+        else:
+            await self.send(text_data=json.dumps({
+                'type': 'error',
+                'message': join_result['message'],
+                'code': 'JOIN_FAILED'
             }))
     
     async def auction_update(self, event):
@@ -108,20 +204,31 @@ class AuctionConsumer(AsyncWebsocketConsumer):
     @database_sync_to_async
     def get_auction_data(self):
         try:
-            auction = Auction.objects.get(id=self.auction_id)
-            bids = auction.bids.all().order_by('-bid_time')[:10]
+            auction = Auction.objects.select_related('related_property').get(id=self.auction_id)
+            bids = auction.bids.select_related('bidder').order_by('-bid_time')[:20]
             
             return {
                 'type': 'auction_data',
                 'auction': {
                     'id': auction.id,
                     'title': auction.title,
+                    'slug': auction.slug,
                     'current_bid': float(auction.current_bid) if auction.current_bid else float(auction.starting_bid),
                     'starting_bid': float(auction.starting_bid),
                     'minimum_increment': float(auction.minimum_increment),
+                    'start_date': auction.start_date.isoformat(),
                     'end_date': auction.end_date.isoformat(),
                     'status': auction.status,
-                    'bid_count': auction.bid_count
+                    'auction_type': auction.auction_type,
+                    'bid_count': auction.bid_count,
+                    'registered_bidders': auction.registered_bidders,
+                    'is_active': auction.is_active(),
+                    'time_remaining': auction.time_remaining,
+                    'property': {
+                        'id': auction.related_property.id,
+                        'title': auction.related_property.title,
+                        'slug': auction.related_property.slug,
+                    } if auction.related_property else None
                 },
                 'bids': [
                     {
@@ -129,10 +236,13 @@ class AuctionConsumer(AsyncWebsocketConsumer):
                         'amount': float(bid.bid_amount),
                         'bidder_info': {
                             'id': bid.bidder.id,
-                            'name': bid.bidder.get_full_name() or bid.bidder.email
-                        },
+                            'name': f"{bid.bidder.first_name} {bid.bidder.last_name}".strip() or bid.bidder.email,
+                            'email': bid.bidder.email if bid.bidder.email else None,
+                            'is_verified': getattr(bid.bidder, 'is_verified', False)
+                        } if bid.bidder else None,
                         'bid_time': bid.bid_time.isoformat(),
-                        'status': bid.status
+                        'status': bid.status,
+                        'is_verified': bid.is_verified
                     }
                     for bid in bids
                 ]
@@ -140,52 +250,138 @@ class AuctionConsumer(AsyncWebsocketConsumer):
         except Auction.DoesNotExist:
             return {
                 'type': 'error',
-                'message': 'Auction not found'
+                'message': 'Auction not found',
+                'code': 'AUCTION_NOT_FOUND'
+            }
+        except Exception as e:
+            logger.error(f"Error getting auction data: {str(e)}")
+            return {
+                'type': 'error',
+                'message': 'Failed to get auction data',
+                'code': 'DATA_ERROR'
             }
     
     @database_sync_to_async
-    def create_bid(self, user_id, amount):
+    def create_bid(self, user_id, amount, max_bid=None):
         try:
             user = User.objects.get(id=user_id)
-            auction = Auction.objects.get(id=self.auction_id)
+            auction = Auction.objects.select_related('related_property').get(id=self.auction_id)
             
             # Check if auction is active
             if not auction.can_accept_bids():
-                return {'success': False, 'message': 'Auction is not active'}
+                return {
+                    'success': False, 
+                    'message': 'Auction is not currently accepting bids',
+                    'code': 'AUCTION_INACTIVE'
+                }
             
             # Check minimum bid
-            min_bid = auction.current_bid + auction.minimum_increment if auction.current_bid else auction.starting_bid
+            current_bid = auction.current_bid if auction.current_bid else auction.starting_bid
+            min_bid = current_bid + auction.minimum_increment
+            
             if amount < min_bid:
                 return {
                     'success': False, 
-                    'message': f'Bid must be at least {min_bid}'
+                    'message': f'Bid must be at least ${min_bid:,.2f}',
+                    'code': 'BID_TOO_LOW',
+                    'minimum_bid': float(min_bid)
                 }
+            
+            # Check if user is bidding on their own auction (prevent self-bidding)
+            if hasattr(auction, 'created_by') and auction.created_by == user:
+                return {
+                    'success': False,
+                    'message': 'You cannot bid on your own auction',
+                    'code': 'SELF_BID_NOT_ALLOWED'
+                }
+            
+            # Get client IP for tracking
+            client_ip = None
+            if hasattr(self.scope, 'client') and self.scope['client']:
+                client_ip = self.scope['client'][0]
             
             # Create the bid
             bid = Bid.objects.create(
                 auction=auction,
                 bidder=user,
                 bid_amount=amount,
-                status='pending'
+                max_bid_amount=max_bid,
+                status='pending',
+                ip_address=client_ip,
+                is_verified=user.is_verified
             )
             
-            # Process bid (mark as winning if highest)
-            if not auction.current_bid or amount > auction.current_bid:
-                # Update auction current bid
-                auction.current_bid = amount
-                auction.save(update_fields=['current_bid'])
-                
-                # Update bid status
-                bid.status = 'winning'
-                bid.save(update_fields=['status'])
-                
-                # Mark previous winning bids as outbid
-                Bid.objects.filter(
-                    auction=auction,
-                    status='winning'
-                ).exclude(id=bid.id).update(status='outbid')
+            # Process bid (this will trigger the model's save method which handles bid processing)
+            bid.save()
             
-            return {'success': True}
+            # Refresh auction from database
+            auction.refresh_from_db()
+            
+            return {
+                'success': True,
+                'bid_data': {
+                    'id': bid.id,
+                    'amount': float(bid.bid_amount),
+                    'bidder_info': {
+                        'id': user.id,
+                        'name': f"{user.first_name} {user.last_name}".strip() or user.email,
+                        'email': user.email
+                    },
+                    'bid_time': bid.bid_time.isoformat(),
+                    'status': bid.status,
+                    'is_verified': bid.is_verified
+                }
+            }
+            
+        except User.DoesNotExist:
+            logger.error(f"User {user_id} not found")
+            return {
+                'success': False, 
+                'message': 'User not found',
+                'code': 'USER_NOT_FOUND'
+            }
+        except Auction.DoesNotExist:
+            logger.error(f"Auction {self.auction_id} not found")
+            return {
+                'success': False, 
+                'message': 'Auction not found',
+                'code': 'AUCTION_NOT_FOUND'
+            }
         except Exception as e:
             logger.error(f"Error creating bid: {str(e)}")
-            return {'success': False, 'message': str(e)}
+            return {
+                'success': False, 
+                'message': 'Failed to place bid. Please try again.',
+                'code': 'BID_ERROR'
+            }
+    
+    @database_sync_to_async
+    def join_auction(self, user_id):
+        try:
+            user = User.objects.get(id=user_id)
+            auction = Auction.objects.get(id=self.auction_id)
+            
+            # Check if auction allows joining
+            if auction.status not in ['scheduled', 'live']:
+                return {
+                    'success': False,
+                    'message': 'Auction is not open for registration'
+                }
+            
+            # Check registration deadline
+            if auction.registration_deadline and timezone.now() > auction.registration_deadline:
+                return {
+                    'success': False,
+                    'message': 'Registration deadline has passed'
+                }
+            
+            # Here you could implement auction participant tracking
+            # For now, just return success
+            return {'success': True}
+            
+        except Exception as e:
+            logger.error(f"Error joining auction: {str(e)}")
+            return {
+                'success': False,
+                'message': 'Failed to join auction'
+            }

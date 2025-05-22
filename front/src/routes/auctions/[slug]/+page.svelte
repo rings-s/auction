@@ -19,9 +19,13 @@
   import Modal from '$lib/components/ui/Modal.svelte';
   import Alert from '$lib/components/ui/Alert.svelte';
   import LoadingSkeleton from '$lib/components/ui/LoadingSkeleton.svelte';
-  import Gallery from '$lib/components/ui/Gallery.svelte';
   import ShareButtons from '$lib/components/shared/ShareButtons.svelte';
   import FormField from '$lib/components/ui/FormField.svelte';
+  import Gallery from '$lib/components/ui/Gallery.svelte';
+  
+  // Import the existing LiveBidding components
+  import LiveBidding from '$lib/components/auction/LiveBidding.svelte';
+  import LiveBiddingPanel from '$lib/components/auction/LiveBiddingPanel.svelte';
   
   let auction = null;
   let property = null;
@@ -35,6 +39,7 @@
   let showBidModal = false;
   let showLoginModal = false;
   let refreshInterval;
+  let websocket = null;
   
   // Bidding state
   let bidAmount = '';
@@ -67,11 +72,97 @@
     const increment = parseFloat(auction.minimum_increment) || 100;
     
     return [
-      minBid,
-      minBid + increment,
-      minBid + (increment * 2),
-      minBid + (increment * 5)
+      { amount: minBid, label: 'Min Bid' },
+      { amount: minBid + increment, label: '+1 Inc' },
+      { amount: minBid + (increment * 2), label: '+2 Inc' },
+      { amount: minBid + (increment * 5), label: '+5 Inc' }
     ];
+  }
+  
+  // Get all available images for gallery
+  function getAllImages() {
+    let images = [];
+    
+    // Add auction media first
+    if (auction?.media) {
+      const auctionImages = auction.media
+        .filter(m => m.media_type === 'image')
+        .map(m => ({
+          url: m.url || m.file,
+          alt: m.name || auction.title,
+          caption: m.name || 'Auction Image'
+        }));
+      images = [...images, ...auctionImages];
+    }
+    
+    // Add property media if no auction images or to supplement
+    if (auction?.related_property?.media) {
+      const propertyImages = auction.related_property.media
+        .filter(m => m.media_type === 'image')
+        .map(m => ({
+          url: m.url || m.file,
+          alt: m.name || auction.related_property.title,
+          caption: m.name || 'Property Image'
+        }));
+      images = [...images, ...propertyImages];
+    }
+    
+    return images;
+  }
+  
+  // Initialize WebSocket connection for live updates
+  function initializeWebSocket() {
+    if (!auction || !isLiveAuction) return;
+    
+    try {
+      const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+      const wsUrl = `${protocol}//${window.location.host}/ws/auctions/${auction.id}/`;
+      
+      websocket = new WebSocket(wsUrl);
+      
+      websocket.onopen = function(event) {
+        console.log('WebSocket connected to auction:', auction.id);
+      };
+      
+      websocket.onmessage = function(event) {
+        const data = JSON.parse(event.data);
+        
+        if (data.type === 'auction_data' || data.type === 'auction_update') {
+          // Update auction data from WebSocket
+          if (data.auction) {
+            auction = { ...auction, ...data.auction };
+            quickBidAmounts = generateQuickBidAmounts();
+          }
+          
+          // Update bids
+          if (data.bids) {
+            bids = data.bids;
+          }
+        } else if (data.type === 'bid_success') {
+          bidSuccess = data.message;
+          bidError = '';
+          // Refresh the auction data
+          loadAuctionData();
+        } else if (data.type === 'error') {
+          bidError = data.message;
+          bidSuccess = '';
+        }
+      };
+      
+      websocket.onerror = function(error) {
+        console.error('WebSocket error:', error);
+      };
+      
+      websocket.onclose = function(event) {
+        console.log('WebSocket closed');
+        // Attempt to reconnect after a delay for live auctions
+        if (isLiveAuction) {
+          setTimeout(initializeWebSocket, 5000);
+        }
+      };
+    } catch (error) {
+      console.error('Failed to initialize WebSocket:', error);
+    }
   }
   
   async function loadAuctionData() {
@@ -91,8 +182,10 @@
       // Generate quick bid amounts
       quickBidAmounts = generateQuickBidAmounts();
       
-      // Initialize bid amount
-      bidAmount = minimumBidAmount.toString();
+      // Initialize WebSocket for live auctions
+      if (isLiveAuction) {
+        initializeWebSocket();
+      }
       
     } catch (err) {
       console.error('Error loading auction details:', err);
@@ -119,38 +212,56 @@
     }
   }
   
-  async function handlePlaceBid(amount = null) {
+  // Handle bid placed from LiveBidding component
+  function handleBidPlaced() {
+    // Refresh auction and bids data
+    loadAuctionData();
+    loadAuctionBids();
+    
+    // Update quick bid amounts
+    quickBidAmounts = generateQuickBidAmounts();
+  }
+  
+  // Handle modal opening from LiveBiddingPanel
+  function handleOpenModal() {
+    if ($user) {
+      bidError = '';
+      bidSuccess = '';
+      bidAmount = minimumBidAmount.toString();
+      showBidModal = true;
+    } else {
+      showLoginModal = true;
+    }
+  }
+  
+  // Handle placing bid from LiveBiddingPanel via WebSocket or API
+  async function handlePlaceBidFromPanel(event) {
+    const { amount } = event.detail;
+    
     try {
       bidError = '';
       bidSuccess = '';
       placingBid = true;
       
-      // Use provided amount or form input
-      const bidValue = amount || parseFloat(bidAmount);
-      
-      // Validate bid amount
-      if (isNaN(bidValue) || bidValue < minimumBidAmount) {
-        bidError = $t('auction.bidTooLow', { amount: minimumBidAmount.toLocaleString() });
-        return;
+      // Try WebSocket first for live auctions
+      if (websocket && websocket.readyState === WebSocket.OPEN) {
+        websocket.send(JSON.stringify({
+          type: 'place_bid',
+          amount: amount
+        }));
+      } else {
+        // Fallback to HTTP API
+        await placeBid(auction.id, amount);
+        
+        // Show success message
+        bidSuccess = $t('auction.bidPlaced');
+        
+        // Reload auction and bids data
+        await Promise.all([
+          loadAuctionData(),
+          loadAuctionBids()
+        ]);
       }
-      
-      // Submit bid using auction ID directly
-      await placeBid(auction.id, bidValue);
-      
-      // Show success message
-      bidSuccess = $t('auction.bidPlaced');
-      
-      // Reset form
-      bidAmount = minimumBidAmount.toString();
-      
-      // Close modal if open
-      showBidModal = false;
-      
-      // Reload auction and bids data
-      await Promise.all([
-        loadAuctionData(),
-        loadAuctionBids()
-      ]);
       
       // Update quick bid amounts
       quickBidAmounts = generateQuickBidAmounts();
@@ -163,14 +274,53 @@
     }
   }
   
-  function openBidModal() {
-    if ($user) {
+  // Handle modal bid submission
+  async function handleModalBidSubmit() {
+    const bidValue = parseFloat(bidAmount);
+    
+    // Validate bid amount
+    if (isNaN(bidValue) || bidValue < minimumBidAmount) {
+      bidError = $t('auction.bidTooLow', { amount: minimumBidAmount.toLocaleString() });
+      return;
+    }
+    
+    try {
       bidError = '';
       bidSuccess = '';
+      placingBid = true;
+      
+      // Try WebSocket first for live auctions
+      if (websocket && websocket.readyState === WebSocket.OPEN) {
+        websocket.send(JSON.stringify({
+          type: 'place_bid',
+          amount: bidValue
+        }));
+      } else {
+        // Fallback to HTTP API
+        await placeBid(auction.id, bidValue);
+        
+        // Show success message
+        bidSuccess = $t('auction.bidPlaced');
+        
+        // Reload auction and bids data
+        await Promise.all([
+          loadAuctionData(),
+          loadAuctionBids()
+        ]);
+      }
+      
+      // Reset form and close modal
       bidAmount = minimumBidAmount.toString();
-      showBidModal = true;
-    } else {
-      showLoginModal = true;
+      showBidModal = false;
+      
+      // Update quick bid amounts
+      quickBidAmounts = generateQuickBidAmounts();
+      
+    } catch (err) {
+      console.error('Error placing bid:', err);
+      bidError = err.message || $t('error.bidFailed');
+    } finally {
+      placingBid = false;
     }
   }
   
@@ -202,30 +352,39 @@
     // Reload auction data when timer ends
     loadAuctionData();
     loadAuctionBids();
+    
+    // Close WebSocket connection
+    if (websocket) {
+      websocket.close();
+      websocket = null;
+    }
   }
   
   onMount(async () => {
     await loadAuctionData();
     await loadAuctionBids();
     
-    // Set up refresh interval for live auctions
-    if (isLiveAuction) {
+    // Set up refresh interval for non-live auctions
+    if (!isLiveAuction) {
       refreshInterval = setInterval(async () => {
         if (!placingBid) {
           await Promise.all([
             loadAuctionData(),
             loadAuctionBids()
           ]);
-          // Update quick bid amounts after refresh
           quickBidAmounts = generateQuickBidAmounts();
         }
-      }, 15000); // Refresh every 15 seconds for live auctions
+      }, 30000); // Refresh every 30 seconds for non-live auctions
     }
   });
   
   onDestroy(() => {
     if (refreshInterval) {
       clearInterval(refreshInterval);
+    }
+    
+    if (websocket) {
+      websocket.close();
     }
   });
   
@@ -329,89 +488,14 @@
       <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
         <!-- Main content (left and center) -->
         <div class="lg:col-span-2 space-y-8">
-          <!-- Gallery -->
+          <!-- Image Gallery -->
           <div class="bg-white dark:bg-gray-800 rounded-lg shadow-md overflow-hidden">
             <Gallery 
-              images={auction.media || []} 
-              fallbackImage="/images/auction-placeholder.jpg"
+              images={getAllImages()} 
               alt={auction.title}
+              showThumbnails={true}
             />
           </div>
-          
-          <!-- Quick Bidding Section (for live auctions) -->
-          {#if canBid}
-            <div class="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6 border-l-4 border-green-500">
-              <h2 class="text-xl font-semibold text-gray-900 dark:text-white mb-4 flex items-center">
-                <span class="w-3 h-3 bg-green-500 rounded-full mr-2 animate-pulse"></span>
-                {$t('auction.quickBid')}
-              </h2>
-              
-              <div class="mb-4 p-4 bg-green-50 dark:bg-green-900/20 rounded-lg">
-                <div class="flex justify-between items-center mb-2">
-                  <span class="text-sm text-gray-600 dark:text-gray-400">
-                    {$t('auction.currentBid')}:
-                  </span>
-                  <span class="text-xl font-bold text-green-600 dark:text-green-400">
-                    {formatCurrency(auction.current_bid || auction.starting_bid)}
-                  </span>
-                </div>
-                <div class="flex justify-between items-center">
-                  <span class="text-xs text-gray-500 dark:text-gray-500">
-                    {$t('auction.minimumBid')}:
-                  </span>
-                  <span class="text-sm font-medium text-gray-700 dark:text-gray-300">
-                    {formatCurrency(minimumBidAmount)}
-                  </span>
-                </div>
-              </div>
-              
-              <!-- Quick Bid Buttons -->
-              <div class="grid grid-cols-2 sm:grid-cols-4 gap-2 mb-4">
-                {#each quickBidAmounts as amount}
-                  <Button
-                    variant="outline"
-                    size="small" 
-                    loading={placingBid}
-                    disabled={placingBid}
-                    onClick={() => handlePlaceBid(amount)}
-                    class="text-xs hover:bg-green-50 hover:border-green-500 hover:text-green-700 dark:hover:bg-green-900/20"
-                  >
-                    {formatCurrency(amount)}
-                  </Button>
-                {/each}
-              </div>
-              
-              <!-- Custom Bid Form -->
-              <form on:submit|preventDefault={() => handlePlaceBid()} class="flex gap-2">
-                <div class="flex-1">
-                  <FormField
-                    type="number"
-                    id="custom-bid"
-                    placeholder={minimumBidAmount.toString()}
-                    bind:value={bidAmount}
-                    min={minimumBidAmount}
-                    step="1"
-                    disabled={placingBid}
-                  />
-                </div>
-                <Button
-                  type="submit"
-                  variant="primary"
-                  loading={placingBid}
-                  disabled={placingBid || !bidAmount}
-                  class="px-6"
-                >
-                  {#if placingBid}
-                    <svg class="animate-spin -ml-1 mr-2 h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                      <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                      <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                    </svg>
-                  {/if}
-                  {$t('auction.placeBid')}
-                </Button>
-              </form>
-            </div>
-          {/if}
           
           <!-- Tabs Navigation -->
           <Tabs {tabs} bind:activeTab />
@@ -581,106 +665,11 @@
               </div>
               
             {:else if activeTab === 'bids'}
-              <div>
-                <div class="flex justify-between items-center mb-6">
-                  <h2 class="text-xl font-semibold text-gray-900 dark:text-white">
-                    {$t('auction.bidHistory')}
-                    <span class="text-sm font-normal text-gray-500 dark:text-gray-400 ml-2">
-                      ({bids.length} {$t('auction.bids')})
-                    </span>
-                  </h2>
-                  
-                  <Button
-                    variant="outline"
-                    size="small"
-                    loading={bidsLoading}
-                    onClick={loadAuctionBids}
-                    aria-label={$t('auction.refreshBids')}
-                  >
-                    <svg class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-                    </svg>
-                    {$t('auction.refresh')}
-                  </Button>
-                </div>
-                
-                {#if bidsLoading}
-                  <div class="py-8 text-center">
-                    <div class="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-primary-500"></div>
-                    <p class="mt-2 text-sm text-gray-500 dark:text-gray-400">
-                      {$t('common.loading')}
-                    </p>
-                  </div>
-                {:else if bids.length === 0}
-                  <div class="text-center py-12 bg-gray-50 dark:bg-gray-700 rounded-lg">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-16 w-16 mx-auto text-gray-400 dark:text-gray-500 mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                    </svg>
-                    <h3 class="text-lg font-medium text-gray-900 dark:text-gray-100 mb-2">
-                      {$t('auction.noBids')}
-                    </h3>
-                    <p class="text-gray-500 dark:text-gray-400 mb-6">
-                      {$t('auction.beTheFirst')}
-                    </p>
-                    
-                    {#if canBid}
-                      <Button
-                        variant="primary"
-                        onClick={openBidModal}
-                        aria-label={$t('auction.placeBid')}
-                      >
-                        {$t('auction.placeBid')}
-                      </Button>
-                    {/if}
-                  </div>
-                {:else}
-                  <div class="overflow-x-auto">
-                    <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
-                      <thead class="bg-gray-50 dark:bg-gray-700">
-                        <tr>
-                          <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-                            {$t('auction.bidder')}
-                          </th>
-                          <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-                            {$t('auction.bidAmount')}
-                          </th>
-                          <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-                            {$t('auction.bidTime')}
-                          </th>
-                          <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-                            {$t('auction.status')}
-                          </th>
-                        </tr>
-                      </thead>
-                      <tbody class="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
-                        {#each bids as bid}
-                          <tr class={bid.bidder_info?.id === $user?.id ? 'bg-primary-50 dark:bg-primary-900/20' : ''}>
-                            <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-white">
-                              {bid.bidder_info?.name || 'Anonymous'}
-                              {#if bid.bidder_info?.id === $user?.id}
-                                <span class="ml-2 inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-primary-100 text-primary-800 dark:bg-primary-900 dark:text-primary-200">
-                                  {$t('auction.you')}
-                                </span>
-                              {/if}
-                            </td>
-                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-700 dark:text-gray-300">
-                              <span class="font-medium">
-                                {formatCurrency(bid.amount)}
-                              </span>
-                            </td>
-                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
-                              {formatDateTime(bid.bid_time)}
-                            </td>
-                            <td class="px-6 py-4 whitespace-nowrap">
-                              <AuctionStatus status={bid.status} isCompact={true} />
-                            </td>
-                          </tr>
-                        {/each}
-                      </tbody>
-                    </table>
-                  </div>
-                {/if}
-              </div>
+              <!-- Use the LiveBidding component for the bids tab -->
+              <LiveBidding 
+                {auction}
+                onBidPlaced={handleBidPlaced}
+              />
               
             {:else if activeTab === 'terms'}
               <div>
@@ -768,7 +757,7 @@
                   <Button
                     variant="primary"
                     class="w-full"
-                    onClick={openBidModal}
+                    onClick={handleOpenModal}
                     aria-label={$t('auction.placeBid')}
                   >
                     {$t('auction.placeBid')}
@@ -825,6 +814,18 @@
             </div>
           </div>
           
+          <!-- Live Bidding Panel for active auctions -->
+          {#if canBid}
+            <LiveBiddingPanel
+              {auction}
+              {quickBidAmounts}
+              {minimumBidAmount}
+              {placingBid}
+              on:placeBid={handlePlaceBidFromPanel}
+              on:openModal={handleOpenModal}
+            />
+          {/if}
+          
           <!-- Property Quick Info -->
           {#if property}
             <div class="bg-white dark:bg-gray-800 rounded-lg shadow-md overflow-hidden">
@@ -843,11 +844,19 @@
                 </div>
                 
                 <div class="aspect-w-16 aspect-h-9 bg-gray-200 dark:bg-gray-700 rounded-lg overflow-hidden mb-4">
-                  <img 
-                    src={property.main_image?.url || '/images/property-placeholder.jpg'} 
-                    alt={property.title}
-                    class="w-full h-full object-cover"
-                  />
+                  {#if property.main_image?.url}
+                    <img 
+                      src={property.main_image.url} 
+                      alt={property.title}
+                      class="w-full h-full object-cover"
+                    />
+                  {:else}
+                    <div class="flex items-center justify-center h-full">
+                      <svg class="h-12 w-12 text-gray-400 dark:text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+                      </svg>
+                    </div>
+                  {/if}
                 </div>
                 
                 <h4 class="font-medium text-gray-900 dark:text-white mb-3">
@@ -930,7 +939,7 @@
   title={$t('auction.placeBid')}
   maxWidth="md"
 >
-  <form on:submit|preventDefault={() => handlePlaceBid()} class="space-y-6 p-6">
+  <form on:submit|preventDefault={handleModalBidSubmit} class="space-y-6 p-6">
     {#if bidError}
       <Alert type="error" message={bidError} />
     {/if}

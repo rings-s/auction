@@ -1,165 +1,264 @@
-<!-- src/lib/components/Gallery.svelte -->
+<!-- src/lib/components/ui/Gallery.svelte -->
 <script>
-    import { onMount } from 'svelte';
-    
-    export let images = [];
-    export let fallbackImage = '';
-    export let alt = 'Gallery image';
-    export let showThumbnails = true;
-    export let aspectRatio = '16:9'; // '16:9', '4:3', '1:1'
-    
-    let selectedImage = null;
-    let thumbnailsContainer;
-    
-    // Process images to ensure consistent format
-    $: processedImages = processImages(images);
-    $: selectedImage = selectedImage || (processedImages.length > 0 ? processedImages[0] : null);
-    
-    // Generate aspect ratio class
-    $: aspectClass = getAspectClass(aspectRatio);
-    
-    function processImages(images) {
-      if (!images || images.length === 0) {
-        return fallbackImage ? [{ url: fallbackImage, alt }] : [];
-      }
-      
-      return images.map(img => {
-        // Handle various image formats
-        if (typeof img === 'string') {
-          return { url: img, alt };
-        }
-        
-        if (img.url) {
-          return { url: img.url, alt: img.alt || img.name || alt };
-        }
-        
-        if (img.file) {
-          return { url: img.file, alt: img.alt || img.name || alt };
-        }
-        
-        return { url: fallbackImage, alt };
-      });
-    }
-    
-    function getAspectClass(ratio) {
-      switch (ratio) {
-        case '1:1': return 'aspect-w-1 aspect-h-1';
-        case '4:3': return 'aspect-w-4 aspect-h-3';
-        case '16:9': 
-        default: return 'aspect-w-16 aspect-h-9';
-      }
-    }
-    
-    function selectImage(image) {
-      selectedImage = image;
-    }
-    
-    function nextImage() {
-      const currentIndex = processedImages.findIndex(img => img.url === selectedImage.url);
-      const nextIndex = (currentIndex + 1) % processedImages.length;
-      selectedImage = processedImages[nextIndex];
-    }
-    
-    function prevImage() {
-      const currentIndex = processedImages.findIndex(img => img.url === selectedImage.url);
-      const prevIndex = (currentIndex - 1 + processedImages.length) % processedImages.length;
-      selectedImage = processedImages[prevIndex];
-    }
-    
-    onMount(() => {
-      // Initialize selected image
-      if (processedImages.length > 0) {
-        selectedImage = processedImages[0];
-      }
-    });
-  </script>
+  import { createEventDispatcher } from 'svelte';
   
-  <div class="gallery">
-    <!-- Main image display -->
-    <div class="{aspectClass} bg-gray-100 dark:bg-gray-800 rounded-lg overflow-hidden relative">
-      {#if selectedImage}
-        <img
-          src={selectedImage.url}
-          alt={selectedImage.alt}
-          class="w-full h-full object-cover transition-opacity duration-300"
-        />
-      {:else}
-        <div class="w-full h-full flex items-center justify-center text-gray-400 dark:text-gray-600">
-          <svg class="h-12 w-12" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
-          </svg>
-        </div>
-      {/if}
+  export let images = [];
+  export let fallbackImage = null;
+  export let alt = '';
+  export let showThumbnails = true;
+  export let autoPlay = false;
+  export let interval = 5000;
+  
+  const dispatch = createEventDispatcher();
+  
+  let currentIndex = 0;
+  let showModal = false;
+  let intervalId = null;
+  
+  $: hasImages = images && images.length > 0;
+  $: displayImages = hasImages ? images : (fallbackImage ? [{ url: fallbackImage, alt }] : []);
+  
+  function nextImage() {
+    if (displayImages.length > 1) {
+      currentIndex = (currentIndex + 1) % displayImages.length;
+    }
+  }
+  
+  function prevImage() {
+    if (displayImages.length > 1) {
+      currentIndex = currentIndex === 0 ? displayImages.length - 1 : currentIndex - 1;
+    }
+  }
+  
+  function goToImage(index) {
+    currentIndex = index;
+  }
+  
+  function openModal(index = currentIndex) {
+    currentIndex = index;
+    showModal = true;
+    dispatch('modalOpen', { index });
+  }
+  
+  function closeModal() {
+    showModal = false;
+    dispatch('modalClose');
+  }
+  
+  function startAutoPlay() {
+    if (autoPlay && displayImages.length > 1) {
+      intervalId = setInterval(nextImage, interval);
+    }
+  }
+  
+  function stopAutoPlay() {
+    if (intervalId) {
+      clearInterval(intervalId);
+      intervalId = null;
+    }
+  }
+  
+  $: if (autoPlay) {
+    startAutoPlay();
+  } else {
+    stopAutoPlay();
+  }
+  
+  // Handle keyboard navigation
+  function handleKeydown(event) {
+    if (!showModal) return;
+    
+    switch (event.key) {
+      case 'ArrowLeft':
+        prevImage();
+        break;
+      case 'ArrowRight':
+        nextImage();
+        break;
+      case 'Escape':
+        closeModal();
+        break;
+    }
+  }
+</script>
+
+<svelte:window on:keydown={handleKeydown} />
+
+<div class="gallery-container">
+  {#if displayImages.length > 0}
+    <!-- Main Image Display -->
+    <div class="relative aspect-w-16 aspect-h-9 bg-gray-200 dark:bg-gray-700 rounded-lg overflow-hidden">
+      <img 
+        src={displayImages[currentIndex].url} 
+        alt={displayImages[currentIndex].alt || alt}
+        class="w-full h-full object-cover cursor-pointer transition-transform duration-300 hover:scale-105"
+        on:click={() => openModal(currentIndex)}
+      />
       
-      {#if processedImages.length > 1}
-        <!-- Navigation arrows -->
+      <!-- Navigation Arrows (only show if multiple images) -->
+      {#if displayImages.length > 1}
         <button
-          class="absolute left-2 top-1/2 transform -translate-y-1/2 bg-white dark:bg-gray-900 bg-opacity-80 dark:bg-opacity-80 rounded-full p-1.5 shadow-md text-gray-800 dark:text-gray-200 hover:bg-opacity-100 focus:outline-none transition-all duration-200"
-          on:click={prevImage}
+          class="absolute left-2 top-1/2 transform -translate-y-1/2 bg-black bg-opacity-50 text-white rounded-full p-2 hover:bg-opacity-75 transition-opacity"
+          on:click|stopPropagation={prevImage}
           aria-label="Previous image"
         >
-          <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
           </svg>
         </button>
+        
         <button
-          class="absolute right-2 top-1/2 transform -translate-y-1/2 bg-white dark:bg-gray-900 bg-opacity-80 dark:bg-opacity-80 rounded-full p-1.5 shadow-md text-gray-800 dark:text-gray-200 hover:bg-opacity-100 focus:outline-none transition-all duration-200"
-          on:click={nextImage}
+          class="absolute right-2 top-1/2 transform -translate-y-1/2 bg-black bg-opacity-50 text-white rounded-full p-2 hover:bg-opacity-75 transition-opacity"
+          on:click|stopPropagation={nextImage}
           aria-label="Next image"
         >
-          <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
           </svg>
         </button>
+        
+        <!-- Image Counter -->
+        <div class="absolute bottom-2 right-2 bg-black bg-opacity-50 text-white text-sm px-2 py-1 rounded">
+          {currentIndex + 1} / {displayImages.length}
+        </div>
       {/if}
+      
+      <!-- Expand Button -->
+      <button
+        class="absolute top-2 right-2 bg-black bg-opacity-50 text-white rounded-full p-2 hover:bg-opacity-75 transition-opacity"
+        on:click|stopPropagation={() => openModal(currentIndex)}
+        aria-label="Expand image"
+      >
+        <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4" />
+        </svg>
+      </button>
     </div>
     
     <!-- Thumbnails -->
-    {#if showThumbnails && processedImages.length > 1}
-      <div 
-        class="flex overflow-x-auto space-x-2 mt-2 pb-2 thumbnail-container" 
-        bind:this={thumbnailsContainer}
-      >
-        {#each processedImages as image, index}
+    {#if showThumbnails && displayImages.length > 1}
+      <div class="mt-4 flex space-x-2 overflow-x-auto pb-2">
+        {#each displayImages as image, index}
           <button
-            class="flex-shrink-0 w-16 h-16 bg-gray-100 dark:bg-gray-800 rounded-md overflow-hidden transition-all duration-200 
-              {selectedImage && selectedImage.url === image.url 
-                ? 'ring-2 ring-primary-500 dark:ring-primary-400' 
-                : 'opacity-70 hover:opacity-100'}"
-            on:click={() => selectImage(image)}
-            aria-label={`Select image ${index + 1}`}
+            class="flex-shrink-0 w-20 h-20 rounded-lg overflow-hidden border-2 transition-all duration-200 {
+              index === currentIndex 
+                ? 'border-primary-500 ring-2 ring-primary-200' 
+                : 'border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600'
+            }"
+            on:click={() => goToImage(index)}
+            aria-label="View image {index + 1}"
           >
             <img 
               src={image.url} 
-              alt={`Thumbnail ${index + 1}`}
-              class="w-full h-full object-cover" 
+              alt={image.alt || `Thumbnail ${index + 1}`}
+              class="w-full h-full object-cover"
             />
           </button>
         {/each}
       </div>
     {/if}
+  {:else}
+    <!-- No Images Placeholder -->
+    <div class="aspect-w-16 aspect-h-9 bg-gray-200 dark:bg-gray-700 rounded-lg flex items-center justify-center">
+      <div class="text-center">
+        <svg class="h-16 w-16 mx-auto text-gray-400 dark:text-gray-500 mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+        </svg>
+        <p class="text-gray-500 dark:text-gray-400">No images available</p>
+      </div>
+    </div>
+  {/if}
+</div>
+
+<!-- Full Screen Modal -->
+{#if showModal}
+  <div class="fixed insets-0 z-50 bg-black bg-opacity-90 flex items-center justify-center p-4">
+    <div class="relative max-w-7xl max-h-full">
+      <!-- Close Button -->
+      <button
+        class="absolute top-4 right-4 z-10 bg-black bg-opacity-50 text-white rounded-full p-2 hover:bg-opacity-75 transition-opacity"
+        on:click={closeModal}
+        aria-label="Close modal"
+      >
+        <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+        </svg>
+      </button>
+      
+      <!-- Main Image -->
+      <div class="relative">
+        <img 
+          src={displayImages[currentIndex].url} 
+          alt={displayImages[currentIndex].alt || alt}
+          class="max-w-full max-h-[90vh] object-contain"
+        />
+        
+        <!-- Navigation Arrows (only show if multiple images) -->
+        {#if displayImages.length > 1}
+          <button
+            class="absolute left-4 top-1/2 transform -translate-y-1/2 bg-black bg-opacity-50 text-white rounded-full p-3 hover:bg-opacity-75 transition-opacity"
+            on:click={prevImage}
+            aria-label="Previous image"
+          >
+            <svg class="w-8 h-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
+            </svg>
+          </button>
+          
+          <button
+            class="absolute right-4 top-1/2 transform -translate-y-1/2 bg-black bg-opacity-50 text-white rounded-full p-3 hover:bg-opacity-75 transition-opacity"
+            on:click={nextImage}
+            aria-label="Next image"
+          >
+            <svg class="w-8 h-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+            </svg>
+          </button>
+        {/if}
+      </div>
+      
+      <!-- Image Info -->
+      {#if displayImages[currentIndex].caption}
+        <div class="mt-4 text-center">
+          <p class="text-white text-lg">{displayImages[currentIndex].caption}</p>
+        </div>
+      {/if}
+      
+      <!-- Thumbnail Navigation -->
+      {#if showThumbnails && displayImages.length > 1}
+        <div class="mt-6 flex justify-center space-x-2 overflow-x-auto pb-2">
+          {#each displayImages as image, index}
+            <button
+              class="flex-shrink-0 w-16 h-16 rounded-lg overflow-hidden border-2 transition-all duration-200 {
+                index === currentIndex 
+                  ? 'border-white ring-2 ring-white ring-opacity-50' 
+                  : 'border-gray-400 hover:border-white'
+              }"
+              on:click={() => goToImage(index)}
+              aria-label="View image {index + 1}"
+            >
+              <img 
+                src={image.url} 
+                alt={image.alt || `Thumbnail ${index + 1}`}
+                class="w-full h-full object-cover"
+              />
+            </button>
+          {/each}
+        </div>
+      {/if}
+    </div>
   </div>
+{/if}
+
+<style>
+  .gallery-container {
+    @apply w-full;
+  }
   
-  <style>
-    .thumbnail-container {
-      scrollbar-width: thin;
-      scrollbar-color: var(--color-gray-400) transparent;
-    }
-    
-    .thumbnail-container::-webkit-scrollbar {
-      height: 6px;
-    }
-    
-    .thumbnail-container::-webkit-scrollbar-track {
-      background: transparent;
-    }
-    
-    .thumbnail-container::-webkit-scrollbar-thumb {
-      background-color: var(--color-gray-400);
-      border-radius: 3px;
-    }
-    
-    .thumbnail-container::-webkit-scrollbar-thumb:hover {
-      background-color: var(--color-gray-500);
-    }
-  </style>
+  .insets-0 {
+    top: 0;
+    right: 0;
+    bottom: 0;
+    left: 0;
+  }
+</style>
