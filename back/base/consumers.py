@@ -66,8 +66,11 @@ class AuctionConsumer(AsyncWebsocketConsumer):
                 auction_data = await self.get_auction_data()
                 await self.send(text_data=json.dumps(auction_data))
             elif message_type == 'join_auction':
-                # Handle auction joining/registration
                 await self.handle_join_auction(data)
+            elif message_type == 'extend_auction':
+                await self.handle_extend_auction(data)
+            elif message_type == 'end_auction':
+                await self.handle_end_auction(data)
             else:
                 await self.send(text_data=json.dumps({
                     'type': 'error',
@@ -385,3 +388,152 @@ class AuctionConsumer(AsyncWebsocketConsumer):
                 'success': False,
                 'message': 'Failed to join auction'
             }
+
+
+    async def handle_extend_auction(self, data):
+        """Handle auction extension request"""
+        if not hasattr(self.scope, 'user') or isinstance(self.scope['user'], AnonymousUser):
+            await self.send(text_data=json.dumps({
+                'type': 'error',
+                'message': 'Authentication required',
+                'code': 'AUTH_REQUIRED'
+            }))
+            return
+        
+        user = self.scope['user']
+        extension_hours = data.get('extension_hours', 24)
+        reason = data.get('reason', '')
+        
+        try:
+            # Check if user is the auction owner
+            auction = await database_sync_to_async(Auction.objects.get)(id=self.auction_id)
+            
+            if auction.created_by != user and not user.is_staff:
+                await self.send(text_data=json.dumps({
+                    'type': 'error',
+                    'message': 'Only auction owner can extend auction',
+                    'code': 'PERMISSION_DENIED'
+                }))
+                return
+            
+            # Extend the auction
+            from datetime import timedelta
+            new_end_date = auction.end_date + timedelta(hours=extension_hours)
+            auction.end_date = new_end_date
+            auction.save()
+            
+            # Notify all connected clients
+            await self.channel_layer.group_send(
+                self.auction_group_name,
+                {
+                    'type': 'auction_extended',
+                    'auction': await self.get_auction_data(),
+                    'extension_hours': extension_hours,
+                    'reason': reason
+                }
+            )
+            
+            await self.send(text_data=json.dumps({
+                'type': 'extension_success',
+                'message': f'Auction extended by {extension_hours} hours'
+            }))
+            
+        except Exception as e:
+            logger.error(f"Error extending auction: {str(e)}")
+            await self.send(text_data=json.dumps({
+                'type': 'error',
+                'message': 'Failed to extend auction'
+            }))
+
+    async def handle_end_auction(self, data):
+        """Handle auction completion by owner"""
+        if not hasattr(self.scope, 'user') or isinstance(self.scope['user'], AnonymousUser):
+            await self.send(text_data=json.dumps({
+                'type': 'error',
+                'message': 'Authentication required',
+                'code': 'AUTH_REQUIRED'
+            }))
+            return
+        
+        user = self.scope['user']
+        winning_bid_id = data.get('winning_bid_id')
+        notes = data.get('notes', '')
+        
+        try:
+            auction = await database_sync_to_async(Auction.objects.get)(id=self.auction_id)
+            
+            if auction.created_by != user and not user.is_staff:
+                await self.send(text_data=json.dumps({
+                    'type': 'error',
+                    'message': 'Only auction owner can end auction',
+                    'code': 'PERMISSION_DENIED'
+                }))
+                return
+            
+            # Get the winning bid
+            winning_bid = await database_sync_to_async(Bid.objects.get)(
+                id=winning_bid_id, 
+                auction=auction
+            )
+            
+            # Update auction status
+            auction.status = 'completed'
+            auction.save()
+            
+            # Update winning bid status
+            winning_bid.status = 'winning'
+            winning_bid.save()
+            
+            # Update other bids to outbid
+            await database_sync_to_async(
+                Bid.objects.filter(auction=auction).exclude(id=winning_bid_id).update
+            )(status='outbid')
+            
+            # Notify all connected clients
+            await self.channel_layer.group_send(
+                self.auction_group_name,
+                {
+                    'type': 'auction_completed',
+                    'auction': await self.get_auction_data(),
+                    'winning_bid': {
+                        'id': winning_bid.id,
+                        'amount': float(winning_bid.bid_amount),
+                        'bidder_name': winning_bid.bidder.get_full_name() or winning_bid.bidder.email
+                    },
+                    'notes': notes
+                }
+            )
+            
+            await self.send(text_data=json.dumps({
+                'type': 'auction_end_success',
+                'message': 'Auction completed successfully'
+            }))
+            
+        except Exception as e:
+            logger.error(f"Error ending auction: {str(e)}")
+            await self.send(text_data=json.dumps({
+                'type': 'error',
+                'message': 'Failed to end auction'
+            }))
+
+    async def auction_extended(self, event):
+        """Send auction extension notification"""
+        await self.send(text_data=json.dumps({
+            'type': 'auction_extended',
+            'auction': event['auction'],
+            'extension_hours': event['extension_hours'],
+            'reason': event.get('reason', ''),
+            'message': f"Auction extended by {event['extension_hours']} hours"
+        }))
+
+    async def auction_completed(self, event):
+        """Send auction completion notification"""
+        await self.send(text_data=json.dumps({
+            'type': 'auction_completed',
+            'auction': event['auction'],
+            'winning_bid': event['winning_bid'],
+            'notes': event.get('notes', ''),
+            'message': f"Auction completed! Winner: {event['winning_bid']['bidder_name']}"
+        }))
+
+    

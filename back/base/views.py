@@ -17,6 +17,9 @@ from .permissions import (
     IsPropertyOwnerOrAppraiserOrDataEntry, IsPropertyOwnerOrAppraiser,
     IsAdminUser
 )
+from django.utils import timezone
+from datetime import timedelta
+
 
 # Location Views
 class LocationListCreateView(generics.ListCreateAPIView):
@@ -236,6 +239,119 @@ class AuctionDetailView(generics.RetrieveUpdateDestroyAPIView):
         context = super().get_serializer_context()
         context.update({"request": self.request})
         return context
+
+    def patch(self, request, *args, **kwargs):
+        """Handle partial updates like auction extension"""
+        auction = self.get_object()
+        action = request.data.get('action')
+        
+        if action == 'extend':
+            return self.extend_auction(request, auction)
+        elif action == 'complete':
+            return self.complete_auction(request, auction)
+        else:
+            return super().patch(request, *args, **kwargs)
+    
+    def extend_auction(self, request, auction):
+        """Extend auction end time"""
+        if request.user != auction.created_by and not request.user.is_staff:
+            return Response(
+                {'error': 'Only auction owner can extend auction'}, 
+                status=status.HTTP_403_FORBIDDEN
+            )
+        
+        extension_hours = request.data.get('extension_hours', 24)
+        reason = request.data.get('reason', '')
+        
+        try:
+            extension_hours = int(extension_hours)
+            if extension_hours < 1 or extension_hours > 168:  # Max 7 days
+                return Response(
+                    {'error': 'Extension must be between 1 and 168 hours'}, 
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+            
+            # Extend the auction
+            auction.end_date += timedelta(hours=extension_hours)
+            auction.save()
+            
+            # Log the extension
+            logger.info(f"Auction {auction.id} extended by {extension_hours} hours. Reason: {reason}")
+            
+            serializer = self.get_serializer(auction)
+            return Response({
+                'message': f'Auction extended by {extension_hours} hours',
+                'auction': serializer.data
+            })
+            
+        except (ValueError, TypeError):
+            return Response(
+                {'error': 'Invalid extension hours'}, 
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        except Exception as e:
+            logger.error(f"Error extending auction {auction.id}: {str(e)}")
+            return Response(
+                {'error': 'Failed to extend auction'}, 
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+    
+    def complete_auction(self, request, auction):
+        """Complete auction with selected winner"""
+        if request.user != auction.created_by and not request.user.is_staff:
+            return Response(
+                {'error': 'Only auction owner can complete auction'}, 
+                status=status.HTTP_403_FORBIDDEN
+            )
+        
+        winning_bid_id = request.data.get('winning_bid_id')
+        notes = request.data.get('notes', '')
+        
+        try:
+            if not winning_bid_id:
+                return Response(
+                    {'error': 'Winning bid ID is required'}, 
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+            
+            # Get the winning bid
+            winning_bid = Bid.objects.get(id=winning_bid_id, auction=auction)
+            
+            # Update auction status
+            auction.status = 'completed'
+            auction.save()
+            
+            # Update bid statuses
+            winning_bid.status = 'winning'
+            winning_bid.save()
+            
+            # Mark other bids as outbid
+            auction.bids.exclude(id=winning_bid_id).update(status='outbid')
+            
+            logger.info(f"Auction {auction.id} completed. Winner: {winning_bid.bidder.email}")
+            
+            serializer = self.get_serializer(auction)
+            return Response({
+                'message': 'Auction completed successfully',
+                'auction': serializer.data,
+                'winning_bid': {
+                    'id': winning_bid.id,
+                    'amount': float(winning_bid.bid_amount),
+                    'bidder_name': winning_bid.bidder.get_full_name() or winning_bid.bidder.email
+                }
+            })
+            
+        except Bid.DoesNotExist:
+            return Response(
+                {'error': 'Invalid winning bid'}, 
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        except Exception as e:
+            logger.error(f"Error completing auction {auction.id}: {str(e)}")
+            return Response(
+                {'error': 'Failed to complete auction'}, 
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
 
 class AuctionSlugDetailView(AuctionDetailView):
     lookup_field = 'slug'

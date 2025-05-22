@@ -465,3 +465,148 @@ export async function deleteAuction(id) {
     throw error;
   }
 }
+
+
+// Extend auction
+export async function extendAuction(id, extensionData) {
+  try {
+    const token = localStorage.getItem('accessToken');
+    
+    if (!token) {
+      throw new Error('Authentication required');
+    }
+    
+    const response = await fetch(`${AUCTION_URL}/${id}/`, {
+      method: 'PATCH',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        action: 'extend',
+        ...extensionData
+      })
+    });
+    
+    if (response.status === 401) {
+      const newToken = await refreshToken();
+      const retryResponse = await fetch(`${AUCTION_URL}/${id}/`, {
+        method: 'PATCH',
+        headers: {
+          'Authorization': `Bearer ${newToken}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          action: 'extend',
+          ...extensionData
+        })
+      });
+      
+      if (!retryResponse.ok) {
+        const errorData = await retryResponse.json();
+        throw new Error(errorData.error || 'Failed to extend auction');
+      }
+      
+      return await retryResponse.json();
+    }
+    
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.error || 'Failed to extend auction');
+    }
+    
+    return await response.json();
+  } catch (error) {
+    console.error('Error extending auction:', error);
+    throw error;
+  }
+}
+
+// Complete auction
+export async function completeAuction(id, completionData) {
+  try {
+    const token = localStorage.getItem('accessToken');
+    
+    if (!token) {
+      throw new Error('Authentication required');
+    }
+    
+    const response = await fetch(`${AUCTION_URL}/${id}/`, {
+      method: 'PATCH',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        action: 'complete',
+        ...completionData
+      })
+    });
+    
+    if (response.status === 401) {
+      const newToken = await refreshToken();
+      const retryResponse = await fetch(`${AUCTION_URL}/${id}/`, {
+        method: 'PATCH',
+        headers: {
+          'Authorization': `Bearer ${newToken}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          action: 'complete',
+          ...completionData
+        })
+      });
+      
+      if (!retryResponse.ok) {
+        const errorData = await retryResponse.json();
+        throw new Error(errorData.error || 'Failed to complete auction');
+      }
+      
+      return await retryResponse.json();
+    }
+    
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.error || 'Failed to complete auction');
+    }
+    
+    return await response.json();
+  } catch (error) {
+    console.error('Error completing auction:', error);
+    throw error;
+  }
+}
+
+// Get auction statistics for owners
+export async function getAuctionStats(id) {
+  try {
+    const token = localStorage.getItem('accessToken');
+    const headers = token ? { 'Authorization': `Bearer ${token}` } : {};
+    
+    const response = await fetch(`${AUCTION_URL}/${id}/stats/`, {
+      headers
+    });
+    
+    if (response.status === 401 && token) {
+      const newToken = await refreshToken();
+      const retryResponse = await fetch(`${AUCTION_URL}/${id}/stats/`, {
+        headers: { 'Authorization': `Bearer ${newToken}` }
+      });
+      
+      if (!retryResponse.ok) {
+        throw new Error('Failed to fetch auction stats');
+      }
+      
+      return await retryResponse.json();
+    }
+    
+    if (!response.ok) {
+      throw new Error('Failed to fetch auction stats');
+    }
+    
+    return await response.json();
+  } catch (error) {
+    console.error('Error fetching auction stats:', error);
+    throw error;
+  }
+}

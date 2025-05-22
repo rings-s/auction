@@ -2,12 +2,14 @@
 <script>
   import { onMount, onDestroy } from 'svelte';
   import { page } from '$app/stores';
+  import { goto } from '$app/navigation';
   import { t } from '$lib/i18n/i18n';
   import { user } from '$lib/stores/user';
   import { 
     fetchAuctionBySlug, 
     fetchAuctionBidsBySlug, 
-    placeBid 
+    placeBid,
+    updateAuction
   } from '$lib/api/auction';
   
   import Breadcrumb from '$lib/components/ui/Breadcrumb.svelte';
@@ -23,9 +25,8 @@
   import FormField from '$lib/components/ui/FormField.svelte';
   import Gallery from '$lib/components/ui/Gallery.svelte';
   
-  // Import the existing LiveBidding components
+  // Import the enhanced LiveBidding component
   import LiveBidding from '$lib/components/auction/LiveBidding.svelte';
-  import LiveBiddingPanel from '$lib/components/auction/LiveBiddingPanel.svelte';
   
   let auction = null;
   let property = null;
@@ -38,6 +39,7 @@
   let activeTab = 'details';
   let showBidModal = false;
   let showLoginModal = false;
+  let showExtendModal = false;
   let refreshInterval;
   let websocket = null;
   
@@ -46,14 +48,19 @@
   let placingBid = false;
   let quickBidAmounts = [];
   
+  // Auction extension
+  let extensionHours = 24;
+  let extensionReason = '';
+  
   $: slug = $page.params.slug;
   $: isLiveAuction = auction?.status === 'live';
   $: canBid = isLiveAuction && $user && new Date(auction?.end_date) > new Date();
+  $: isOwner = $user && auction?.created_by?.id === $user?.id;
   $: minimumBidAmount = calculateMinimumBid();
   $: breadcrumbItems = [
     { label: $t('nav.home'), href: '/' },
     { label: $t('nav.auctions'), href: '/auctions' },
-    { label: auction?.title || $t('auction.loading'), href: `/auctions/${slug}`, active: true }
+    { label: auction?.title || 'Loading...', href: `/auctions/${slug}`, active: true }
   ];
   
   function calculateMinimumBid() {
@@ -222,56 +229,40 @@
     quickBidAmounts = generateQuickBidAmounts();
   }
   
-  // Handle modal opening from LiveBiddingPanel
-  function handleOpenModal() {
-    if ($user) {
-      bidError = '';
-      bidSuccess = '';
-      bidAmount = minimumBidAmount.toString();
-      showBidModal = true;
-    } else {
-      showLoginModal = true;
+  // Handle auction extension
+  async function handleExtendAuction() {
+    try {
+      if (!extensionHours || extensionHours < 1) {
+        error = 'Please enter a valid extension time';
+        return;
+      }
+      
+      const currentEndDate = new Date(auction.end_date);
+      const newEndDate = new Date(currentEndDate.getTime() + (extensionHours * 60 * 60 * 1000));
+      
+      const updatedAuction = await updateAuction(auction.id, {
+        end_date: newEndDate.toISOString(),
+        extension_reason: extensionReason
+      });
+      
+      auction = { ...auction, ...updatedAuction };
+      showExtendModal = false;
+      bidSuccess = `Auction extended by ${extensionHours} hours`;
+      
+    } catch (err) {
+      console.error('Error extending auction:', err);
+      bidError = err.message || 'Failed to extend auction';
     }
   }
   
-  // Handle placing bid from LiveBiddingPanel via WebSocket or API
-  async function handlePlaceBidFromPanel(event) {
-    const { amount } = event.detail;
+  // Handle auction ended event from LiveBidding
+  function handleAuctionEnded(event) {
+    const { winningBid, notes } = event.detail;
+    console.log('Auction ended with winner:', winningBid, 'Notes:', notes);
     
-    try {
-      bidError = '';
-      bidSuccess = '';
-      placingBid = true;
-      
-      // Try WebSocket first for live auctions
-      if (websocket && websocket.readyState === WebSocket.OPEN) {
-        websocket.send(JSON.stringify({
-          type: 'place_bid',
-          amount: amount
-        }));
-      } else {
-        // Fallback to HTTP API
-        await placeBid(auction.id, amount);
-        
-        // Show success message
-        bidSuccess = $t('auction.bidPlaced');
-        
-        // Reload auction and bids data
-        await Promise.all([
-          loadAuctionData(),
-          loadAuctionBids()
-        ]);
-      }
-      
-      // Update quick bid amounts
-      quickBidAmounts = generateQuickBidAmounts();
-      
-    } catch (err) {
-      console.error('Error placing bid:', err);
-      bidError = err.message || $t('error.bidFailed');
-    } finally {
-      placingBid = false;
-    }
+    // Update auction status
+    auction = { ...auction, status: 'completed' };
+    bidSuccess = `Auction completed! Winner: ${winningBid.bidder_info?.name || 'Anonymous'}`;
   }
   
   // Handle modal bid submission
@@ -398,8 +389,17 @@
 </script>
 
 <svelte:head>
-  <title>{auction?.title || $t('auction.loading')} | {$t('nav.auctions')}</title>
-  <meta name="description" content={auction?.description || $t('auction.loading')} />
+  <title>{auction?.title || 'Loading...'} | {$t('nav.auctions')}</title>
+  <meta name="description" content={auction?.description || 'Loading auction details...'} />
+  {#if auction}
+    <meta property="og:title" content={auction.title} />
+    <meta property="og:description" content={auction.description} />
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content={`${$page.url.origin}/auctions/${auction.slug}`} />
+    {#if auction.related_property?.main_image?.url}
+      <meta property="og:image" content={auction.related_property.main_image.url} />
+    {/if}
+  {/if}
 </svelte:head>
 
 <div class="bg-gray-50 dark:bg-gray-900 min-h-screen py-8 px-4 sm:px-6 lg:px-8">
@@ -460,15 +460,16 @@
               {auction.title}
             </h1>
             <p class="text-gray-600 dark:text-gray-400">
-              {$t('auction.idLabel')}: {auction.id}
+              Auction ID: {auction.id} • Views: {auction.view_count || 0}
             </p>
           </div>
           <div class="flex space-x-2">
             <ShareButtons 
               url={`/auctions/${auction.slug}`} 
               title={auction.title}
+              description={auction.description}
             />
-            {#if $user?.id === auction.created_by?.id || $user?.is_admin}
+            {#if isOwner}
               <Button 
                 variant="outline"
                 href={`/auctions/${auction.id}/edit`}
@@ -512,7 +513,7 @@
                 <div class="mt-8 grid grid-cols-1 sm:grid-cols-2 gap-6">
                   <div class="bg-gray-50 dark:bg-gray-700 p-4 rounded-lg">
                     <h3 class="text-lg font-medium text-gray-900 dark:text-white mb-3">
-                      {$t('auction.startEndDates')}
+                      {$t('auction.schedule')}
                     </h3>
                     <dl class="space-y-2">
                       <div class="flex justify-between">
@@ -546,7 +547,7 @@
                   
                   <div class="bg-gray-50 dark:bg-gray-700 p-4 rounded-lg">
                     <h3 class="text-lg font-medium text-gray-900 dark:text-white mb-3">
-                      {$t('auction.bidding')}
+                      {$t('auction.keyDetails')}
                     </h3>
                     <dl class="space-y-2">
                       <div class="flex justify-between">
@@ -602,7 +603,7 @@
                 
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-6 mb-6">
                   <div>
-                    <PropertyCard {property} isCompact={true} />
+                    <PropertyCard property={property} isCompact={true} />
                   </div>
                   
                   <div class="space-y-4">
@@ -665,10 +666,13 @@
               </div>
               
             {:else if activeTab === 'bids'}
-              <!-- Use the LiveBidding component for the bids tab -->
+              <!-- Use the enhanced LiveBidding component for the bids tab -->
               <LiveBidding 
                 {auction}
+                {isOwner}
                 onBidPlaced={handleBidPlaced}
+                on:extendAuction={() => showExtendModal = true}
+                on:auctionEnded={handleAuctionEnded}
               />
               
             {:else if activeTab === 'terms'}
@@ -736,6 +740,16 @@
                 <p class="text-gray-700 dark:text-gray-300">
                   {formatDateTime(auction.end_date)}
                 </p>
+                {#if auction.status === 'completed' && bids.length > 0}
+                  <div class="mt-4 p-4 bg-green-50 dark:bg-green-900/20 rounded-lg border border-green-200 dark:border-green-800">
+                    <h4 class="text-sm font-medium text-green-800 dark:text-green-200 mb-2">
+                      🎉 Auction Winner
+                    </h4>
+                    <p class="text-sm text-green-700 dark:text-green-300">
+                      {bids[0]?.bidder_info?.name || 'Anonymous'} won with a bid of {formatCurrency(bids[0]?.amount || 0)}
+                    </p>
+                  </div>
+                {/if}
               </div>
             {/if}
             
@@ -757,7 +771,12 @@
                   <Button
                     variant="primary"
                     class="w-full"
-                    onClick={handleOpenModal}
+                    on:click={() => {
+                      bidError = '';
+                      bidSuccess = '';
+                      bidAmount = minimumBidAmount.toString();
+                      showBidModal = true;
+                    }}
                     aria-label={$t('auction.placeBid')}
                   >
                     {$t('auction.placeBid')}
@@ -771,7 +790,7 @@
                   <Button
                     variant="secondary" 
                     class="w-full"
-                    onClick={() => alert($t('auction.registrationSuccessful'))}
+                    on:click={() => alert('Registration successful!')}
                     aria-label={$t('auction.registerForAuction')}
                   >
                     {$t('auction.registerForAuction')}
@@ -813,18 +832,6 @@
               </Button>
             </div>
           </div>
-          
-          <!-- Live Bidding Panel for active auctions -->
-          {#if canBid}
-            <LiveBiddingPanel
-              {auction}
-              {quickBidAmounts}
-              {minimumBidAmount}
-              {placingBid}
-              on:placeBid={handlePlaceBidFromPanel}
-              on:openModal={handleOpenModal}
-            />
-          {/if}
           
           <!-- Property Quick Info -->
           {#if property}
@@ -918,7 +925,7 @@
                   <Button
                     variant="outline"
                     size="small"
-                    onClick={() => activeTab = 'bids'}
+                    on:click={() => activeTab = 'bids'}
                     class="w-full mt-3"
                   >
                     {$t('auction.viewAllBids')} ({bids.length})
@@ -980,7 +987,7 @@
       <Button
         variant="outline"
         type="button"
-        onClick={() => showBidModal = false}
+        on:click={() => showBidModal = false}
         disabled={placingBid}
         aria-label={$t('common.cancel')}
       >
@@ -1014,7 +1021,7 @@
     <div class="flex flex-col sm:flex-row justify-center gap-3">
       <Button
         variant="outline"
-        onClick={() => showLoginModal = false}
+        on:click={() => showLoginModal = false}
         aria-label={$t('common.cancel')}
       >
         {$t('common.cancel')}
@@ -1029,4 +1036,64 @@
       </Button>
     </div>
   </div>
+</Modal>
+
+<!-- Extend Auction Modal -->
+<Modal
+  bind:show={showExtendModal}
+  title="Extend Auction"
+  maxWidth="md"
+>
+  <form on:submit|preventDefault={handleExtendAuction} class="space-y-6 p-6">
+    <div class="bg-blue-50 dark:bg-blue-900/20 p-4 rounded-lg">
+      <h4 class="text-lg font-semibold text-blue-900 dark:text-blue-100 mb-2">
+        Extend Auction Time
+      </h4>
+      <p class="text-sm text-blue-700 dark:text-blue-300">
+        Current end time: {formatDateTime(auction?.end_date)}
+      </p>
+    </div>
+    
+    <FormField
+      type="number"
+      id="extension_hours"
+      label="Extension Hours"
+      bind:value={extensionHours}
+      min={1}
+      max={168}
+      step="1"
+      required={true}
+      helpText="Number of hours to extend the auction (max 7 days)"
+    />
+    
+    <FormField
+      type="textarea"
+      id="extension_reason"
+      label="Reason for Extension (Optional)"
+      bind:value={extensionReason}
+      rows={3}
+      helpText="Optional reason for extending the auction"
+    />
+    
+    {#if bidError}
+      <Alert type="error" message={bidError} />
+    {/if}
+    
+    <div class="flex justify-end space-x-3">
+      <Button
+        variant="outline"
+        type="button"
+        on:click={() => showExtendModal = false}
+      >
+        Cancel
+      </Button>
+      
+      <Button
+        variant="primary"
+        type="submit"
+      >
+        Extend Auction
+      </Button>
+    </div>
+  </form>
 </Modal>
