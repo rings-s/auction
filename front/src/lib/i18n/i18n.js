@@ -1,4 +1,5 @@
 // src/lib/i18n/i18n.js
+// @ts-nocheck - This file is pure JavaScript, no TypeScript checking needed
 import { writable, derived } from 'svelte/store';
 import { browser } from '$app/environment';
 
@@ -31,6 +32,128 @@ if (browser) {
     document.documentElement.classList.add(value === 'ar' ? 'rtl' : 'ltr');
   });
 }
+
+// Feature and amenity mapping for translation
+const featureMap = {
+  // Features
+  'Swimming Pool': 'pool',
+  'swimming pool': 'pool',
+  'Pool': 'pool',
+  'Air Conditioning': 'airConditioning',
+  'air conditioning': 'airConditioning',
+  'Air conditioning': 'airConditioning',
+  'AC': 'airConditioning',
+  'A/C': 'airConditioning',
+  'Security System': 'security',
+  'security system': 'security',
+  'Security': 'security',
+  'Parking': 'parking',
+  'parking': 'parking',
+  'Car Park': 'parking',
+  'Garage': 'garage',
+  'garage': 'garage',
+  'Garden': 'garden',
+  'garden': 'garden',
+  'Elevator': 'elevator',
+  'elevator': 'elevator',
+  'Lift': 'elevator',
+  'Fireplace': 'fireplace',
+  'fireplace': 'fireplace',
+  'Balcony': 'balcony',
+  'balcony': 'balcony',
+  'Terrace': 'terrace',
+  'terrace': 'terrace',
+  'Storage Room': 'storage',
+  'Storage': 'storage',
+  'storage': 'storage',
+  'Furnished': 'furnished',
+  'furnished': 'furnished',
+  'Pets Allowed': 'petsAllowed',
+  'Pet Friendly': 'petsAllowed',
+  'Wheelchair Access': 'wheelchairAccess',
+  'Accessible': 'wheelchairAccess',
+  'Fiber Internet': 'fiberInternet',
+  'High-speed Internet': 'fiberInternet',
+  'Solar Panels': 'solarPanels',
+  'solar': 'solarPanels',
+  'Heating': 'heating',
+  'heating': 'heating',
+  
+  // Amenities
+  'Gym': 'gym',
+  'gym': 'gym',
+  'Fitness Center': 'gym',
+  'Spa': 'spa',
+  'spa': 'spa',
+  'Sauna': 'sauna',
+  'sauna': 'sauna',
+  'Playground': 'playground',
+  'playground': 'playground',
+  'Kids Area': 'playground',
+  'BBQ Area': 'bbqArea',
+  'Barbecue': 'bbqArea',
+  'BBQ': 'bbqArea',
+  'Community Center': 'communityCenter',
+  'Tennis Court': 'tennisCourtBasketball',
+  'Basketball Court': 'tennisCourtBasketball',
+  'Sports Court': 'tennisCourtBasketball',
+  'Concierge': 'concierge',
+  'concierge': 'concierge',
+  'Concierge Service': 'concierge',
+  'Business Center': 'businessCenter',
+  'business center': 'businessCenter',
+  'Guest Parking': 'guestParking',
+  'Visitor Parking': 'guestParking',
+  'Laundry': 'laundryService',
+  'Laundry Service': 'laundryService',
+  'Rooftop': 'rooftopDeck',
+  'Rooftop Deck': 'rooftopDeck',
+  'Childcare': 'childcare',
+  'Childcare Services': 'childcare',
+  'Pet Grooming': 'petGrooming',
+  'Electric Car Charging': 'carCharging',
+  'EV Charging': 'carCharging',
+  'Bike Storage': 'bikeStorage',
+  'Schools': 'schools',
+  'School': 'schools',
+  'schools': 'schools',
+  'Shopping Centers': 'shoppingCenters',
+  'Shopping Center': 'shoppingCenters',
+  'Shopping Mall': 'shoppingCenters',
+  'Mall': 'shoppingCenters',
+  'Shops': 'shoppingCenters',
+  'Parks': 'parks',
+  'Park': 'parks',
+  'parks': 'parks',
+  'Public Transportation': 'publicTransportation',
+  'Public Transport': 'publicTransportation',
+  'Transit': 'publicTransportation',
+  'Bus Stop': 'publicTransportation',
+  'Metro': 'publicTransportation'
+};
+
+// Room type mapping for translation
+const roomTypeMap = {
+  'bedroom': 'bedroom',
+  'living room': 'livingRoom',
+  'kitchen': 'kitchen',
+  'bathroom': 'bathroom',
+  'dining room': 'diningRoom',
+  'office': 'office',
+  'guest room': 'guestRoom',
+  'master bedroom': 'masterBedroom',
+  'children room': 'childrenRoom',
+  'utility room': 'utilityRoom',
+  'storage room': 'storageRoom',
+  'garage': 'garage',
+  'balcony': 'balcony',
+  'terrace': 'terrace',
+  'basement': 'basement',
+  'attic': 'attic',
+  'hallway': 'hallway',
+  'entrance': 'entrance',
+  'laundry room': 'laundryRoom'
+};
 
 // Translation dictionaries
 const translations = {
@@ -176,8 +299,22 @@ const translations = {
       amenities: 'Amenities',
       location: 'Location',
       propertyDetails: 'Property Details',
+      error: {
+        title: 'Unable to load property'
+      },
+      loading_details: 'Loading property details...',
+      edit: 'Edit Property',
+      contact_owner: 'Contact Owner',
+      media: {
+        untitled: 'Untitled media'
+      },
+      gallery: {
+        keyboard_nav: 'Use arrow keys to navigate',
+        swipe_nav: 'Swipe to navigate',
+        press_esc: 'Press ESC to close'
+      },
       description: 'Description',
-      marketValue: 'Market Value',
+      market_value: 'Market Value',
       size: 'Size',
       propertyType: 'Property Type',
       buildingType: 'Building Type',
@@ -224,6 +361,95 @@ const translations = {
       featuresAndAmenities: 'Features & Amenities',
       nearbyServices: 'Nearby Services',
       nearbyServicesInfo: 'Nearby services information not currently available',
+      featureItems: {
+        airConditioning: 'Air Conditioning',
+        heating: 'Heating',
+        parking: 'Parking',
+        garage: 'Garage',
+        pool: 'Swimming Pool',
+        garden: 'Garden',
+        security: 'Security System',
+        elevator: 'Elevator',
+        fireplace: 'Fireplace',
+        balcony: 'Balcony',
+        terrace: 'Terrace',
+        storage: 'Storage Room',
+        furnished: 'Furnished',
+        petsAllowed: 'Pets Allowed',
+        wheelchairAccess: 'Wheelchair Access',
+        fiberInternet: 'Fiber Internet',
+        solarPanels: 'Solar Panels'
+      },
+      roomFeatureItems: {
+        window: 'Window',
+        privateBathroom: 'Private Bathroom',
+        walkInCloset: 'Walk-in Closet',
+        ensuite: 'En-suite',
+        airConditioning: 'Air Conditioning',
+        heating: 'Heating',
+        ceilingFan: 'Ceiling Fan',
+        hardwoodFloor: 'Hardwood Floor',
+        carpetFloor: 'Carpet Floor',
+        tileFloor: 'Tile Floor',
+        soundproofing: 'Soundproofing',
+        furnished: 'Furnished',
+        desk: 'Desk/Workspace',
+        tv: 'TV',
+        internetAccess: 'Internet Access',
+        naturalLight: 'Natural Light',
+        view: 'Good View',
+        storage: 'Storage Space',
+        kingBed: 'King Size Bed',
+        queenBed: 'Queen Size Bed',
+        singleBed: 'Single Bed',
+        doubleBed: 'Double Bed',
+        bathtub: 'Bathtub',
+        shower: 'Shower',
+        jacuzzi: 'Jacuzzi'
+      },
+      roomTypes: {
+        bedroom: 'Bedroom',
+        livingRoom: 'Living Room',
+        kitchen: 'Kitchen',
+        bathroom: 'Bathroom',
+        diningRoom: 'Dining Room',
+        office: 'Office',
+        guestRoom: 'Guest Room',
+        masterBedroom: 'Master Bedroom',
+        childrenRoom: 'Children Room',
+        utilityRoom: 'Utility Room',
+        storageRoom: 'Storage Room',
+        garage: 'Garage',
+        balcony: 'Balcony',
+        terrace: 'Terrace',
+        basement: 'Basement',
+        attic: 'Attic',
+        hallway: 'Hallway',
+        entrance: 'Entrance',
+        laundryRoom: 'Laundry Room'
+      },
+      amenityItems: {
+        gym: 'Gym',
+        spa: 'Spa',
+        sauna: 'Sauna',
+        playground: 'Playground',
+        bbqArea: 'BBQ Area',
+        communityCenter: 'Community Center',
+        tennisCourtBasketball: 'Tennis/Basketball Court',
+        concierge: 'Concierge Service',
+        businessCenter: 'Business Center',
+        guestParking: 'Guest Parking',
+        laundryService: 'Laundry Service',
+        rooftopDeck: 'Rooftop Deck',
+        childcare: 'Childcare Services',
+        petGrooming: 'Pet Grooming',
+        carCharging: 'Electric Car Charging',
+        bikeStorage: 'Bike Storage',
+        schools: 'Schools',
+        shoppingCenters: 'Shopping Centers',
+        parks: 'Parks',
+        publicTransportation: 'Public Transportation'
+      },
       buildingTypes: {
         apartment: 'Apartment',
         villa: 'Villa',
@@ -787,6 +1013,95 @@ const translations = {
       featuresAndAmenities: 'الميزات والمرافق',
       nearbyServices: 'الخدمات القريبة',
       nearbyServicesInfo: 'معلومات عن الخدمات القريبة غير متوفرة حاليًا',
+      featureItems: {
+        airConditioning: 'تكييف الهواء',
+        heating: 'تدفئة',
+        parking: 'موقف سيارات',
+        garage: 'مرآب',
+        pool: 'حمام سباحة',
+        garden: 'حديقة',
+        security: 'نظام أمان',
+        elevator: 'مصعد',
+        fireplace: 'مدفأة',
+        balcony: 'شرفة',
+        terrace: 'تراس',
+        storage: 'غرفة تخزين',
+        furnished: 'مفروش',
+        petsAllowed: 'يسمح بالحيوانات الأليفة',
+        wheelchairAccess: 'مدخل للكراسي المتحركة',
+        fiberInternet: 'إنترنت فايبر',
+        solarPanels: 'ألواح شمسية'
+      },
+      roomFeatureItems: {
+        window: 'نافذة',
+        privateBathroom: 'حمام خاص',
+        walkInCloset: 'خزانة ملابس واسعة',
+        ensuite: 'جناح خاص',
+        airConditioning: 'تكييف هواء',
+        heating: 'تدفئة',
+        ceilingFan: 'مروحة سقف',
+        hardwoodFloor: 'أرضية خشبية',
+        carpetFloor: 'أرضية مفروشة بالسجاد',
+        tileFloor: 'أرضية بلاط',
+        soundproofing: 'عازل للصوت',
+        furnished: 'مفروشة',
+        desk: 'مكتب/مساحة عمل',
+        tv: 'تلفزيون',
+        internetAccess: 'اتصال بالإنترنت',
+        naturalLight: 'إضاءة طبيعية',
+        view: 'إطلالة جيدة',
+        storage: 'مساحة تخزين',
+        kingBed: 'سرير كينج',
+        queenBed: 'سرير كوين',
+        singleBed: 'سرير فردي',
+        doubleBed: 'سرير مزدوج',
+        bathtub: 'حوض استحمام',
+        shower: 'دش',
+        jacuzzi: 'جاكوزي'
+      },
+      roomTypes: {
+        bedroom: 'غرفة نوم',
+        livingRoom: 'غرفة معيشة',
+        kitchen: 'مطبخ',
+        bathroom: 'حمام',
+        diningRoom: 'غرفة طعام',
+        office: 'مكتب',
+        guestRoom: 'غرفة ضيوف',
+        masterBedroom: 'غرفة نوم رئيسية',
+        childrenRoom: 'غرفة أطفال',
+        utilityRoom: 'غرفة خدمات',
+        storageRoom: 'غرفة تخزين',
+        garage: 'مرآب',
+        balcony: 'شرفة',
+        terrace: 'تراس',
+        basement: 'قبو',
+        attic: 'علية',
+        hallway: 'ممر',
+        entrance: 'مدخل',
+        laundryRoom: 'غرفة غسيل'
+      },
+      amenityItems: {
+        gym: 'صالة رياضية',
+        spa: 'سبا',
+        sauna: 'ساونا',
+        playground: 'ملعب أطفال',
+        bbqArea: 'منطقة شواء',
+        communityCenter: 'مركز مجتمعي',
+        tennisCourtBasketball: 'ملعب تنس/كرة سلة',
+        concierge: 'خدمة الكونسيرج',
+        businessCenter: 'مركز أعمال',
+        guestParking: 'موقف للضيوف',
+        laundryService: 'خدمة غسيل الملابس',
+        rooftopDeck: 'سطح علوي',
+        childcare: 'خدمات رعاية الأطفال',
+        petGrooming: 'العناية بالحيوانات الأليفة',
+        carCharging: 'شحن السيارات الكهربائية',
+        bikeStorage: 'تخزين الدراجات',
+        schools: 'مدارس',
+        shoppingCenters: 'مراكز تسوق',
+        parks: 'منتزهات',
+        publicTransportation: 'وسائل النقل العام'
+      },
       buildingTypes: {
         apartment: 'شقة',
         villa: 'فيلا',
@@ -1197,3 +1512,45 @@ export const t = derived(
     return value;
   }
 );
+
+// Get translation for a specific key
+function translateKey(key) {
+  const lang = localStorage.getItem('lang') || 'en';
+  
+  // Split the key by dots to navigate the nested objects
+  const keys = key.split('.');
+  
+  // Use a safer approach to access nested properties
+  if (!translations[lang]) {
+    return key; // Language not found
+  }
+  
+  let result = translations[lang];
+  
+  // Navigate through the nested objects
+  for (const k of keys) {
+    if (result && Object.prototype.hasOwnProperty.call(result, k)) {
+      result = result[k];
+    } else {
+      // Return the key if translation not found
+      return key;
+    }
+  }
+  
+  // Ensure we return a string
+  return typeof result === 'string' ? result : key;
+}
+
+// Get the mapped feature or amenity key
+function getFeatureMapKey(item) {
+  return Object.prototype.hasOwnProperty.call(featureMap, item) ? featureMap[item] : null;
+}
+
+// Get the mapped room type key
+function getRoomTypeMapKey(roomType) {
+  const lowerCaseType = roomType.toLowerCase();
+  return Object.prototype.hasOwnProperty.call(roomTypeMap, lowerCaseType) ? roomTypeMap[lowerCaseType] : null;
+}
+
+// Export the translation functions
+export { translateKey, getFeatureMapKey, getRoomTypeMapKey };
