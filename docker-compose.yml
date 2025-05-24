@@ -1,0 +1,48 @@
+services:
+  backend:
+    build: ./back
+    container_name: auction_backend
+    command: /entrypoint.sh
+    volumes:
+      - ./back:/app
+      # Add a volume for your database if it's SQLite and you want to persist it
+      # - ./back/db:/app/db 
+    ports:
+      - "8000:8000"
+    env_file:
+      - ./.env  # Assuming your backend .env is in the project root
+    # depends_on:
+      # - db # Uncomment if you add a database service
+
+  frontend:
+    build: ./front
+    container_name: auction_frontend
+    volumes:
+      - ./front:/app
+      - /app/node_modules # Keep node_modules in the container separate from local
+    ports:
+      - "5173:5173" # SvelteKit new port
+    environment:
+      # Ensure Vite HMR works correctly if needed during development
+      - CHOKIDAR_USEPOLLING=true 
+      # Example: Point frontend to the backend API
+      # Adjust VITE_API_URL as per your SvelteKit app's environment variable for the backend URL
+      - VITE_API_URL=http://backend:8000/api 
+    depends_on:
+      - backend
+
+# volumes: # Uncomment and define if you add a database service
+#   postgres_data:
+
+# services: # Example for a PostgreSQL database service
+#   db:
+#     image: postgres:13
+#     container_name: auction_db
+#     volumes:
+#       - postgres_data:/var/lib/postgresql/data/
+#     environment:
+#       - POSTGRES_USER=your_db_user
+#       - POSTGRES_PASSWORD=your_db_password
+#       - POSTGRES_DB=your_db_name
+#     ports:
+#       - "5432:5432"

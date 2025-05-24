@@ -133,6 +133,7 @@
                     searchParams.query = '';
                     debounceSearch(0);
                   }}
+                  aria-label={$t('search.removeFilter')}
                 >
                   <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
@@ -210,6 +211,7 @@
                     searchParams.city = '';
                     debounceSearch(0);
                   }}
+                  aria-label={$t('search.removeFilter')}
                 >
                   <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
@@ -458,14 +460,15 @@
       <div class="flex flex-wrap items-center gap-2">
         <!-- Property Type Filter -->
         {#if searchParams.propertyType}
-          <div class="inline-flex items-center rounded-full bg-blue-100 text-blue-800 dark:bg-blue-900/50 dark:text-blue-300 text-xs px-3 py-1">
-            <span>{$t(propertyTypes.find(t => t.value === searchParams.propertyType)?.label)}</span>
+          <div class="inline-flex items-center rounded-full bg-teal-100 text-teal-800 dark:bg-teal-900/50 dark:text-teal-300 text-xs px-3 py-1">
+            <span>{$t(propertyTypes.find(p => p.value === searchParams.propertyType)?.label)}</span>
             <button 
-              class="ml-1.5 text-blue-500 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-200"
+              class="ml-1.5 text-teal-500 hover:text-teal-700 dark:text-teal-400 dark:hover:text-teal-200"
               on:click={() => {
                 searchParams.propertyType = '';
                 handleSearch();
               }}
+              aria-label={$t('search.removeFilter')}
             >
               <svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
@@ -476,14 +479,15 @@
         
         <!-- City Filter -->
         {#if searchParams.city}
-          <div class="inline-flex items-center rounded-full bg-green-100 text-green-800 dark:bg-green-900/50 dark:text-green-300 text-xs px-3 py-1">
+          <div class="inline-flex items-center rounded-full bg-cyan-100 text-cyan-800 dark:bg-cyan-900/50 dark:text-cyan-300 text-xs px-3 py-1">
             <span>{searchParams.city}</span>
             <button 
-              class="ml-1.5 text-green-500 hover:text-green-700 dark:text-green-400 dark:hover:text-green-200"
+              class="ml-1.5 text-cyan-500 hover:text-cyan-700 dark:text-cyan-400 dark:hover:text-cyan-200"
               on:click={() => {
                 searchParams.city = '';
                 handleSearch();
               }}
+              aria-label={$t('search.removeFilter')}
             >
               <svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
@@ -503,6 +507,7 @@
                 searchParams.maxPrice = '';
                 handleSearch();
               }}
+              aria-label={$t('search.removeFilter')}
             >
               <svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
@@ -522,6 +527,7 @@
                 searchParams.maxSize = '';
                 handleSearch();
               }}
+              aria-label={$t('search.removeFilter')}
             >
               <svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
@@ -540,6 +546,7 @@
                 searchParams.query = '';
                 handleSearch();
               }}
+              aria-label={$t('search.removeFilter')}
             >
               <svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
@@ -558,6 +565,7 @@
                 searchParams.sort = 'newest';
                 handleSearch();
               }}
+              aria-label={$t('search.removeFilter')}
             >
               <svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />

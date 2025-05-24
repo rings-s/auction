@@ -316,6 +316,7 @@
               type="button"
               class="absolute inset-y-0 {isRTL ? 'left-0 pl-3' : 'right-0 pr-3'} flex items-center text-gray-400 hover:text-gray-600"
               on:click={() => handleFilterChange('search', '')}
+              aria-label={$t('search.removeFilter')}
             >
               <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
@@ -524,7 +525,7 @@
   <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
     <!-- Active Filters Summary -->
     {#if !loading && !error && activeFiltersCount > 0}
-      <div class="mb-6 bg-white dark:bg-gray-800 p-4 rounded-lg shadow-sm">
+      <div class="mb-6 bg-white dark:bg-gray-800 p-4 rounded-lg shadow-md">
         <div class="flex flex-wrap items-center justify-between">
           <div class="flex flex-wrap gap-2 my-1">
             {#if filters.status}
@@ -532,7 +533,9 @@
               <div class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200">
                 <span>{$t(statusOptions.find(o => o.value === filters.status)?.label)}</span>
                 <button type="button" class="{isRTL ? 'mr-1.5' : 'ml-1.5'} text-blue-600 dark:text-blue-300 hover:text-blue-800 dark:hover:text-blue-100" 
-                  on:click={() => handleFilterChange('status', '')}>
+                  on:click={() => handleFilterChange('status', '')}
+                  aria-label={$t('search.removeFilter')}
+                >
                   <svg class="h-3 w-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
                   </svg>
@@ -545,7 +548,9 @@
               <div class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-indigo-100 text-indigo-800 dark:bg-indigo-900 dark:text-indigo-200">
                 <span>{$t(typeOptions.find(o => o.value === filters.type)?.label)}</span>
                 <button type="button" class="{isRTL ? 'mr-1.5' : 'ml-1.5'} text-indigo-600 dark:text-indigo-300 hover:text-indigo-800 dark:hover:text-indigo-100" 
-                  on:click={() => handleFilterChange('type', '')}>
+                  on:click={() => handleFilterChange('type', '')}
+                  aria-label={$t('search.removeFilter')}
+                >
                   <svg class="h-3 w-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
                   </svg>
@@ -561,7 +566,9 @@
                   on:click={() => {
                     handleFilterChange('minPrice', '');
                     handleFilterChange('maxPrice', '');
-                  }}>
+                  }}
+                  aria-label={$t('search.removeFilter')}
+                >
                   <svg class="h-3 w-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
                   </svg>
@@ -574,7 +581,9 @@
               <div class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200">
                 <span>"{filters.search}"</span>
                 <button type="button" class="{isRTL ? 'mr-1.5' : 'ml-1.5'} text-purple-600 dark:text-purple-300 hover:text-purple-800 dark:hover:text-purple-100" 
-                  on:click={() => handleFilterChange('search', '')}>
+                  on:click={() => handleFilterChange('search', '')}
+                  aria-label={$t('search.removeFilter')}
+                >
                   <svg class="h-3 w-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
                   </svg>
@@ -587,7 +596,9 @@
               <div class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-amber-100 text-amber-800 dark:bg-amber-900 dark:text-amber-200">
                 <span>{$t(sortOptions.find(o => o.value === filters.sort)?.label)}</span>
                 <button type="button" class="{isRTL ? 'mr-1.5' : 'ml-1.5'} text-amber-600 dark:text-amber-300 hover:text-amber-800 dark:hover:text-amber-100" 
-                  on:click={() => handleFilterChange('sort', 'newest')}>
+                  on:click={() => handleFilterChange('sort', 'newest')}
+                  aria-label={$t('search.removeFilter')}
+                >
                   <svg class="h-3 w-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
                   </svg>
@@ -797,7 +808,14 @@
   {#if showMobileFilters}
     <div class="fixed inset-0 z-40 flex md:hidden" in:fade={{ duration: 200 }} out:fade={{ duration: 150 }}>
       <!-- Backdrop -->
-      <div class="fixed inset-0 bg-black bg-opacity-50 backdrop-blur-sm" on:click={toggleMobileFilters}></div>
+      <div 
+        class="fixed inset-0 bg-black bg-opacity-50 backdrop-blur-sm"
+        on:click={toggleMobileFilters} 
+        on:keydown={(e) => { if (e.key === 'Enter' || e.key === ' ') toggleMobileFilters(); }}
+        role="button"
+        tabindex="0"
+        aria-label={$t('auction.closeFilters')}
+      ></div>
       
       <!-- Drawer panel -->
       <div 
@@ -814,8 +832,9 @@
           </h2>
           <button
             type="button"
-            class="rounded-full p-2 text-gray-400 hover:text-gray-500 hover:bg-gray-100 dark:text-gray-300 dark:hover:text-white dark:hover:bg-gray-700"
+            class="rounded-full p-2 text-gray-400 hover:text-gray-500 hover:bg-gray-100 dark:text-gray-300 dark:hover:text-white dark:hover:bg-gray-700 transition-colors"
             on:click={toggleMobileFilters}
+            aria-label={$t('auction.closeFilters')}
           >
             <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
@@ -846,6 +865,7 @@
                   <button 
                     class="text-gray-400 hover:text-gray-500 dark:text-gray-300 dark:hover:text-white"
                     on:click={() => handleFilterChange('search', '')}
+                    aria-label={$t('search.removeFilter')}
                   >
                     <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
@@ -994,6 +1014,7 @@
               on:click={clearFilters}
               class="flex justify-center items-center px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg shadow-sm text-sm font-medium text-gray-700 dark:text-gray-200 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
               disabled={!activeFiltersCount}
+              aria-label={$t('search.clearAllFilters')}
             >
               <svg class="w-4 h-4 {isRTL ? 'ml-2' : 'mr-2'}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />

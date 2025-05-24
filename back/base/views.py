@@ -1,6 +1,4 @@
-# Django REST Framework (DRF) views for the auction application.
-# This file defines API endpoints for managing various resources like locations, media, properties, etc.
-
+import logging
 from rest_framework import generics, filters, status
 from django.utils.translation import gettext_lazy as _
 from django.utils import timezone

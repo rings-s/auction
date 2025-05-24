@@ -386,11 +386,11 @@
   {#if showMobileFilters}
     <div class="fixed inset-0 z-40 flex md:hidden" in:fade={{ duration: 200 }} out:fade={{ duration: 150 }}>
       <!-- Backdrop -->
-      <div class="fixed inset-0 bg-black bg-opacity-50 backdrop-blur-sm" on:click={toggleMobileFilters}></div>
+      <div class="fixed inset-0 bg-black bg-opacity-50 backdrop-blur-sm" on:click={toggleMobileFilters} on:keydown={(e) => { if (e.key === 'Enter' || e.key === ' ') toggleMobileFilters(); }} role="button" tabindex="0" aria-label="Close filter panel"></div>
       
       <!-- Drawer panel -->
       <div 
-        class="relative max-w-xs w-full h-full bg-white dark:bg-gray-800 shadow-2xl flex flex-col overflow-y-auto {isRTL ? 'right-0' : 'left-0'}"
+        class="relative max-w-xs w-full h-full bg-white dark:bg-gray-800 shadow-2xl flex flex-col overflow-y-auto scrollbar-hide {isRTL ? 'right-0' : 'left-0'}"
         in:slide={{ duration: 300, axis: 'x' }}
         out:slide={{ duration: 250, axis: 'x', easing: x => 1 - Math.pow(1 - x, 3) }}
       >
@@ -405,6 +405,7 @@
             type="button"
             class="rounded-full p-2 text-gray-400 hover:text-gray-500 hover:bg-gray-100 dark:text-gray-300 dark:hover:text-white dark:hover:bg-gray-700"
             on:click={toggleMobileFilters}
+            aria-label="Close filter panel"
           >
             <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
