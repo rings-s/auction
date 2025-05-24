@@ -101,6 +101,9 @@
           <p class="text-gray-500 dark:text-gray-400 text-sm">
             &copy; {new Date().getFullYear()} RealEstate. {$t('footer.rights')}
           </p>
+          <p class="text-gray-500 dark:text-gray-400 text-sm mt-2 md:mt-0">
+            {$t('footer.developedBy', { name: $t('footer.developerName') })}
+          </p>
           <div class="flex space-x-6 mt-4 md:mt-0">
             <a href="/" class="text-gray-400 hover:text-gray-500 dark:hover:text-gray-300">
               <span class="sr-only">Facebook</span>

@@ -2,6 +2,8 @@
 
 from rest_framework.permissions import BasePermission, SAFE_METHODS
 from django.utils.translation import gettext_lazy as _
+from django.contrib.contenttypes.models import ContentType
+from .models import Property, Auction, Media
 
 # --- Core Status/Role Permissions ---
 
@@ -13,8 +15,6 @@ class IsVerifiedUser(BasePermission):
             return False
         return hasattr(request.user, 'is_verified') and request.user.is_verified
 
-    
-    
 class IsAdminUser(BasePermission):
     """
     Allows access only to admin users (is_staff).
@@ -128,6 +128,54 @@ class IsSelfOrStaff(BasePermission):
         # Grant permission if the user is staff or if the object is the user themselves.
         return request.user.is_staff or obj == request.user
 
+class IsMediaManager(BasePermission):
+    message = _('You do not have permission to manage this media.')
+
+    def has_object_permission(self, request, view, obj): # obj is a Media instance
+        if not request.user or not request.user.is_authenticated:
+            return False
+
+        if request.user.is_superuser:
+            return True
+
+        # Check 1: Is the user the owner of the media object itself (uploader)?
+        if hasattr(obj, 'owner') and obj.owner == request.user:
+            return True
+
+        # Check 2: Is the media linked to a Property?
+        # And does the user have owner/appraiser/data_entry rights for properties?
+        try:
+            property_content_type = ContentType.objects.get_for_model(Property)
+            if obj.content_type == property_content_type:
+                # If user has a role that grants broad access to property media
+                if request.user.role in ['appraiser', 'data_entry']:
+                    return True
+                # If user is the owner of the specific property this media is linked to.
+                property_instance = obj.content_object # This is the Property instance
+                if property_instance and hasattr(property_instance, 'owner') and property_instance.owner == request.user:
+                    return True
+        except Exception: # Catch potential errors if ContentType or Property model changes
+            pass
+
+        # Check 3: Is the media linked to an Auction?
+        # And does the user have owner/appraiser rights for auctions (via its property)?
+        try:
+            auction_content_type = ContentType.objects.get_for_model(Auction)
+            if obj.content_type == auction_content_type:
+                auction_instance = obj.content_object # This is the Auction instance
+                if auction_instance and hasattr(auction_instance, 'property'):
+                    property_of_auction = auction_instance.property
+                    # If user has a role that grants broad access to auction media (e.g., appraiser)
+                    if request.user.role == 'appraiser':
+                        return True
+                    # If user is the owner of the specific property this auction (and thus its media) is linked to.
+                    if property_of_auction and hasattr(property_of_auction, 'owner') and property_of_auction.owner == request.user:
+                        return True
+        except Exception:
+            pass
+        
+        return False
+
 # --- Combined Permissions (for OR logic) ---
 
 class IsAppraiserOrDataEntry(BasePermission):
@@ -149,25 +197,43 @@ class IsAppraiserOrDataEntry(BasePermission):
 class IsPropertyOwnerOrAppraiserOrDataEntry(BasePermission):
     """
     Allows access if the user owns the Property object, is an Appraiser, is Data Entry, or is a Superuser.
-    Used for updating properties.
+    Used for updating properties and related objects like rooms.
     """
-    message = _('You must be the property owner, an appraiser, or a data entry specialist to modify this property.')
+    message = _('You must be the property owner, an appraiser, or a data entry specialist to modify this item.')
 
     def has_permission(self, request, view):
-        # User must be authenticated.
+        # User must be authenticated for any action this permission guards.
         return request.user and request.user.is_authenticated
 
     def has_object_permission(self, request, view, obj):
-        # If user isn't authenticated, deny permission
+        # Dynamically import Property model to avoid circular imports if models.py imports permissions
+        from .models import Property
+
+        # Authenticated check (already done by has_permission, but good for direct calls too)
         if not request.user or not request.user.is_authenticated:
             return False
             
-        # Grant access if superuser or has a relevant role.
+        # Grant access if superuser or has a relevant role (appraiser, data_entry).
+        # These roles are considered to have broad access to properties they are involved with.
         if request.user.is_superuser or request.user.role in ['appraiser', 'data_entry']:
             return True
 
-        # Grant access if the user is the owner of the property object.
-        return hasattr(obj, 'owner') and obj.owner == request.user
+        # Determine the target Property instance
+        target_property = None
+        if isinstance(obj, Property):
+            target_property = obj
+        elif hasattr(obj, 'property') and isinstance(obj.property, Property):
+            # This handles cases like Room, Auction, etc., that have a direct link to a Property
+            target_property = obj.property
+        
+        # If we found a target property, check if the current user is its owner.
+        if target_property:
+            return hasattr(target_property, 'owner') and target_property.owner == request.user
+        
+        # Fallback: If the object isn't a Property and doesn't link to one as expected,
+        # and the user isn't a superuser or designated role, deny permission.
+        # This prevents accidental access if the permission is misapplied.
+        return False
 
 
 class IsPropertyOwnerOrAppraiser(BasePermission):

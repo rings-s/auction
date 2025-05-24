@@ -226,8 +226,8 @@ const translations = {
       home: 'Home',
       properties: 'Properties',
       auctions: 'Auctions',
-      about: 'About',
-      contact: 'Contact',
+      about: 'About Us',
+      contact: 'Contact Us',
       login: 'Login',
       register: 'Register',
       logout: 'Logout',
@@ -655,7 +655,8 @@ const translations = {
       autoExtend: 'Auto-extend (minutes)',
       autoExtendHelp: 'Automatically extend the auction if a bid is placed within this many minutes of the end time.',
       slugHelp: 'URL-friendly version of the auction title. Leave blank to generate automatically.',
-      updateSuccess: 'Auction updated successfully',
+      updateSuccess: 'Auction updated successfully!',
+      editNotAuthorized: 'You are not authorized to edit this auction.',
       updateFailed: 'Failed to update auction',
       save: 'Save Changes',
       delete: 'Delete Auction',
@@ -828,7 +829,9 @@ const translations = {
       privacy: 'Privacy Policy',
       cookies: 'Cookie Policy',
       contact: 'Contact Us',
-      rights: 'All rights reserved.'
+      rights: 'All rights reserved.',
+      developedBy: 'This platform has been made by {name}.',
+      developerName: 'Ahmed Bashir Ali'
     }
   },
 
@@ -895,7 +898,7 @@ const translations = {
       about: 'من نحن',
       contact: 'اتصل بنا',
       login: 'تسجيل الدخول',
-      register: 'تسجيل جديد',
+      register: 'تسجيل',
       logout: 'تسجيل الخروج',
       profile: 'الملف الشخصي',
       propertyTypes: {
@@ -1482,15 +1485,17 @@ const translations = {
     },
 
     footer: {
-      about: 'من نحن',
-      aboutText: 'نحن منصة رائدة لمزادات العقارات تربط المشترين والبائعين للعقارات السكنية والتجارية والأراضي.',
+      about: 'عنا',
+      aboutText: 'نحن منصة رائدة تربط بين مشتري وبائعي العقارات من خلال المزادات الشفافة والفعالة.',
       links: 'روابط سريعة',
       legal: 'قانوني',
-      terms: 'شروط الخدمة',
+      terms: 'الشروط والأحكام',
       privacy: 'سياسة الخصوصية',
-      cookies: 'سياسة ملفات تعريف الارتباط',
+      cookies: 'سياسة الكوكيز',
       contact: 'اتصل بنا',
-      rights: 'جميع الحقوق محفوظة.'
+      rights: 'جميع الحقوق محفوظة.',
+      developedBy: 'تم إنشاء هذه المنصة بواسطة {name}.',
+      developerName: 'أحمد بشير علي'
     }
   }
 };

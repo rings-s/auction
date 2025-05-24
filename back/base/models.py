@@ -92,12 +92,12 @@ class Media(BaseModel):
                         save=False
                     )
             except Exception as e:
-                print(f"Image processing error: {e}")
                 # Handle gracefully if not an image or processing fails
+                pass
         # For document files, ensure we don't try to process them as images
         elif self.media_type == 'document' and self.file and not self.pk:
             # Log the document file but don't try to process it
-            print(f"Saving document file: {self.file.name}")
+            pass
                 
         super().save(*args, **kwargs)
                     
@@ -295,7 +295,7 @@ class Property(BaseModel):
         while Property.objects.filter(slug=unique_slug).exclude(pk=self.pk).exists():
             unique_slug = f"{original_slug}-{counter}"
             counter += 1
-            
+        
         return unique_slug
 
     def get_main_image(self):
@@ -519,7 +519,7 @@ class Auction(BaseModel):
         while Auction.objects.filter(slug=unique_slug).exclude(pk=self.pk).exists():
             unique_slug = f"{original_slug}-{counter}"
             counter += 1
-            
+        
         return unique_slug
 
     @property
