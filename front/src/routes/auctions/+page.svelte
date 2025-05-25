@@ -135,13 +135,13 @@
         params.ordering = '-created_at';
         break;
       case 'endingSoon':
-        params.ordering = 'end_date';
+        params.ordering = 'end_date'; // Ascending for dates ending sooner
         break;
       case 'priceAsc':
-        params.ordering = 'current_bid,starting_bid';
+        params.ordering = 'starting_bid'; // Changed from current_bid
         break;
       case 'priceDesc':
-        params.ordering = '-current_bid,-starting_bid';
+        params.ordering = '-starting_bid'; // Changed from -current_bid
         break;
       case 'bidCount':
         params.ordering = '-bid_count';

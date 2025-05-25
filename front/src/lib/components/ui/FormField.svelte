@@ -20,6 +20,12 @@
     export let currencySymbol = '';
     
     const dispatch = createEventDispatcher();
+
+    // Base styles for all input types
+    const baseInputStyle = "shadow-sm block w-full sm:text-sm rounded-md bg-white dark:bg-gray-50 text-gray-900 dark:text-gray-800 placeholder-gray-400 dark:placeholder-gray-500 focus:ring-primary-500 focus:border-primary-500";
+    
+    // Reactive border style based on error state
+    $: borderStyle = error ? 'border-danger-500' : 'border-gray-300 dark:border-gray-200';
     
     function handleChange(e) {
       dispatch('change', e.target.value);
@@ -54,7 +60,7 @@
           {disabled}
           {rows}
           bind:value
-          class="shadow-sm focus:ring-primary-500 focus:border-primary-500 block w-full sm:text-sm border-gray-300 dark:border-gray-700 rounded-md dark:bg-gray-800 dark:text-white {error ? 'border-red-500' : ''}"
+          class="{baseInputStyle} {borderStyle}"
           on:change={handleChange}
           on:blur={handleBlur}
           on:input={handleInput}
@@ -63,7 +69,7 @@
         
         {#if error}
           <div class="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
-            <svg class="h-5 w-5 text-red-500" fill="currentColor" viewBox="0 0 20 20">
+            <svg class="h-5 w-5 text-danger-500" fill="currentColor" viewBox="0 0 20 20">
               <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clip-rule="evenodd" />
             </svg>
           </div>
@@ -80,7 +86,7 @@
             {disabled}
             multiple
             bind:value
-            class="shadow-sm focus:ring-primary-500 focus:border-primary-500 block w-full sm:text-sm border-gray-300 dark:border-gray-700 rounded-md dark:bg-gray-800 dark:text-white {error ? 'border-red-500' : ''}"
+            class="{baseInputStyle} {borderStyle}"
             on:change={handleChange}
             on:blur={handleBlur}
             on:focus={handleFocus}
@@ -95,7 +101,7 @@
             {required}
             {disabled}
             bind:value
-            class="shadow-sm focus:ring-primary-500 focus:border-primary-500 block w-full sm:text-sm border-gray-300 dark:border-gray-700 rounded-md dark:bg-gray-800 dark:text-white {error ? 'border-red-500' : ''}"
+            class="{baseInputStyle} {borderStyle}"
             on:change={handleChange}
             on:blur={handleBlur}
             on:focus={handleFocus}
@@ -108,7 +114,7 @@
         
         {#if error}
           <div class="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
-            <svg class="h-5 w-5 text-red-500" fill="currentColor" viewBox="0 0 20 20">
+            <svg class="h-5 w-5 text-danger-500" fill="currentColor" viewBox="0 0 20 20">
               <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clip-rule="evenodd" />
             </svg>
           </div>
@@ -130,7 +136,7 @@
           {max}
           {step}
           bind:value
-          class="pl-7 shadow-sm focus:ring-primary-500 focus:border-primary-500 block w-full sm:text-sm border-gray-300 dark:border-gray-700 rounded-md dark:bg-gray-800 dark:text-white {error ? 'border-red-500' : ''}"
+          class="pl-7 {baseInputStyle} {borderStyle}"
           on:change={handleChange}
           on:blur={handleBlur}
           on:input={handleInput}
@@ -139,7 +145,7 @@
         
         {#if error}
           <div class="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
-            <svg class="h-5 w-5 text-red-500" fill="currentColor" viewBox="0 0 20 20">
+            <svg class="h-5 w-5 text-danger-500" fill="currentColor" viewBox="0 0 20 20">
               <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clip-rule="evenodd" />
             </svg>
           </div>
@@ -158,7 +164,7 @@
           {max}
           {step}
           bind:value
-          class="shadow-sm focus:ring-primary-500 focus:border-primary-500 block w-full sm:text-sm border-gray-300 dark:border-gray-700 rounded-md dark:bg-gray-800 dark:text-white {error ? 'border-red-500' : ''}"
+          class="{baseInputStyle} {borderStyle}"
           on:change={handleChange}
           on:blur={handleBlur}
           on:input={handleInput}
@@ -167,7 +173,7 @@
         
         {#if error}
           <div class="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
-            <svg class="h-5 w-5 text-red-500" fill="currentColor" viewBox="0 0 20 20">
+            <svg class="h-5 w-5 text-danger-500" fill="currentColor" viewBox="0 0 20 20">
               <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clip-rule="evenodd" />
             </svg>
           </div>
@@ -176,7 +182,7 @@
     {/if}
     
     {#if error}
-      <p class="mt-1 text-sm text-red-600 dark:text-red-500">{error}</p>
+      <p class="mt-1 text-sm text-danger-600 dark:text-danger-500">{error}</p>
     {:else if helpText}
       <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">{helpText}</p>
     {/if}

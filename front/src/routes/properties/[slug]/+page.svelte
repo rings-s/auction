@@ -9,6 +9,7 @@
   import { fade, fly, slide } from 'svelte/transition';
   import { quintOut, cubicOut } from 'svelte/easing';
   import TagSelector from '$lib/components/ui/TagSelector.svelte';
+  import ContactForm from '$lib/components/messages/ContactForm.svelte';
   
   // State variables
   let property = null;
@@ -421,7 +422,7 @@
         if (item.url.endsWith('.pdf')) {
           return `<div class="text-center text-white">
                     <svg class="mx-auto h-20 w-20 text-gray-200" fill="currentColor" viewBox="0 0 24 24">
-                      <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8l-6-6zm-1 5V3.5L18.5 9H13v-2z"/>
+                      <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8l-6-6zm-1 5V3.5L18.5 9H13v-2z"/>
                     </svg>
                     <p class="mt-4 text-lg">${$t('property.pdfDocument')}: ${item.name}</p>
                     <a href="${item.url}" download class="mt-2 inline-block px-4 py-2 bg-white text-gray-900 rounded-md hover:bg-gray-200 transition-colors">
@@ -431,7 +432,7 @@
         } else {
           return `<div class="text-center text-white">
                     <svg class="mx-auto h-20 w-20 text-gray-200" fill="currentColor" viewBox="0 0 24 24">
-                      <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8l-6-6zm-1 5V3.5L18.5 9H13v-2z"/>
+                      <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8l-6-6zm-1 5V3.5L18.5 9H13v-2z"/>
                     </svg>
                     <p class="mt-4 text-lg">${$t('property.document')}: ${item.name}</p>
                     <a href="${item.url}" download class="mt-2 inline-block px-4 py-2 bg-white text-gray-900 rounded-md hover:bg-gray-200 transition-colors">
@@ -442,7 +443,7 @@
       default:
         return `<div class="text-center text-white">
                   <svg class="mx-auto h-20 w-20 text-gray-200" fill="currentColor" viewBox="0 0 24 24">
-                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8l-6-6zm-1 5V3.5L18.5 9H13v-2z"/>
+                    <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8l-6-6zm-1 5V3.5L18.5 9H13v-2z"/>
                   </svg>
                   <p class="mt-4 text-lg">${$t('property.file')}: ${item.name}</p>
                   <a href="${item.url}" download class="mt-2 inline-block px-4 py-2 bg-white text-gray-900 rounded-md hover:bg-gray-200 transition-colors">
@@ -476,21 +477,13 @@
   function getMediaTypeIcon(type) {
     switch (type) {
       case 'image':
-        return `<svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                </svg>`;
+        return `<svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>`;
       case 'video':
-        return `<svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
-                </svg>`;
+        return `<svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 10l4.553-2.276A1 1 0 0121 8v6a1 1 0 01-1 1v6a1 1 0 01-1-1v-6a1 1 0 00-1-1H9a1 1 0 00-1 1v6a1 1 0 001 1v6a1 1 0 01-1 1H4a1 1 0 01-1-1V7a1 1 0 011-1h5m0 0V5a2 2 0 012-2h2a2 2 0 012 2v2m-6 3h6m-6 2h6a2 2 0 012 2v3m0 0h-9"></path></svg>`;
       case 'document':
-        return `<svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
-                </svg>`;
+        return `<svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0112.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"></path></svg>`;
       default:
-        return `<svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                </svg>`;
+        return `<svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>`;
     }
   }
   
@@ -520,7 +513,7 @@
       case 'image':
         return `<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>`;
       case 'gavel':
-        return `<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path></svg>`;
+        return `<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h9a2 2 0 002 2v1.41a2 2 0 01-2 2H5a2 2 0 01-2-2V7a2 2 0 00-2-2h9m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path></svg>`;
       default:
         return '';
     }
@@ -656,10 +649,8 @@
             <!-- Location -->
             <p class="mt-4 text-base sm:text-lg text-gray-500 dark:text-gray-400 flex items-center gap-2">
               <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                  d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                  d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
               </svg>
               {property.location?.address}, {property.location?.city}, {property.location?.state}
             </p>            
@@ -682,7 +673,7 @@
                   class="inline-flex items-center px-3 py-1.5 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:ring-2 focus:ring-primary-500 dark:bg-gray-700 dark:text-gray-200 dark:border-gray-600 dark:hover:bg-gray-600 transition-colors"
                 >
                   <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2V7a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
                   </svg>
                   {$t('property.edit')}
                 </a>
@@ -693,7 +684,7 @@
                 class="inline-flex items-center px-3 py-1.5 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-primary-600 hover:bg-primary-700 focus:ring-2 focus:ring-primary-500 transition-colors"
               >
                 <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h9a2 2 0 002 2v1.41a2 2 0 01-2 2H5a2 2 0 00-2-2V7a2 2 0 00-2-2h9m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
                 </svg>
                 {$t('property.contactOwner')}
               </button>
@@ -906,7 +897,7 @@
                       <!-- Size -->
                       <div class="bg-white dark:bg-gray-800 p-4 rounded-lg flex flex-col items-center shadow-sm hover:shadow-md transition-shadow border border-gray-100 dark:border-gray-700">
                         <svg class="w-6 h-6 text-primary-500 mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5v-4m0 4h-4m4 0l-5-5" />
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
                         </svg>
                         <span class="text-sm text-gray-500 dark:text-gray-400">{$t('property.size')}</span>
                         <span class="text-lg font-bold text-gray-900 dark:text-white">{property.size_sqm} {$t('property.sqm')}</span>
@@ -965,63 +956,19 @@
               </div>
               
               <!-- Contact Owner Card -->
-              <div class="mt-8 bg-white dark:bg-gray-800 rounded-xl shadow-md overflow-hidden border border-gray-100 dark:border-gray-700">
-                <div class="p-5">
-                  <h2 class="text-lg font-bold text-gray-900 dark:text-white mb-4 flex items-center">
-                    <svg class="w-5 h-5 mr-2 text-primary-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 12a4 4 0 10-8 0 4 4 0 008 0zm0 0v1.5a2.5 2.5 0 005 0V12a9 9 0 10-9 9m4.5-1.206a8.959 8.959 0 01-4.5 1.207" />
-                    </svg>
-                    {$t('property.contactOwner')}
-                  </h2>
-                  
-                  {#if $user}
-                    <form class="space-y-5">
-                      <div>
-                        <label for="name" class="block text-sm font-medium text-gray-700 dark:text-gray-300">
-                          {$t('property.name')}
-                        </label>
-                        <input 
-                          type="text" 
-                          id="name" 
-                          value={`${$user.first_name} ${$user.last_name}`}
-                          readonly
-                          class="mt-1 block w-full py-2 px-3 border border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-700 rounded-md shadow-sm text-gray-900 dark:text-white text-sm"
-                        />
-                      </div>
-                      
-                      <div>
-                        <label for="message" class="block text-sm font-medium text-gray-700 dark:text-gray-300">
-                          {$t('property.message')}
-                        </label>
-                        <textarea 
-                          id="message" 
-                          rows="4" 
-                          placeholder={$t('property.messagePlaceholder')}
-                          class="mt-1 block w-full py-2 px-3 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 rounded-md shadow-sm focus:ring-primary-500 focus:border-primary-500 text-gray-900 dark:text-white text-sm"
-                        ></textarea>
-                      </div>
-                      
-                      <button
-                        type="submit"
-                        class="w-full inline-flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-gradient-to-r from-primary-500 to-primary-600 hover:from-primary-600 hover:to-primary-700 focus:ring-2 focus:ring-primary-500 transition-all"
-                      >
-                        {$t('property.sendMessage')}
-                      </button>
-                    </form>
-                  {:else}
-                    <div class="text-center py-5">
-                      <p class="text-gray-500 dark:text-gray-400 mb-4 text-sm">
-                        {$t('property.loginToContact')}
-                      </p>
-                      <a 
-                        href="/login" 
-                        class="inline-flex justify-center py-2.5 px-5 border border-transparent rounded-lg shadow-md text-sm font-medium text-white bg-primary-600 hover:bg-primary-700 focus:ring-2 focus:ring-primary-500 transition-colors"
-                      >
-                        {$t('nav.login')}
-                      </a>
-                    </div>
-                  {/if}
-                </div>
+              <div class="mt-8">
+                <ContactForm 
+                  {property} 
+                  compact={true}
+                  on:success={(e) => {
+                    // Handle success
+                    console.log('Message sent successfully:', e.detail);
+                  }}
+                  on:error={(e) => {
+                    // Handle error
+                    console.error('Failed to send message:', e.detail);
+                  }}
+                />
               </div>
             </div>
           </div>
@@ -1125,7 +1072,7 @@
                             {:else if mediaItem.media_type === 'video'}
                               <div class="flex-shrink-0 w-16 h-16 rounded-md overflow-hidden bg-black relative">
                                 <svg class="absolute inset-0 m-auto w-6 h-6 text-white" fill="currentColor" viewBox="0 0 20 20">
-                                  <path d="M4 4a2 2 0 00-2 2v8a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2H4zm6 10a1 1 0 100-2 1 1 0 000 2z" />
+                                  <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM9.555 7.168A1 1 0 008 8v4a1 1 0 001.555.832l3-2a1 1 0 000-1.664l-3-2z" />
                                 </svg>
                               </div>
                             {/if}
@@ -1238,7 +1185,7 @@
                 <div class="h-96 w-full bg-gray-100 dark:bg-gray-700 rounded-xl flex items-center justify-center shadow-lg border-2 border-gray-200 dark:border-gray-600">
                   <div class="text-center p-8">
                     <svg class="mx-auto h-12 w-12 text-gray-400 dark:text-gray-500 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.172 16l-7-7m0 0l7-7m-7 7h18m-6 4h-5m6 4h5m-6 4h-5m-6-7h11m-6 7h6m6-7h5m-6 7h5m-7 6h12m-6-7h6m6-7v-1a1 1 0 00-1-1H8a1 1 0 00-1 1v12a1 1 0 001 1h2.5a1 1 0 001-1V10a1 1 0 00-1-1H6a1 1 0 001-1h2a1 1 0 001 1v7.5a1 1 0 001 1V10a1 1 0 001 1h2a1 1 0 001-1V4a1 1 0 011-1h1z" />
                     </svg>
                     <p class="text-gray-500 dark:text-gray-400">
                       {$t('property.noLocationData')}
@@ -1263,35 +1210,35 @@
                   <div class="space-y-4">
                     <div class="flex items-center py-2 px-3 rounded-md hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
                     <span class="text-gray-600 dark:text-gray-400 w-28 flex-shrink-0 font-medium">{$t('property.address')}:</span>
-                    <span class="text-gray-900 dark:text-gray-200 flex-grow ml-2">{property.location.address}</span>
+                    <span class="text-gray-900 dark:text-white flex-grow ml-2">{property.location.address}</span>
                   </div>
                     
                     <div class="flex items-center py-2 px-3 rounded-md hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
                     <span class="text-gray-600 dark:text-gray-400 w-28 flex-shrink-0 font-medium">{$t('property.city')}:</span>
-                    <span class="text-gray-900 dark:text-gray-200 flex-grow ml-2">{property.location.city}</span>
+                    <span class="text-gray-900 dark:text-white flex-grow ml-2">{property.location.city}</span>
                   </div>
                     
                     <div class="flex items-center py-2 px-3 rounded-md hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
                     <span class="text-gray-600 dark:text-gray-400 w-28 flex-shrink-0 font-medium">{$t('property.state')}:</span>
-                    <span class="text-gray-900 dark:text-gray-200 flex-grow ml-2">{property.location.state}</span>
+                    <span class="text-gray-900 dark:text-white flex-grow ml-2">{property.location.state}</span>
                   </div>
                     
                     {#if property.location.postal_code}
                       <div class="flex items-center py-2 px-3 rounded-md hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
                         <span class="text-gray-600 dark:text-gray-400 w-28 flex-shrink-0 font-medium">{$t('property.postalCode')}:</span>
-                        <span class="text-gray-900 dark:text-gray-200 flex-grow ml-2">{property.location.postal_code}</span>
+                        <span class="text-gray-900 dark:text-white flex-grow ml-2">{property.location.postal_code}</span>
                       </div>
                     {/if}
                     
                     <div class="flex items-center py-2 px-3 rounded-md hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
                     <span class="text-gray-600 dark:text-gray-400 w-28 flex-shrink-0 font-medium">{$t('property.country')}:</span>
-                    <span class="text-gray-900 dark:text-gray-200 flex-grow ml-2">{property.location.country}</span>
+                    <span class="text-gray-900 dark:text-white flex-grow ml-2">{property.location.country}</span>
                   </div>
                     
                     {#if property.location.latitude && property.location.longitude}
                       <div class="flex items-center py-1.5 px-2 mt-1 border-t border-gray-200 dark:border-gray-700 pt-3 rounded-md hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
                         <span class="text-gray-600 dark:text-gray-400 w-28 flex-shrink-0 font-medium">{$t('property.coordinates')}:</span>
-                        <span class="text-gray-900 dark:text-gray-200 flex-grow ml-2 font-mono text-sm">
+                        <span class="text-gray-900 dark:text-white flex-grow ml-2 font-mono text-sm">
                           {property.location.latitude}, {property.location.longitude}
                         </span>
                       </div>
@@ -1377,7 +1324,7 @@
                     {:else if mediaItem.media_type === 'video'}
                       <div class="w-full h-full flex items-center justify-center bg-black">
                         <svg class="w-12 h-12 text-white opacity-80 group-hover:opacity-100 transition-opacity" fill="currentColor" viewBox="0 0 20 20">
-                          <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM9.555 7.168A1 1 0 008 8v4a1 1 0 001.555.832l3-2a1 1 0 000-1.664l-3-2z" clip-rule="evenodd" />
+                          <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM9.555 7.168A1 1 0 008 8v4a1 1 0 001.555.832l3-2a1 1 0 000-1.664l-3-2z" />
                         </svg>
                       </div>
                     {:else if mediaItem.media_type === 'document'}
@@ -1496,7 +1443,7 @@
                         
                         <a 
                           href={`/auctions/${auction.slug}`} 
-                          class="mt-3 inline-flex items-center justify-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-primary-600 hover:bg-primary-700 focus:ring-2 focus:ring-primary-500 transition-colors"
+                          class="mt-3 inline-flex items-center justify-center px-4 py-2 border border-transparent rounded-md shadow-md text-sm font-medium text-white bg-primary-600 hover:bg-primary-700 focus:ring-2 focus:ring-primary-500 transition-colors"
                         >
                           {$t('auction.viewDetails')}
                           <svg class="ml-1 -mr-1 h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -1510,7 +1457,7 @@
                     <div class="mt-4 flex flex-wrap justify-between pt-4 border-t border-gray-200 dark:border-gray-700">
                       <div class="flex items-center text-sm text-gray-500 dark:text-gray-400">
                         <svg class="h-4 w-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8h2a2 2 0 012 2v6a2 2 0 01-2 2h-2v4l-4-4H9a1.994 1.994 0 01-1.414-.586m0 0L11 14h4a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2v4l.586-.586z" />
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8h2a2 2 0 012 2v6a2 2 0 01-2 2H7a2 2 0 01-2-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2v4l-4-4H5a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2V6a2 2 0 00-2-2H5z" />
                         </svg>
                         {auction.bid_count} {$t('auction.bids')}
                       </div>
@@ -1630,7 +1577,7 @@
           aria-label="Previous item"
         >
           <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7m0 0l-7 7m-7 7h18" />
           </svg>
         </button>
         <button 
@@ -1683,7 +1630,7 @@
                   <img src={item.url} alt={item.name} class="w-full h-full object-cover" loading="lazy" />
                 {:else if item.media_type === 'video'}
                   <svg class="w-6 h-6 text-white" fill="currentColor" viewBox="0 0 20 20">
-                    <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM9.555 7.168A1 1 0 008 8v4a1 1 0 001.555.832l3-2a1 1 0 000-1.664l-3-2z" clip-rule="evenodd" />
+                    <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM9.555 7.168A1 1 0 008 8v4a1 1 0 001.555.832l3-2a1 1 0 000-1.664l-3-2z" />
                   </svg>
                 {:else if item.media_type === 'document'}
                   <svg class="w-6 h-6 text-blue-400" fill="currentColor" viewBox="0 0 20 20">
@@ -1855,54 +1802,5 @@
     }
   }
   
-  /* Responsive aspect ratios - Modified for better containment */
-  .aspect-w-4 {
-    position: relative;
-    height: 0;
-    padding-bottom: 75%;
-    overflow: hidden;
-  }
-  
-  .aspect-h-3 {
-    position: absolute;
-    height: 100%;
-    width: 100%;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    object-fit: cover;
-  }
-  
-  .aspect-video {
-    position: relative;
-    padding-bottom: 56.25%;
-  }
-  
-  /* Leaflet dark mode styling */
-  :global(.dark .leaflet-tile) {
-    filter: invert(1) hue-rotate(180deg) brightness(0.8) contrast(0.8);
-  }
-  
-  :global(.dark .leaflet-container) {
-    background: #333;
-  }
-  
-  /* Line clamp for truncating text */
-  .line-clamp-2 {
-    display: -webkit-box;
-    -webkit-line-clamp: 2;
-    -webkit-box-orient: vertical;
-    overflow: hidden;
-  }
-  
-  /* Add transition for image loading */
-  img.loaded {
-    animation: imgFadeIn 0.5s ease-in-out;
-  }
-  
-  @keyframes imgFadeIn {
-    from { opacity: 0; }
-    to { opacity: 1; }
-  }
+
 </style>

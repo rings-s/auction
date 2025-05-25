@@ -31,6 +31,8 @@ urlpatterns = [
     path('properties/', views.PropertyListCreateView.as_view(), name='properties'),
     path('properties/<int:pk>/', views.PropertyDetailView.as_view(), name='property'),
     path('properties/<arabicslug:slug>/', views.PropertySlugDetailView.as_view(), name='property-by-slug'),
+    path('properties/<int:property_id>/contact/', views.PropertyOwnerContactView.as_view(), name='property-contact'),
+
     
     # Rooms
     path('rooms/', views.RoomListCreateView.as_view(), name='rooms'),
@@ -44,4 +46,15 @@ urlpatterns = [
     # Bids
     path('bids/', views.BidListCreateView.as_view(), name='bids'),
     path('bids/<int:pk>/', views.BidDetailView.as_view(), name='bid'),
+
+
+
+
+    # Messages
+    path('messages/', views.MessageListCreateView.as_view(), name='messages'),
+    path('messages/<int:pk>/', views.MessageDetailView.as_view(), name='message-detail'),
+    path('messages/<int:pk>/reply/', views.MessageReplyView.as_view(), name='message-reply'),
+    path('messages/thread/<uuid:thread_id>/', views.MessageReplyView.as_view(), name='message-thread'),
+    path('messages/stats/', views.MessageStatsView.as_view(), name='message-stats'),
+    
 ]

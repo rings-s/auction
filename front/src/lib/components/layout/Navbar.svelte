@@ -130,7 +130,7 @@
         </div>
         
         <!-- Desktop links -->
-        <div class="hidden lg:ml-8 lg:flex lg:space-x-8">
+        <div class="hidden lg:ml-8 lg:flex" class:lg:space-x-8={document.documentElement.dir !== 'rtl'} class:lg:space-x-reverse={document.documentElement.dir === 'rtl'} class:lg:mr-8={document.documentElement.dir === 'rtl'}>
           <slot name="nav-links">
             <a 
               href="/" 
@@ -158,6 +158,15 @@
                   : 'border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300'
               }`}
             >{$t('nav.auctions')}</a>
+            
+            <a 
+              href="/messages" 
+              class={`inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium transition-all duration-300 ${
+                $page.url.pathname.startsWith('/messages') 
+                  ? `border-primary-500 text-primary-600 dark:text-primary-400` 
+                  : 'border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300'
+              }`}
+            >{$t('nav.messages')}</a>
           </slot>
         </div>
       </div>
@@ -316,6 +325,25 @@
               </svg>
             </span>
             {$t('nav.auctions')}
+          </a>
+          
+          <a 
+            href="/messages" 
+            class={`flex items-center pl-3 pr-4 py-3 rounded-lg transition-all duration-300 ${
+              $page.url.pathname.startsWith('/messages') 
+                ? `bg-primary-50/50 dark:bg-primary-900/30 text-primary-700 dark:text-primary-300` 
+                : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100/50 dark:hover:bg-gray-700/50'
+            }`}
+            on:click={() => isOpen = false}
+            in:fly={{ x: -10, duration: 300, delay: 350 }}
+          >
+            <span class={`mr-3 text-lg ${$page.url.pathname.startsWith('/messages') ? 'text-primary-500' : 'text-gray-400'}`}>
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                <path d="M2 5a2 2 0 012-2h7a2 2 0 012 2v4a2 2 0 01-2 2H9l-3 3v-3H4a2 2 0 01-2-2V5z" />
+                <path d="M15 7v2a4 4 0 01-4 4H9.828l-1.766 1.767c.28.149.599.233.938.233h2l3 3v-3h2a2 2 0 002-2V9a2 2 0 00-2-2h-1z" />
+              </svg>
+            </span>
+            {$t('nav.messages')}
           </a>
         </slot>
       </div>

@@ -1,30 +1,16 @@
-import os
+import os, random, uuid
 from django.utils import timezone
-from django.db import models
+from django.db import models, transaction
 from django.contrib.auth.models import AbstractUser, BaseUserManager
 from django.utils.translation import gettext_lazy as _
 from django.conf import settings
-from django.db import transaction
-import random
-import uuid
 from django.core.validators import RegexValidator, MinValueValidator
 
-# --- Path Functions ---
 def user_avatar_path(instance, filename):
-    """ File will be uploaded to MEDIA_ROOT/users/<user_uuid>/avatars/<timestamp>_<filename> """
     timestamp = timezone.now().strftime('%Y%m%d%H%M%S')
-    # Ensure instance has a uuid before accessing it (might not during initial creation before save)
     user_uuid = instance.uuid if instance.uuid else 'temp'
     return f'users/{user_uuid}/avatars/{timestamp}_{filename}'
 
-def user_document_path(instance, filename):
-    """ For any other user-related documents """
-    timestamp = timezone.now().strftime('%Y%m%d%H%M%S')
-    # More robust check for different types of instances
-    user_uuid = getattr(getattr(instance, 'user', instance), 'uuid', 'temp')
-    return f'users/{user_uuid}/documents/{timestamp}_{filename}'
-
-# --- Custom User Manager ---
 class CustomUserManager(BaseUserManager):
     def create_user(self, email, password=None, **extra_fields):
         if not email:
@@ -45,23 +31,16 @@ class CustomUserManager(BaseUserManager):
         extra_fields.setdefault('is_active', True)
         extra_fields.setdefault('is_verified', True)
 
-        if not extra_fields.get('is_staff'):
-            raise ValueError(_('Superuser must have is_staff=True'))
-        if not extra_fields.get('is_superuser'):
-            raise ValueError(_('Superuser must have is_superuser=True'))
+        if not extra_fields.get('is_staff') or not extra_fields.get('is_superuser'):
+            raise ValueError(_('Superuser must have is_staff=True and is_superuser=True'))
 
         with transaction.atomic():
-            user = self.create_user(email, password, **extra_fields)
-        return user
+            return self.create_user(email, password, **extra_fields)
 
-# --- Custom User Model ---
 class CustomUser(AbstractUser):
-
     ROLE_CHOICES = [
-        ('owner', _('Property Owner')),
-        ('appraiser', _('Property Appraiser')),
-        ('data_entry', _('Data Entry Specialist')),
-        ('user', _('User')),
+        ('owner', _('Property Owner')), ('appraiser', _('Property Appraiser')),
+        ('data_entry', _('Data Entry Specialist')), ('user', _('User')),
     ]
     
     uuid = models.UUIDField(default=uuid.uuid4, editable=False, unique=True, verbose_name=_('UUID'), db_index=True)
@@ -76,25 +55,16 @@ class CustomUser(AbstractUser):
     )
     phone_number = models.CharField(validators=[phone_regex], max_length=17, blank=True, verbose_name=_('Phone number'))
     date_of_birth = models.DateField(null=True, blank=True, verbose_name=_('Date of birth'))
-    is_verified = models.BooleanField(default=False, verbose_name=_('Verified'),
-                                     help_text=_('Indicates if user has verified their email'))
-    verification_code = models.CharField(max_length=6, blank=True, null=True, verbose_name=_('Verification code'))
+    is_verified = models.BooleanField(default=False, verbose_name=_('Verified'))
+    verification_code = models.CharField(max_length=6, blank=True, null=True)
     verification_code_created = models.DateTimeField(null=True, blank=True)
-    reset_code = models.CharField(max_length=6, blank=True, null=True, verbose_name=_('Password reset code'))
+    reset_code = models.CharField(max_length=6, blank=True, null=True)
     reset_code_created = models.DateTimeField(null=True, blank=True)
     avatar = models.ImageField(upload_to=user_avatar_path, null=True, blank=True, verbose_name=_('Avatar'))
-
-    role = models.CharField(
-        max_length=20, 
-        choices=ROLE_CHOICES,
-        default='user',
-        verbose_name=_('User Role')
-    )
-
+    role = models.CharField(max_length=20, choices=ROLE_CHOICES, default='user', verbose_name=_('User Role'))
 
     USERNAME_FIELD = 'email'
     REQUIRED_FIELDS = ['first_name', 'last_name']
-
     objects = CustomUserManager()
 
     def __str__(self):
@@ -104,13 +74,10 @@ class CustomUser(AbstractUser):
         verbose_name = _('User')
         verbose_name_plural = _('Users')
 
-    # Add method to check role (this is a helper method)
     def has_role(self, role_name):
         return self.role == role_name or self.is_superuser
 
     def generate_verification_code(self, length=6):
-        """Generate a random verification code"""
-        if length < 4: length = 4
         code = str(random.randint(10**(length-1), 10**length-1))
         self.verification_code = code
         self.verification_code_created = timezone.now()
@@ -119,19 +86,13 @@ class CustomUser(AbstractUser):
         return code
 
     def verify_account(self, code):
-        """Verify user account with provided code"""
-        if not self.verification_code or not self.verification_code_created:
+        if not self.verification_code or not self.verification_code_created or self.verification_code != code:
             return False
-
-        if self.verification_code != code:
-            return False
-
-        # Check expiry (24 hours)
+        
         expiry_time = self.verification_code_created + timezone.timedelta(hours=24)
         if timezone.now() > expiry_time:
             return False
 
-        # Verification successful
         self.is_verified = True
         self.verification_code = None
         self.verification_code_created = None
@@ -139,8 +100,6 @@ class CustomUser(AbstractUser):
         return True
 
     def generate_reset_code(self, length=6):
-        """Generate password reset code"""
-        if length < 4: length = 4
         code = str(random.randint(10**(length-1), 10**length-1))
         self.reset_code = code
         self.reset_code_created = timezone.now()
@@ -148,19 +107,13 @@ class CustomUser(AbstractUser):
         return code
 
     def reset_password(self, code, new_password):
-        """Reset password with provided code"""
-        if not self.reset_code or not self.reset_code_created:
+        if not self.reset_code or not self.reset_code_created or self.reset_code != code:
             return False
-
-        if self.reset_code != code:
-            return False
-
-        # Check expiry (1 hour)
+        
         expiry_time = self.reset_code_created + timezone.timedelta(hours=1)
         if timezone.now() > expiry_time:
             return False
 
-        # Reset successful
         self.set_password(new_password)
         self.reset_code = None
         self.reset_code_created = None
@@ -173,59 +126,30 @@ class CustomUser(AbstractUser):
         if not self.uuid:
             self.uuid = uuid.uuid4()
         super().save(*args, **kwargs)
-
         if is_new:
             UserProfile.objects.get_or_create(user=self)
 
-# --- User Profile Model ---
 class UserProfile(models.Model):
-    # Use settings.AUTH_USER_MODEL for flexibility
-    user = models.OneToOneField(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='profile', verbose_name=_('المستخدم'), primary_key=True)
+    user = models.OneToOneField(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='profile', primary_key=True)
     bio = models.TextField(blank=True, verbose_name=_('نبذة شخصية'))
     company_name = models.CharField(max_length=200, blank=True, verbose_name=_('اسم الشركة'))
-    company_registration = models.CharField(
-        max_length=100,
-        blank=True,
-        unique=True,
-        null=True,
-        verbose_name=_('رقم تسجيل الشركة')
-    )
+    company_registration = models.CharField(max_length=100, blank=True, unique=True, null=True, verbose_name=_('رقم تسجيل الشركة'))
     tax_id = models.CharField(max_length=50, blank=True, verbose_name=_('الرقم الضريبي'))
     address = models.TextField(blank=True, verbose_name=_('العنوان'))
     city = models.CharField(max_length=100, blank=True, verbose_name=_('المدينة'))
     state = models.CharField(max_length=100, blank=True, verbose_name=_('المحافظة/الولاية'))
     postal_code = models.CharField(max_length=20, blank=True, verbose_name=_('الرمز البريدي'))
     country = models.CharField(max_length=100, blank=True, verbose_name=_('الدولة'))
-    credit_limit = models.DecimalField(
-        max_digits=15,
-        decimal_places=2,
-        default=0,
-        validators=[MinValueValidator(0)],
-        verbose_name=_('الحد الائتماني')
-    )
-    rating = models.DecimalField(
-        max_digits=3,
-        decimal_places=2,
-        null=True,
-        blank=True,
-        validators=[MinValueValidator(0)],
-        verbose_name=_('التقييم')
-    )
-    license_number = models.CharField(max_length=50, blank=True,
-                                       verbose_name=_('رقم الترخيص'),
-                                       help_text=_("رقم ترخيص مزاولة المهنة للوكلاء العقاريين"))
+    credit_limit = models.DecimalField(max_digits=15, decimal_places=2, default=0, validators=[MinValueValidator(0)], verbose_name=_('الحد الائتماني'))
+    rating = models.DecimalField(max_digits=3, decimal_places=2, null=True, blank=True, validators=[MinValueValidator(0)], verbose_name=_('التقييم'))
+    license_number = models.CharField(max_length=50, blank=True, verbose_name=_('رقم الترخيص'))
     license_expiry = models.DateField(null=True, blank=True, verbose_name=_('تاريخ انتهاء الترخيص'))
-    preferred_locations = models.TextField(blank=True,
-                                           verbose_name=_('المواقع المفضلة'),
-                                           help_text=_("قائمة المواقع المفضلة مفصولة بفواصل (أو JSON)"))
-    property_preferences = models.TextField(blank=True,
-                                            verbose_name=_('تفضيلات العقارات'),
-                                            help_text=_("تفضيلات نوع العقار للمشترين (أو JSON)"))
+    preferred_locations = models.TextField(blank=True, verbose_name=_('المواقع المفضلة'))
+    property_preferences = models.TextField(blank=True, verbose_name=_('تفضيلات العقارات'))
 
     class Meta:
         verbose_name = _('ملف تعريف المستخدم')
         verbose_name_plural = _('ملفات تعريف المستخدمين')
-        app_label = 'accounts'
 
     def __str__(self):
         return f"Profile for {self.user.email}"

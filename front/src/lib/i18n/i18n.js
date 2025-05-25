@@ -171,7 +171,8 @@ const translations = {
       edit: 'Edit',
       delete: 'Delete',
       confirm: 'Confirm',
-      back: 'Back'
+      back: 'Back',
+      linkCopied: 'Link copied!'
     },
     share: {
       facebook: 'Share on Facebook',
@@ -209,7 +210,13 @@ const translations = {
       invalidMarketValueRange: 'Market value must be greater than 0',
       invalidMinimumBidRange: 'Minimum bid must be greater than 0',
       invalidFloorsFormat: 'Invalid floors format',
-      invalidYearFormat: 'Invalid year format'
+      invalidYearFormat: 'Invalid year format',
+      subjectRequired: "Subject is required",
+      subjectTooShort: "Subject must be at least 5 characters long",
+      subjectTooLong: "Subject cannot exceed 255 characters",
+      messageRequired: "Message is required",
+      messageTooShort: "Message must be at least 10 characters long",
+      messageTooLong: "Message cannot exceed 2000 characters"
     },
 
     fileUpload: {
@@ -226,10 +233,11 @@ const translations = {
       home: 'Home',
       properties: 'Properties',
       auctions: 'Auctions',
+      messages: 'Messages',
       about: 'About Us',
       contact: 'Contact Us',
-      login: 'Login',
-      register: 'Register',
+      login: 'Sign In',
+      register: 'Create Account',
       logout: 'Logout',
       profile: 'My Profile',
       propertyTypes: {
@@ -326,7 +334,11 @@ const translations = {
       area: 'Area',
       relatedAuctions: 'Related Auctions',
       noAuctions: 'No auctions currently listed for this property',
-      contactOwner: 'Contact Owner',
+      contactOwner: 'Contact Property Owner',
+      loginToContact: 'Please log in to your account to send a message to the property owner.',
+      message: "Your Message",
+      messagePlaceholder: "Hi! I'm interested in this property. Could you please provide more details about...",
+      sendMessage: "Send Message",
       noLocationData: 'No location data available for this property',
       createProperty: 'Create New Property',
       createPropertyDesc: 'Fill in the details to add a new property to your portfolio.',
@@ -712,6 +724,52 @@ const translations = {
       
     },
 
+    messages: {
+      inquiryAbout: "Inquiry about",
+      getInTouch: "Get in touch with the property owner",
+      sender: "Sender",
+      subject: "Subject",
+      subjectPlaceholder: "Enter the subject of your message...",
+      aboutProperty: "About property",
+      loginRequired: "Login Required",
+      messageSentSuccess: "Message Sent Successfully!",
+      messageDelivered: "Your message has been delivered to the property owner. They will get back to you soon.",
+      directMessagingNotAvailable: "Direct messaging is not available in this context",
+      sendError: "Failed to send message. Please try again.",
+      messageDisclaimer: "Your contact information will be shared with the property owner.",
+      form: {
+        priority: "Message Priority"
+      },
+      priority: {
+        low: "Low Priority",
+        normal: "Normal",
+        high: "High Priority",
+        urgent: "Urgent"
+      }
+    },
+
+    nav: {
+      login: "Sign In",
+      register: "Create Account",
+      messages: "Messages",
+      auctions: "Auctions",
+      properties: "Properties",
+      profile: "Profile",
+      logout: "Logout",
+      home: "Home",
+      about: "About",
+      contact: "Contact",
+      faq: "FAQ",
+      terms: "Terms",
+      privacy: "Privacy"
+    },
+
+    error: {
+      title: "Error",
+      sendingFailed: "Failed to Send Message",
+      fetchFailed: "Failed to load data"
+    },
+
     auth: {
       login: 'Login to your account',
       email: 'Email address',
@@ -832,6 +890,13 @@ const translations = {
       rights: 'All rights reserved.',
       developedBy: 'This platform has been made by {name}.',
       developerName: 'Ahmed Bashir Ali'
+    },
+    messages: {
+      subject: "Subject",
+      form: {
+        'priority *': "Priority *"
+      },
+      messageDisclaimer: "Please note: This is a placeholder for the message disclaimer."
     }
   },
 
@@ -849,13 +914,14 @@ const translations = {
       confirm: 'تأكيد',
       back: 'رجوع',
       next: 'التالي',
-      previous: 'السابق'
+      previous: 'السابق',
+      linkCopied: 'تم نسخ الرابط!'
     },
 
     validation: {
       titleRequired: 'العنوان مطلوب',
       propertyTypeRequired: 'نوع العقار مطلوب',
-      deedNumberRequired: 'رقم الصك مطلوب',
+      deedNumberRequired: 'رقم صك الملكية مطلوب',
       descriptionRequired: 'الوصف مطلوب',
       sizeRequired: 'الحجم مطلوب',
       addressRequired: 'عنوان الشارع مطلوب',
@@ -877,8 +943,14 @@ const translations = {
       invalidSizeRange: 'يجب أن يكون الحجم أكبر من 0',
       invalidMarketValueRange: 'يجب أن تكون القيمة السوقية أكبر من 0',
       invalidMinimumBidRange: 'يجب أن يكون الحد الأدنى للمزايدة أكبر من 0',
-      invalidFloorsFormat: 'صيغة عدد الطوابق غير صحيحة',
-      invalidYearFormat: 'صيغة سنة البناء غير صحيحة'
+      invalidFloorsFormat: 'تنسيق عدد الطوابق غير صالح',
+      invalidYearFormat: 'تنسيق سنة غير صالح',
+      subjectRequired: "الموضوع مطلوب",
+      subjectTooShort: "يجب أن يكون الموضوع 5 أحرف على الأقل",
+      subjectTooLong: "لا يمكن أن يتجاوز الموضوع 255 حرف",
+      messageRequired: "الرسالة مطلوبة",
+      messageTooShort: "يجب أن تكون الرسالة 10 أحرف على الأقل",
+      messageTooLong: "لا يمكن أن تتجاوز الرسالة 2000 حرف"
     },
 
     fileUpload: {
@@ -895,6 +967,7 @@ const translations = {
       home: 'الرئيسية',
       properties: 'العقارات',
       auctions: 'المزادات',
+      messages: 'الرسائل',
       about: 'من نحن',
       contact: 'اتصل بنا',
       login: 'تسجيل الدخول',
@@ -982,6 +1055,10 @@ const translations = {
       relatedAuctions: 'المزادات المرتبطة',
       noAuctions: 'لا توجد مزادات حالية لهذا العقار',
       contactOwner: 'التواصل مع المالك',
+      loginToContact: 'يرجى تسجيل الدخول إلى حسابك لإرسال رسالة إلى مالك العقار.',
+      message: "رسالتك",
+      messagePlaceholder: "مرحباً! أنا مهتم بهذا العقار. هل يمكنك تقديم المزيد من التفاصيل حول...",
+      sendMessage: "إرسال الرسالة",
       noLocationData: 'لا تتوفر بيانات الموقع لهذا العقار',
       createProperty: 'إضافة عقار جديد',
       createPropertyDesc: 'املأ التفاصيل لإضافة عقار جديد إلى محفظتك',
@@ -1188,7 +1265,12 @@ const translations = {
       subtitle: 'تصفح العقارات المتاحة للبيع والمزاد',
       noResults: 'لم يتم العثور على عقارات',
       tryAdjusting: 'حاول تعديل عوامل التصفية أو تحقق لاحقًا',
-      backToProperties: 'العودة إلى العقارات'
+      backToProperties: 'العودة إلى العقارات',
+      contactOwner: "تواصل مع مالك العقار",
+      loginToContact: "يرجى تسجيل الدخول إلى حسابك لإرسال رسالة إلى مالك العقار.",
+      message: "رسالتك",
+      messagePlaceholder: "مرحباً! أنا مهتم بهذا العقار. هل يمكنك تقديم المزيد من التفاصيل حول...",
+      sendMessage: "إرسال الرسالة"
     },
 
     auction: {
@@ -1373,8 +1455,8 @@ const translations = {
       noTerms: 'لا توجد شروط متاحة',
       contactForTerms: 'اتصل بالدعم للحصول على الشروط والأحكام',
       
-
     },
+    
 
     auth: {
       login: 'تسجيل الدخول إلى حسابك',
@@ -1481,9 +1563,9 @@ const translations = {
       resetRequestFailed: 'فشل في طلب إعادة تعيين كلمة المرور',
       resetFailed: 'فشل في إعادة تعيين كلمة المرور',
       verificationFailed: 'فشل التحقق',
-      resendVerificationFailed: 'فشل في إعادة إرسال رمز التحقق'
+      resendVerificationFailed: 'فشل في إعادة إرسال رمز التحقق',
+      sendingFailed: "فشل في إرسال الرسالة"
     },
-
     footer: {
       about: 'عنا',
       aboutText: 'نحن منصة رائدة تربط بين مشتري وبائعي العقارات من خلال المزادات الشفافة والفعالة.',
@@ -1496,7 +1578,30 @@ const translations = {
       rights: 'جميع الحقوق محفوظة.',
       developedBy: 'تم إنشاء هذه المنصة بواسطة {name}.',
       developerName: 'أحمد بشير علي'
+    },
+    messages: {
+    inquiryAbout: "استفسار حول",
+    getInTouch: "تواصل مع مالك العقار",
+    sender: "المرسل",
+    subject: "الموضوع",
+    subjectPlaceholder: "أدخل موضوع رسالتك...",
+    aboutProperty: "حول العقار",
+    loginRequired: "تسجيل الدخول مطلوب",
+    messageSentSuccess: "تم إرسال الرسالة بنجاح!",
+    messageDelivered: "تم توصيل رسالتك إلى مالك العقار. سيتواصل معك قريباً.",
+    directMessagingNotAvailable: "المراسلة المباشرة غير متاحة في هذا السياق",
+    sendError: "فشل في إرسال الرسالة. يرجى المحاولة مرة أخرى.",
+    messageDisclaimer: "سيتم مشاركة معلومات الاتصال الخاصة بك مع مالك العقار.",
+    form: {
+      "priority": "أولوية الرسالة"
+    },
+    priority: {
+      "low": "أولوية منخفضة",
+      "normal": "عادية",
+      "high": "أولوية عالية",
+      "urgent": "عاجل"
     }
+  }
   }
 };
 

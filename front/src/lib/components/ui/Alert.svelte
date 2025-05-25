@@ -1,8 +1,10 @@
 <!-- src/lib/components/Alert.svelte -->
 <script>
+    /** @type {'info' | 'success' | 'warning' | 'error'} */
     export let type = 'info'; // 'info', 'success', 'warning', 'error'
     export let title = '';
     export let message = '';
+    /** @type {{label: string, href?: string, onClick?: () => void} | null} */
     export let action = null; // Optional action button {label, href, onClick}
     export let dismissible = false;
     export let class_ = '';
@@ -14,24 +16,24 @@
     // Define styles for different alert types
     const alertStyles = {
       info: {
-        bg: 'bg-blue-50 dark:bg-blue-900/20',
-        text: 'text-blue-800 dark:text-blue-200',
-        icon: 'text-blue-400'
+        bg: 'bg-gray-100', // Uses var(--color-gray-100)
+        text: 'text-gray-700', // Uses var(--color-gray-700)
+        icon: 'text-gray-500'  // Uses var(--color-gray-500)
       },
       success: {
-        bg: 'bg-green-50 dark:bg-green-900/20',
-        text: 'text-green-800 dark:text-green-200',
-        icon: 'text-green-400'
+        bg: 'bg-success-100', // Uses var(--color-success-100)
+        text: 'text-success-700', // Uses var(--color-success-700)
+        icon: 'text-success-500'  // Uses var(--color-success-500)
       },
       warning: {
-        bg: 'bg-yellow-50 dark:bg-yellow-900/20',
-        text: 'text-yellow-800 dark:text-yellow-200',
-        icon: 'text-yellow-400'
+        bg: 'bg-warning-100', // Uses var(--color-warning-100)
+        text: 'text-warning-700', // Uses var(--color-warning-700)
+        icon: 'text-warning-500'  // Uses var(--color-warning-500)
       },
       error: {
-        bg: 'bg-red-50 dark:bg-red-900/20',
-        text: 'text-red-800 dark:text-red-200',
-        icon: 'text-red-400'
+        bg: 'bg-danger-100', // Uses var(--color-danger-100)
+        text: 'text-danger-700', // Uses var(--color-danger-700)
+        icon: 'text-danger-500'  // Uses var(--color-danger-500)
       }
     };
     
@@ -39,6 +41,7 @@
     $: styles = alertStyles[type] || alertStyles.info;
     
     // Get icon for alert type
+    /** @param {'info' | 'success' | 'warning' | 'error'} type */
     function getIcon(type) {
       switch (type) {
         case 'success':

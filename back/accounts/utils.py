@@ -1,47 +1,29 @@
-"""Email handling, response formatting, and rate limiting utilities."""
 from django.core.mail import send_mail
 from django.conf import settings
 from django.template.loader import render_to_string
 from django.utils.html import strip_tags
 from django.core.cache import cache
-from typing import Dict, Any, Optional, Union
-import logging
 from django.utils import timezone
 from rest_framework import status
 from rest_framework.response import Response
-from django.template.exceptions import TemplateDoesNotExist, TemplateSyntaxError
-from django.contrib.auth import get_user_model
-
-
-
-User = get_user_model()
+import logging
+from functools import wraps
 
 logger = logging.getLogger(__name__)
 
-# Rate limiting configuration
 RATE_LIMITS = {
-    'verification': {'max_attempts': 3, 'lockout_seconds': 1800},  # 30 min
-    'reset': {'max_attempts': 3, 'lockout_seconds': 1800},         # 30 min
-    'default': {'max_attempts': 5, 'lockout_seconds': 900}         # 15 min
+    'verification': {'max_attempts': 3, 'lockout_seconds': 1800},
+    'reset': {'max_attempts': 3, 'lockout_seconds': 1800},
+    'default': {'max_attempts': 5, 'lockout_seconds': 900}
 }
 
-
 class EmailRateLimitExceeded(Exception):
-    """Exception raised when email action exceeds rate limit."""
     def __init__(self, wait_minutes=None):
         self.wait_minutes = wait_minutes
         message = f"Too many attempts. Please wait {wait_minutes} minutes before trying again." if wait_minutes else "Too many attempts. Please try again later."
         super().__init__(message)
 
-
-def create_response(
-    data: Optional[Dict[str, Any]] = None,
-    message: Optional[str] = None,
-    error: Optional[Union[str, Dict[str, Any]]] = None,
-    error_code: Optional[str] = None,
-    status_code: int = status.HTTP_200_OK
-) -> Response:
-    """Create standardized API response."""
+def create_response(data=None, message=None, error=None, error_code=None, status_code=status.HTTP_200_OK):
     response_data = {"status": "error" if error else "success"}
 
     if data is not None:
@@ -50,7 +32,6 @@ def create_response(
         response_data["message"] = message
     if error:
         if isinstance(error, dict) and any(isinstance(v, list) for v in error.values()):
-            # It's a validation error dictionary
             response_data["error"] = error
         else:
             response_data["error"] = {"message": error}
@@ -59,50 +40,30 @@ def create_response(
 
     return Response(response_data, status=status_code)
 
-
-def check_rate_limit(identifier: str, action_type: str) -> None:
-    """Check if action exceeds rate limit."""
+def check_rate_limit(identifier, action_type):
     if not identifier:
         logger.warning(f"Empty identifier for rate limit check: {action_type}")
         return
 
-    # Get limits for action type
     limits = RATE_LIMITS.get(action_type, RATE_LIMITS['default'])
     max_attempts = limits['max_attempts']
     lockout_time = limits['lockout_seconds']
 
-    # Normalize cache key
     cache_key = f"rate_limit_{action_type}_{identifier.lower().replace('@', '_at_').replace('.', '_dot_')}"
 
-    # Check current attempts
     attempts = cache.get(cache_key, 0)
     if attempts >= max_attempts:
-        # Fixed for Django 4.1.5's LocMemCache that doesn't have ttl method
         wait_minutes = lockout_time // 60
         logger.warning(f"Rate limit exceeded: {action_type} by {identifier}. Attempts: {attempts}/{max_attempts}")
         raise EmailRateLimitExceeded(wait_minutes=wait_minutes)
 
-    # Increment attempts
     cache.set(cache_key, attempts + 1, timeout=lockout_time)
 
-
-def send_email(
-    to_email: str,
-    subject: str,
-    template_name: str,
-    context: Dict[str, Any],
-    action_type: str = 'default',
-    check_limits: bool = True,
-    fail_silently: bool = False
-) -> bool:
-    """
-    Send an email using Django templates with rate limiting.
-    """
+def send_email(to_email, subject, template_name, context, action_type='default', check_limits=True, fail_silently=False):
     if not to_email:
         logger.error(f"Attempted to send email with empty recipient: {subject}")
         return False
 
-    # Rate limiting
     if check_limits:
         try:
             check_rate_limit(to_email, action_type)
@@ -110,7 +71,6 @@ def send_email(
             logger.warning(f"Rate limit hit: {action_type} to {to_email}")
             raise e
 
-    # Add common context data
     company_name = getattr(settings, 'COMPANY_NAME', 'Real Estate Platform')
     default_from_email = getattr(settings, 'DEFAULT_FROM_EMAIL', 'noreply@example.com')
     frontend_url = getattr(settings, 'FRONTEND_URL', '').rstrip('/')
@@ -121,38 +81,26 @@ def send_email(
         'current_year': timezone.now().year,
     })
 
-    # Format subject with company name
     full_subject = f"[{company_name}] {subject}"
 
     try:
-        # Render email templates with better error handling
         html_template = f'emails/{template_name}.html'
-        try:
-            html_message = render_to_string(html_template, context)
-        except TemplateSyntaxError as e:
-            logger.error(f"Template syntax error in {html_template}: {str(e)}")
-            if not fail_silently:
-                raise
-            return False
+        html_message = render_to_string(html_template, context)
 
         try:
             txt_template = f'emails/{template_name}.txt'
             plain_message = render_to_string(txt_template, context)
-        except (TemplateDoesNotExist, TemplateSyntaxError):
-            # Fallback to HTML stripped of tags
+        except:
             plain_message = strip_tags(html_message)
 
-        # Debug mode console output
         if settings.DEBUG and 'console' in getattr(settings, 'EMAIL_BACKEND', ''):
             logger.info(f"\n{'='*40}\nEMAIL TO: {to_email}\nSUBJECT: {full_subject}\nTEMPLATE: {template_name}\n{'='*40}")
-            # Log verification/reset codes only in debug
             if settings.DEBUG and action_type in ['verification', 'reset']:
                 code = context.get('verification_code') or context.get('reset_code')
                 if code:
                     logger.info(f"DEBUG - {action_type.upper()} CODE: {code}")
             return True
 
-        # Send actual email
         send_mail(
             subject=full_subject,
             message=plain_message,
@@ -170,9 +118,7 @@ def send_email(
             raise
         return False
 
-# Specific email functions with preset templates and contexts
-def send_verification_email(email: str, verification_code: str, context: Optional[Dict[str, Any]] = None) -> None:
-    """Send verification code email."""
+def send_verification_email(email, verification_code, context=None):
     ctx = context or {}
     ctx['verification_code'] = verification_code
     ctx['expiry_hours'] = RATE_LIMITS['verification']['lockout_seconds'] // 3600
@@ -181,7 +127,6 @@ def send_verification_email(email: str, verification_code: str, context: Optiona
         verify_path = getattr(settings, 'EMAIL_VERIFY_PATH', '/verify-email')
         ctx['verification_url'] = f"{settings.FRONTEND_URL.rstrip('/')}{verify_path}/{verification_code}"
 
-    # Skip rate limiting in development
     check_limits = not settings.DEBUG
 
     send_email(
@@ -193,9 +138,7 @@ def send_verification_email(email: str, verification_code: str, context: Optiona
         check_limits=check_limits
     )
 
-
-def send_password_reset_email(email: str, reset_code: str, context: Optional[Dict[str, Any]] = None) -> None:
-    """Send password reset code email."""
+def send_password_reset_email(email, reset_code, context=None):
     ctx = context or {}
     ctx['reset_code'] = reset_code
     ctx['expiry_hours'] = RATE_LIMITS['reset']['lockout_seconds'] // 3600
@@ -212,48 +155,20 @@ def send_password_reset_email(email: str, reset_code: str, context: Optional[Dic
         action_type='reset'
     )
 
-
-def send_login_alert_email(email: str, ip_address: Optional[str] = None, location: Optional[str] = None,
-                          device_info: Optional[str] = None, login_time=None) -> None:
-    """Send alert for new device/location login."""
-    send_email(
-        to_email=email,
-        subject="Security Alert: New Login Detected",
-        template_name='login_alert',
-        context={
-            'ip_address': ip_address or 'Unknown',
-            'location': location or 'Unknown location',
-            'device_info': device_info or 'Unknown device',
-            'login_time': login_time or timezone.now(),
-        },
-        action_type='notification',
-        check_limits=False,
-        fail_silently=True
-    )
-
-
-# Simple debug request decorator
 def debug_request(view_func):
-    """Log request details in debug mode."""
-    from functools import wraps
-    import json
-
     @wraps(view_func)
     def wrapper(request, *args, **kwargs):
         response = view_func(request, *args, **kwargs)
 
         if settings.DEBUG:
             try:
-                # Basic request info
                 logger.debug(f"DEBUG: {request.method} {request.path}")
-
-                # Request body for non-GET requests
                 if request.method not in ['GET', 'HEAD'] and hasattr(request, 'body') and request.body:
                     content_type = request.META.get('CONTENT_TYPE', '').lower()
                     if 'application/json' in content_type:
                         try:
+                            import json
                             body = json.loads(request.body)
-                            # Mask sensitive data
                             if isinstance(body, dict):
                                 for k in body:
                                     if any(s in k.lower() for s in ['password', 'token', 'key', 'secret']):

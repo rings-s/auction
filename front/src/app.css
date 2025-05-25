@@ -2,7 +2,6 @@
 @plugin '@tailwindcss/forms';
 @plugin '@tailwindcss/typography';
 
-
 :root {
     /* Primary: Digital Lavender */
     --color-primary-50:  #f5f3ff;
@@ -147,8 +146,7 @@
     --color-gray-500: #a8a29e;
     --color-gray-600: #d6d3d1;
     --color-gray-700: #e7e5e4;
-    --color-gray-800: #f5f5f4;
+    --color-gray-800: #1c1917; /* Corrected: Was #f5f5f4, now using a darker shade */
     --color-gray-900: #fafaf9;
   }
   
-

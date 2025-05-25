@@ -1,41 +1,14 @@
 <!-- src/lib/components/ui/ThemeToggle.svelte -->
 <script>
     import { theme } from '$lib/stores/theme';
-    import { onMount } from 'svelte';
     import { fade } from 'svelte/transition';
-  
-    // Ensure dark class is applied to <html>
-    function applyTheme(t) {
-      if (typeof document !== 'undefined') {
-        document.documentElement.classList.toggle('dark', t === 'dark');
-      }
-    }
-  
-    onMount(() => {
-      const saved = localStorage.getItem('theme');
-      let initial;
-      if (saved === 'dark' || saved === 'light') {
-        initial = saved;
-      } else if (window.matchMedia('(prefers-color-scheme: dark)').matches) {
-        initial = 'dark';
-      } else {
-        initial = 'light';
-      }
-      theme.set(initial);
-      applyTheme(initial);
-  
-      // Reactively update <html> class on theme change
-      const unsubscribe = theme.subscribe(t => {
-        applyTheme(t);
-      });
-      return unsubscribe;
-    });
   
     function toggleTheme() {
       theme.update(t => {
         const next = t === 'dark' ? 'light' : 'dark';
-        localStorage.setItem('theme', next);
-        applyTheme(next);
+        if (typeof localStorage !== 'undefined') {
+          localStorage.setItem('theme', next);
+        }
         return next;
       });
     }

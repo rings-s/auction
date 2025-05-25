@@ -224,6 +224,30 @@
     }
   }
   
+  // Reactive logger for bid modal state
+  $: {
+    if (showBidModal) { // Only log when the modal is open
+      console.log('--- Bid Modal Debug ---');
+      console.log('bidAmount (raw):', bidAmount);
+      console.log('typeof bidAmount:', typeof bidAmount);
+      const parsedBidAmount = parseFloat(bidAmount);
+      console.log('parseFloat(bidAmount):', parsedBidAmount);
+      console.log('minimumBidAmount:', minimumBidAmount);
+      console.log('typeof minimumBidAmount:', typeof minimumBidAmount);
+      console.log('placingBid:', placingBid);
+      
+      const isBidAmountEmpty = !bidAmount || String(bidAmount).trim() === '';
+      const isBidTooLow = parsedBidAmount < minimumBidAmount;
+      
+      console.log('Condition !bidAmount (is empty?):', isBidAmountEmpty);
+      console.log('Condition parseFloat(bidAmount) < minimumBidAmount (is too low?):', isBidTooLow);
+      
+      const isDisabled = placingBid || isBidAmountEmpty || isBidTooLow;
+      console.log('Button should be disabled:', isDisabled);
+      console.log('--- End Bid Modal Debug ---');
+    }
+  }
+  
   // FIXED: Quick bid functionality
   async function handleQuickBid(amount) {
     if (placingBid) return;
@@ -645,8 +669,8 @@
                     {#if isScheduledAuction}
                       <div class="bg-warning-900/30 border border-warning-600/30 rounded-lg p-3">
                         <div class="flex items-start gap-2">
-                          <svg class="h-4 w-4 text-warning-400 flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
-                            <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd" />
+                          <svg class="h-4 w-4 text-warning-400 flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
                           </svg>
                           <div>
                             <h4 class="text-warning-200 font-medium text-sm mb-1">Pre-Bidding Available</h4>
@@ -665,7 +689,7 @@
                     <div class="bg-gray-800 border border-gray-600 rounded-lg p-4 max-w-sm mx-auto">
                       <div class="w-12 h-12 bg-primary-600/20 rounded-full flex items-center justify-center mx-auto mb-3">
                         <svg class="w-6 h-6 text-primary-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z" />
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                         </svg>
                       </div>
                       <h3 class="text-lg font-bold text-white mb-2">
@@ -1017,69 +1041,22 @@
                       {#each bids as bid, index (bid.id)}
                         <div class="group relative rounded-lg border border-gray-200 dark:border-gray-700 p-4 hover:border-gray-300 dark:hover:border-gray-600 transition-all duration-200 {index === 0 ? 'bg-gradient-to-r from-success-50 to-emerald-50 dark:from-success-900/10 dark:to-emerald-900/10 border-success-200 dark:border-success-800' : 'bg-white dark:bg-gray-800'} {bid.bidder_info?.id === $user?.id ? 'ring-1 ring-primary-200 dark:ring-primary-800' : ''}">
                           <div class="flex items-center justify-between">
-                            <div class="flex items-center gap-3">
-                              <!-- Bid Rank Icon -->
-                              <div class="flex-shrink-0">
-                                {#if index === 0}
-                                  <div class="w-8 h-8 bg-gradient-to-br from-warning-400 to-warning-600 rounded-full flex items-center justify-center shadow">
-                                    <svg class="w-4 h-4 text-white" fill="currentColor" viewBox="0 0 20 20">
-                                      <path fill-rule="evenodd" d="M5 2a1 1 0 011 1v1h1a1 1 0 010 2H6v1a1 1 0 01-2 0V6H3a1 1 0 010-2h1V3a1 1 0 011-1zm0 10a1 1 0 011 1v1h1a1 1 0 110 2H6v1a1 1 0 11-2 0v-1H3a1 1 0 110-2h1v-1a1 1 0 011-1zM12 2a1 1 0 01.967.744L14.146 7.2 17.5 9.134a1 1 0 010 1.732L14.146 12.8l-1.179 4.456a1 1 0 01-1.934 0L9.854 12.8 6.5 10.866a1 1 0 010-1.732L9.854 7.2l1.179-4.456A1 1 0 0112 2z" clip-rule="evenodd" />
-                                    </svg>
-                                  </div>
-                                {:else}
-                                  <div class="w-8 h-8 bg-gray-100 dark:bg-gray-600 rounded-full flex items-center justify-center">
-                                    <span class="text-xs font-bold text-gray-600 dark:text-gray-300">
-                                      #{index + 1}
-                                    </span>
-                                  </div>
+                            <div class="flex-1 min-w-0">
+                              <p class="text-sm font-semibold text-gray-900 dark:text-white">
+                                {formatCurrency(bid.amount)}
+                              </p>
+                              <p class="text-xs text-gray-500 dark:text-gray-400 truncate">
+                                {bid.bidder_info?.name || 'Anonymous'}
+                                {#if bid.bidder_info?.id === $user?.id}
+                                  <span class="text-primary-600 dark:text-primary-400 font-medium">({$t('auction.you')})</span>
                                 {/if}
-                              </div>
-                              
-                              <!-- Bid Details -->
-                              <div>
-                                <div class="flex items-center gap-2 mb-1">
-                                  <h4 class="text-lg font-bold text-gray-900 dark:text-white">
-                                    {formatCurrency(bid.amount)}
-                                  </h4>
-                                  
-                                  <!-- Badges -->
-                                  <div class="flex flex-wrap gap-1">
-                                    {#if index === 0}
-                                      <span class="inline-flex items-center px-1.5 py-0.5 rounded text-xs font-medium bg-success-100 text-success-800 dark:bg-success-900 dark:text-success-200">
-                                        🏆 Highest
-                                      </span>
-                                    {/if}
-                                    {#if bid.bidder_info?.id === $user?.id}
-                                      <span class="inline-flex items-center px-1.5 py-0.5 rounded text-xs font-medium bg-primary-100 text-primary-800 dark:bg-primary-900 dark:text-primary-200">
-                                        👤 You
-                                      </span>
-                                    {/if}
-                                    {#if bid.is_verified}
-                                      <span class="inline-flex items-center px-1.5 py-0.5 rounded text-xs font-medium bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200">
-                                        ✓
-                                      </span>
-                                    {/if}
-                                  </div>
-                                </div>
-                                
-                                <!-- Bidder Info -->
-                                <div class="flex items-center gap-2">
-                                  <p class="text-sm font-medium text-gray-700 dark:text-gray-300">
-                                    {bid.bidder_info?.name || $t('auction.anonymous')}
-                                  </p>
-                                  <AuctionStatus status={bid.status} isCompact={true} />
-                                </div>
-                              </div>
+                              </p>
                             </div>
-                            
-                            <!-- Timestamp -->
-                            <div class="text-right">
-                              <p class="text-sm font-medium text-gray-900 dark:text-gray-100 mb-1">
+                            <div class="text-right flex-shrink-0 ml-2">
+                              <p class="text-xs text-gray-500 dark:text-gray-400">
                                 {getTimeAgo(bid.bid_time)}
                               </p>
-                              <p class="text-xs text-gray-500 dark:text-gray-400">
-                                {formatDateTime(bid.bid_time)}
-                              </p>
+                              <AuctionStatus status={bid.status} isCompact={true} />
                             </div>
                           </div>
                         </div>
@@ -1607,7 +1584,7 @@
   <div class="text-center py-4 p-4">
     <div class="w-12 h-12 bg-warning-100 dark:bg-warning-900 rounded-full flex items-center justify-center mx-auto mb-3">
       <svg class="w-6 h-6 text-warning-600 dark:text-warning-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zM3 20a6 6 0 0112 0v1H3v-1z" />
       </svg>
     </div>
     
@@ -1628,7 +1605,7 @@
       
       <Button
         variant="primary"
-        href={`/login?redirect=/auctions/${auction?.slug}`}
+        href={`/login?redirect=/auctions/${auction.slug}`}
       >
         {$t('nav.login')}
       </Button>
@@ -1706,7 +1683,7 @@
         class="px-6"
       >
         <svg class="w-4 h-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z" />
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
         </svg>
         Register for Auction
       </Button>

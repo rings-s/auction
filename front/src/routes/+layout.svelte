@@ -10,6 +10,7 @@
 	
 	import Navbar from '$lib/components/layout/Navbar.svelte';
 	import Footer from '$lib/components/layout/Footer.svelte';
+	import ToastContainer from '$lib/components/ToastContainer.svelte';
 	
 	let loading = true;
 	
@@ -49,6 +50,7 @@
 		document.documentElement.classList.add('ltr');
 	  }
 	  document.documentElement.classList.add($theme); // always add theme last
+	  document.documentElement.style.colorScheme = $theme; // Explicitly set color-scheme
 	}
 	
 	// Apply lang and dir attributes
@@ -64,7 +66,7 @@
 	<title>Real Estate Auction Platform</title>
   </svelte:head>
   
-  <div class="min-h-screen flex flex-col bg-gray-50 dark:bg-gray-900 transition-colors duration-200">
+  <div class="min-h-screen flex flex-col bg-gray-50 dark:bg-gray-800 transition-colors duration-200">
 	{#if !loading}
 	  <Navbar />
 	  
@@ -78,4 +80,5 @@
 		<div class="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary-500"></div>
 	  </div>
 	{/if}
+	<ToastContainer />
   </div>
