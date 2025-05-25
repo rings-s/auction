@@ -231,6 +231,16 @@ class MessageListCreateView(BaseListCreateView):
     def perform_create(self, serializer):
         serializer.save(sender=self.request.user)
 
+    def create(self, request, *args, **kwargs):
+        logger.info(f"MessageListCreateView create called. Request data: {request.data}")
+        try:
+            response = super().create(request, *args, **kwargs)
+            logger.info(f"MessageListCreateView create successful. Response data: {response.data}")
+            return response
+        except Exception as e:
+            logger.error(f"Exception in MessageListCreateView create: {type(e).__name__} - {str(e)}", exc_info=True)
+            # Re-raise the exception to let DRF handle it or be caught by a custom handler
+            raise
 
 class MessageDetailView(BaseDetailView):
     serializer_class = MessageSerializer
@@ -299,4 +309,4 @@ class MessageStatsView(APIView):
             ).values('thread_id').distinct().count()
         }
         
-        return create_response(data=stats)
+        return Response(data=stats)

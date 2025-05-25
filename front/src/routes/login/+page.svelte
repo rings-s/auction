@@ -12,9 +12,20 @@
   let loading = false;
   let error = '';
 
+  // Default redirect is home page
+  let redirectTo = '/';
+
   onMount(() => {
+    // Get redirect from URL if present
+    const urlParams = new URLSearchParams(window.location.search);
+    const redirect = urlParams.get('redirect');
+    if (redirect) {
+      redirectTo = redirect;
+    }
+
+    // If user is already logged in, go to home page
     if ($user) {
-      goto('/profile');
+      goto('/');
     }
   });
 
@@ -22,15 +33,26 @@
     try {
       loading = true;
       error = '';
+      console.log('Attempting login...');
       const response = await login(email, password);
       
+      console.log('Login successful, checking tokens...');
+      // Verify tokens were stored
+      const accessToken = localStorage.getItem('accessToken');
+      const refreshToken = localStorage.getItem('refreshToken');
+      
+      if (!accessToken || !refreshToken) {
+        console.error('Tokens not stored after login!');
+        throw new Error('Login succeeded but tokens were not stored');
+      }
+      
+      console.log('Tokens stored successfully, redirecting...');
       if (response) {
-        goto('/profile');
+        goto(redirectTo);
       }
     } catch (err) {
       console.error('Login error:', err);
-      error = err.message || $t('error.invalidCredentials');
-    } finally {
+      error = (err && err.message) || $t('error.invalidCredentials')    } finally {
       loading = false;
     }
   }
@@ -40,7 +62,7 @@
   <title>{$t('auth.login')} | Real Estate Platform</title>
 </svelte:head>
 
-<div class="min-h-screen flex flex-col items-center justify-center py-12 px-4 sm:px-6 lg:px-8 bg-gradient-to-b from-gray-50 to-gray-100 dark:from-gray-900 dark:to-gray-800">
+<div class="min-h-screen flex flex-col items-center justify-center py-12 px-4 sm:px-6 lg:px-8 bg-gradient-to-b from-gray-50 to-gray-100 dark:from-gray-200 dark:to-gray-200">
   <div class="w-full max-w-md space-y-8 bg-white dark:bg-gray-800 p-8 rounded-xl shadow-lg transform transition-all">
     <div>
       <h2 class="mt-2 text-center text-3xl font-bold tracking-tight text-gray-900 dark:text-white">
@@ -91,7 +113,7 @@
               autocomplete="email"
               required
               bind:value={email}
-              class="pl-10 appearance-none block w-full px-3 py-3 border border-gray-300 dark:border-gray-600 rounded-lg shadow-sm placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 text-gray-900 dark:text-white dark:bg-gray-700 transition-colors duration-200"
+              class="pl-10 appearance-none block w-full px-3 py-3 border border-gray-300 dark:border-gray-200 rounded-lg shadow-sm placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 text-gray-900 dark:text-gray-800 bg-white dark:bg-gray-50 transition-colors duration-200"
               placeholder={$t('auth.email')}
             />
           </div>
@@ -114,7 +136,7 @@
               autocomplete="current-password"
               required
               bind:value={password}
-              class="pl-10 appearance-none block w-full px-3 py-3 border border-gray-300 dark:border-gray-600 rounded-lg shadow-sm placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 text-gray-900 dark:text-white dark:bg-gray-700 transition-colors duration-200"
+              class="pl-10 appearance-none block w-full px-3 py-3 border border-gray-300 dark:border-gray-200 rounded-lg shadow-sm placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 text-gray-900 dark:text-gray-800 bg-white dark:bg-gray-50 transition-colors duration-200"
               placeholder={$t('auth.password')}
             />
           </div>
@@ -128,7 +150,7 @@
             name="remember-me"
             type="checkbox"
             bind:checked={rememberMe}
-            class="h-4 w-4 text-primary-600 focus:ring-primary-500 border-gray-300 dark:border-gray-700 rounded dark:bg-gray-800 transition-colors duration-200"
+            class="h-4 w-4 text-primary-600 focus:ring-primary-500 border-gray-300 dark:border-gray-200 rounded bg-white dark:bg-gray-50 transition-colors duration-200"
           />
           <label for="remember-me" class="ml-2 block text-sm text-gray-700 dark:text-gray-300">
             {$t('auth.rememberMe')}

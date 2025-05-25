@@ -33,7 +33,7 @@ DEBUG = get_bool_env('DEBUG', 'True')
 ALLOWED_HOSTS = get_list_env('ALLOWED_HOSTS', 'localhost,127.0.0.1')
 
 # Company Configuration
-COMPANY_NAME = get_env_variable('COMPANY_NAME', 'Real Estate Auctions')
+COMPANY_NAME = get_env_variable('COMPANY_NAME', 'Auctions')
 FRONTEND_URL = get_env_variable('FRONTEND_URL', 'http://localhost:5137').rstrip('/')
 
 # Application Definition
@@ -367,7 +367,7 @@ LOGGING = {
         'file': {
             'level': 'INFO',
             'class': 'logging.handlers.RotatingFileHandler',
-            'filename': BASE_DIR / 'logs' / 'django.log',
+            'filename': os.path.expanduser('~/auction_django.log'),
             'maxBytes': 1024*1024*5,  # 5MB
             'backupCount': 5,
             'formatter': 'verbose',
@@ -375,7 +375,7 @@ LOGGING = {
         'error_file': {
             'level': 'ERROR',
             'class': 'logging.handlers.RotatingFileHandler',
-            'filename': BASE_DIR / 'logs' / 'error.log',
+            'filename': os.path.expanduser('~/auction_error.log'),
             'maxBytes': 1024*1024*5,  # 5MB
             'backupCount': 5,
             'formatter': 'verbose',

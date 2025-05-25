@@ -130,7 +130,7 @@
         </div>
         
         <!-- Desktop links -->
-        <div class="hidden lg:ml-8 lg:flex" class:lg:space-x-8={document.documentElement.dir !== 'rtl'} class:lg:space-x-reverse={document.documentElement.dir === 'rtl'} class:lg:mr-8={document.documentElement.dir === 'rtl'}>
+        <div class="hidden lg:ml-8 lg:flex" class:lg:space-x-10={document.documentElement.dir !== 'rtl'} class:lg:space-x-reverse={document.documentElement.dir === 'rtl'} class:lg:mr-8={document.documentElement.dir === 'rtl'}>
           <slot name="nav-links">
             <a 
               href="/" 

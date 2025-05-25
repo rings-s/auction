@@ -172,9 +172,17 @@ const translations = {
       delete: 'Delete',
       confirm: 'Confirm',
       back: 'Back',
-      linkCopied: 'Link copied!'
-    },
-    share: {
+      linkCopied: 'Link copied!',
+      justNow: 'Just now',
+      minutesAgo: '{count} minutes ago',
+      hoursAgo: '{count} hours ago',
+      yesterday: 'Yesterday',
+      tryAgain: 'Try Again',
+      showFilters: 'Show Filters',
+      hideFilters: 'Hide Filters',
+      unknown: 'Unknown',
+      sending: 'Sending...',
+
       facebook: 'Share on Facebook',
       twitter: 'Share on Twitter',
       linkedin: 'Share on LinkedIn',
@@ -182,8 +190,8 @@ const translations = {
       email: 'Share via Email',
       copyLink: 'Copy Link',
       linkCopied: 'Link copied!'
-    },
 
+    },
     validation: {
       titleRequired: 'Title is required',
       propertyTypeRequired: 'Property type is required',
@@ -218,7 +226,6 @@ const translations = {
       messageTooShort: "Message must be at least 10 characters long",
       messageTooLong: "Message cannot exceed 2000 characters"
     },
-
     fileUpload: {
       dropZoneLabel: 'Drop zone for file upload',
       selectedFilesList: 'Selected files',
@@ -226,9 +233,8 @@ const translations = {
       invalidType: 'Invalid file type',
       fileTooLarge: 'File too large (max {size}MB)',
       tooManyFiles: 'Too many files (max {max})',
-      removeFile: 'Remove file {name}'
+      removeFile: 'Remove file {first_name} {last_name}'
     },
-
     nav: {
       home: 'Home',
       properties: 'Properties',
@@ -248,7 +254,6 @@ const translations = {
         mixedUse: 'Mixed Use'
       }
     },
-
     search: {
       keyword: 'Search by keyword',
       keywordPlaceholder: 'Property name, location, etc.',
@@ -271,7 +276,6 @@ const translations = {
         sizeDesc: 'Size: Large to Small'
       }
     },
-
     location: {
       title: 'Location',
       locationDesc: 'Select the property location on the map',
@@ -297,7 +301,6 @@ const translations = {
       searchFailed: 'Search failed',
       geocodingFailed: 'Failed to convert coordinates to address'
     },
-
     property: {
       title: 'Property',
       featured: 'Featured',
@@ -530,15 +533,18 @@ const translations = {
         otherFiles: 'Other Files'
       }
     },
-
     properties: {
       title: 'Properties',
       subtitle: 'Browse available properties for sale and auction',
       noResults: 'No properties found',
       tryAdjusting: 'Try adjusting your filters or check back later',
-      backToProperties: 'Back to Properties'
+      backToProperties: 'Back to Properties',
+      contactOwner: "Contact Property Owner",
+      loginToContact: "Please login to your account to send a message to the property owner.",
+      message: "Your Message",
+      messagePlaceholder: "Hi! I'm interested in this property. Could you please provide more details about...",
+      sendMessage: "Send Message"
     },
-
     auction: {
       title: 'Auctions',
       subtitle: 'Browse and bid on available property auctions',
@@ -723,7 +729,6 @@ const translations = {
       contactForTerms: 'Contact support for terms and conditions',
       
     },
-
     messages: {
       inquiryAbout: "Inquiry about",
       getInTouch: "Get in touch with the property owner",
@@ -737,17 +742,41 @@ const translations = {
       directMessagingNotAvailable: "Direct messaging is not available in this context",
       sendError: "Failed to send message. Please try again.",
       messageDisclaimer: "Your contact information will be shared with the property owner.",
+      title: 'Messages',
+      compose: 'Compose Message',
+      total: 'total',
+      unread: 'unread',
+      search: 'Search messages...',
+      confirmDelete: 'Are you sure you want to delete this message?',
+      to: 'To: {name}',
+      from: 'From: {name}',
+      archive: 'Archive',
+      delete: 'Delete',
+      close: 'Close',
+      reply: 'Reply',
+      relatedProperty: 'Related Property',
+      selectToRead: 'Select a message to read',
+      selectToReadDesc: 'Choose a message from the list on the left to view its contents',
+      noMessages: 'No messages',
+      noSearchResults: 'No messages matching your search',
+      startConversation: 'Start a new conversation by clicking the Compose button',
+      filters: {
+        all: 'All Messages',
+        inbox: 'Inbox',
+        sent: 'Sent',
+        unread: 'Unread',
+        archived: 'Archived'
+      },
       form: {
-        priority: "Message Priority"
+        priority: 'Message Priority'
       },
       priority: {
-        low: "Low Priority",
-        normal: "Normal",
-        high: "High Priority",
-        urgent: "Urgent"
+        low: 'Low Priority',
+        normal: 'Normal',
+        high: 'High Priority',
+        urgent: 'Urgent'
       }
     },
-
     nav: {
       login: "Sign In",
       register: "Create Account",
@@ -763,13 +792,11 @@ const translations = {
       terms: "Terms",
       privacy: "Privacy"
     },
-
     error: {
       title: "Error",
       sendingFailed: "Failed to Send Message",
       fetchFailed: "Failed to load data"
     },
-
     auth: {
       login: 'Login to your account',
       email: 'Email address',
@@ -811,7 +838,6 @@ const translations = {
       verificationCodeResent: 'Verification code has been resent to your email',
       registrationSuccess: 'Registration successful! Please check your email for verification instructions.'
     },
-
     profile: {
       myProfile: 'My Profile',
       personalInfo: 'Personal Information',
@@ -851,7 +877,6 @@ const translations = {
       changePasswordDesc: 'Ensure your account is secure with a strong password',
       commaSeparated: 'comma separated'
     },
-
     error: {
       generic: 'An error occurred',
       notFound: 'Page not found',
@@ -877,7 +902,6 @@ const translations = {
       verificationFailed: 'Verification failed',
       resendVerificationFailed: 'Failed to resend verification code'
     },
-
     footer: {
       about: 'About Us',
       aboutText: 'We are a leading real estate auction platform connecting buyers and sellers for residential, commercial, and land properties.',
@@ -915,9 +939,17 @@ const translations = {
       back: 'رجوع',
       next: 'التالي',
       previous: 'السابق',
-      linkCopied: 'تم نسخ الرابط!'
+      linkCopied: 'تم نسخ الرابط!',
+      justNow: 'الآن',
+      minutesAgo: '{count} دقيقة مضت',
+      hoursAgo: '{count} ساعة مضت',
+      yesterday: 'الأمس',
+      tryAgain: 'حاول مرة أخرى',
+      showFilters: 'إظهار الفلاتر',
+      hideFilters: 'إخفاء الفلاتر',
+      unknown: 'غير معروف',
+      sending: 'جاري الإرسال...'
     },
-
     validation: {
       titleRequired: 'العنوان مطلوب',
       propertyTypeRequired: 'نوع العقار مطلوب',
@@ -952,7 +984,6 @@ const translations = {
       messageTooShort: "يجب أن تكون الرسالة 10 أحرف على الأقل",
       messageTooLong: "لا يمكن أن تتجاوز الرسالة 2000 حرف"
     },
-
     fileUpload: {
       dropZoneLabel: 'منطقة إسقاط لتحميل الملف',
       selectedFilesList: 'الملفات المحددة',
@@ -962,7 +993,6 @@ const translations = {
       tooManyFiles: 'عدد كبير جدًا من الملفات (الحد الأقصى {max})',
       removeFile: 'إزالة الملف {name}'
     },
-
     nav: {
       home: 'الرئيسية',
       properties: 'العقارات',
@@ -982,7 +1012,6 @@ const translations = {
         mixedUse: 'متعدد الاستخدامات'
       }
     },
-
     search: {
       keyword: 'بحث بالكلمات المفتاحية',
       keywordPlaceholder: 'اسم العقار، الموقع، إلخ',
@@ -1005,7 +1034,6 @@ const translations = {
         sizeDesc: 'المساحة: من الأكبر إلى الأصغر'
       }
     },
-
     location: {
       title: 'الموقع',
       locationDesc: 'حدد موقع العقار على الخريطة',
@@ -1031,7 +1059,6 @@ const translations = {
       searchFailed: 'فشل البحث',
       geocodingFailed: 'فشل تحويل الإحداثيات إلى عنوان'
     },
-
     property: {
       title: 'العقار',
       featured: 'مميز',
@@ -1259,7 +1286,6 @@ const translations = {
       country: 'الدولة',
       noAuctionsInfo: 'لا توجد مزادات متاحة لهذا العقار حالياً.'
     },
-
     properties: {
       title: 'العقارات',
       subtitle: 'تصفح العقارات المتاحة للبيع والمزاد',
@@ -1270,9 +1296,8 @@ const translations = {
       loginToContact: "يرجى تسجيل الدخول إلى حسابك لإرسال رسالة إلى مالك العقار.",
       message: "رسالتك",
       messagePlaceholder: "مرحباً! أنا مهتم بهذا العقار. هل يمكنك تقديم المزيد من التفاصيل حول...",
-      sendMessage: "إرسال الرسالة"
+      sendMessage: "إرسال رسالة"
     },
-
     auction: {
       title: 'المزادات',
       subtitle: 'تصفح وزايد على المزادات العقارية المتاحة',
@@ -1463,7 +1488,7 @@ const translations = {
       email: 'البريد الإلكتروني',
       password: 'كلمة المرور',
       forgotPassword: 'نسيت كلمة المرور؟',
-      noAccount: 'ليس لديك حساب؟',
+      noAccount: "ليس لديك حساب؟",
       createAccount: 'إنشاء حساب جديد',
       register: 'تسجيل حساب جديد',
       firstName: 'الاسم الأول',
@@ -1580,28 +1605,63 @@ const translations = {
       developerName: 'أحمد بشير علي'
     },
     messages: {
-    inquiryAbout: "استفسار حول",
-    getInTouch: "تواصل مع مالك العقار",
-    sender: "المرسل",
-    subject: "الموضوع",
-    subjectPlaceholder: "أدخل موضوع رسالتك...",
-    aboutProperty: "حول العقار",
-    loginRequired: "تسجيل الدخول مطلوب",
-    messageSentSuccess: "تم إرسال الرسالة بنجاح!",
-    messageDelivered: "تم توصيل رسالتك إلى مالك العقار. سيتواصل معك قريباً.",
-    directMessagingNotAvailable: "المراسلة المباشرة غير متاحة في هذا السياق",
-    sendError: "فشل في إرسال الرسالة. يرجى المحاولة مرة أخرى.",
-    messageDisclaimer: "سيتم مشاركة معلومات الاتصال الخاصة بك مع مالك العقار.",
-    form: {
-      "priority": "أولوية الرسالة"
-    },
-    priority: {
-      "low": "أولوية منخفضة",
-      "normal": "عادية",
-      "high": "أولوية عالية",
-      "urgent": "عاجل"
+      inquiryAbout: "استفسار حول",
+      getInTouch: "تواصل مع مالك العقار",
+      sender: "المرسل",
+      subject: "الموضوع",
+      subjectPlaceholder: "أدخل موضوع رسالتك...",
+      aboutProperty: "حول العقار",
+      loginRequired: "تسجيل الدخول مطلوب",
+      messageSentSuccess: "تم إرسال الرسالة بنجاح!",
+      messageDelivered: "تم توصيل رسالتك إلى مالك العقار. سيتواصل معك قريباً.",
+      directMessagingNotAvailable: "المراسلة المباشرة غير متاحة في هذا السياق",
+      sendError: "فشل في إرسال الرسالة. يرجى المحاولة مرة أخرى.",
+      messageDisclaimer: "سيتم مشاركة معلومات الاتصال الخاصة بك مع مالك العقار.",
+      title: "الرسائل",
+      compose: "إنشاء رسالة",
+      total: "إجمالي",
+      unread: "غير مقروءة",
+      search: "البحث في الرسائل...",
+      confirmDelete: "هل أنت متأكد أنك تريد حذف هذه الرسالة؟",
+      to: "إلى: {name}",
+      from: "من: {name}",
+      archive: "أرشفة",
+      delete: "حذف",
+      close: "إغلاق",
+      reply: "الرد",
+      relatedProperty: "العقار المرتبط",
+      selectToRead: "اختر رسالة للقراءة",
+      selectToReadDesc: "اختر رسالة من القائمة على اليسار لعرض محتواها",
+      noMessages: "لا توجد رسائل",
+      noSearchResults: "لم يتم العثور على رسائل مطابقة لبحثك",
+      startConversation: "ابدأ محادثة جديدة بالضغط على زر 'إنشاء رسالة'",
+      backToMessages: "العودة إلى الرسائل",
+      replyToMessage: "الرد على الرسالة",
+      composeNewMessage: "إنشاء رسالة جديدة",
+      originalMessage: "الرسالة الأصلية",
+      couldNotLoadReplyMessage: "تعذر تحميل الرسالة الأصلية للرد",
+      directMessagingNotImplemented: "المراسلة المباشرة غير متاحة حالياً",
+      recipientEmailPlaceholder: "أدخل البريد الإلكتروني للمستلم",
+      message: "الرسالة",
+      messagePlaceholder: "اكتب رسالتك هنا...",
+      send: "إرسال الرسالة",
+      filters: {
+        all: "جميع الرسائل",
+        inbox: "صندوق الوارد",
+        sent: "الرسائل المرسلة",
+        unread: "غير مقروءة",
+        archived: "مؤرشفة"
+      },
+      form: {
+        priority: "أولوية الرسالة"
+      },
+      priority: {
+        low: "أولوية منخفضة",
+        normal: "عادية",
+        high: "أولوية عالية",
+        urgent: "عاجل"
+      }
     }
-  }
   }
 };
 
@@ -1625,7 +1685,17 @@ export const t = derived(
 
 // Get translation for a specific key
 function translateKey(key) {
-  const lang = localStorage.getItem('lang') || 'en';
+  let lang = 'en'; // Default for SSR
+  if (browser) {
+    // Try to get locale from localStorage, then navigator, then default to 'en'
+    const savedLocale = localStorage.getItem('lang');
+    const browserLang = navigator.language ? navigator.language.split('-')[0] : null;
+    lang = savedLocale || browserLang || 'en';
+    // Ensure lang is one of the supported locales, default to 'en' if not
+    if (lang !== 'ar' && lang !== 'en') {
+      lang = 'en';
+    }
+  }
   
   // Split the key by dots to navigate the nested objects
   const keys = key.split('.');

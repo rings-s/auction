@@ -2,8 +2,11 @@ from rest_framework import serializers
 from django.utils.translation import gettext_lazy as _
 from django.db import transaction
 from django.contrib.contenttypes.models import ContentType
+from django.contrib.auth import get_user_model
 from .models import Media, Property, Room, Auction, Bid, Location, Message, MessageAttachment
 import json, logging
+
+User = get_user_model()
 
 class LocationSerializer(serializers.ModelSerializer):
     coordinates = serializers.SerializerMethodField()
@@ -226,14 +229,31 @@ class MessageSerializer(serializers.ModelSerializer):
     status_display = serializers.CharField(source='get_status_display', read_only=True)
     priority_display = serializers.CharField(source='get_priority_display', read_only=True)
     
+    recipient_email = serializers.EmailField(write_only=True, required=True)
+
     class Meta:
         model = Message
         fields = [
             'id', 'subject', 'body', 'status', 'status_display', 'priority', 'priority_display', 
             'sender_info', 'recipient_info', 'property_info', 'thread_id', 'parent_message',
-            'is_read', 'created_at', 'read_at', 'replied_at'
+            'is_read', 'created_at', 'read_at', 'replied_at',
+            'recipient_email', 'sender', 'recipient', 'related_property'
         ]
-        read_only_fields = ['sender_info', 'recipient_info', 'thread_id', 'is_read', 'created_at', 'read_at', 'replied_at']
+        read_only_fields = [
+            'id', 'sender_info', 'recipient_info', 'property_info', 
+            'status_display', 'priority_display', 'thread_id', 
+            'is_read', 'created_at', 'read_at', 'replied_at',
+            'sender' # Sender is set by the view
+        ]
+        extra_kwargs = {
+            'recipient': {'required': False, 'allow_null': True}, # Will be set from recipient_email
+            'parent_message': {'required': False, 'allow_null': True},
+            'related_property': {'required': False, 'allow_null': True},
+            'status': {'required': False}, # Has default
+            'priority': {'required': False}, # Has default
+            'subject': {'required': True},
+            'body': {'required': True},
+        }
 
     def get_sender_info(self, obj):
         if not obj.sender:
@@ -262,6 +282,22 @@ class MessageSerializer(serializers.ModelSerializer):
             'slug': obj.related_property.slug,
             'market_value': float(obj.related_property.market_value) if obj.related_property.market_value else None
         }
+
+    def create(self, validated_data):
+        recipient_email_str = validated_data.pop('recipient_email', None)
+        
+        if not recipient_email_str:
+            raise serializers.ValidationError({'recipient_email': _('Recipient email is required for a new message.')})
+        
+        try:
+            recipient_user = User.objects.get(email__iexact=recipient_email_str)
+            validated_data['recipient'] = recipient_user
+        except User.DoesNotExist:
+            raise serializers.ValidationError({'recipient_email': _('User with this email does not exist.')})
+        except User.MultipleObjectsReturned:
+            raise serializers.ValidationError({'recipient_email': _('Multiple users found with this email. Please contact support.')})
+
+        return super().create(validated_data)
 
 class MessageReplySerializer(serializers.ModelSerializer):
     sender_info = serializers.SerializerMethodField()

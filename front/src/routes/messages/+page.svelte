@@ -1,39 +1,40 @@
-<!-- front/src/routes/messages/+page.svelte -->
 <script>
-    import { onMount } from 'svelte';
-    import { fade, slide, fly } from 'svelte/transition';
-    import { t, locale } from '$lib/i18n/i18n';
-    import { user } from '$lib/stores/user';
-    import { 
-      getMessages, 
-      getMessageStats, 
-      markMessageAsRead, 
-      archiveMessage,
-      deleteMessage 
-    } from '$lib/api/messages';
-    import Button from '$lib/components/ui/Button.svelte';
-    import LoadingSkeleton from '$lib/components/ui/LoadingSkeleton.svelte';
-    import ContactForm from '$lib/components/messages/ContactForm.svelte';
+  import { onMount } from 'svelte';
+  import { fade, slide, fly } from 'svelte/transition';
+  import { t, locale } from '$lib/i18n/i18n';
+  import { user } from '$lib/stores/user';
+  import { 
+    getMessages, 
+    getMessageStats, 
+    markMessageAsRead, 
+    archiveMessage,
+    deleteMessage 
+  } from '$lib/api/messages';
+  import Button from '$lib/components/ui/Button.svelte';
+  import LoadingSkeleton from '$lib/components/ui/LoadingSkeleton.svelte';
 
-    // State
-    let messages = [];
-    let stats = {};
-    let loading = true;
-    let error = null;
-    let selectedMessage = null;
-    let activeFilter = 'all';
-    let searchQuery = '';
-    let currentPage = 1;
-    let totalPages = 1;
-    let showMobileMenu = false;
-    
-    // Computed
-    $: isRTL = $locale === 'ar';
-    $: filteredMessages = messages.filter(message => {
+  // State management with Svelte 5
+  let messages = $state([]);
+  let stats = $state({});
+  let loading = $state(true);
+  let error = $state(null);
+  let selectedMessage = $state(null);
+  let activeFilter = $state('all');
+  let searchQuery = $state('');
+  let currentPage = $state(1);
+  let totalPages = $state(1);
+  let showMobileDetail = $state(false);
+  let showMobileFilters = $state(false);
+  
+  // Derived values
+  let isRTL = $derived($locale === 'ar');
+  
+  let filteredMessages = $derived.by(() => {
+    return messages.filter(message => {
       const matchesSearch = !searchQuery || 
         message.subject.toLowerCase().includes(searchQuery.toLowerCase()) ||
         message.body.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        message.sender_info?.name.toLowerCase().includes(searchQuery.toLowerCase());
+        message.sender_info?.name?.toLowerCase().includes(searchQuery.toLowerCase());
       
       const matchesFilter = activeFilter === 'all' || 
         (activeFilter === 'unread' && message.status === 'unread') ||
@@ -43,174 +44,175 @@
       
       return matchesSearch && matchesFilter;
     });
+  });
+  
+  // Filter options with modern design
+  const filterOptions = [
+    { id: 'all', label: 'messages.filters.all', icon: 'grid', color: 'gray' },
+    { id: 'inbox', label: 'messages.filters.inbox', icon: 'inbox', color: 'blue' },
+    { id: 'sent', label: 'messages.filters.sent', icon: 'send', color: 'green' },
+    { id: 'unread', label: 'messages.filters.unread', icon: 'mail', color: 'amber' },
+    { id: 'archived', label: 'messages.filters.archived', icon: 'archive', color: 'purple' }
+  ];
+  
+  // Toggle mobile filters
+  function toggleMobileFilters() {
+    showMobileFilters = !showMobileFilters;
+  }
+  
+  // Load messages
+  async function loadMessages() {
+    loading = true;
+    error = null;
     
-    // Filter options
-    const filterOptions = [
-      { id: 'all', label: 'messages.filters.all', icon: 'inbox', count: () => stats.total_messages || 0 },
-      { id: 'inbox', label: 'messages.filters.inbox', icon: 'inbox', count: () => stats.received_count || 0 },
-      { id: 'sent', label: 'messages.filters.sent', icon: 'send', count: () => stats.sent_count || 0 },
-      { id: 'unread', label: 'messages.filters.unread', icon: 'mail', count: () => stats.unread_count || 0 },
-      { id: 'archived', label: 'messages.filters.archived', icon: 'archive', count: () => 0 }
-    ];
-    
-    // Load messages
-    async function loadMessages() {
-      try {
-        loading = true;
-        error = null;
-        
-        const [messagesResponse, statsResponse] = await Promise.all([
-          getMessages({ 
-            page: currentPage,
-            box: activeFilter === 'all' ? undefined : activeFilter,
-            search: searchQuery || undefined
-          }),
-          getMessageStats()
-        ]);
-        
-        messages = messagesResponse.results || messagesResponse;
-        stats = statsResponse;
-        
-        if (messagesResponse.count) {
-          totalPages = Math.ceil(messagesResponse.count / (messagesResponse.page_size || 20));
-        }
-        
-      } catch (err) {
-        console.error('Error loading messages:', err);
-        error = err.message;
-      } finally {
-        loading = false;
+    try {
+      const [messagesResponse, statsResponse] = await Promise.all([
+        getMessages({ 
+          page: currentPage,
+          box: activeFilter === 'all' ? undefined : activeFilter,
+          search: searchQuery || undefined
+        }),
+        getMessageStats()
+      ]);
+      
+      messages = messagesResponse.results || messagesResponse;
+      stats = statsResponse.data || statsResponse;
+      
+      if (messagesResponse.count) {
+        totalPages = Math.ceil(messagesResponse.count / (messagesResponse.page_size || 20));
       }
+      
+    } catch (err) {
+      console.error('Error loading messages:', err);
+      error = err.message || $t('error.fetchFailed');
+    } finally {
+      loading = false;
     }
-    
-    // Handle filter change
-    function setActiveFilter(filterId) {
-      activeFilter = filterId;
+  }
+  
+  // Handle filter change
+  function setActiveFilter(filterId) {
+    activeFilter = filterId;
+    currentPage = 1;
+    selectedMessage = null;
+    loadMessages();
+  }
+  
+  // Handle search with debounce
+  let searchTimeout;
+  function handleSearch() {
+    clearTimeout(searchTimeout);
+    searchTimeout = setTimeout(() => {
       currentPage = 1;
-      selectedMessage = null;
-      showMobileMenu = false;
       loadMessages();
-    }
+    }, 300);
+  }
+  
+  // Select message
+  async function selectMessage(message) {
+    selectedMessage = message;
+    showMobileDetail = true;
     
-    // Handle search
-    let searchTimeout;
-    function handleSearch() {
-      clearTimeout(searchTimeout);
-      searchTimeout = setTimeout(() => {
-        currentPage = 1;
-        loadMessages();
-      }, 500);
-    }
-    
-    // Select message
-    async function selectMessage(message) {
-      selectedMessage = message;
-      
-      // Mark as read if unread
-      if (message.status === 'unread' && message.recipient_info?.id === $user?.id) {
-        try {
-          await markMessageAsRead(message.id);
-          message.status = 'read';
-          stats.unread_count = Math.max(0, stats.unread_count - 1);
-        } catch (err) {
-          console.error('Error marking message as read:', err);
-        }
-      }
-    }
-    
-    // Archive message
-    async function handleArchiveMessage(messageId) {
+    // Mark as read if unread
+    if (message.status === 'unread' && message.recipient_info?.id === $user?.id) {
       try {
-        await archiveMessage(messageId);
-        const messageIndex = messages.findIndex(m => m.id === messageId);
-        if (messageIndex > -1) {
-          messages[messageIndex].status = 'archived';
-        }
-        if (selectedMessage?.id === messageId) {
-          selectedMessage = null;
-        }
+        await markMessageAsRead(message.id);
+        message.status = 'read';
+        stats.unread_count = Math.max(0, (stats.unread_count || 0) - 1);
       } catch (err) {
-        console.error('Error archiving message:', err);
+        console.error('Error marking message as read:', err);
       }
     }
-    
-    // Delete message
-    async function handleDeleteMessage(messageId) {
-      if (!confirm($t('messages.confirmDelete'))) return;
-      
-      try {
-        await deleteMessage(messageId);
-        messages = messages.filter(m => m.id !== messageId);
-        if (selectedMessage?.id === messageId) {
-          selectedMessage = null;
-        }
-      } catch (err) {
-        console.error('Error deleting message:', err);
+  }
+  
+  // Archive message
+  async function handleArchiveMessage(messageId) {
+    try {
+      await archiveMessage(messageId);
+      const messageIndex = messages.findIndex(m => m.id === messageId);
+      if (messageIndex > -1) {
+        messages[messageIndex].status = 'archived';
       }
-    }
-    
-    // Format date
-    function formatDate(dateString) {
-      if (!dateString) return '';
-      const date = new Date(dateString);
-      const now = new Date();
-      const diffTime = Math.abs(now - date);
-      const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-      
-      if (diffDays === 1) {
-        return $t('common.today');
-      } else if (diffDays === 2) {
-        return $t('common.yesterday');
-      } else if (diffDays < 7) {
-        return date.toLocaleDateString($locale, { weekday: 'long' });
-      } else {
-        return date.toLocaleDateString($locale, { 
-          year: 'numeric', 
-          month: 'short', 
-          day: 'numeric' 
-        });
+      if (selectedMessage?.id === messageId) {
+        selectedMessage = null;
+        showMobileDetail = false;
       }
+    } catch (err) {
+      console.error('Error archiving message:', err);
     }
+  }
+  
+  // Delete message
+  async function handleDeleteMessage(messageId) {
+    if (!confirm($t('messages.confirmDelete'))) return;
     
-    // Get icon by name
-    function getIcon(name) {
-      const icons = {
-        inbox: `<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m14 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m14 0H8m12 0H4m0 0l4-4m0 4l4-4"></path></svg>`,
-        send: `<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"></path></svg>`,
-        mail: `<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path></svg>`,
-        archive: `<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 8l6 6 6-6"></path></svg>`
-      };
-      return icons[name] || '';
+    try {
+      await deleteMessage(messageId);
+      messages = messages.filter(m => m.id !== messageId);
+      if (selectedMessage?.id === messageId) {
+        selectedMessage = null;
+        showMobileDetail = false;
+      }
+    } catch (err) {
+      console.error('Error deleting message:', err);
     }
+  }
+  
+  // Format date/time
+  function formatDateTime(dateString) {
+    if (!dateString) return '';
+    const date = new Date(dateString);
+    const now = new Date();
+    const diffMs = now - date;
+    const diffMins = Math.floor(diffMs / 60000);
     
-    // Load data on mount
-    onMount(() => {
-      loadMessages();
+    if (diffMins < 1) return $t('common.justNow');
+    if (diffMins < 60) return $t('common.minutesAgo', { count: diffMins });
+    if (diffMins < 1440) return $t('common.hoursAgo', { count: Math.floor(diffMins / 60) });
+    if (diffMins < 2880) return $t('common.yesterday');
+    
+    return date.toLocaleDateString($locale, { 
+      month: 'short', 
+      day: 'numeric',
+      year: date.getFullYear() !== now.getFullYear() ? 'numeric' : undefined
     });
-  </script>
+  }
   
-  <svelte:head>
-    <title>{$t('messages.title')} | Auction Platform</title>
-  </svelte:head>
+  // Get priority badge color
+  function getPriorityColor(priority) {
+    const colors = {
+      low: 'bg-slate-100 text-slate-700 dark:bg-slate-900 dark:text-slate-300',
+      normal: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900 dark:text-emerald-300',
+      high: 'bg-amber-100 text-amber-700 dark:bg-amber-900 dark:text-amber-300',
+      urgent: 'bg-rose-100 text-rose-700 dark:bg-rose-900 dark:text-rose-300'
+    };
+    return colors[priority] || colors.normal;
+  }
   
+  // Initialize
+  onMount(() => {
+    loadMessages();
+  });
+</script>
+
+<svelte:head>
+  <title>{$t('messages.title')} | {$t('app.name')}</title>
+</svelte:head>
+
 <div class="min-h-screen bg-gray-50 dark:bg-gray-900">
-  <!-- Header -->
-  <div class="bg-white dark:bg-gray-800 shadow-md">
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-      <div class="md:flex md:items-center md:justify-between">
+  <div class="max-w-7xl mx-auto">
+    <!-- Header -->
+    <div class="px-4 sm:px-6 lg:px-8 py-6 sm:py-8">
+      <div class="flex items-center justify-between">
         <div>
-          <h1 class="text-2xl md:text-3xl font-bold text-gray-900 dark:text-white flex items-center">
-            <svg class="w-8 h-8 {isRTL ? 'ml-3' : 'mr-3'} text-primary-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
-            </svg>
+          <h1 class="text-2xl font-semibold text-gray-900 dark:text-white">
             {$t('messages.title')}
           </h1>
-          
           {#if stats.total_messages}
-            <p class="mt-2 text-sm text-gray-600 dark:text-gray-400">
-              {stats.total_messages} {$t('messages.totalMessages')}
+            <p class="mt-1 text-sm text-gray-600 dark:text-gray-400">
+              {stats.total_messages} {$t('messages.total')}
               {#if stats.unread_count > 0}
-                • <span class="font-semibold text-primary-600 dark:text-primary-400">
+                · <span class="font-medium text-amber-600 dark:text-amber-400">
                   {stats.unread_count} {$t('messages.unread')}
                 </span>
               {/if}
@@ -218,332 +220,571 @@
           {/if}
         </div>
         
-        <!-- Mobile Menu Button -->
-        <button
-          type="button"
-          class="md:hidden mt-4 p-2 rounded-md bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300"
-          on:click={() => showMobileMenu = !showMobileMenu}
+        <Button
+          href="/messages/compose"
+          variant="primary"
+          size="sm"
+          class="hidden sm:inline-flex"
         >
-          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
+          <svg class="w-4 h-4 {isRTL ? 'ml-2' : 'mr-2'}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
           </svg>
-        </button>
+          {$t('messages.compose')}
+        </Button>
       </div>
     </div>
-  </div>
-  
-  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-    <div class="grid grid-cols-1 lg:grid-cols-4 gap-8">
-      <!-- Sidebar -->
-      <div class="lg:col-span-1">
-        <div class={`${showMobileMenu ? 'block' : 'hidden'} lg:block`}>
-          <!-- Search -->
-          <div class="mb-6">
+
+    <!-- Main Content -->
+    <div class="px-4 sm:px-6 lg:px-8">
+      <!-- Mobile Filters Toggle Button -->
+      <div class="lg:hidden mb-4">
+        <div class="flex items-center justify-between">
+          <div class="flex-1">
             <div class="relative">
               <input
                 type="text"
                 bind:value={searchQuery}
-                on:input={handleSearch}
-                placeholder={$t('messages.searchPlaceholder')}
-                class="w-full pl-10 pr-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 dark:bg-gray-700 dark:text-white"
+                oninput={handleSearch}
+                placeholder={$t('messages.search')}
+                class="w-full pl-9 pr-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg 
+                  bg-white dark:bg-gray-800 text-gray-900 dark:text-white
+                  focus:ring-2 focus:ring-primary-500 focus:border-primary-500 focus:outline-none"
               />
-              <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                <svg class="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                </svg>
-              </div>
+              <svg class="absolute left-3 top-2.5 w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+              </svg>
+            </div>
+          </div>
+          <button 
+            type="button" 
+            class="mobile-filter-toggle ml-3 flex-shrink-0 inline-flex items-center justify-center p-2 rounded-md text-gray-500 hover:text-gray-700 hover:bg-gray-100 dark:text-gray-400 dark:hover:text-gray-200 dark:hover:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-primary-500"
+            aria-expanded={showMobileFilters}
+            aria-controls="mobile-filters-panel"
+            onclick={toggleMobileFilters}
+          >
+            <span class="sr-only">{showMobileFilters ? $t('common.hideFilters') : $t('common.showFilters')}</span>
+            <svg class="filter-icon w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" />
+            </svg>
+            <span class="ml-2 text-sm font-medium">{activeFilter !== 'all' ? $t(`messages.filters.${activeFilter}`) : $t('messages.filters.all')}</span>
+            <span class="filter-badge ml-2 text-xs px-2 py-0.5 rounded-full bg-primary-100 text-primary-800 dark:bg-primary-900 dark:text-primary-200">
+              {activeFilter === 'all' ? stats.total_messages :
+               activeFilter === 'inbox' ? stats.received_count :
+               activeFilter === 'sent' ? stats.sent_count :
+               activeFilter === 'unread' ? stats.unread_count : 0}
+            </span>
+          </button>
+        </div>
+
+        <!-- Mobile Filters Panel -->
+        {#if showMobileFilters}
+          <div 
+            id="mobile-filters-panel"
+            class="mobile-filters-panel mt-3 bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 overflow-hidden"
+            transition:slide={{ duration: 300, easing: (t) => 1 - Math.pow(1 - t, 3) }}
+          >
+            <div class="p-3 space-y-1">
+              {#each filterOptions as filter}
+                {@const count = filter.id === 'all' ? stats.total_messages :
+                  filter.id === 'inbox' ? stats.received_count :
+                  filter.id === 'sent' ? stats.sent_count :
+                  filter.id === 'unread' ? stats.unread_count : 0}
+                
+                <button
+                  type="button"
+                  class="filter-option w-full flex items-center justify-between px-3 py-2.5 text-sm rounded-lg transition-all duration-200
+                    {activeFilter === filter.id
+                      ? `bg-${filter.color}-100 dark:bg-${filter.color}-900/20 text-${filter.color}-700 dark:text-${filter.color}-300 font-medium`
+                      : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800'
+                    }"
+                  onclick={() => { 
+                    setActiveFilter(filter.id);
+                    // Close mobile filters after selection on small screens
+                    if (window.innerWidth < 640) {
+                      showMobileFilters = false;
+                    }
+                  }}
+                >
+                  <div class="flex items-center">
+                    <span class="filter-icon flex-shrink-0 w-5 h-5 mr-2 {activeFilter === filter.id ? `text-${filter.color}-600 dark:text-${filter.color}-400` : 'text-gray-400 dark:text-gray-500'}">
+                      {#if filter.icon === 'grid'}
+                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" />
+                        </svg>
+                      {:else if filter.icon === 'inbox'}
+                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4" />
+                        </svg>
+                      {:else if filter.icon === 'send'}
+                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
+                        </svg>
+                      {:else if filter.icon === 'mail'}
+                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                        </svg>
+                      {:else if filter.icon === 'archive'}
+                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4" />
+                        </svg>
+                      {/if}
+                    </span>
+                    <span class="filter-label">{$t(filter.label)}</span>
+                  </div>
+                  {#if count > 0}
+                    <span class={`filter-count text-xs px-2 py-0.5 rounded-full
+                      ${activeFilter === filter.id 
+                        ? `bg-${filter.color}-200 dark:bg-${filter.color}-800 text-${filter.color}-800 dark:text-${filter.color}-200`
+                        : 'bg-gray-200 dark:bg-gray-700'
+                      }`}>
+                      {count}
+                    </span>
+                  {/if}
+                </button>
+              {/each}
+            </div>
+          </div>
+        {/if}
+      </div>
+
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+        <!-- Sidebar - Desktop Only -->
+        <div class="hidden lg:block lg:col-span-3">
+          <!-- Search -->
+          <div class="mb-4">
+            <div class="relative">
+              <input
+                type="text"
+                bind:value={searchQuery}
+                oninput={handleSearch}
+                placeholder={$t('messages.search')}
+                class="w-full pl-9 pr-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg 
+                  bg-white dark:bg-gray-800 text-gray-900 dark:text-white
+                  focus:ring-2 focus:ring-primary-500 focus:border-primary-500 focus:outline-none"
+              />
+              <svg class="absolute left-3 top-2.5 w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+              </svg>
             </div>
           </div>
           
-          <!-- Filters -->
-          <nav class="space-y-2">
+          <!-- Filters - Desktop -->
+          <nav class="space-y-1">
             {#each filterOptions as filter}
+              {@const count = filter.id === 'all' ? stats.total_messages :
+                filter.id === 'inbox' ? stats.received_count :
+                filter.id === 'sent' ? stats.sent_count :
+                filter.id === 'unread' ? stats.unread_count : 0}
+              
               <button
                 type="button"
-                class={`w-full flex items-center justify-between px-4 py-3 rounded-lg text-sm font-medium transition-colors ${
-                  activeFilter === filter.id
-                    ? 'bg-primary-100 dark:bg-primary-900/30 text-primary-700 dark:text-primary-300 border border-primary-200 dark:border-primary-700'
-                    : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 border border-transparent'
-                }`}
-                on:click={() => setActiveFilter(filter.id)}
+                class="w-full flex items-center justify-between px-3 py-2 text-sm rounded-lg transition-colors
+                  {activeFilter === filter.id
+                    ? `bg-${filter.color}-100 dark:bg-${filter.color}-900/20 text-${filter.color}-700 dark:text-${filter.color}-300 font-medium`
+                    : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800'
+                  }"
+                onclick={() => setActiveFilter(filter.id)}
               >
-                <div class="flex items-center">
-                  {@html getIcon(filter.icon)}
-                  <span class="{isRTL ? 'mr-3' : 'ml-3'}">{$t(filter.label)}</span>
-                </div>
-                
-                {#if filter.count() > 0}
-                  <span class={`px-2 py-1 text-xs rounded-full ${
-                    activeFilter === filter.id
-                      ? 'bg-primary-200 dark:bg-primary-800 text-primary-800 dark:text-primary-200'
-                      : 'bg-gray-200 dark:bg-gray-600 text-gray-700 dark:text-gray-300'
-                  }`}>
-                    {filter.count()}
+                <span>{$t(filter.label)}</span>
+                {#if count > 0}
+                  <span class={`text-xs px-2 py-0.5 rounded-full
+                    ${activeFilter === filter.id 
+                      ? `bg-${filter.color}-200 dark:bg-${filter.color}-800 text-${filter.color}-800 dark:text-${filter.color}-200`
+                      : 'bg-gray-200 dark:bg-gray-700'
+                    }`}>
+                    {count}
                   </span>
                 {/if}
               </button>
             {/each}
           </nav>
         </div>
-      </div>
-      
-      <!-- Messages List -->
-      <div class="lg:col-span-2">
-        <div class="bg-white dark:bg-gray-800 rounded-xl shadow-lg border border-gray-200 dark:border-gray-700">
-          {#if loading}
-            <div class="p-6 space-y-4">
-              {#each Array(5) as _}
-                <LoadingSkeleton height="80px" />
-              {/each}
-            </div>
-          {:else if error}
-            <div class="p-6 text-center">
-              <svg class="mx-auto h-12 w-12 text-red-500 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-              </svg>
-              <p class="text-red-600 dark:text-red-400">{error}</p>
-              <Button
-                onClick={loadMessages}
-                variant="outline"
-                size="default"
-                class="mt-4"
-              >
-                {$t('common.tryAgain')}
-              </Button>
-            </div>
-          {:else if filteredMessages.length === 0}
-            <div class="p-12 text-center">
-              <svg class="mx-auto h-16 w-16 text-gray-400 dark:text-gray-500 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m14 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m14 0H8m12 0H4m0 0l4-4m0 4l4-4" />
-              </svg>
-              <h3 class="text-lg font-medium text-gray-900 dark:text-white mb-2">
-                {$t('messages.noMessages')}
-              </h3>
-              <p class="text-gray-600 dark:text-gray-400">
-                {searchQuery ? $t('messages.noSearchResults') : $t('messages.noMessagesDesc')}
-              </p>
-            </div>
-          {:else}
-            <div class="divide-y divide-gray-200 dark:divide-gray-700">
-              {#each filteredMessages as message, index (message.id)}
-                <button
-                  type="button"
-                  class={`w-full p-4 text-left hover:bg-gray-50 dark:hover:bg-gray-750 transition-colors ${
-                    selectedMessage?.id === message.id ? 'bg-primary-50 dark:bg-primary-900/20' : ''
-                  } ${message.status === 'unread' ? 'border-l-4 border-primary-500' : ''}`}
-                  on:click={() => selectMessage(message)}
-                  in:fly={{ y: 20, duration: 200, delay: index * 50 }}
+        
+        <!-- Messages List -->
+        <div class="lg:col-span-5">
+          <div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
+            {#if loading}
+              <div class="p-4 space-y-3">
+                {#each Array(5) as _}
+                  <LoadingSkeleton height="72px" />
+                {/each}
+              </div>
+            {:else if error}
+              <div class="p-8 text-center">
+                <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                <p class="mt-2 text-sm text-gray-600 dark:text-gray-400">{error}</p>
+                <Button
+                  onclick={loadMessages}
+                  variant="outline"
+                  size="sm"
+                  class="mt-4"
                 >
-                  <div class="flex items-start justify-between">
-                    <div class="flex-1 min-w-0">
-                      <!-- Sender/Recipient info -->
-                      <div class="flex items-center mb-1">
-                        <div class="w-8 h-8 bg-gradient-to-br from-primary-500 to-secondary-500 rounded-full flex items-center justify-center text-white text-sm font-semibold {isRTL ? 'ml-3' : 'mr-3'}">
-                          {(message.sender_info?.name || 'U')[0].toUpperCase()}
+                  {$t('common.tryAgain')}
+                </Button>
+              </div>
+            {:else if filteredMessages.length === 0}
+              <div class="p-8 text-center">
+                <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                </svg>
+                <p class="mt-2 text-sm font-medium text-gray-900 dark:text-white">
+                  {$t('messages.noMessages')}
+                </p>
+                <p class="text-sm text-gray-600 dark:text-gray-400">
+                  {searchQuery ? $t('messages.noSearchResults') : $t('messages.startConversation')}
+                </p>
+              </div>
+            {:else}
+              <div class="divide-y divide-gray-200 dark:divide-gray-700">
+                {#each filteredMessages as message (message.id)}
+                  <button
+                    type="button"
+                    class="w-full px-4 py-3 text-left hover:bg-gray-50 dark:hover:bg-gray-750 transition-colors
+                      {selectedMessage?.id === message.id ? 'bg-primary-50 dark:bg-primary-900/10' : ''}
+                      {message.status === 'unread' ? 'border-l-2 border-primary-500' : ''}"
+                    onclick={() => selectMessage(message)}
+                  >
+                    <div class="flex items-start gap-3">
+                      <!-- Avatar -->
+                      <div class="flex-shrink-0 w-10 h-10 rounded-full bg-gradient-to-br from-gray-400 to-gray-600 flex items-center justify-center text-white font-medium text-sm">
+                        {message.sender_info?.name?.[0]?.toUpperCase() || '?'}
+                      </div>
+                      
+                      <!-- Content -->
+                      <div class="flex-1 min-w-0">
+                        <div class="flex items-start justify-between gap-2">
+                          <div class="flex-1 min-w-0">
+                            <p class={`text-sm ${message.status === 'unread' ? 'font-semibold' : 'font-medium'} text-gray-900 dark:text-white truncate`}>
+                              {message.sender_info?.id === $user?.id 
+                                ? $t('messages.to', { name: message.recipient_info?.name })
+                                : message.sender_info?.name}
+                            </p>
+                            <p class={`text-sm ${message.status === 'unread' ? 'font-medium text-gray-900 dark:text-white' : 'text-gray-600 dark:text-gray-400'} truncate`}>
+                              {message.subject}
+                            </p>
+                          </div>
+                          <span class="flex-shrink-0 text-xs text-gray-500 dark:text-gray-400">
+                            {formatDateTime(message.created_at)}
+                          </span>
                         </div>
                         
-                        <div class="flex-1 min-w-0">
-                          <p class={`text-sm ${message.status === 'unread' ? 'font-semibold' : 'font-medium'} text-gray-900 dark:text-white truncate`}>
-                            {message.sender_info?.id === $user?.id 
-                              ? `To: ${message.recipient_info?.name}` 
-                              : message.sender_info?.name}
-                          </p>
-                          
+                        <p class="mt-1 text-sm text-gray-600 dark:text-gray-400 line-clamp-1">
+                          {message.body}
+                        </p>
+                        
+                        <!-- Tags -->
+                        <div class="mt-1 flex items-center gap-2">
+                          {#if message.priority !== 'normal'}
+                            <span class={`inline-flex items-center px-1.5 py-0.5 rounded text-xs font-medium ${getPriorityColor(message.priority)}`}>
+                              {$t(`messages.priority.${message.priority}`)}
+                            </span>
+                          {/if}
                           {#if message.property_info}
-                            <p class="text-xs text-primary-600 dark:text-primary-400 truncate">
-                              {$t('messages.aboutProperty')}: {message.property_info.title}
-                            </p>
+                            <span class="inline-flex items-center text-xs text-primary-600 dark:text-primary-400">
+                              <svg class="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
+                              </svg>
+                              {message.property_info.title}
+                            </span>
                           {/if}
                         </div>
                       </div>
-                      
-                      <!-- Subject -->
-                      <h4 class={`text-sm ${message.status === 'unread' ? 'font-semibold' : 'font-medium'} text-gray-900 dark:text-white mb-1 truncate`}>
-                        {message.subject}
-                      </h4>
-                      
-                      <!-- Preview -->
-                      <p class="text-sm text-gray-600 dark:text-gray-400 line-clamp-2">
-                        {message.body}
+                    </div>
+                  </button>
+                {/each}
+              </div>
+            {/if}
+          </div>
+          
+          <!-- Pagination -->
+          {#if totalPages > 1}
+            <div class="mt-4 flex items-center justify-center gap-2">
+              <button
+                type="button"
+                onclick={() => {
+                  if (currentPage > 1) {
+                    currentPage--;
+                    loadMessages();
+                  }
+                }}
+                disabled={currentPage === 1}
+                class="px-3 py-1 text-sm rounded border border-gray-300 dark:border-gray-600 
+                  disabled:opacity-50 disabled:cursor-not-allowed
+                  hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+              >
+                {$t('common.previous')}
+              </button>
+              <span class="text-sm text-gray-600 dark:text-gray-400">
+                {currentPage} / {totalPages}
+              </span>
+              <button
+                type="button"
+                onclick={() => {
+                  if (currentPage < totalPages) {
+                    currentPage++;
+                    loadMessages();
+                  }
+                }}
+                disabled={currentPage === totalPages}
+                class="px-3 py-1 text-sm rounded border border-gray-300 dark:border-gray-600 
+                  disabled:opacity-50 disabled:cursor-not-allowed
+                  hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+              >
+                {$t('common.next')}
+              </button>
+            </div>
+          {/if}
+        </div>
+        
+        <!-- Message Detail -->
+        <div class="lg:col-span-4 {showMobileDetail ? 'block' : 'hidden'} lg:block">
+          {#if selectedMessage}
+            <div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 h-full" in:fade>
+              <!-- Message Header -->
+              <div class="px-6 py-4 border-b border-gray-200 dark:border-gray-700">
+                <div class="flex items-start justify-between">
+                  <div class="flex items-start gap-3">
+                    <div class="w-10 h-10 rounded-full bg-gradient-to-br from-gray-400 to-gray-600 flex items-center justify-center text-white font-medium text-sm">
+                      {selectedMessage.sender_info?.name?.[0]?.toUpperCase() || '?'}
+                    </div>
+                    <div>
+                      <h3 class="text-sm font-semibold text-gray-900 dark:text-white">
+                        {selectedMessage.sender_info?.name}
+                      </h3>
+                      <p class="text-xs text-gray-500 dark:text-gray-400">
+                        {selectedMessage.sender_info?.email}
                       </p>
                     </div>
-                    
-                    <!-- Meta info -->
-                    <div class="flex flex-col items-end {isRTL ? 'mr-4' : 'ml-4'} flex-shrink-0">
-                      <span class="text-xs text-gray-500 dark:text-gray-400">
-                        {formatDate(message.created_at)}
-                      </span>
-                      
-                      {#if message.status === 'unread'}
-                        <div class="w-2 h-2 bg-primary-500 rounded-full mt-1"></div>
-                      {/if}
-                      
-                      {#if message.priority === 'high' || message.priority === 'urgent'}
-                        <svg class="w-4 h-4 text-red-500 mt-1" fill="currentColor" viewBox="0 0 20 20">
-                          <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd" />
-                        </svg>
-                      {/if}
-                    </div>
                   </div>
-                </button>
-              {/each}
+                  
+                  <!-- Actions -->
+                  <div class="flex items-center gap-1">
+                    <button
+                      type="button"
+                      onclick={() => handleArchiveMessage(selectedMessage.id)}
+                      class="p-1.5 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 rounded hover:bg-gray-100 dark:hover:bg-gray-700"
+                      title={$t('messages.archive')}
+                      aria-label={$t('messages.archive')}
+                    >
+                      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4" />
+                      </svg>
+                    </button>
+                    <button
+                      type="button"
+                      onclick={() => handleDeleteMessage(selectedMessage.id)}
+                      class="p-1.5 text-gray-400 hover:text-red-600 dark:hover:text-red-400 rounded hover:bg-gray-100 dark:hover:bg-gray-700"
+                      title={$t('messages.delete')}
+                      aria-label={$t('messages.delete')}
+                    >
+                      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                      </svg>
+                    </button>
+                    <button
+                      type="button"
+                      onclick={() => showMobileDetail = false}
+                      class="p-1.5 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 rounded hover:bg-gray-100 dark:hover:bg-gray-700 lg:hidden"
+                      aria-label={$t('messages.close')}
+                    >
+                      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                      </svg>
+                    </button>
+                  </div>
+                </div>
+                
+                <!-- Subject & Meta -->
+                <div class="mt-3">
+                  <h2 class="text-base font-semibold text-gray-900 dark:text-white">
+                    {selectedMessage.subject}
+                  </h2>
+                  <div class="mt-1 flex items-center gap-3 text-xs text-gray-500 dark:text-gray-400">
+                    <span>{new Date(selectedMessage.created_at).toLocaleString($locale)}</span>
+                    {#if selectedMessage.priority !== 'normal'}
+                      <span class={`inline-flex items-center px-1.5 py-0.5 rounded font-medium ${getPriorityColor(selectedMessage.priority)}`}>
+                        {$t(`messages.priority.${selectedMessage.priority}`)}
+                      </span>
+                    {/if}
+                  </div>
+                </div>
+              </div>
+              
+              <!-- Message Body -->
+              <div class="px-6 py-4 flex-1 overflow-y-auto">
+                <div class="prose prose-sm dark:prose-invert max-w-none">
+                  <p class="whitespace-pre-wrap text-gray-700 dark:text-gray-300">
+                    {selectedMessage.body}
+                  </p>
+                </div>
+                
+                <!-- Property Link -->
+                {#if selectedMessage.property_info}
+                  <div class="mt-6 p-3 bg-gray-50 dark:bg-gray-900/50 rounded-lg border border-gray-200 dark:border-gray-700">
+                    <p class="text-xs font-medium text-gray-500 dark:text-gray-400 mb-2">
+                      {$t('messages.relatedProperty')}
+                    </p>
+                    <a 
+                      href="/properties/{selectedMessage.property_info.slug}"
+                      class="flex items-center gap-3 group"
+                    >
+                      <div class="flex-shrink-0 w-12 h-12 bg-gray-200 dark:bg-gray-700 rounded-lg flex items-center justify-center">
+                        <svg class="w-6 h-6 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
+                        </svg>
+                      </div>
+                      <div class="flex-1 min-w-0">
+                        <p class="text-sm font-medium text-gray-900 dark:text-white group-hover:text-primary-600 dark:group-hover:text-primary-400">
+                          {selectedMessage.property_info.title}
+                        </p>
+                        {#if selectedMessage.property_info.market_value}
+                          <p class="text-xs text-gray-600 dark:text-gray-400">
+                            ${selectedMessage.property_info.market_value.toLocaleString()}
+                          </p>
+                        {/if}
+                      </div>
+                      <svg class="w-4 h-4 text-gray-400 group-hover:text-gray-600 dark:group-hover:text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+                      </svg>
+                    </a>
+                  </div>
+                {/if}
+              </div>
+              
+              <!-- Reply Button -->
+              <div class="px-6 py-4 border-t border-gray-200 dark:border-gray-700">
+                <Button
+                  href="/messages/compose?reply={selectedMessage.id}"
+                  variant="primary"
+                  size="sm"
+                  class="w-full"
+                >
+                  <svg class="w-4 h-4 {isRTL ? 'ml-2' : 'mr-2'}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6" />
+                  </svg>
+                  {$t('messages.reply')}
+                </Button>
+              </div>
+            </div>
+          {:else}
+            <div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 h-full flex items-center justify-center p-8">
+              <div class="text-center">
+                <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                </svg>
+                <p class="mt-2 text-sm font-medium text-gray-900 dark:text-white">
+                  {$t('messages.selectToRead')}
+                </p>
+                <p class="text-sm text-gray-600 dark:text-gray-400">
+                  {$t('messages.selectToReadDesc')}
+                </p>
+              </div>
             </div>
           {/if}
         </div>
       </div>
-      
-      <!-- Message Detail -->
-      <div class="lg:col-span-1">
-        {#if selectedMessage}
-          <div 
-            class="bg-white dark:bg-gray-800 rounded-xl shadow-lg border border-gray-200 dark:border-gray-700 sticky top-8"
-            transition:slide={{ duration: 300 }}
-          >
-            <!-- Header -->
-            <div class="p-6 border-b border-gray-200 dark:border-gray-700">
-              <div class="flex items-start justify-between mb-4">
-                <div class="flex items-center">
-                  <div class="w-10 h-10 bg-gradient-to-br from-primary-500 to-secondary-500 rounded-full flex items-center justify-center text-white font-semibold {isRTL ? 'ml-3' : 'mr-3'}">
-                    {(selectedMessage.sender_info?.name || 'U')[0].toUpperCase()}
-                  </div>
-                  <div>
-                    <p class="font-medium text-gray-900 dark:text-white">
-                      {selectedMessage.sender_info?.name}
-                    </p>
-                    <p class="text-sm text-gray-600 dark:text-gray-400">
-                      {formatDate(selectedMessage.created_at)}
-                    </p>
-                  </div>
-                </div>
-                
-                <!-- Actions -->
-                <div class="flex items-center space-x-2">
-                  <button
-                    type="button"
-                    on:click={() => handleArchiveMessage(selectedMessage.id)}
-                    class="p-2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700"
-                    title={$t('messages.archive')}
-                  >
-                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 8l6 6 6-6" />
-                    </svg>
-                  </button>
-                  
-                  <button
-                    type="button"
-                    on:click={() => handleDeleteMessage(selectedMessage.id)}
-                    class="p-2 text-gray-400 hover:text-red-600 dark:hover:text-red-400 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700"
-                    title={$t('messages.delete')}
-                  >
-                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                    </svg>
-                  </button>
-                </div>
-              </div>
-              
-              <!-- Subject and Priority -->
-              <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-2">
-                {selectedMessage.subject}
-              </h3>
-              
-              <div class="flex items-center space-x-2">
-                {#if selectedMessage.priority !== 'normal'}
-                  <span class={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
-                    selectedMessage.priority === 'urgent' ? 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200' :
-                    selectedMessage.priority === 'high' ? 'bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-200' :
-                    'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-200'
-                  }`}>
-                    {selectedMessage.priority_display}
-                  </span>
-                {/if}
-                
-                {#if selectedMessage.property_info}
-                  <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-primary-100 text-primary-800 dark:bg-primary-900 dark:text-primary-200">
-                    {$t('messages.propertyInquiry')}
-                  </span>
-                {/if}
-              </div>
-            </div>
-            
-            <!-- Message Content -->
-            <div class="p-6">
-              <div class="prose dark:prose-invert max-w-none">
-                <p class="text-gray-800 dark:text-gray-200 whitespace-pre-wrap leading-relaxed">
-                  {selectedMessage.body}
-                </p>
-              </div>
-              
-              <!-- Property Info -->
-              {#if selectedMessage.property_info}
-                <div class="mt-6 p-4 bg-gray-50 dark:bg-gray-750 rounded-lg">
-                  <h4 class="text-sm font-medium text-gray-900 dark:text-white mb-2">
-                    {$t('messages.relatedProperty')}
-                  </h4>
-                  <a 
-                    href="/properties/{selectedMessage.property_info.slug}"
-                    class="flex items-center hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg p-2 transition-colors"
-                  >
-                    {#if selectedMessage.property_info.main_image}
-                      <img 
-                        src={selectedMessage.property_info.main_image.url} 
-                        alt={selectedMessage.property_info.title}
-                        class="w-12 h-12 rounded-lg object-cover {isRTL ? 'ml-3' : 'mr-3'}"
-                      />
-                    {/if}
-                    <div>
-                      <p class="font-medium text-gray-900 dark:text-white text-sm">
-                        {selectedMessage.property_info.title}
-                      </p>
-                      {#if selectedMessage.property_info.market_value}
-                        <p class="text-primary-600 dark:text-primary-400 text-sm">
-                          ${selectedMessage.property_info.market_value.toLocaleString()}
-                        </p>
-                      {/if}
-                    </div>
-                  </a>
-                </div>
-              {/if}
-            </div>
-            
-            <!-- Reply Button -->
-            <div class="p-6 border-t border-gray-200 dark:border-gray-700">
-              <Button
-                href="/messages/compose?reply={selectedMessage.id}"
-                variant="primary"
-                size="default"
-                class="w-full"
-              >
-                <svg class="w-4 h-4 {isRTL ? 'ml-2' : 'mr-2'}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6" />
-                </svg>
-                {$t('messages.reply')}
-              </Button>
-            </div>
-          </div>
-        {:else}
-          <div class="bg-white dark:bg-gray-800 rounded-xl shadow-lg border border-gray-200 dark:border-gray-700 p-12 text-center">
-            <svg class="mx-auto h-16 w-16 text-gray-400 dark:text-gray-500 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
-            </svg>
-            <h3 class="text-lg font-medium text-gray-900 dark:text-white mb-2">
-              {$t('messages.selectMessage')}
-            </h3>
-            <p class="text-gray-600 dark:text-gray-400">
-              {$t('messages.selectMessageDesc')}
-            </p>
-          </div>
-        {/if}
-      </div>
     </div>
   </div>
 </div>
-  
+
+<!-- Mobile Compose Button -->
+<div class="fixed bottom-4 right-4 sm:hidden">
+  <Button
+    href="/messages/compose"
+    variant="primary"
+    size="sm"
+    rounded="full"
+    class="!p-3 shadow-lg"
+  >
+    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+    </svg>
+  </Button>
+</div>
+
 <style>
-    .line-clamp-2 {
-      display: -webkit-box;
-      -webkit-line-clamp: 2;
-      -webkit-box-orient: vertical;
-      overflow: hidden;
+  .line-clamp-1 {
+    display: -webkit-box;
+    -webkit-line-clamp: 1;
+    line-clamp: 1;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+  
+  /* Mobile filter animations and styling */
+  .mobile-filter-toggle {
+    position: relative;
+    transition: all 0.2s ease;
+  }
+  
+  .mobile-filter-toggle:active {
+    transform: scale(0.95);
+  }
+  
+  .filter-icon {
+    transition: transform 0.3s ease;
+  }
+  
+  .mobile-filter-toggle[aria-expanded="true"] .filter-icon {
+    transform: rotate(180deg);
+  }
+  
+  .filter-badge {
+    transition: all 0.2s ease;
+  }
+  
+  .mobile-filters-panel {
+    transform-origin: top center;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  }
+  
+  .filter-option {
+    position: relative;
+    overflow: hidden;
+  }
+  
+  .filter-option:active {
+    transform: translateY(1px);
+  }
+  
+  .filter-option::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 100%;
+    height: 100%;
+    background-color: currentColor;
+    border-radius: 50%;
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(0);
+    transition: opacity 0.5s, transform 0.3s;
+  }
+  
+  .filter-option:active::after {
+    opacity: 0.1;
+    transform: translate(-50%, -50%) scale(1);
+    transition: opacity 0s, transform 0s;
+  }
+  
+  .filter-label, .filter-icon, .filter-count {
+    position: relative;
+    z-index: 1;
+    transition: transform 0.2s ease;
+  }
+  
+  .filter-option:hover .filter-label {
+    transform: translateX(3px);
+  }
+  
+  @media (prefers-reduced-motion: reduce) {
+    *, ::before, ::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+      scroll-behavior: auto !important;
     }
+  }
 </style>

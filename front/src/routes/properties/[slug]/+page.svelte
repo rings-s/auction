@@ -1168,7 +1168,7 @@
             <!-- Map Container -->
             <div class="md:col-span-8">
               {#if property.location && (property.location.latitude || property.location.longitude)}
-                <div class="relative">
+                <div class="relative" style="z-index: 1;">
                   <div 
                     bind:this={mapElement} 
                     class="h-96 w-full rounded-xl overflow-hidden shadow-lg bg-gray-100 dark:bg-gray-700 border-2 border-gray-200 dark:border-gray-600"
