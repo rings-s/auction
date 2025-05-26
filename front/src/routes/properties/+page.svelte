@@ -2,7 +2,7 @@
 <script>
   import { onMount, onDestroy } from 'svelte';
   import { fade, slide, fly } from 'svelte/transition';
-  import { t, locale } from '../../../../i18n';
+  import { t, locale } from '$lib/i18n'; // Fixed import path
   import { user } from '$lib/stores/user';
   import { getProperties } from '$lib/api/property';
   import { properties as propertiesStore } from '$lib/stores/properties';
@@ -166,11 +166,11 @@
 </script>
 
 <svelte:head>
-  <title>{$t('properties.title')} | Real Estate Platform</title>
+  <title>{$t('properties.title')} | {$t('app.name')}</title>
   <meta name="description" content={$t('properties.subtitle')} />
 </svelte:head>
 
-<div class="min-h-screen ">
+<div class="min-h-screen" dir={isRTL ? 'rtl' : 'ltr'}>
   <!-- Enhanced Hero Section with Gradient Backdrop -->
   <div class="relative bg-white dark:bg-gray-800 shadow-md">
     <div class="absolute inset-0 bg-gradient-to-r from-primary-50 to-secondary-50 dark:from-primary-900/30 dark:to-secondary-900/30 opacity-50"></div>
@@ -211,7 +211,7 @@
           <svg class="w-4 h-4 {isRTL ? 'ml-2' : 'mr-2'}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4h13M3 8h9m-9 4h6m4 0l4-4m0 0l4 4m-4-4v12" />
           </svg>
-          <span>{$t('auction.filterAndSort')}</span>
+          <span>{$t('search.advancedFilters')}</span>
         </button>
       </div>
     </div>
@@ -289,7 +289,7 @@
                 <svg class="w-4 h-4 {isRTL ? 'ml-2' : 'mr-2'}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
                 </svg>
-                {$t('auction.tryAgain')}
+                {$t('common.tryAgain')}
               </Button>
             </div>
           </div>
@@ -328,7 +328,7 @@
             class="px-8 py-3 transition-all hover:bg-gray-50 dark:hover:bg-gray-700 rounded-full"
           >
             <div class="flex items-center">
-              <span>{$t('property.loadMore')}</span>
+              <span>{$t('auction.loadMore')}</span>
               <svg class="{isRTL ? 'mr-2' : 'ml-2'} w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
               </svg>
@@ -356,7 +356,7 @@
         <div class="sm:flex sm:items-center sm:justify-between">
           <div class="max-w-md">
             <h3 class="text-lg font-semibold text-gray-900 dark:text-white">
-              {$t('property.createNewPrompt')}
+              {$t('auction.createNewPrompt')}
             </h3>
             <p class="mt-2 text-sm text-gray-600 dark:text-gray-300">
               {$t('property.unauthorizedMessage')}
@@ -399,7 +399,7 @@
             <svg class="w-5 h-5 {isRTL ? 'ml-2' : 'mr-2'}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4h13M3 8h9m-9 4h6m4 0l4-4m0 0l4 4m-4-4v12" />
             </svg>
-            {$t('auction.filterAndSort')}
+            {$t('search.advancedFilters')}
           </h2>
           <button
             type="button"
@@ -429,18 +429,6 @@
 </div>
 
 <style>
-  /* RTL-specific styles */
-  :global(.rtl) {
-    direction: rtl;
-    text-align: right;
-  }
-  
-  /* Animation for badge appearance */
-  @keyframes fadeIn {
-    from { opacity: 0; transform: translateY(-4px); }
-    to { opacity: 1; transform: translateY(0); }
-  }
-  
   /* Scrollbar styling */
   .scrollbar-hide {
     -ms-overflow-style: none;

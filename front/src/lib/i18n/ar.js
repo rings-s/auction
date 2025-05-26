@@ -35,7 +35,9 @@ export const arTranslations = {
       whatsapp: 'مشاركة على واتساب',
       email: 'مشاركة عبر البريد الإلكتروني',
       copyLink: 'نسخ الرابط',
-      linkCopied: 'تم نسخ الرابط!'
+    
+
+
     },
   
     nav: {
@@ -280,6 +282,9 @@ export const arTranslations = {
       noActiveAuctions: 'لا توجد مزادات متاحة لهذا العقار حالياً.',
       startAuctionDesc: 'يمكنك بدء مزاد على هذا العقار',
       create: 'إنشاء',
+      noLocationData: 'لا تتوفر بيانات الموقع',
+
+
       
       tab: {
         overview: 'نظرة عامة',
@@ -433,7 +438,8 @@ export const arTranslations = {
         keyboard_nav: 'استخدم أسهم لوحة المفاتيح للتنقل',
         swipe_nav: 'اسحب للتنقل',
         press_esc: 'اضغط ESC للإغلاق'
-      }
+      },
+    
     },
   
     properties: {
