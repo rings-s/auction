@@ -1,6 +1,6 @@
 <!-- src/lib/components/AuctionStatus.svelte -->
 <script>
-    import { t } from '$lib/i18n/i18n';
+    import { t } from '../../../../../i18n';
     
     export let status = '';
     export let isCompact = false;

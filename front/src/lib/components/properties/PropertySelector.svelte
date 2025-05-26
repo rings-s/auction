@@ -1,7 +1,7 @@
 <!-- src/lib/components/PropertySelector.svelte -->
 <script>
     import { onMount, createEventDispatcher } from 'svelte';
-    import { t } from '$lib/i18n/i18n';
+    import { t } from '../../../../../i18n';
     import { getProperties } from '$lib/api/property';
     import { user } from '$lib/stores/user';
     import Button from '$lib/components/ui/Button.svelte';

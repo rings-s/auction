@@ -1,6 +1,6 @@
 <!-- src/lib/components/LanguageSelector.svelte -->
 <script>
-    import { locale, locales } from '$lib/i18n/i18n';
+    import { locale, locales } from '../../../../../i18n';
     
     function changeLocale(e) {
       locale.set(e.target.value);

@@ -2,7 +2,7 @@
 <script>
   import { onMount, onDestroy } from 'svelte';
   import { fade, slide, fly } from 'svelte/transition';
-  import { t, locale } from '$lib/i18n/i18n';
+  import { t, locale } from '../../../../i18n';
   import { user } from '$lib/stores/user';
   import { getProperties } from '$lib/api/property';
   import { properties as propertiesStore } from '$lib/stores/properties';

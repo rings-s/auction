@@ -2,7 +2,7 @@
   import { onMount, tick } from 'svelte';
   import { page } from '$app/stores';
   import { goto } from '$app/navigation';
-  import { t, getFeatureMapKey, getRoomTypeMapKey } from '$lib/i18n/i18n';
+  import { t, getFeatureKey, getRoomTypeKey } from '$lib/i18n';
   import { user } from '$lib/stores/user';
   import { getPropertyBySlug } from '$lib/api/property';
   import { fade, fly, slide } from 'svelte/transition';
@@ -148,7 +148,7 @@
     const normalizedType = roomType.toLowerCase().replace(/\s+/g, '');
     
     // Try direct mapping first using the centralized room type map
-    const mappedKey = getRoomTypeMapKey(roomType);
+    const mappedKey = getRoomTypeKey(roomType);
     if (mappedKey) {
       const translationKey = `property.roomTypes.${mappedKey}`;
       const translation = $t(translationKey);
@@ -189,7 +189,7 @@
     // We now use the centralized feature map from i18n.js
     
     // Check if we have a direct mapping using the centralized feature map
-    const mappedKey = getFeatureMapKey(item);
+    const mappedKey = getFeatureKey(item);
     if (mappedKey) {
       const mappedTranslationKey = `${translationPrefix}${itemsKey}.${mappedKey}`;
       const mappedTranslation = $t(mappedTranslationKey);
@@ -953,8 +953,8 @@
                     
                     <!-- Deed Number -->
                     <div class="flex justify-between items-center py-2 border-t border-gray-200 dark:border-gray-700">
-                      <span class="text-gray-500 dark:text-gray-400">{$t('property.deedNumber')}</span>
-                      <span class="text-gray-900 dark:text-white font-medium">{property.deed_number}</span>
+                      <span class="text-gray-500 dark:text-gray-400 w-28 flex-shrink-0 font-medium">{$t('property.deedNumber')}</span>
+                      <span class="text-gray-900 dark:text-white flex-grow ml-2">{property.deed_number}</span>
                     </div>
                     
                     <!-- Financial Info -->
@@ -1011,7 +1011,7 @@
             
             <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
               {#each property.rooms as room}
-                <div class="bg-white dark:bg-gray-750 rounded-xl shadow-md transition-transform duration-300 hover:scale-[1.02] border border-gray-100 dark:border-gray-700">
+                <div class="bg-white dark:bg-gray-750 rounded-xl shadow-md transition-transform duration-300 hover:shadow-lg border border-gray-100 dark:border-gray-700">
                   <div class="p-5">
                     <div class="flex justify-between items-start">
                       <div>
@@ -1205,7 +1205,7 @@
                 <div class="h-96 w-full bg-gray-100 dark:bg-gray-700 rounded-xl flex items-center justify-center shadow-lg border-2 border-gray-200 dark:border-gray-600">
                   <div class="text-center p-8">
                     <svg class="mx-auto h-12 w-12 text-gray-400 dark:text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.172 16l-7-7m0 0l7-7m-7 7h18m-6 4h-5m6 4h5m-6 4h-5m-6-7h11m-6 7h6m6-7v-1a1 1 0 00-1-1H8a1 1 0 00-1 1v12a1 1 0 001 1h2.5a1 1 0 001-1V10a1 1 0 00-1-1H6a1 1 0 001-1h2a1 1 0 001 1v7.5a1 1 0 001 1V10a1 1 0 001 1h2a1 1 0 001-1V4a1 1 0 011-1h1z" />
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.172 16l-7-7m0 0l7-7m-7 7h18m-6 4h-5m6 4h5m-6 4h-5m-6-7h11m-6 7h6m6-7v-1a1 1 0 00-1-1H8a1 1 0 00-1 1v12a1 1 0 001 1h2.5a1 1 0 001-1V10a1 1 0 001 1h2a1 1 0 001-1V4a1 1 0 011-1h1z" />
                     </svg>
                     <p class="text-gray-500 dark:text-gray-400">
                       {$t('property.noLocationData')}
@@ -1250,7 +1250,7 @@
                       </div>
                     {/if}
                     
-                    <div class="flex items-center py-2 px-3 rounded-md hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
+                    <div class="flex items-center py-1.5 px-2 mt-1 border-t border-gray-200 dark:border-gray-700 pt-3 rounded-md hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
                     <span class="text-gray-600 dark:text-gray-400 w-28 flex-shrink-0 font-medium">{$t('property.country')}:</span>
                     <span class="text-gray-900 dark:text-white flex-grow ml-2">{property.location.country}</span>
                   </div>

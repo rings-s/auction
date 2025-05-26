@@ -1,7 +1,7 @@
 <!-- src/routes/account/bids/+page.svelte -->
 <script>
   import { onMount } from 'svelte';
-  import { t } from '$lib/i18n/i18n';
+  import { t } from '../../../../../i18n';
   import { user } from '$lib/stores/user';
   import { goto } from '$app/navigation';
   import { fetchUserBids } from '$lib/api/auction';

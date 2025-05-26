@@ -3,7 +3,7 @@
     import { onMount } from 'svelte';
     import { goto } from '$app/navigation';
     import { fetchUserProfile, updateUserProfile, changePassword, logout } from '$lib/api/auth';
-    import { t } from '$lib/i18n/i18n';
+    import { t } from '../../../../i18n';
     import { user } from '$lib/stores/user';
   
     let loading = true;

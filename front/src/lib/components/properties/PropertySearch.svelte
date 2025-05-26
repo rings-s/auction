@@ -1,7 +1,7 @@
 <!-- PropertySearch.svelte - Advanced property search component with filters -->
 <script>
   import { createEventDispatcher } from 'svelte';
-  import { t, locale } from '$lib/i18n/i18n';
+  import { t, locale } from '$lib/i18n';
   import { fade, fly } from 'svelte/transition';
   import { clickOutside } from '$lib/actions/clickOutside';
   

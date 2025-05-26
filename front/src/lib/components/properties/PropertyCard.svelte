@@ -1,6 +1,6 @@
 <!-- src/lib/components/PropertyCard.svelte -->
 <script>
-  import { t } from '$lib/i18n/i18n';
+  import { t } from '$lib/i18n';
   
   export let property = {};
 

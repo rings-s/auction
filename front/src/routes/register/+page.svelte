@@ -2,7 +2,7 @@
 <script>
   import { goto } from '$app/navigation';
   import { register } from '$lib/api/auth';
-  import { t } from '$lib/i18n/i18n';
+  import { t } from '../../../../i18n';
   import { onMount } from 'svelte';
   import { user } from '$lib/stores/user';
 

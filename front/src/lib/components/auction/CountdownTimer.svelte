@@ -1,7 +1,7 @@
 <!-- src/lib/components/CountdownTimer.svelte -->
 <script>
     import { onMount, onDestroy } from 'svelte';
-    import { t } from '$lib/i18n/i18n';
+    import { t } from '../../../../../i18n';
     
     export let endDate;
     export let onEnd = () => {};

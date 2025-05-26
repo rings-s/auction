@@ -1,7 +1,7 @@
 <!-- src/lib/components/LocationPicker.svelte -->
 <script>
   import { onMount, createEventDispatcher } from 'svelte';
-  import { t } from '$lib/i18n/i18n';
+  import { t } from '../../../../../i18n';
   
   // Exported props with defaults
   export let latitude = null;

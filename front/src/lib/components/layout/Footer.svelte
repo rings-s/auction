@@ -1,7 +1,7 @@
 <!-- src/lib/components/Footer.svelte -->
 <script>
-    import { t } from '$lib/i18n/i18n';
-    import { locale } from '$lib/i18n/i18n';
+    import { t } from '../../../../../i18n';
+    import { locale } from '../../../../../i18n';
   </script>
   
   <footer class="bg-white dark:bg-gray-900 border-t border-gray-200 dark:border-gray-800">
