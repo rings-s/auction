@@ -311,11 +311,11 @@ export async function uploadPropertyMedia(propertyId, file, isPrimary = false) {
   
   // Determine media type based on file MIME type and extension
   let mediaType = 'other';
-  if (file.type.startsWith('image/')) {
+  if (file.type && file.type.startsWith('image/')) {
     mediaType = 'image';
-  } else if (file.type.startsWith('video/')) {
+  } else if (file.type && file.type.startsWith('video/')) {
     mediaType = 'video';
-  } else if (file.type === 'application/pdf' || file.name.toLowerCase().endsWith('.pdf')) {
+  } else if (file.type === 'application/pdf' || (file.name && file.name.toLowerCase().endsWith('.pdf'))) {
     mediaType = 'document';
   }
   
@@ -339,30 +339,58 @@ export async function uploadPropertyMedia(propertyId, file, isPrimary = false) {
     isPrimary
   });
   
-  try {
-    const response = await fetch(API.MEDIA, {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${token}`
-        // Do NOT set Content-Type here - browser will set with boundary
-      },
-      body: formData
-    });
-    
-    // Handle response same as before...
-    
-    // Handle non-200 responses with better error messages
-    if (!response.ok) {
-      const errorData = await extractErrorResponse(response);
-      console.error('Media upload failed:', errorData);
-      throw new Error(errorData.message || `Upload failed with status ${response.status}`);
+  // Add a retry mechanism for better reliability
+  let retries = 0;
+  const maxRetries = 2;
+  
+  while (retries <= maxRetries) {
+    try {
+      console.log(`Attempt ${retries + 1} of ${maxRetries + 1} to upload media`);
+      
+      const response = await fetch(API.MEDIA, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`
+          // Do NOT set Content-Type here - browser will set with boundary
+        },
+        body: formData
+      });
+      
+      // Handle non-200 responses with better error messages
+      if (!response.ok) {
+        const errorData = await extractErrorResponse(response);
+        console.error(`Media upload failed (attempt ${retries + 1}):`, errorData);
+        
+        // If we have retries left, try again after a delay
+        if (retries < maxRetries) {
+          retries++;
+          // Exponential backoff: 1s, 2s, 4s, etc.
+          const delay = Math.pow(2, retries) * 1000;
+          console.log(`Retrying in ${delay}ms...`);
+          await new Promise(resolve => setTimeout(resolve, delay));
+          continue;
+        }
+        
+        throw new Error(errorData.message || `Upload failed with status ${response.status}`);
+      }
+      
+      // Success!
+      const result = await response.json();
+      console.log('Media upload successful:', result);
+      return result;
+    } catch (error) {
+      // If this is our last retry, or it's a client-side error (not network related)
+      const isTypeError = error && typeof error === 'object' && error.name === 'TypeError';
+      if (retries >= maxRetries || !isTypeError) {
+        console.error('Media upload error:', error);
+        throw error;
+      }
+      
+      retries++;
+      const delay = Math.pow(2, retries) * 1000;
+      console.log(`Network error, retrying in ${delay}ms...`);
+      await new Promise(resolve => setTimeout(resolve, delay));
     }
-    
-    // Success!
-    return await response.json();
-  } catch (error) {
-    console.error('Media upload error:', error);
-    throw error;
   }
 }
 
@@ -383,7 +411,7 @@ export async function uploadPropertyMediaBatch(propertyId, files, onProgress) {
   console.log(`Starting batch upload of ${total} files for property ID ${propertyId}`);
   
   // Find first image to use as primary
-  const firstImage = files.find(f => f.type.startsWith('image/'));
+  const firstImage = files.find(f => f && f.type && f.type.startsWith('image/'));
   
   // Upload primary image first if available
   if (firstImage) {
@@ -392,8 +420,10 @@ export async function uploadPropertyMediaBatch(propertyId, files, onProgress) {
       const result = await uploadPropertyMedia(propertyId, firstImage, true);
       results.push(result);
     } catch (error) {
+      // Get error message safely without TypeScript instanceof
+      const errorMessage = error && error.message ? error.message : 'Unknown error';
       console.error(`Failed to upload primary image: ${firstImage.name}`, error);
-      errors.push({ file: firstImage.name, error: error.message || 'Upload failed' });
+      errors.push({ file: firstImage.name, error: errorMessage });
     } finally {
       completed++;
       if (onProgress) onProgress(completed, total);
@@ -412,8 +442,10 @@ export async function uploadPropertyMediaBatch(propertyId, files, onProgress) {
       const result = await uploadPropertyMedia(propertyId, file, false);
       results.push(result);
     } catch (error) {
+      // Get error message safely without TypeScript instanceof
+      const errorMessage = error && error.message ? error.message : 'Unknown error';
       console.error(`Failed to upload file: ${file.name}`, error);
-      errors.push({ file: file.name, error: error.message || 'Upload failed' });
+      errors.push({ file: file.name, error: errorMessage });
     } finally {
       completed++;
       if (onProgress) onProgress(completed, total);
@@ -421,6 +453,12 @@ export async function uploadPropertyMediaBatch(propertyId, files, onProgress) {
   }
   
   console.log(`Batch upload complete: ${results.length} succeeded, ${errors.length} failed`);
+  
+  // If all uploads failed, throw an error to notify the caller
+  if (results.length === 0 && errors.length > 0) {
+    console.error('All media uploads failed:', errors);
+    throw new Error(`All ${errors.length} media uploads failed. Check console for details.`);
+  }
   
   return {
     success: results.length > 0,
@@ -431,7 +469,8 @@ export async function uploadPropertyMediaBatch(propertyId, files, onProgress) {
 }
 
 /**
- * Set a property media item as primary
+ * Set a media item as primary for a property
+ * @param {number} mediaId - The ID of the media item to set as primary
  */
 export async function setPropertyMediaPrimary(mediaId) {
   if (!mediaId) throw new Error('Media ID is required');

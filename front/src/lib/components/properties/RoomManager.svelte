@@ -28,7 +28,7 @@
   };
   
   // Room types with appropriate translations
-  const roomTypes = [
+  $: roomTypes = [
     { value: 'bedroom', label: 'property.roomTypes.bedroom' },
     { value: 'bathroom', label: 'property.roomTypes.bathroom' },
     { value: 'kitchen', label: 'property.roomTypes.kitchen' },
@@ -281,9 +281,8 @@
             <select
               id="room_type"
               bind:value={newRoom.room_type}
-              on:blur={() => touched.room_type = true}
-              class="shadow-sm focus:ring-primary-500 focus:border-primary-500 block w-full sm:text-sm border-gray-300 dark:border-gray-700 rounded-md dark:bg-gray-800 dark:text-white"
-              class:border-red-500={touched.room_type && !newRoom.room_type}
+              on:change={() => touched.room_type = true}
+              class="mt-1 block w-full py-2 px-3 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 rounded-md shadow-sm focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm dark:text-white"
             >
               {#each roomTypes as type}
                 <option value={type.value}>{$t(type.label)}</option>

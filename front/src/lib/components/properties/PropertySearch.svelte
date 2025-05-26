@@ -1,10 +1,11 @@
-<!-- src/lib/components/PropertySearch.svelte -->
+<!-- PropertySearch.svelte - Advanced property search component with filters -->
 <script>
   import { createEventDispatcher } from 'svelte';
   import { t, locale } from '$lib/i18n/i18n';
-  import { fade } from 'svelte/transition';
+  import { fade, fly } from 'svelte/transition';
   import { clickOutside } from '$lib/actions/clickOutside';
   
+  // Default search parameters
   export let searchParams = {
     query: '',
     propertyType: '',
@@ -58,6 +59,7 @@
   
   // Dropdown management
   let showFilterDropdown = { sort: false, price: false, type: false, size: false };
+  let showMobileFilters = false; // For mobile view toggle
   
   // Toggle dropdown visibility
   function toggleDropdown(name) {
@@ -75,6 +77,11 @@
     }, {});
   }
   
+  // Toggle mobile filters visibility
+  function toggleMobileFilters() {
+    showMobileFilters = !showMobileFilters;
+  }
+  
   // Computed value for RTL mode
   $: isRTL = $locale === 'ar';
   
@@ -90,6 +97,12 @@
     searchParams.sort !== 'newest' ? searchParams.sort : ''
   ].filter(Boolean).length;
   
+  // Format price for display
+  function formatPrice(value) {
+    if (!value) return '0';
+    return new Intl.NumberFormat().format(Number(value));
+  }
+  
   // Initialize debounce for search inputs
   let searchTimeout;
   function debounceSearch(delay = 500) {
@@ -100,19 +113,20 @@
   }
 </script>
 
-<div class="bg-white dark:bg-gray-800 shadow rounded-lg transition-shadow duration-300 hover:shadow-md">
+<div class="search-container bg-white dark:bg-gray-800 shadow-lg rounded-xl transition-all duration-300 hover:shadow-xl">
   <div
     use:clickOutside
     on:clickoutside={handleClickOutside}
+    class="relative"
   >
-    <div class="p-6">
+    <div class="p-6 md:p-8">
       <form on:submit|preventDefault={handleSearch} class="space-y-6">
         <!-- Main Search Area: Keyword search and primary filters -->
         <div class="grid grid-cols-1 md:grid-cols-12 gap-4">
           <!-- Keyword Search -->
           <div class="md:col-span-5">
-            <div class="relative rounded-md shadow-sm">
-              <div class="absolute inset-y-0 {isRTL ? 'right-0 pr-3' : 'left-0 pl-3'} flex items-center pointer-events-none">
+            <div class="relative">
+              <div class="absolute inset-y-0 {isRTL ? 'right-0 pr-4' : 'left-0 pl-4'} flex items-center pointer-events-none">
                 <svg class="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
                 </svg>
@@ -122,13 +136,13 @@
                 bind:value={searchParams.query}
                 on:input={() => debounceSearch()}
                 placeholder={$t('search.keywordPlaceholder')}
-                class="{isRTL ? 'pr-10 pl-4' : 'pl-10 pr-4'} py-2 w-full rounded-md border-gray-300 bg-white dark:bg-gray-700 dark:border-gray-600 shadow-sm focus:border-primary-300 focus:ring focus:ring-primary-200 focus:ring-opacity-50 dark:text-white text-sm transition-colors"
+                class="block w-full {isRTL ? 'pr-12' : 'pl-12'} py-3 rounded-full border-gray-200 dark:border-gray-600 shadow-sm focus:border-primary-400 focus:ring focus:ring-primary-200 focus:ring-opacity-50 dark:bg-gray-700 dark:text-white text-sm transition-all"
                 aria-label={$t('search.keyword')}
               />
               {#if searchParams.query}
                 <button
                   type="button"
-                  class="absolute inset-y-0 {isRTL ? 'left-0 pl-3' : 'right-0 pr-3'} flex items-center text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
+                  class="absolute inset-y-0 {isRTL ? 'left-0 pl-4' : 'right-0 pr-4'} flex items-center text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
                   on:click={() => {
                     searchParams.query = '';
                     debounceSearch(0);
@@ -148,36 +162,41 @@
             <button
               type="button"
               on:click={() => toggleDropdown('type')}
-              class="inline-flex items-center justify-between w-full px-4 py-2 rounded-md bg-white dark:bg-gray-700 shadow-sm border border-gray-300 dark:border-gray-600 text-sm font-medium text-gray-700 dark:text-gray-100 hover:bg-gray-50 dark:hover:bg-gray-600 transition-colors {searchParams.propertyType ? 'border-primary-300 dark:border-primary-600' : ''}"
+              class="inline-flex items-center justify-between w-full px-5 py-3 rounded-full bg-white dark:bg-gray-700 shadow-sm border border-gray-200 dark:border-gray-600 text-sm font-medium text-gray-700 dark:text-gray-100 hover:bg-gray-50 dark:hover:bg-gray-600 transition-all {searchParams.propertyType ? 'border-primary-300 dark:border-primary-600 ring-2 ring-primary-100 dark:ring-primary-900' : ''}"
             >
-              <span class="truncate">{searchParams.propertyType ? $t(propertyTypes.find(t => t.value === searchParams.propertyType)?.label) : $t('search.propertyType')}</span>
-              <svg class="w-5 h-5 {isRTL ? 'mr-2' : 'ml-2'}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <span class="truncate">
+                {#if searchParams.propertyType}
+                  {$t(propertyTypes.find(p => p.value === searchParams.propertyType)?.label)}
+                {:else}
+                  {$t('search.propertyType')}
+                {/if}
+              </span>
+              <svg class="w-5 h-5 {isRTL ? 'mr-2' : 'ml-2'} text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
               </svg>
             </button>
             
             {#if showFilterDropdown.type}
               <div 
-                class="absolute {isRTL ? 'right-0' : 'left-0'} mt-2 w-full rounded-md shadow-lg bg-white dark:bg-gray-800 ring-1 ring-black ring-opacity-5 focus:outline-none z-10"
-                transition:fade={{ duration: 150 }}
+                class="absolute {isRTL ? 'right-0' : 'left-0'} mt-3 w-full rounded-xl shadow-xl bg-white dark:bg-gray-800 ring-1 ring-black ring-opacity-5 focus:outline-none z-10 overflow-hidden"
+                transition:fade={{ duration: 200 }}
               >
-                <div class="py-1">
+                <div class="py-2">
                   <button
                     type="button"
-                    class="w-full text-start px-4 py-2 text-sm {!searchParams.propertyType ? 'bg-primary-50 dark:bg-primary-900/20 text-primary-700 dark:text-primary-300 font-medium' : 'text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700'}"
+                    class="w-full text-start px-5 py-2.5 text-sm {!searchParams.propertyType ? 'bg-primary-50 dark:bg-primary-900/20 text-primary-700 dark:text-primary-300 font-medium' : 'text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700'} transition-colors"
                     on:click={() => {
                       searchParams.propertyType = '';
                       toggleDropdown('type');
                       handleSearch();
                     }}
                   >
-                    {$t('search.all')}
+                    {$t('search.allPropertyTypes')}
                   </button>
-                  
                   {#each propertyTypes as type}
                     <button
                       type="button"
-                      class="w-full text-start px-4 py-2 text-sm {searchParams.propertyType === type.value ? 'bg-primary-50 dark:bg-primary-900/20 text-primary-700 dark:text-primary-300 font-medium' : 'text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700'}"
+                      class="w-full text-start px-5 py-2.5 text-sm {searchParams.propertyType === type.value ? 'bg-primary-50 dark:bg-primary-900/20 text-primary-700 dark:text-primary-300 font-medium' : 'text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700'} transition-colors"
                       on:click={() => {
                         searchParams.propertyType = type.value;
                         toggleDropdown('type');
@@ -194,19 +213,19 @@
           
           <!-- City Input -->
           <div class="md:col-span-2">
-            <div class="relative rounded-md shadow-sm">
+            <div class="relative">
               <input
                 type="text"
                 bind:value={searchParams.city}
                 on:input={() => debounceSearch()}
                 placeholder={$t('search.cityPlaceholder')}
-                class="block w-full px-4 py-2 rounded-md border-gray-300 dark:border-gray-600 shadow-sm focus:border-primary-300 focus:ring focus:ring-primary-200 focus:ring-opacity-50 dark:bg-gray-700 dark:text-white text-sm transition-colors"
+                class="block w-full px-4 py-3 rounded-full border-gray-200 dark:border-gray-600 shadow-sm focus:border-primary-400 focus:ring focus:ring-primary-200 focus:ring-opacity-50 dark:bg-gray-700 dark:text-white text-sm transition-all"
                 aria-label={$t('search.city')}
               />
               {#if searchParams.city}
                 <button
                   type="button"
-                  class="absolute inset-y-0 {isRTL ? 'left-0 pl-3' : 'right-0 pr-3'} flex items-center text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
+                  class="absolute inset-y-0 {isRTL ? 'left-0 pl-4' : 'right-0 pr-4'} flex items-center text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
                   on:click={() => {
                     searchParams.city = '';
                     debounceSearch(0);
@@ -225,7 +244,7 @@
           <div class="md:col-span-2">
             <button
               type="submit"
-              class="w-full inline-flex items-center justify-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-primary-600 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 transition-colors"
+              class="w-full inline-flex items-center justify-center px-5 py-3 border border-transparent rounded-full shadow-md text-sm font-medium text-white bg-primary-600 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 transition-all transform hover:scale-[1.02] active:scale-[0.98]"
             >
               <svg class="w-5 h-5 {isRTL ? 'ml-1.5 -mr-1' : 'mr-1.5 -ml-1'}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
@@ -235,48 +254,70 @@
           </div>
         </div>
         
+        <!-- Mobile Toggle Button (visible only on small screens) -->
+        <div class="md:hidden mb-2">
+          <button 
+            type="button"
+            on:click={toggleMobileFilters}
+            class="w-full flex items-center justify-between px-4 py-3 bg-gray-50 dark:bg-gray-700 rounded-full border border-gray-200 dark:border-gray-600 text-sm font-medium transition-colors hover:bg-gray-100 dark:hover:bg-gray-600"
+          >
+            <span class="flex items-center">
+              <svg class="h-5 w-5 text-gray-500 dark:text-gray-300 {isRTL ? 'ml-2' : 'mr-2'}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" />
+              </svg>
+              {$t('search.advancedFilters')} {activeFiltersCount > 0 ? `(${activeFiltersCount})` : ''}
+            </span>
+            <svg class="h-5 w-5 text-gray-500 dark:text-gray-300 transform transition-transform duration-200 {showMobileFilters ? 'rotate-180' : ''}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+            </svg>
+          </button>
+        </div>
+        
         <!-- Advanced Filters (Collapsible) -->
-        <div class="grid grid-cols-1 md:grid-cols-12 gap-4">
+        <div class="grid grid-cols-1 md:grid-cols-12 gap-4 {!showMobileFilters ? 'hidden md:grid' : ''}">
           <!-- Price Range -->
           <div class="md:col-span-4 relative">
             <button
               type="button"
               on:click={() => toggleDropdown('price')}
-              class="inline-flex items-center justify-between w-full px-4 py-2 rounded-md bg-white dark:bg-gray-700 shadow-sm border border-gray-300 dark:border-gray-600 text-sm font-medium text-gray-700 dark:text-gray-100 hover:bg-gray-50 dark:hover:bg-gray-600 transition-colors {(searchParams.minPrice || searchParams.maxPrice) ? 'border-primary-300 dark:border-primary-600' : ''}"
+              class="inline-flex items-center justify-between w-full px-5 py-3 rounded-full bg-white dark:bg-gray-700 shadow-sm border border-gray-200 dark:border-gray-600 text-sm font-medium text-gray-700 dark:text-gray-100 hover:bg-gray-50 dark:hover:bg-gray-600 transition-all {(searchParams.minPrice || searchParams.maxPrice) ? 'border-primary-300 dark:border-primary-600 ring-2 ring-primary-100 dark:ring-primary-900' : ''}"
             >
-              <span>
+              <span class="flex items-center">
+                <svg class="w-5 h-5 text-gray-400 {isRTL ? 'ml-2' : 'mr-2'}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
                 {#if searchParams.minPrice || searchParams.maxPrice}
-                  ${searchParams.minPrice || '0'} - ${searchParams.maxPrice || '∞'}
+                  ${formatPrice(searchParams.minPrice) || '0'} - ${searchParams.maxPrice ? formatPrice(searchParams.maxPrice) : '∞'}
                 {:else}
                   {$t('search.price')}
                 {/if}
               </span>
-              <svg class="w-5 h-5 {isRTL ? 'mr-2' : 'ml-2'}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
               </svg>
             </button>
             
             {#if showFilterDropdown.price}
               <div 
-                class="absolute {isRTL ? 'right-0' : 'left-0'} mt-2 w-64 rounded-md shadow-lg bg-white dark:bg-gray-800 ring-1 ring-black ring-opacity-5 focus:outline-none z-10 p-4"
-                transition:fade={{ duration: 150 }}
+                class="absolute {isRTL ? 'right-0' : 'left-0'} mt-3 w-72 rounded-xl shadow-xl bg-white dark:bg-gray-800 ring-1 ring-black ring-opacity-5 focus:outline-none z-10 p-5"
+                transition:fade={{ duration: 200 }}
               >
-                <div class="space-y-3">
+                <div class="space-y-4">
                   <!-- Min Price -->
                   <div>
-                    <label for="min-price" class="block text-xs text-gray-500 dark:text-gray-400 mb-1">
+                    <label for="min-price" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">
                       {$t('search.min')}
                     </label>
-                    <div class="relative rounded-md">
+                    <div class="relative">
                       <div class="absolute inset-y-0 {isRTL ? 'right-0 pr-3' : 'left-0 pl-3'} flex items-center pointer-events-none">
-                        <span class="text-gray-500 sm:text-sm">$</span>
+                        <span class="text-gray-500 dark:text-gray-400 sm:text-sm">$</span>
                       </div>
                       <input
                         id="min-price"
                         type="number"
                         bind:value={searchParams.minPrice}
                         placeholder="0"
-                        class="block w-full {isRTL ? 'pr-7' : 'pl-7'} py-2 border border-gray-300 dark:border-gray-600 rounded-md placeholder-gray-400 focus:outline-none focus:ring-primary-500 focus:border-primary-500 text-sm dark:bg-gray-700 dark:text-white"
+                        class="block w-full {isRTL ? 'pr-8' : 'pl-8'} py-2.5 border border-gray-200 dark:border-gray-600 rounded-lg placeholder-gray-400 focus:outline-none focus:ring-primary-500 focus:border-primary-500 text-sm dark:bg-gray-700 dark:text-white transition-all"
                         min="0"
                       />
                     </div>
@@ -284,19 +325,19 @@
                   
                   <!-- Max Price -->
                   <div>
-                    <label for="max-price" class="block text-xs text-gray-500 dark:text-gray-400 mb-1">
+                    <label for="max-price" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">
                       {$t('search.max')}
                     </label>
-                    <div class="relative rounded-md">
+                    <div class="relative">
                       <div class="absolute inset-y-0 {isRTL ? 'right-0 pr-3' : 'left-0 pl-3'} flex items-center pointer-events-none">
-                        <span class="text-gray-500 sm:text-sm">$</span>
+                        <span class="text-gray-500 dark:text-gray-400 sm:text-sm">$</span>
                       </div>
                       <input
                         id="max-price"
                         type="number"
                         bind:value={searchParams.maxPrice}
                         placeholder="100000"
-                        class="block w-full {isRTL ? 'pr-7' : 'pl-7'} py-2 border border-gray-300 dark:border-gray-600 rounded-md placeholder-gray-400 focus:outline-none focus:ring-primary-500 focus:border-primary-500 text-sm dark:bg-gray-700 dark:text-white"
+                        class="block w-full {isRTL ? 'pr-8' : 'pl-8'} py-2.5 border border-gray-200 dark:border-gray-600 rounded-lg placeholder-gray-400 focus:outline-none focus:ring-primary-500 focus:border-primary-500 text-sm dark:bg-gray-700 dark:text-white transition-all"
                         min="0"
                       />
                     </div>
@@ -305,7 +346,7 @@
                   <!-- Apply Button -->
                   <button
                     type="button"
-                    class="w-full mt-2 px-4 py-2 bg-primary-600 text-white rounded-md hover:bg-primary-700 text-sm transition-colors"
+                    class="w-full mt-3 px-4 py-2.5 bg-primary-600 text-white rounded-lg hover:bg-primary-700 text-sm font-medium transition-all transform hover:scale-[1.02] active:scale-[0.98]"
                     on:click={() => {
                       toggleDropdown('price');
                       handleSearch();
@@ -323,38 +364,41 @@
             <button
               type="button"
               on:click={() => toggleDropdown('size')}
-              class="inline-flex items-center justify-between w-full px-4 py-2 rounded-md bg-white dark:bg-gray-700 shadow-sm border border-gray-300 dark:border-gray-600 text-sm font-medium text-gray-700 dark:text-gray-100 hover:bg-gray-50 dark:hover:bg-gray-600 transition-colors {(searchParams.minSize || searchParams.maxSize) ? 'border-primary-300 dark:border-primary-600' : ''}"
+              class="inline-flex items-center justify-between w-full px-5 py-3 rounded-full bg-white dark:bg-gray-700 shadow-sm border border-gray-200 dark:border-gray-600 text-sm font-medium text-gray-700 dark:text-gray-100 hover:bg-gray-50 dark:hover:bg-gray-600 transition-all {(searchParams.minSize || searchParams.maxSize) ? 'border-primary-300 dark:border-primary-600 ring-2 ring-primary-100 dark:ring-primary-900' : ''}"
             >
-              <span>
+              <span class="flex items-center">
+                <svg class="w-5 h-5 text-gray-400 {isRTL ? 'ml-2' : 'mr-2'}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4" />
+                </svg>
                 {#if searchParams.minSize || searchParams.maxSize}
                   {searchParams.minSize || '0'} - {searchParams.maxSize || '∞'} m²
                 {:else}
                   {$t('search.size')}
                 {/if}
               </span>
-              <svg class="w-5 h-5 {isRTL ? 'mr-2' : 'ml-2'}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
               </svg>
             </button>
             
             {#if showFilterDropdown.size}
               <div 
-                class="absolute {isRTL ? 'right-0' : 'left-0'} mt-2 w-64 rounded-md shadow-lg bg-white dark:bg-gray-800 ring-1 ring-black ring-opacity-5 focus:outline-none z-10 p-4"
-                transition:fade={{ duration: 150 }}
+                class="absolute {isRTL ? 'right-0' : 'left-0'} mt-3 w-72 rounded-xl shadow-xl bg-white dark:bg-gray-800 ring-1 ring-black ring-opacity-5 focus:outline-none z-10 p-5"
+                transition:fade={{ duration: 200 }}
               >
-                <div class="space-y-3">
+                <div class="space-y-4">
                   <!-- Min Size -->
                   <div>
-                    <label for="min-size" class="block text-xs text-gray-500 dark:text-gray-400 mb-1">
+                    <label for="min-size" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">
                       {$t('search.min')} (m²)
                     </label>
-                    <div class="relative rounded-md">
+                    <div class="relative">
                       <input
                         id="min-size"
                         type="number"
                         bind:value={searchParams.minSize}
                         placeholder="0"
-                        class="block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md placeholder-gray-400 focus:outline-none focus:ring-primary-500 focus:border-primary-500 text-sm dark:bg-gray-700 dark:text-white"
+                        class="block w-full px-4 py-2.5 border border-gray-200 dark:border-gray-600 rounded-lg placeholder-gray-400 focus:outline-none focus:ring-primary-500 focus:border-primary-500 text-sm dark:bg-gray-700 dark:text-white transition-all"
                         min="0"
                       />
                     </div>
@@ -362,16 +406,16 @@
                   
                   <!-- Max Size -->
                   <div>
-                    <label for="max-size" class="block text-xs text-gray-500 dark:text-gray-400 mb-1">
+                    <label for="max-size" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">
                       {$t('search.max')} (m²)
                     </label>
-                    <div class="relative rounded-md">
+                    <div class="relative">
                       <input
                         id="max-size"
                         type="number"
                         bind:value={searchParams.maxSize}
                         placeholder="1000"
-                        class="block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md placeholder-gray-400 focus:outline-none focus:ring-primary-500 focus:border-primary-500 text-sm dark:bg-gray-700 dark:text-white"
+                        class="block w-full px-4 py-2.5 border border-gray-200 dark:border-gray-600 rounded-lg placeholder-gray-400 focus:outline-none focus:ring-primary-500 focus:border-primary-500 text-sm dark:bg-gray-700 dark:text-white transition-all"
                         min="0"
                       />
                     </div>
@@ -380,7 +424,7 @@
                   <!-- Apply Button -->
                   <button
                     type="button"
-                    class="w-full mt-2 px-4 py-2 bg-primary-600 text-white rounded-md hover:bg-primary-700 text-sm transition-colors"
+                    class="w-full mt-3 px-4 py-2.5 bg-primary-600 text-white rounded-lg hover:bg-primary-700 text-sm font-medium transition-all transform hover:scale-[1.02] active:scale-[0.98]"
                     on:click={() => {
                       toggleDropdown('size');
                       handleSearch();
@@ -398,24 +442,29 @@
             <button
               type="button"
               on:click={() => toggleDropdown('sort')}
-              class="inline-flex items-center justify-between w-full px-4 py-2 rounded-md bg-white dark:bg-gray-700 shadow-sm border border-gray-300 dark:border-gray-600 text-sm font-medium text-gray-700 dark:text-gray-100 hover:bg-gray-50 dark:hover:bg-gray-600 transition-colors {searchParams.sort !== 'newest' ? 'border-primary-300 dark:border-primary-600' : ''}"
+              class="inline-flex items-center justify-between w-full px-5 py-3 rounded-full bg-white dark:bg-gray-700 shadow-sm border border-gray-200 dark:border-gray-600 text-sm font-medium text-gray-700 dark:text-gray-100 hover:bg-gray-50 dark:hover:bg-gray-600 transition-all {searchParams.sort !== 'newest' ? 'border-primary-300 dark:border-primary-600 ring-2 ring-primary-100 dark:ring-primary-900' : ''}"
             >
-              <svg class="w-5 h-5 {isRTL ? 'ml-1' : 'mr-1'}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4h13M3 8h9m-9 4h6m4 0l4-4m0 0l4 4m-4-4v12" />
+              <span class="flex items-center">
+                <svg class="w-5 h-5 text-gray-400 {isRTL ? 'ml-1' : 'mr-1'}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4h13M3 8h9m-9 4h6m4 0l4-4m0 0l4 4m-4-4v12" />
+                </svg>
+                <span class="truncate">{$t(sortOptions.find(o => o.value === searchParams.sort)?.label)}</span>
+              </span>
+              <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
               </svg>
-              <span class="truncate">{$t(sortOptions.find(o => o.value === searchParams.sort)?.label)}</span>
             </button>
             
             {#if showFilterDropdown.sort}
               <div 
-                class="absolute {isRTL ? 'right-0' : 'left-0'} mt-2 w-48 rounded-md shadow-lg bg-white dark:bg-gray-800 ring-1 ring-black ring-opacity-5 focus:outline-none z-10"
-                transition:fade={{ duration: 150 }}
+                class="absolute {isRTL ? 'right-0' : 'left-0'} mt-3 w-56 rounded-xl shadow-xl bg-white dark:bg-gray-800 ring-1 ring-black ring-opacity-5 focus:outline-none z-10 overflow-hidden"
+                transition:fade={{ duration: 200 }}
               >
-                <div class="py-1">
+                <div class="py-2">
                   {#each sortOptions as option}
                     <button
                       type="button"
-                      class="w-full text-start px-4 py-2 text-sm {searchParams.sort === option.value ? 'bg-primary-50 dark:bg-primary-900/20 text-primary-700 dark:text-primary-300 font-medium' : 'text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700'}"
+                      class="w-full text-start px-5 py-2.5 text-sm {searchParams.sort === option.value ? 'bg-primary-50 dark:bg-primary-900/20 text-primary-700 dark:text-primary-300 font-medium' : 'text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700'} transition-colors"
                       on:click={() => {
                         searchParams.sort = option.value;
                         toggleDropdown('sort');

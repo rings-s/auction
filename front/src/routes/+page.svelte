@@ -262,7 +262,7 @@
           >
             <Button 
               variant="primary" 
-              size="large" 
+              size="small" 
               href="/properties" 
               class_="hero__cta-primary"
             >
@@ -280,7 +280,7 @@
             
             <Button 
               variant="outline" 
-              size="large" 
+              size="small" 
               href="/how-it-works" 
               class_="hero__cta-secondary"
             >

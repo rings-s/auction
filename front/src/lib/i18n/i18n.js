@@ -235,6 +235,21 @@ const translations = {
       tooManyFiles: 'Too many files (max {max})',
       removeFile: 'Remove file {first_name} {last_name}'
     },
+    mediaUploader: {
+      dragAndDrop: 'Drag and drop files here, or click to select files',
+      uploading: 'Uploading media files...',
+      selectFiles: 'Select Files',
+      browse: 'Browse',
+      dropFilesHere: 'Drop files here',
+      uploadProgress: 'Upload Progress',
+      uploadComplete: 'Upload Complete',
+      uploadFailed: 'Upload Failed',
+      maxFileSize: 'Maximum file size: {size}MB',
+      allowedFileTypes: 'Allowed file types: {types}',
+      fileAdded: 'File added: {name}',
+      fileRemoved: 'File removed: {name}',
+      clearAll: 'Clear All'
+    },
     nav: {
       home: 'Home',
       properties: 'Properties',
@@ -267,6 +282,8 @@ const translations = {
       search: 'Search',
       clear: 'Clear Filters',
       all: 'All',
+      allPropertyTypes: 'All Property Types',
+      advancedFilters: 'Advanced Filters',
       sort: 'Sort by',
       sortOptions: {
         newest: 'Newest first',
@@ -376,6 +393,8 @@ const translations = {
       featuresAndAmenities: 'Features & Amenities',
       nearbyServices: 'Nearby Services',
       nearbyServicesInfo: 'Nearby services information not currently available',
+      mediaUpload: 'Media Upload',
+      mediaUploadDesc: 'Upload photos, floor plans, and documents for your property. Supported formats: JPEG, PNG, GIF, PDF.',
       featureItems: {
         airConditioning: 'Air Conditioning',
         heating: 'Heating',
@@ -441,7 +460,8 @@ const translations = {
         attic: 'Attic',
         hallway: 'Hallway',
         entrance: 'Entrance',
-        laundryRoom: 'Laundry Room'
+        laundryRoom: 'Laundry Room',
+        other: 'Other'
       },
       amenityItems: {
         gym: 'Gym',
@@ -993,6 +1013,21 @@ const translations = {
       tooManyFiles: 'عدد كبير جدًا من الملفات (الحد الأقصى {max})',
       removeFile: 'إزالة الملف {name}'
     },
+    mediaUploader: {
+      dragAndDrop: 'اسحب وأفلت الملفات هنا، أو انقر لتحديد الملفات',
+      uploading: 'جاري تحميل ملفات الوسائط...',
+      selectFiles: 'تحديد الملفات',
+      browse: 'استعراض',
+      dropFilesHere: 'أفلت الملفات هنا',
+      uploadProgress: 'تقدم التحميل',
+      uploadComplete: 'اكتمل التحميل',
+      uploadFailed: 'فشل التحميل',
+      maxFileSize: 'الحد الأقصى لحجم الملف: {size} ميجابايت',
+      allowedFileTypes: 'أنواع الملفات المسموح بها: {types}',
+      fileAdded: 'تمت إضافة الملف: {name}',
+      fileRemoved: 'تمت إزالة الملف: {name}',
+      clearAll: 'مسح الكل'
+    },
     nav: {
       home: 'الرئيسية',
       properties: 'العقارات',
@@ -1025,6 +1060,8 @@ const translations = {
       search: 'بحث',
       clear: 'مسح الفلاتر',
       all: 'الكل',
+      allPropertyTypes: 'جميع أنواع العقارات',
+      advancedFilters: 'خيارات البحث المتقدمة',
       sort: 'ترتيب حسب',
       sortOptions: {
         newest: 'الأحدث أولاً',
@@ -1120,6 +1157,8 @@ const translations = {
       featuresAndAmenities: 'الميزات والمرافق',
       nearbyServices: 'الخدمات القريبة',
       nearbyServicesInfo: 'معلومات عن الخدمات القريبة غير متوفرة حاليًا',
+      mediaUpload: 'تحميل الوسائط',
+      mediaUploadDesc: 'قم بتحميل الصور ومخططات الطوابق والمستندات للعقار الخاص بك. الصيغ المدعومة: JPEG، PNG، GIF، PDF.',
       featureItems: {
         airConditioning: 'تكييف الهواء',
         heating: 'تدفئة',
@@ -1185,7 +1224,8 @@ const translations = {
         attic: 'علية',
         hallway: 'ممر',
         entrance: 'مدخل',
-        laundryRoom: 'غرفة غسيل'
+        laundryRoom: 'غرفة غسيل',
+        other: 'أخرى'
       },
       amenityItems: {
         gym: 'صالة رياضية',
