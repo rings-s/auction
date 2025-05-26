@@ -56,21 +56,82 @@ class LocationDetailView(BaseDetailView):
         return [drf_permissions.AllowAny()] if self.request.method in SAFE_METHODS else [IsAdminUser()]
 
 # Media Views
-class MediaListCreateView(BaseListCreateView):
-    queryset = Media.objects.select_related('content_type')
+class MediaListCreateView(generics.ListCreateAPIView):
+    """
+    API endpoint for listing media files or uploading new ones.
+    Media can be linked to various models (Property, Auction, etc.) via GenericForeignKey.
+    """
+    queryset = Media.objects.select_related('content_type') # Optimizes DB query by fetching related ContentType.
     serializer_class = MediaSerializer
+    permission_classes = [drf_permissions.AllowAny] # Base permission, refined by get_permissions for POST.
+    filter_backends = [drf_django_filters.DjangoFilterBackend, filters.SearchFilter]
     filterset_fields = ['media_type', 'is_primary']
     search_fields = ['name']
 
     def get_permissions(self):
-        return [drf_permissions.IsAuthenticated()] if self.request.method == 'POST' else [drf_permissions.AllowAny()]
+        if self.request.method == 'POST':
+            # Authenticated users can upload media.
+            return [drf_permissions.IsAuthenticated()] 
+        # Anyone can list media.
+        return [drf_permissions.AllowAny()] 
 
-class MediaDetailView(BaseDetailView):
+    def get_serializer_context(self):
+        context = super().get_serializer_context()
+        context.update({"request": self.request})
+        return context
+    
+    def create(self, request, *args, **kwargs):
+        """Custom create logic to automatically set the media owner to the logged-in user."""
+        try:
+            # Log the incoming data for debugging
+            print(f"Media create - FILES: {request.FILES}")
+            print(f"Media create - DATA: {request.data}")
+            
+            # If the model field is sent without app_label, add "base." prefix
+            content_type_str = request.data.get('content_type_str')
+            if content_type_str and '.' not in content_type_str:
+                # List known content types to help with debugging
+                content_types = ContentType.objects.all()
+                print(f"Available content types: {[(ct.app_label, ct.model) for ct in content_types]}")
+                
+                # For any model in the base app, add the base. prefix
+                base_app_models = ['property', 'room', 'auction', 'bid', 'location', 'media']
+                if content_type_str.lower() in base_app_models:
+                    request.data['content_type_str'] = f'base.{content_type_str.lower()}'
+                    print(f"Updated content_type_str from '{content_type_str}' to 'base.{content_type_str.lower()}'")
+                    
+            # Continue with normal handling
+            serializer = self.get_serializer(data=request.data)
+            serializer.is_valid(raise_exception=True)
+            serializer.save(owner=request.user) # Sets the owner during save.
+            headers = self.get_success_headers(serializer.data)
+            return Response(serializer.data, status=status.HTTP_201_CREATED, headers=headers)
+        except Exception as e:
+            print(f"Error in MediaListCreateView.create: {str(e)}")
+            import traceback
+            print(traceback.format_exc())
+            return Response(
+                {"error": {"message": str(e)}},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+class MediaDetailView(generics.RetrieveUpdateDestroyAPIView):
+    """
+    API endpoint for managing a specific media file.
+    """
     queryset = Media.objects.select_related('content_type')
     serializer_class = MediaSerializer
 
     def get_permissions(self):
-        return [drf_permissions.AllowAny()] if self.request.method in SAFE_METHODS else [drf_permissions.IsAuthenticated(), IsMediaManager()]
+        if self.request.method in SAFE_METHODS:
+            return [drf_permissions.AllowAny()] 
+        # For write operations (PUT, PATCH, DELETE), use custom IsMediaManager permission.
+        return [drf_permissions.IsAuthenticated(), IsMediaManager()]
+
+    def get_serializer_context(self):
+        context = super().get_serializer_context()
+        context.update({"request": self.request})
+        return context
 
 # Property Views
 class PropertyListCreateView(BaseListCreateView):
