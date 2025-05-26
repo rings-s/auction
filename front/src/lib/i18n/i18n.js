@@ -12,7 +12,7 @@ export const locales = writable({
 // Initial locale detection
 function getInitialLocale() {
   if (browser) {
-    const savedLocale = localStorage.getItem('locale');
+    const savedLocale = localStorage.getItem('lang');
     if (savedLocale) return savedLocale;
     const browserLang = navigator.language.split('-')[0];
     return browserLang === 'ar' ? 'ar' : 'en';
@@ -26,12 +26,15 @@ export const locale = writable(getInitialLocale());
 // Set language and direction attributes
 if (browser) {
   locale.subscribe(value => {
+    localStorage.setItem('lang', value);
     document.documentElement.lang = value;
     document.documentElement.dir = value === 'ar' ? 'rtl' : 'ltr';
     document.documentElement.classList.remove('ltr', 'rtl');
     document.documentElement.classList.add(value === 'ar' ? 'rtl' : 'ltr');
   });
 }
+
+
 
 // Feature and amenity mapping for translation
 const featureMap = {
@@ -156,8 +159,72 @@ const roomTypeMap = {
 };
 
 // Translation dictionaries
+// Updated on 2025-05-26 to fix missing message translations
 const translations = {
   en: {
+    app: {
+      name: 'Auction Platform'
+    },
+    messages: {
+      inquiryAbout: "Inquiry about",
+      getInTouch: "Get in touch with the property owner",
+      sender: "Sender",
+      subject: "Subject",
+      subjectPlaceholder: "Enter the subject of your message...",
+      aboutProperty: "About property",
+      loginRequired: "Login Required",
+      messageSentSuccess: "Message Sent Successfully!",
+      messageDelivered: "Your message has been delivered to the property owner. They will get back to you soon.",
+      directMessagingNotAvailable: "Direct messaging is not available in this context",
+      sendError: "Failed to send message. Please try again.",
+      messageDisclaimer: "Your contact information will be shared with the property owner.",
+      title: 'Messages',
+      compose: 'Compose Message',
+      total: 'total',
+      unread: 'unread',
+      search: 'Search messages...',
+      confirmDelete: 'Are you sure you want to delete this message?',
+      to: 'To: {name}',
+      from: 'From: {name}',
+      archive: 'Archive',
+      delete: 'Delete',
+      close: 'Close',
+      reply: 'Reply',
+      relatedProperty: 'Related Property',
+      selectToRead: 'Select a message to read',
+      selectToReadDesc: 'Choose a message from the list on the left to view its contents',
+      noMessages: 'No messages',
+      noSearchResults: 'No messages matching your search',
+      startConversation: 'Start a new conversation by clicking the Compose button',
+      backToMessages: 'Back to Messages',
+      replyToMessage: 'Reply to Message',
+      composeNewMessage: 'Compose New Message',
+      originalMessage: 'Original Message',
+      couldNotLoadReplyMessage: 'Could not load original message to reply',
+      directMessagingNotImplemented: 'Direct messaging is not available at this time',
+      recipientEmailPlaceholder: 'Enter recipient email',
+      message: 'Message',
+      messagePlaceholder: 'Write your message here...',
+      send: 'Send Message',
+      unknownUser: 'Unknown User',
+      errorFetchingUser: 'Error fetching user data',
+      filters: {
+        all: 'All Messages',
+        inbox: 'Inbox',
+        sent: 'Sent',
+        unread: 'Unread',
+        archived: 'Archived'
+      },
+      form: {
+        priority: 'Message Priority'
+      },
+      priority: {
+        low: 'Low Priority',
+        normal: 'Normal',
+        high: 'High Priority',
+        urgent: 'Urgent'
+      }
+    },
     common: {
       step: 'Step',
       of: 'of',
@@ -172,7 +239,6 @@ const translations = {
       delete: 'Delete',
       confirm: 'Confirm',
       back: 'Back',
-      linkCopied: 'Link copied!',
       justNow: 'Just now',
       minutesAgo: '{count} minutes ago',
       hoursAgo: '{count} hours ago',
@@ -190,7 +256,6 @@ const translations = {
       email: 'Share via Email',
       copyLink: 'Copy Link',
       linkCopied: 'Link copied!'
-
     },
     validation: {
       titleRequired: 'Title is required',
@@ -323,8 +388,8 @@ const translations = {
       featured: 'Featured',
       rooms: 'Rooms',
       viewDetails: 'View Details',
-      features: 'Features',
-      amenities: 'Amenities',
+      features: 'المميزات',
+      amenities: 'المرافق',
       location: 'Location',
       propertyDetails: 'Property Details',
       error: {
@@ -780,6 +845,18 @@ const translations = {
       noMessages: 'No messages',
       noSearchResults: 'No messages matching your search',
       startConversation: 'Start a new conversation by clicking the Compose button',
+      backToMessages: 'Back to Messages',
+      replyToMessage: 'Reply to Message',
+      composeNewMessage: 'Compose New Message',
+      originalMessage: 'Original Message',
+      couldNotLoadReplyMessage: 'Could not load original message to reply',
+      directMessagingNotImplemented: 'Direct messaging is not available at this time',
+      recipientEmailPlaceholder: 'Enter recipient email',
+      message: 'Message',
+      messagePlaceholder: 'Write your message here...',
+      send: 'Send Message',
+      unknownUser: 'Unknown User',
+      errorFetchingUser: 'Error fetching user data',
       filters: {
         all: 'All Messages',
         inbox: 'Inbox',
@@ -941,6 +1018,21 @@ const translations = {
         'priority *': "Priority *"
       },
       messageDisclaimer: "Please note: This is a placeholder for the message disclaimer."
+    },
+    hero: {
+      discover: 'Discover',
+      premium: 'Premium',
+      realEstate: 'Real Estate',
+      throughAuctions: 'Through Smart Auctions',
+      subtitle: 'Join thousands of property investors in transparent, secure auctions for residential and commercial properties',
+      verified: '100% Verified',
+      liveAuctions: 'Live Auctions',
+      users: '15K+ Users',
+      viewAuctions: 'View Auctions',
+      browseProperties: 'Browse Properties'
+    },
+    app: {
+      name: 'Auction Platform'
     }
   },
 
@@ -968,7 +1060,15 @@ const translations = {
       showFilters: 'إظهار الفلاتر',
       hideFilters: 'إخفاء الفلاتر',
       unknown: 'غير معروف',
-      sending: 'جاري الإرسال...'
+      sending: 'جاري الإرسال...',
+
+      facebook: 'مشاركة على فيسبوك',
+      twitter: 'مشاركة على تويتر',
+      linkedin: 'مشاركة على لينكد إن',
+      whatsapp: 'مشاركة على واتساب',
+      email: 'مشاركة عبر البريد الإلكتروني',
+      copyLink: 'نسخ الرابط',
+      linkCopied: 'تم نسخ الرابط!'
     },
     validation: {
       titleRequired: 'العنوان مطلوب',
@@ -1521,129 +1621,6 @@ const translations = {
       contactForTerms: 'اتصل بالدعم للحصول على الشروط والأحكام',
       
     },
-    
-
-    auth: {
-      login: 'تسجيل الدخول إلى حسابك',
-      email: 'البريد الإلكتروني',
-      password: 'كلمة المرور',
-      forgotPassword: 'نسيت كلمة المرور؟',
-      noAccount: "ليس لديك حساب؟",
-      createAccount: 'إنشاء حساب جديد',
-      register: 'تسجيل حساب جديد',
-      firstName: 'الاسم الأول',
-      lastName: 'اسم العائلة',
-      confirmPassword: 'تأكيد كلمة المرور',
-      phoneNumber: 'رقم الهاتف',
-      dateOfBirth: 'تاريخ الميلاد',
-      alreadyAccount: 'لديك حساب بالفعل؟',
-      signIn: 'تسجيل الدخول',
-      resetPassword: 'إعادة تعيين كلمة المرور',
-      sendResetLink: 'إرسال رابط إعادة التعيين',
-      resetInstructions: 'أدخل بريدك الإلكتروني وسنرسل لك تعليمات لإعادة تعيين كلمة المرور.',
-      backToLogin: 'العودة إلى تسجيل الدخول',
-      verifyEmail: 'تحقق من بريدك الإلكتروني',
-      verificationCode: 'رمز التحقق',
-      verifyAccount: 'تحقق من الحساب',
-      verifyInstructions: 'أدخل رمز التحقق المرسل إلى بريدك الإلكتروني لتفعيل حسابك.',
-      resendCode: 'إعادة إرسال الرمز',
-      updateProfile: 'تحديث ملفك الشخصي',
-      update: 'تحديث',
-      logOut: 'تسجيل الخروج',
-      userRole: 'دور المستخدم',
-      roleUser: 'مستخدم عادي',
-      roleOwner: 'مالك عقار',
-      roleAppraiser: 'مقيم عقاري',
-      roleDataEntry: 'مدخل بيانات',
-      roleHelp: 'يحدد دورك الإجراءات التي يمكنك تنفيذها في النظام',
-      fullName: 'الاسم الكامل',
-      rememberMe: 'تذكرني',
-      resetCode: 'رمز إعادة التعيين',
-      newPassword: 'كلمة المرور الجديدة',
-      enterNewPassword: 'أدخل كلمة المرور الجديدة',
-      verificationCodeResent: 'تم إعادة إرسال رمز التحقق إلى بريدك الإلكتروني',
-      registrationSuccess: 'تم التسجيل بنجاح! يرجى التحقق من بريدك الإلكتروني للحصول على تعليمات التحقق.'
-    },
-
-    profile: {
-      myProfile: 'ملفي الشخصي',
-      personalInfo: 'المعلومات الشخصية',
-      contactInfo: 'معلومات الاتصال',
-      companyInfo: 'معلومات الشركة',
-      preferenceInfo: 'التفضيلات',
-      bio: 'نبذة',
-      companyName: 'اسم الشركة',
-      companyRegistration: 'رقم تسجيل الشركة',
-      taxId: 'الرقم الضريبي',
-      address: 'العنوان',
-      city: 'المدينة',
-      state: 'المحافظة/المنطقة',
-      postalCode: 'الرمز البريدي',
-      country: 'الدولة',
-      licenseNumber: 'رقم الترخيص',
-      licenseExpiry: 'تاريخ انتهاء الترخيص',
-      preferredLocations: 'المواقع المفضلة',
-      propertyPreferences: 'تفضيلات العقارات',
-      changePassword: 'تغيير كلمة المرور',
-      currentPassword: 'كلمة المرور الحالية',
-      newPassword: 'كلمة المرور الجديدة',
-      confirmNewPassword: 'تأكيد كلمة المرور الجديدة',
-      myProperties: 'عقاراتي',
-      myAuctions: 'مزاداتي',
-      myBids: 'مزايداتي',
-      addProperty: 'إضافة عقار جديد',
-      addAuction: 'إنشاء مزاد جديد',
-      personalDetails: 'البيانات الشخصية ومعلومات الاتصال',
-      notProvided: 'غير متوفر',
-      memberSince: 'عضو منذ',
-      addressInfo: 'معلومات العنوان',
-      addressInfoDesc: 'عنوانك الحالي ومعلومات الموقع',
-      editProfile: 'تعديل الملف الشخصي',
-      passwordChangeSuccess: 'تم تغيير كلمة المرور بنجاح',
-      updateSuccess: 'تم تحديث الملف الشخصي بنجاح',
-      changePasswordDesc: 'تأكد من أمان حسابك بكلمة مرور قوية',
-      commaSeparated: 'مفصولة بفواصل'
-    },
-
-    error: {
-      generic: 'حدث خطأ',
-      notFound: 'الصفحة غير موجودة',
-      unauthorized: 'دخول غير مصرح به',
-      invalidCredentials: 'بريد إلكتروني أو كلمة مرور غير صحيحة',
-      emailTaken: 'البريد الإلكتروني مستخدم بالفعل',
-      weakPassword: 'كلمة المرور ضعيفة جدًا',
-      passwordMismatch: 'كلمات المرور غير متطابقة',
-      serverError: 'خطأ في الخادم، يرجى المحاولة مرة أخرى لاحقًا',
-      invalidToken: 'رمز غير صالح أو منتهي الصلاحية',
-      notVerified: 'البريد الإلكتروني غير مؤكد',
-      forbidden: 'الوصول ممنوع',
-      noResults: 'لم يتم العثور على نتائج',
-      title: 'خطأ',
-      fetchFailed: 'فشل في جلب البيانات',
-      bidFailed: 'فشل في تقديم المزايدة',
-      registrationFailed: 'فشل التسجيل',
-      profileLoadFailed: 'فشل في تحميل الملف الشخصي',
-      profileUpdateFailed: 'فشل في تحديث الملف الشخصي',
-      passwordChangeFailed: 'فشل في تغيير كلمة المرور',
-      resetRequestFailed: 'فشل في طلب إعادة تعيين كلمة المرور',
-      resetFailed: 'فشل في إعادة تعيين كلمة المرور',
-      verificationFailed: 'فشل التحقق',
-      resendVerificationFailed: 'فشل في إعادة إرسال رمز التحقق',
-      sendingFailed: "فشل في إرسال الرسالة"
-    },
-    footer: {
-      about: 'عنا',
-      aboutText: 'نحن منصة رائدة تربط بين مشتري وبائعي العقارات من خلال المزادات الشفافة والفعالة.',
-      links: 'روابط سريعة',
-      legal: 'قانوني',
-      terms: 'الشروط والأحكام',
-      privacy: 'سياسة الخصوصية',
-      cookies: 'سياسة الكوكيز',
-      contact: 'اتصل بنا',
-      rights: 'جميع الحقوق محفوظة.',
-      developedBy: 'تم إنشاء هذه المنصة بواسطة {name}.',
-      developerName: 'أحمد بشير علي'
-    },
     messages: {
       inquiryAbout: "استفسار حول",
       getInTouch: "تواصل مع مالك العقار",
@@ -1700,26 +1677,777 @@ const translations = {
         normal: "عادية",
         high: "أولوية عالية",
         urgent: "عاجل"
+      },
+      unknownUser: 'مستخدم غير معروف',
+      errorFetchingUser: 'خطأ في جلب بيانات المستخدم'
+    },
+    auth: {
+      login: 'تسجيل الدخول إلى حسابك',
+      email: 'عنوان البريد الإلكتروني',
+      password: 'كلمة المرور',
+      forgotPassword: 'هل نسيت كلمة المرور؟',
+      noAccount: "ليس لديك حساب؟",
+      createAccount: 'إنشاء حساب',
+      register: 'تسجيل حساب جديد',
+      firstName: 'الاسم الأول',
+      lastName: 'الاسم الأخير',
+      confirmPassword: 'تأكيد كلمة المرور',
+      phoneNumber: 'رقم الهاتف',
+      dateOfBirth: 'تاريخ الميلاد',
+      alreadyAccount: 'هل لديك حساب بالفعل؟',
+      signIn: 'تسجيل الدخول',
+      resetPassword: 'إعادة تعيين كلمة المرور الخاصة بك',
+      sendResetLink: 'إرسال رابط إعادة التعيين',
+      resetInstructions: 'أدخل عنوان بريدك الإلكتروني وسنرسل لك تعليمات لإعادة تعيين كلمة المرور الخاصة بك.',
+      backToLogin: 'العودة إلى تسجيل الدخول',
+      verifyEmail: 'التحقق من بريدك الالكتروني',
+      verificationCode: 'رمز التحقق',
+      verifyAccount: 'التحقق من الحساب',
+      verifyInstructions: 'أدخل رمز التحقق المرسل إلى بريدك الإلكتروني لتفعيل حسابك.',
+      resendCode: 'إعادة إرسال الرمز',
+      updateProfile: 'تحديث ملفك الشخصي',
+      update: 'تحديث',
+      logOut: 'تسجيل الخروج',
+      userRole: 'دور المستخدم',
+      roleUser: 'مستخدم عادي',
+      roleOwner: 'مالك العقار',
+      roleAppraiser: 'مقيم عقاري',
+      roleDataEntry: 'أخصائي إدخال بيانات',
+      roleHelp: 'يحدد دورك الإجراءات التي يمكنك تنفيذها في النظام',
+      fullName: 'الاسم الكامل',
+      rememberMe: 'تذكرنى',
+      resetCode: 'رمز إعادة التعيين',
+      newPassword: 'كلمة المرور الجديدة',
+      enterNewPassword: 'أدخل كلمة المرور الجديدة الخاصة بك',
+      verificationCodeResent: 'تم إعادة إرسال رمز التحقق إلى بريدك الإلكتروني',
+      registrationSuccess: 'تم التسجيل بنجاح! يرجى مراجعة بريدك الإلكتروني للحصول على تعليمات التحقق.'
+    },
+    hero: {
+      discover: 'اكتشف',
+      premium: 'الفاخرة',
+      realEstate: 'العقارات',
+      throughAuctions: 'عبر المزادات الذكية',
+      subtitle: 'انضم إلى آلاف المستثمرين العقاريين في مزادات شفافة وآمنة للعقارات السكنية والتجارية',
+      verified: 'موثقة 100%',
+      liveAuctions: 'مزادات مباشرة',
+      users: 'أكثر من 15 ألف مستخدم',
+      viewAuctions: 'عرض المزادات',
+      browseProperties: 'تصفح العقارات'
+    },
+   
+    app: {
+      name: 'منصة المزاد' // "Auction Platform" in Arabic
+    },
+    
+    footer: {
+      about: 'حول',
+      aboutText: 'نحن منصة مزادات عبر الإنترنت متخصصة في العقارات',
+      links: 'روابط سريعة',
+      legal: 'قانوني',
+      terms: 'الشروط والأحكام',
+      privacy: 'سياسة الخصوصية',
+      cookies: 'سياسة ملفات تعريف الارتباط',
+      contact: 'اتصل بنا',
+      rights: 'جميع الحقوق محفوظة'
+    },
+    
+    property: {
+      type: 'نوع العقار',
+      available: 'متاح',
+      title: 'عنوان',
+      price: 'السعر',
+      location: 'الموقع',
+      description: 'الوصف',
+      bathrooms: 'الحمامات',
+      bedrooms: 'غرف النوم',
+      size: 'المساحة',
+      squareMeters: 'متر مربع',
+      sqm: 'متر مربع',
+      features: 'المميزات',
+      amenities: 'المرافق',
+      featuresAndAmenities: 'المميزات والمرافق',
+      roomList: 'قائمة الغرف',
+      floor: 'الطابق',
+      floors: 'الطوابق',
+      rooms: 'الغرف',
+      yearBuilt: 'سنة البناء',
+      deedNumber: 'رقم الصك',
+      marketValue: 'القيمة السوقية',
+      gallery: 'معرض الصور',
+      photos: 'الصور',
+      relatedAuctions: 'المزادات ذات الصلة',
+      propertyDetails: 'تفاصيل العقار',
+      loading: 'جاري التحميل',
+      featured: 'مميز',
+      edit: 'تعديل',
+      keyFeatures: 'المميزات الرئيسية',
+      minimumBid: 'الحد الأدنى للمزايدة',
+      contactOwner: 'تواصل مع المالك',
+      area: 'المنطقة',
+      hasWindow: 'يوجد نافذة',
+      hasBathroom: 'يوجد حمام',
+      postalCode: 'الرمز البريدي',
+      coordinates: 'الإحداثيات',
+      addressInfo: 'معلومات العنوان',
+      address: 'العنوان',
+      city: 'المدينة',
+      state: 'الولاية/المنطقة',
+      country: 'البلد',
+      nearbyServices: 'الخدمات القريبة',
+      nearbyServicesInfo: 'معلومات الخدمات القريبة',
+      noActiveAuctions: 'لا توجد مزادات نشطة',
+      startAuctionDesc: 'يمكنك بدء مزاد على هذا العقار',
+      clickToInteract: 'انقر للتفاعل',
+      tab: {
+        overview: 'نظرة عامة',
+        rooms: 'الغرف',
+        location: 'الموقع',
+        gallery: 'معرض الصور',
+        auctions: 'المزادات'
+      },
+      galleryTabs: {
+        photos: 'الصور',
+        videos: 'الفيديوهات',
+        documents: 'المستندات',
+        otherFiles: 'ملفات أخرى'
+      },
+      featureItems: {
+        'حمامسباحة': 'حمام سباحة',
+        'حمام سباحة': 'حمام سباحة',
+        'حديقة': 'حديقة',
+        'مرآب': 'مرآب'
+      },
+      amenityItems: {
+        'مدارس': 'مدارس',
+        'مستشفيات': 'مستشفيات',
+        'مراكزتسوق': 'مراكز تسوق',
+        'مراكز تسوق': 'مراكز تسوق',
+        'حدائقعامة': 'حدائق عامة',
+        'حدائق عامة': 'حدائق عامة'
+      },
+      roomFeatureItems: {
+        'نافذة': 'نافذة',
+        'تكييف': 'تكييف',
+        'تدفئة': 'تدفئة',
+        'حمام': 'حمام',
+        'خزانةكبيرة': 'خزانة كبيرة',
+        'خزانة كبيرة': 'خزانة كبيرة',
+        'خزانةمدمجة': 'خزانة مدمجة',
+        'خزانة مدمجة': 'خزانة مدمجة'
+      },
+      roomTypes: {
+        'غرفةمعيشة': 'غرفة معيشة'
       }
     }
   }
 };
 
+// Ensure critical message translations are defined
+if (!translations.en.messages.filters) {
+  translations.en.messages.filters = {
+    all: 'All Messages',
+    inbox: 'Inbox',
+    sent: 'Sent',
+    unread: 'Unread',
+    archived: 'Archived'
+  };
+}
+
+if (!translations.en.messages.priority) {
+  translations.en.messages.priority = {
+    low: 'Low Priority',
+    normal: 'Normal',
+    high: 'High Priority',
+    urgent: 'Urgent'
+  };
+}
+
+// Explicitly set missing keys
+translations.en.messages.title = translations.en.messages.title || 'Messages';
+translations.en.messages.total = translations.en.messages.total || 'total';
+translations.en.messages.selectToRead = translations.en.messages.selectToRead || 'Select a message to read';
+translations.en.messages.selectToReadDesc = translations.en.messages.selectToReadDesc || 'Choose a message from the list on the left to view its contents';
+translations.en.messages.search = translations.en.messages.search || 'Search messages...';
+translations.en.messages.to = translations.en.messages.to || 'To: {name}';
+translations.en.messages.compose = translations.en.messages.compose || 'Compose Message';
+translations.en.messages.getInTouch = translations.en.messages.getInTouch || 'Get in touch with the property owner';
+translations.en.messages.inquiryAbout = translations.en.messages.inquiryAbout || 'Inquiry about';
+
+// Add missing property translations for English
+if (!translations.en.property) {
+  translations.en.property = translations.en.property || {};
+}
+
+// Add missing location fields to English property
+translations.en.property.address = translations.en.property.address || 'Address';
+translations.en.property.city = translations.en.property.city || 'City';
+translations.en.property.state = translations.en.property.state || 'State/Province';
+translations.en.property.country = translations.en.property.country || 'Country';
+translations.en.property.postalCode = translations.en.property.postalCode || 'Postal Code';
+translations.en.property.marketValue = translations.en.property.marketValue || 'Market Value';
+translations.en.property.photos = translations.en.property.photos || 'Photos';
+translations.en.property.noActiveAuctions = translations.en.property.noActiveAuctions || 'No active auctions for this property';
+translations.en.property.startAuctionDesc = translations.en.property.startAuctionDesc || 'Start an auction for this property';
+translations.en.property.loading = translations.en.property.loading || 'Loading property details...';
+
+// Add feature items translations for English
+if (!translations.en.property.featureItems) {
+  translations.en.property.featureItems = {};
+}
+translations.en.property.featureItems['حمامسباحة'] = 'Swimming Pool';
+translations.en.property.featureItems['حمام سباحة'] = 'Swimming Pool';
+translations.en.property.featureItems['حديقة'] = 'Garden';
+translations.en.property.featureItems['مرآب'] = 'Garage';
+
+// Add amenity items translations for English
+if (!translations.en.property.amenityItems) {
+  translations.en.property.amenityItems = {};
+}
+translations.en.property.amenityItems['مدارس'] = 'Schools';
+translations.en.property.amenityItems['مستشفيات'] = 'Hospitals';
+translations.en.property.amenityItems['مراكزتسوق'] = 'Shopping Centers';
+translations.en.property.amenityItems['مراكز تسوق'] = 'Shopping Centers';
+translations.en.property.amenityItems['حدائقعامة'] = 'Public Parks';
+translations.en.property.amenityItems['حدائق عامة'] = 'Public Parks';
+
+// Add room feature items translations for English
+if (!translations.en.property.roomFeatureItems) {
+  translations.en.property.roomFeatureItems = {};
+}
+translations.en.property.roomFeatureItems['نافذة'] = 'Window';
+translations.en.property.roomFeatureItems['تكييف'] = 'Air Conditioning';
+translations.en.property.roomFeatureItems['تدفئة'] = 'Heating';
+translations.en.property.roomFeatureItems['حمام'] = 'Bathroom';
+translations.en.property.roomFeatureItems['خزانةكبيرة'] = 'Large Closet';
+translations.en.property.roomFeatureItems['خزانة كبيرة'] = 'Large Closet';
+translations.en.property.roomFeatureItems['خزانةمدمجة'] = 'Built-in Closet';
+translations.en.property.roomFeatureItems['خزانة مدمجة'] = 'Built-in Closet';
+
+// Add room types translations for English
+if (!translations.en.property.roomTypes) {
+  translations.en.property.roomTypes = {};
+}
+translations.en.property.roomTypes['غرفةمعيشة'] = 'Living Room';
+translations.en.property.roomTypes.living = 'Living Room';
+translations.en.property.roomTypes.dining = 'Dining Room';
+translations.en.property.roomTypes.storage = 'Storage Room';
+
+// Add location translations for English
+if (!translations.en.location) {
+  translations.en.location = {};
+}
+translations.en.location.detecting = 'Detecting your location...';
+
+// Add validation translations for English
+if (!translations.en.validation) {
+  translations.en.validation = {};
+}
+translations.en.validation.roomNameRequired = 'Room name is required';
+
+// Add property form translations for English
+if (!translations.en.property) {
+  translations.en.property = translations.en.property || {};
+}
+
+// Property creation
+translations.en.property.create = 'Create';
+translations.en.property.createProperty = 'Create Property';
+translations.en.property.createPropertyDesc = 'Add a new property to the platform';
+
+// Form sections
+translations.en.property.basicInfo = 'Basic Information';
+translations.en.property.basicInfoDesc = 'Enter the basic details of your property';
+translations.en.property.details = 'Property Details';
+translations.en.property.detailsDesc = 'Add specific details about your property';
+translations.en.property.financial = 'Financial Information';
+
+// Form fields
+translations.en.property.titlePlaceholder = 'e.g., Luxury Villa with Ocean View';
+translations.en.property.propertyType = 'Property Type';
+translations.en.property.buildingType = 'Building Type';
+translations.en.property.deedNumberPlaceholder = 'e.g., 12345-ABC';
+translations.en.property.deedNumberHelp = 'The official deed or title number of the property';
+translations.en.property.descriptionPlaceholder = 'Describe your property in detail...';
+
+// Room management
+translations.en.property.addRoom = 'Add Room';
+translations.en.property.noRooms = 'No rooms added yet';
+translations.en.property.addRoomHelp = 'Add details about the rooms in your property';
+translations.en.property.startAddingRooms = 'Start adding rooms';
+translations.en.property.roomsDesc = 'Manage the rooms in your property';
+
+// Add missing share related translations for English
+if (!translations.en.share) {
+  translations.en.share = {
+    facebook: 'Share on Facebook',
+    twitter: 'Share on Twitter',
+    linkedin: 'Share on LinkedIn',
+    whatsapp: 'Share on WhatsApp',
+    email: 'Share via Email',
+    copyLink: 'Copy Link'
+  };
+}
+
+// Add missing auction related translations for English
+if (!translations.en.auction) {
+  translations.en.auction = {};
+}
+
+translations.en.auction.description = translations.en.auction.description || 'Description';
+translations.en.auction.startingBid = translations.en.auction.startingBid || 'Starting Bid';
+translations.en.auction.status = translations.en.auction.status || 'Auction Status';
+
+// Add direct Arabic translation mapping to English
+translations.en['متاح'] = 'Available';
+
+// Add missing Arabic translations
+translations.ar.متاح = 'متاح';
+
+// Add missing share related translations for Arabic
+if (!translations.ar.share) {
+  translations.ar.share = {};
+}
+
+translations.ar.share.facebook = 'مشاركة على فيسبوك';
+translations.ar.share.twitter = 'مشاركة على تويتر';
+translations.ar.share.linkedin = 'مشاركة على لينكد إن';
+translations.ar.share.whatsapp = 'مشاركة على واتساب';
+translations.ar.share.email = 'مشاركة عبر البريد الإلكتروني';
+translations.ar.share.copyLink = 'نسخ الرابط';
+if (!translations.ar.share) {
+  translations.ar.share = {
+    facebook: 'مشاركة على فيسبوك',
+    twitter: 'مشاركة على تويتر',
+    linkedin: 'مشاركة على لينكد إن',
+    whatsapp: 'مشاركة عبر واتساب',
+    email: 'مشاركة عبر البريد الإلكتروني',
+    copyLink: 'نسخ الرابط'
+  };
+}
+
+// Also ensure these are accessible in the common namespace for backward compatibility
+if (translations.ar.common) {
+  translations.ar.common.facebook = translations.ar.share.facebook;
+  translations.ar.common.twitter = translations.ar.share.twitter;
+  translations.ar.common.linkedin = translations.ar.share.linkedin;
+  translations.ar.common.whatsapp = translations.ar.share.whatsapp;
+  translations.ar.common.email = translations.ar.share.email;
+  translations.ar.common.copyLink = translations.ar.share.copyLink;
+  translations.ar.common.linkCopied = 'تم نسخ الرابط!';
+}
+
+// Add missing auction related translations for Arabic
+if (!translations.ar.auction) {
+  translations.ar.auction = {};
+}
+
+// Ensure these keys exist with proper Arabic translations
+translations.ar.auction.description = 'الوصف';
+translations.ar.auction.startingBid = 'الحد الأدنى للمزايدة';
+translations.ar.auction.status = 'حالة المزاد';
+
+// Additional commonly used auction translations
+translations.ar.auction.noDescription = 'لا يوجد وصف';
+translations.ar.auction.currentBid = 'المزايدة الحالية';
+translations.ar.auction.bids = 'المزايدات';
+
+// Add missing amenity items translations for English
+if (!translations.en.property.amenityItems) {
+  translations.en.property.amenityItems = {};
+}
+
+translations.en.property.amenityItems.mosque = 'Mosque';
+
+// Add missing amenity items translations for Arabic
+if (!translations.ar.property.amenityItems) {
+  translations.ar.property.amenityItems = {};
+}
+
+translations.ar.property.amenityItems.mosque = 'مسجد';
+
+// Add missing room feature items translations for English
+if (!translations.en.property.roomFeatureItems) {
+  translations.en.property.roomFeatureItems = {};
+}
+
+// Bathroom variations
+translations.en.property.roomFeatureItems.bathroom = 'Bathroom';
+translations.en.property.roomFeatureItems.Bathroom = 'Bathroom';
+
+// Walk-in closet variations
+translations.en.property.roomFeatureItems['walk-incloset'] = 'Walk-in Closet';
+translations.en.property.roomFeatureItems['walk-in closet'] = 'Walk-in Closet';
+translations.en.property.roomFeatureItems['Walk-inCloset'] = 'Walk-in Closet';
+
+// Built-in wardrobe variations
+translations.en.property.roomFeatureItems['built-inwardrobe'] = 'Built-in Wardrobe';
+translations.en.property.roomFeatureItems['built-in wardrobe'] = 'Built-in Wardrobe';
+translations.en.property.roomFeatureItems['Built-inWardrobe'] = 'Built-in Wardrobe';
+
+// Ceiling fan variations
+translations.en.property.roomFeatureItems.ceilingfan = 'Ceiling Fan';
+translations.en.property.roomFeatureItems['ceiling fan'] = 'Ceiling Fan';
+translations.en.property.roomFeatureItems.CeilingFan = 'Ceiling Fan';
+
+// Add missing room feature items translations for Arabic
+if (!translations.ar.property.roomFeatureItems) {
+  translations.ar.property.roomFeatureItems = {};
+}
+
+// Bathroom variations
+translations.ar.property.roomFeatureItems.bathroom = 'حمام';
+translations.ar.property.roomFeatureItems.Bathroom = 'حمام';
+
+// Walk-in closet variations
+translations.ar.property.roomFeatureItems['walk-incloset'] = 'خزانة ملابس مدمجة';
+translations.ar.property.roomFeatureItems['walk-in closet'] = 'خزانة ملابس مدمجة';
+translations.ar.property.roomFeatureItems['Walk-inCloset'] = 'خزانة ملابس مدمجة';
+
+// Built-in wardrobe variations
+translations.ar.property.roomFeatureItems['built-inwardrobe'] = 'خزانة ملابس مدمجة';
+translations.ar.property.roomFeatureItems['built-in wardrobe'] = 'خزانة ملابس مدمجة';
+translations.ar.property.roomFeatureItems['Built-inWardrobe'] = 'خزانة ملابس مدمجة';
+
+// Ceiling fan variations
+translations.ar.property.roomFeatureItems.ceilingfan = 'مروحة سقف';
+translations.ar.property.roomFeatureItems['ceiling fan'] = 'مروحة سقف';
+translations.ar.property.roomFeatureItems.CeilingFan = 'مروحة سقف';
+
+// Window variations
+translations.ar.property.roomFeatureItems.window = 'نافذة';
+translations.ar.property.roomFeatureItems.Window = 'نافذة';
+
+// Air conditioning variations for room features
+translations.ar.property.roomFeatureItems.airConditioning = 'تكييف هواء';
+translations.ar.property.roomFeatureItems.airconditioning = 'تكييف هواء';
+translations.ar.property.roomFeatureItems['air conditioning'] = 'تكييف هواء';
+translations.ar.property.roomFeatureItems.AirConditioning = 'تكييف هواء';
+
+// Heating variations for room features
+translations.ar.property.roomFeatureItems.heating = 'تدفئة';
+translations.ar.property.roomFeatureItems.Heating = 'تدفئة';
+
+// Add missing property feature items translations for English
+if (!translations.en.property.featureItems) {
+  translations.en.property.featureItems = {};
+}
+
+// Garden variations
+translations.en.property.featureItems.garden = 'Garden';
+translations.en.property.featureItems.Garden = 'Garden';
+
+// Garage variations
+translations.en.property.featureItems.garage = 'Garage';
+translations.en.property.featureItems.Garage = 'Garage';
+
+// Air conditioning variations
+translations.en.property.featureItems.airConditioning = 'Air Conditioning';
+translations.en.property.featureItems.airconditioning = 'Air Conditioning';
+translations.en.property.featureItems['air conditioning'] = 'Air Conditioning';
+translations.en.property.featureItems.AirConditioning = 'Air Conditioning';
+
+// Balcony variations
+translations.en.property.featureItems.balcony = 'Balcony';
+translations.en.property.featureItems.Balcony = 'Balcony';
+
+// Heating variations
+translations.en.property.featureItems.heating = 'Heating';
+translations.en.property.featureItems.Heating = 'Heating';
+
+// Elevator variations
+translations.en.property.featureItems.elevator = 'Elevator';
+translations.en.property.featureItems.Elevator = 'Elevator';
+
+// Security system variations
+translations.en.property.featureItems.security = 'Security System';
+translations.en.property.featureItems.securitysystem = 'Security System';
+translations.en.property.featureItems['security system'] = 'Security System';
+translations.en.property.featureItems.SecuritySystem = 'Security System';
+
+// Parking variations
+translations.en.property.featureItems.parking = 'Parking';
+translations.en.property.featureItems.Parking = 'Parking';
+
+// Furnished variations
+translations.en.property.featureItems.furnished = 'Furnished';
+translations.en.property.featureItems.Furnished = 'Furnished';
+
+// Fireplace variations
+translations.en.property.featureItems.fireplace = 'Fireplace';
+translations.en.property.featureItems.Fireplace = 'Fireplace';
+
+// Storage variations
+translations.en.property.featureItems.storage = 'Storage';
+translations.en.property.featureItems.Storage = 'Storage';
+
+// Add missing property feature items translations for Arabic
+if (!translations.ar.property.featureItems) {
+  translations.ar.property.featureItems = {};
+}
+
+// Garden variations
+translations.ar.property.featureItems.garden = 'حديقة';
+translations.ar.property.featureItems.Garden = 'حديقة';
+
+// Garage variations
+translations.ar.property.featureItems.garage = 'مرآب';
+translations.ar.property.featureItems.Garage = 'مرآب';
+
+// Air conditioning variations
+translations.ar.property.featureItems.airConditioning = 'تكييف هواء';
+translations.ar.property.featureItems.airconditioning = 'تكييف هواء';
+translations.ar.property.featureItems['air conditioning'] = 'تكييف هواء';
+translations.ar.property.featureItems.AirConditioning = 'تكييف هواء';
+
+// Balcony variations
+translations.ar.property.featureItems.balcony = 'شرفة';
+translations.ar.property.featureItems.Balcony = 'شرفة';
+
+// Heating variations
+translations.ar.property.featureItems.heating = 'تدفئة';
+translations.ar.property.featureItems.Heating = 'تدفئة';
+
+// Elevator variations
+translations.ar.property.featureItems.elevator = 'مصعد';
+translations.ar.property.featureItems.Elevator = 'مصعد';
+
+// Security system variations
+translations.ar.property.featureItems.security = 'نظام أمني';
+translations.ar.property.featureItems.securitysystem = 'نظام أمني';
+translations.ar.property.featureItems['security system'] = 'نظام أمني';
+translations.ar.property.featureItems.SecuritySystem = 'نظام أمني';
+
+// Parking variations
+translations.ar.property.featureItems.parking = 'موقف سيارات';
+translations.ar.property.featureItems.Parking = 'موقف سيارات';
+
+// Furnished variations
+translations.ar.property.featureItems.furnished = 'مفروش';
+translations.ar.property.featureItems.Furnished = 'مفروش';
+
+// Fireplace variations
+translations.ar.property.featureItems.fireplace = 'مدفأة';
+translations.ar.property.featureItems.Fireplace = 'مدفأة';
+
+// Storage variations
+translations.ar.property.featureItems.storage = 'تخزين';
+translations.ar.property.featureItems.Storage = 'تخزين';
+
+// Add missing amenity items translations for English
+if (!translations.en.property.amenityItems) {
+  translations.en.property.amenityItems = {};
+}
+
+translations.en.property.amenityItems.mosque = 'Mosque';
+translations.en.property.amenityItems.schools = 'Schools';
+translations.en.property.amenityItems.Schools = 'Schools';
+translations.en.property.amenityItems.shoppingCenters = 'Shopping Centers';
+translations.en.property.amenityItems.shoppingcenters = 'Shopping Centers';
+translations.en.property.amenityItems['shopping centers'] = 'Shopping Centers';
+translations.en.property.amenityItems.ShoppingCenters = 'Shopping Centers';
+translations.en.property.amenityItems.parks = 'Parks';
+translations.en.property.amenityItems.Parks = 'Parks';
+translations.en.property.amenityItems.publicTransportation = 'Public Transportation';
+translations.en.property.amenityItems.publictransportation = 'Public Transportation';
+translations.en.property.amenityItems['public transportation'] = 'Public Transportation';
+translations.en.property.amenityItems.PublicTransportation = 'Public Transportation';
+
+// Add missing amenity items translations for Arabic
+if (!translations.ar.property.amenityItems) {
+  translations.ar.property.amenityItems = {};
+}
+
+translations.ar.property.amenityItems.mosque = 'مسجد';
+translations.ar.property.amenityItems.schools = 'مدارس';
+translations.ar.property.amenityItems.Schools = 'مدارس';
+translations.ar.property.amenityItems.shoppingCenters = 'مراكز تسوق';
+translations.ar.property.amenityItems.shoppingcenters = 'مراكز تسوق';
+translations.ar.property.amenityItems['shopping centers'] = 'مراكز تسوق';
+translations.ar.property.amenityItems.ShoppingCenters = 'مراكز تسوق';
+translations.ar.property.amenityItems.parks = 'حدائق';
+translations.ar.property.amenityItems.Parks = 'حدائق';
+translations.ar.property.amenityItems.publicTransportation = 'مواصلات عامة';
+translations.ar.property.amenityItems.publictransportation = 'مواصلات عامة';
+translations.ar.property.amenityItems['public transportation'] = 'مواصلات عامة';
+translations.ar.property.amenityItems.PublicTransportation = 'مواصلات عامة';
+
+// Add missing messages translations for Arabic
+if (!translations.ar.messages) {
+  translations.ar.messages = {};
+}
+
+// Basic message translations
+translations.ar.messages.inquiryAbout = translations.ar.messages.inquiryAbout || 'استفسار حول';
+translations.ar.messages.getInTouch = translations.ar.messages.getInTouch || 'تواصل مع مالك العقار';
+translations.ar.messages.sender = translations.ar.messages.sender || 'المرسل';
+translations.ar.messages.subject = translations.ar.messages.subject || 'الموضوع';
+translations.ar.messages.subjectPlaceholder = translations.ar.messages.subjectPlaceholder || 'أدخل موضوع رسالتك...';
+translations.ar.messages.aboutProperty = translations.ar.messages.aboutProperty || 'حول العقار';
+translations.ar.messages.loginRequired = translations.ar.messages.loginRequired || 'تسجيل الدخول مطلوب';
+translations.ar.messages.messageSentSuccess = translations.ar.messages.messageSentSuccess || 'تم إرسال الرسالة بنجاح!';
+translations.ar.messages.messageDelivered = translations.ar.messages.messageDelivered || 'تم إرسال رسالتك إلى مالك العقار. سيتم الرد عليك قريبا.';
+translations.ar.messages.directMessagingNotAvailable = translations.ar.messages.directMessagingNotAvailable || 'المراسلة المباشرة غير متاحة في هذا السياق';
+translations.ar.messages.sendError = translations.ar.messages.sendError || 'فشل في إرسال الرسالة. يرجى المحاولة مرة أخرى.';
+translations.ar.messages.messageDisclaimer = translations.ar.messages.messageDisclaimer || 'سيتم مشاركة معلومات الاتصال الخاصة بك مع مالك العقار.';
+
+// Message management related translations
+translations.ar.messages.title = translations.ar.messages.title || 'الرسائل';
+translations.ar.messages.compose = translations.ar.messages.compose || 'إنشاء رسالة';
+translations.ar.messages.total = translations.ar.messages.total || 'المجموع';
+translations.ar.messages.unread = translations.ar.messages.unread || 'غير مقروءة';
+translations.ar.messages.search = translations.ar.messages.search || 'البحث في الرسائل...';
+translations.ar.messages.confirmDelete = translations.ar.messages.confirmDelete || 'هل أنت متأكد من رغبتك في حذف هذه الرسالة؟';
+translations.ar.messages.to = translations.ar.messages.to || 'إلى: {name}';
+translations.ar.messages.from = translations.ar.messages.from || 'من: {name}';
+translations.ar.messages.archive = translations.ar.messages.archive || 'أرشفة';
+translations.ar.messages.delete = translations.ar.messages.delete || 'حذف';
+translations.ar.messages.close = translations.ar.messages.close || 'إغلاق';
+translations.ar.messages.reply = translations.ar.messages.reply || 'رد';
+
+// Message filters
+if (!translations.ar.messages.filters) {
+  translations.ar.messages.filters = {
+    all: 'جميع الرسائل',
+    inbox: 'صندوق الوارد',
+    sent: 'المرسلة',
+    unread: 'غير المقروءة',
+    archived: 'المؤرشفة'
+  };
+}
+
+// Message priority
+if (!translations.ar.messages.form) {
+  translations.ar.messages.form = {
+    priority: 'أولوية الرسالة'
+  };
+}
+
+if (!translations.ar.messages.priority) {
+  translations.ar.messages.priority = {
+    low: 'أولوية منخفضة',
+    normal: 'عادية',
+    high: 'أولوية عالية',
+    urgent: 'عاجلة'
+  };
+}
+
+// Add Arabic room types translations
+// Add Arabic property form translations
+translations.ar.property = translations.ar.property || {};
+
+// Property creation
+translations.ar.property.create = 'إنشاء';
+translations.ar.property.createProperty = 'إنشاء عقار';
+translations.ar.property.createPropertyDesc = 'إضافة عقار جديد إلى المنصة';
+
+// Form sections
+translations.ar.property.basicInfo = 'معلومات أساسية';
+translations.ar.property.basicInfoDesc = 'أدخل التفاصيل الأساسية للعقار الخاص بك';
+translations.ar.property.details = 'تفاصيل العقار';
+translations.ar.property.detailsDesc = 'أضف تفاصيل محددة حول العقار الخاص بك';
+translations.ar.property.financial = 'المعلومات المالية';
+
+// Form fields
+translations.ar.property.titlePlaceholder = 'مثال: فيلا فاخرة مطلة على البحر';
+translations.ar.property.propertyType = 'نوع العقار';
+translations.ar.property.buildingType = 'نوع المبنى';
+translations.ar.property.deedNumberPlaceholder = 'مثال: 12345-أبج';
+translations.ar.property.deedNumberHelp = 'رقم صك الملكية الرسمي للعقار';
+translations.ar.property.descriptionPlaceholder = 'صف عقارك بالتفصيل...';
+
+// Property feature items
+if (!translations.en.property.featureItems) {
+  translations.en.property.featureItems = {};
+}
+
+translations.en.property.featureItems.gym = 'Gym';
+translations.en.property.featureItems.laundryroom = 'Laundry Room';
+translations.en.property.featureItems.laundry_room = 'Laundry Room';
+
+// Property amenity items
+if (!translations.en.property.amenityItems) {
+  translations.en.property.amenityItems = {};
+}
+
+translations.en.property.amenityItems.hospitals = 'Hospitals';
+translations.en.property.amenityItems.restaurants = 'Restaurants';
+translations.en.property.amenityItems.beachaccess = 'Beach Access';
+translations.en.property.amenityItems.beach_access = 'Beach Access';
+translations.en.property.amenityItems.sportsfacilities = 'Sports Facilities';
+translations.en.property.amenityItems.sports_facilities = 'Sports Facilities';
+translations.en.property.amenityItems.university = 'University';
+
+// Arabic feature items
+if (!translations.ar.property.featureItems) {
+  translations.ar.property.featureItems = {};
+}
+
+translations.ar.property.featureItems.gym = 'صالة رياضية';
+translations.ar.property.featureItems.laundryroom = 'غرفة غسيل';
+translations.ar.property.featureItems.laundry_room = 'غرفة غسيل';
+
+// Arabic amenity items
+if (!translations.ar.property.amenityItems) {
+  translations.ar.property.amenityItems = {};
+}
+
+translations.ar.property.amenityItems.hospitals = 'مستشفيات';
+translations.ar.property.amenityItems.restaurants = 'مطاعم';
+translations.ar.property.amenityItems.beachaccess = 'وصول للشاطئ';
+translations.ar.property.amenityItems.beach_access = 'وصول للشاطئ';
+translations.ar.property.amenityItems.sportsfacilities = 'مرافق رياضية';
+translations.ar.property.amenityItems.sports_facilities = 'مرافق رياضية';
+translations.ar.property.amenityItems.university = 'جامعة';
+
+// Room types
+if (!translations.ar.property.roomTypes) {
+  translations.ar.property.roomTypes = {};
+}
+translations.ar.property.roomTypes.living = 'غرفة معيشة';
+translations.ar.property.roomTypes.dining = 'غرفة طعام';
+translations.ar.property.roomTypes.storage = 'غرفة تخزين';
+
+// Add Arabic location translations
+if (!translations.ar.location) {
+  translations.ar.location = {};
+}
+translations.ar.location.detecting = 'جاري تحديد موقعك...';
+
 // Translation function
+// Add check for missing messages.compose translation in English
+if (translations.en.app && !translations.en.messages.compose) {
+  console.log('Adding missing messages.compose translation');
+  translations.en.messages.compose = 'Compose Message';
+}
+
 export const t = derived(
   locale,
   ($locale) => (key) => {
+    if (!key) return '';
+    
+    // Split the key by dots to navigate the nested objects
     const keys = key.split('.');
-    let value = translations[$locale];
+    
+    // Use a safer approach to access nested properties
+    if (!translations[$locale]) {
+      console.warn(`Language not found: ${$locale}`);
+      return key;
+    }
+    
+    let result = translations[$locale];
+    
+    // Navigate through the nested objects
     for (const k of keys) {
-      if (value && value[k] !== undefined) {
-        value = value[k];
+      if (result && Object.prototype.hasOwnProperty.call(result, k)) {
+        result = result[k];
       } else {
         console.warn(`Translation key not found: ${key} in locale ${$locale}`);
         return key;
       }
     }
-    return value;
+    
+    // Ensure we return a string
+    return typeof result === 'string' ? result : key;
   }
 );
 

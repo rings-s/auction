@@ -1,4 +1,3 @@
-<!-- src/routes/properties/[slug]/+page.svelte -->
 <script>
   import { onMount, tick } from 'svelte';
   import { page } from '$app/stores';
@@ -27,6 +26,7 @@
   let isImagesLoading = true;
   let imagesLoaded = 0;
   let thumbnailsContainer;
+  let isCurrentMainImageLoading = true; // New state for current main image
   
   // Filter media by type
   $: filteredMedia = property?.media?.filter(item => item.media_type === activeMediaType) || [];
@@ -37,6 +37,13 @@
   
   // Get main image
   $: mainImage = property?.main_image || (images.length > 0 ? images.find(img => img.is_primary) || images[0] : null);
+  $: if (mainImage) console.log('[DEBUG] mainImage updated:', mainImage);
+  
+  // Reactive statement to reset loading state when mainImage changes
+  $: if (mainImage && mainImage.url) {
+    console.log('[DEBUG] mainImage.url changed, setting isCurrentMainImageLoading to true');
+    isCurrentMainImageLoading = true;
+  }
   
   // Tabs management
   let activeTab = 'overview';
@@ -83,13 +90,16 @@
 
   // Load property data
   async function loadProperty() {
+    console.log('[DEBUG] loadProperty called. Current slug:', slug);
     try {
+      console.log('[DEBUG] Setting loading = true');
       loading = true;
       error = null;
       imagesLoaded = 0;
       isImagesLoading = true;
       
       const response = await getPropertyBySlug(slug);
+      console.log('[DEBUG] Property data received:', response);
       property = response;
       
       // Initialize after data loads
@@ -106,6 +116,7 @@
       console.error('Error loading property:', err);
       error = err.message || $t('error.fetchFailed');
     } finally {
+      console.log('[DEBUG] Setting loading = false');
       loading = false;
     }
   }
@@ -421,9 +432,7 @@
       case 'document':
         if (item.url.endsWith('.pdf')) {
           return `<div class="text-center text-white">
-                    <svg class="mx-auto h-20 w-20 text-gray-200" fill="currentColor" viewBox="0 0 24 24">
-                      <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8l-6-6zm-1 5V3.5L18.5 9H13v-2z"/>
-                    </svg>
+                    <svg class="mx-auto h-20 w-20 text-gray-200" fill="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8l-6-6zm-1 5V3.5L18.5 9H13v-2z"/></svg>
                     <p class="mt-4 text-lg">${$t('property.pdfDocument')}: ${item.name}</p>
                     <a href="${item.url}" download class="mt-2 inline-block px-4 py-2 bg-white text-gray-900 rounded-md hover:bg-gray-200 transition-colors">
                       ${$t('property.downloadPdf')}
@@ -431,9 +440,7 @@
                   </div>`;
         } else {
           return `<div class="text-center text-white">
-                    <svg class="mx-auto h-20 w-20 text-gray-200" fill="currentColor" viewBox="0 0 24 24">
-                      <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8l-6-6zm-1 5V3.5L18.5 9H13v-2z"/>
-                    </svg>
+                    <svg class="mx-auto h-20 w-20 text-gray-200" fill="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8l-6-6zm-1 5V3.5L18.5 9H13v-2z"/></svg>
                     <p class="mt-4 text-lg">${$t('property.document')}: ${item.name}</p>
                     <a href="${item.url}" download class="mt-2 inline-block px-4 py-2 bg-white text-gray-900 rounded-md hover:bg-gray-200 transition-colors">
                       ${$t('property.downloadDocument')}
@@ -442,9 +449,7 @@
         }
       default:
         return `<div class="text-center text-white">
-                  <svg class="mx-auto h-20 w-20 text-gray-200" fill="currentColor" viewBox="0 0 24 24">
-                    <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8l-6-6zm-1 5V3.5L18.5 9H13v-2z"/>
-                  </svg>
+                  <svg class="mx-auto h-20 w-20 text-gray-200" fill="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8l-6-6zm-1 5V3.5L18.5 9H13v-2z"/></svg>
                   <p class="mt-4 text-lg">${$t('property.file')}: ${item.name}</p>
                   <a href="${item.url}" download class="mt-2 inline-block px-4 py-2 bg-white text-gray-900 rounded-md hover:bg-gray-200 transition-colors">
                     ${$t('property.downloadFile')}
@@ -479,7 +484,7 @@
       case 'image':
         return `<svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>`;
       case 'video':
-        return `<svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 10l4.553-2.276A1 1 0 0121 8v6a1 1 0 01-1 1v6a1 1 0 01-1-1v-6a1 1 0 00-1-1H9a1 1 0 00-1 1v6a1 1 0 001 1v6a1 1 0 01-1 1H4a1 1 0 01-1-1V7a1 1 0 011-1h5m0 0V5a2 2 0 012-2h2a2 2 0 012 2v2m-6 3h6m-6 2h6a2 2 0 012 2v3m0 0h-9"></path></svg>`;
+        return `<svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 10l4.553-2.276A1 1 0 0121 8v6a1 1 0 01-1 1v6a1 1 0 01-1-1v-6a1 1 0 00-1-1H9a1 1 0 00-1 1v6a1 1 0 001 1v6a1 1 0 01-1 1H4a1 1 0 01-1-1V7a1 1 0 011-1h5m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path></svg>`;
       case 'document':
         return `<svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0112.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"></path></svg>`;
       default:
@@ -513,7 +518,7 @@
       case 'image':
         return `<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>`;
       case 'gavel':
-        return `<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h9a2 2 0 002 2v1.41a2 2 0 01-2 2H5a2 2 0 01-2-2V7a2 2 0 00-2-2h9m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path></svg>`;
+        return `<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h9a2 2 0 002 2v1.41a2 2 0 01-2 2H5a2 2 0 00-2-2V7a2 2 0 00-2-2h9m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path></svg>`;
       default:
         return '';
     }
@@ -545,11 +550,11 @@
 <svelte:window bind:scrollY={scrollY} />
 
 <svelte:head>
-  <title>{property?.title || $t('property.loading')} | Real Estate Platform</title>
+  <title>{property?.title || $t('property.loading')} | Auction Platform</title>
   <meta name="description" content={property?.meta_description || property?.description?.substr(0, 160) || ''} />
 </svelte:head>
 
-<div class="bg-gray-50 dark:bg-gray-900 min-h-screen pb-16">
+<div class="min-h-screen pb-16">
   <!-- Back Button -->
   <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-6">
     <a 
@@ -624,18 +629,18 @@
               {#if property.is_featured}
                 <span class="inline-flex items-center px-2.5 py-0.5 rounded-md text-sm font-medium bg-amber-100 text-amber-800 dark:bg-amber-900 dark:text-amber-200">
                   <svg class="w-4 h-4 mr-1" fill="currentColor" viewBox="0 0 20 20">
-                    <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                    <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 011.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 01-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 01.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 011.95.69l1.07 3.292z" />
                   </svg>
                   {$t('property.featured')}
                 </span>
               {/if}
               
-              <span class="inline-flex items-center px-2.5 py-0.5 rounded-md text-sm font-medium bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-200">
+              <span class="inline-flex items-center px-2.5 py-0.5 rounded-md text-sm font-medium bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300">
                 {property.property_type_display || property.property_type?.name}
               </span>
               
               {#if property.building_type_display || property.building_type?.name}
-                <span class="inline-flex items-center px-2.5 py-0.5 rounded-md text-sm font-medium bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-200">
+                <span class="inline-flex items-center px-2.5 py-0.5 rounded-md text-sm font-medium bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300">
                   {property.building_type_display || property.building_type?.name}
                 </span>
               {/if}
@@ -725,7 +730,7 @@
             <!-- Main Image and Gallery Preview - REFACTORED -->
             <div class="md:col-span-2">
               <div class="relative mb-6 rounded-xl overflow-hidden shadow-lg bg-gray-100 dark:bg-gray-800" style="height: 400px;">
-                {#if isImagesLoading && images.length > 0}
+                {#if isImagesLoading && images.some(img => img.url === mainImage.url) && images.length > 0}
                   <div class="absolute inset-0 flex items-center justify-center bg-gray-100 dark:bg-gray-750">
                     <div class="animate-pulse flex flex-col items-center">
                       <div class="rounded-full bg-gray-300 dark:bg-gray-600 h-12 w-12 mb-2"></div>
@@ -735,13 +740,28 @@
                 {/if}
                 
                 {#if mainImage}
-                    <img 
-                      src="{mainImage?.url}" 
-                      alt="{mainImage?.name || property.title}" 
-                      class="w-full h-full object-cover transition-opacity duration-300 {isImagesLoading ? 'opacity-0' : 'opacity-100 loaded'}" 
-                      on:load={handleImageLoad}
-                      on:error={(e) => { e.currentTarget.src = '/images/placeholder-property.jpg'; }}
-                    />
+                  <img 
+                    src={mainImage.url} 
+                    alt={mainImage.name || property.title} 
+                    class="w-full h-full object-cover transition-opacity duration-300 
+                      {isCurrentMainImageLoading ? 'opacity-0' : 'opacity-100 loaded'}" 
+                    on:load={() => {
+                      console.log('[DEBUG] Main image loaded, setting isCurrentMainImageLoading to false. URL:', mainImage?.url);
+                      isCurrentMainImageLoading = false;
+                      if (mainImage && images.some(img => img.url === mainImage.url)) {
+                        handleImageLoad();
+                      }
+                    }}
+                    on:error={(event) => {
+                      console.error('Failed to load main image:', mainImage.url, event);
+                      event.target.src = '/images/placeholder-property.jpg'; // Fallback
+                      console.log('[DEBUG] Main image error, setting isCurrentMainImageLoading to false. URL:', mainImage?.url);
+                      isCurrentMainImageLoading = false;
+                      if (mainImage && images.some(img => img.url === mainImage.url)) {
+                        handleImageLoad(); // Still call to ensure isImagesLoading eventually becomes false for collective tracking
+                      }
+                    }}
+                  />
                   
                   <!-- Gradient overlay at bottom -->
                   <div class="absolute inset-x-0 bottom-0 h-24 bg-gradient-to-t from-black/60 to-transparent pointer-events-none"></div>
@@ -991,7 +1011,7 @@
             
             <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
               {#each property.rooms as room}
-                <div class="bg-white dark:bg-gray-750 rounded-xl shadow-sm transition-transform duration-300 hover:scale-[1.02] border border-gray-100 dark:border-gray-700">
+                <div class="bg-white dark:bg-gray-750 rounded-xl shadow-md transition-transform duration-300 hover:scale-[1.02] border border-gray-100 dark:border-gray-700">
                   <div class="p-5">
                     <div class="flex justify-between items-start">
                       <div>
@@ -1086,7 +1106,7 @@
             </div>
           {:else}
             <div class="text-center py-12 bg-gray-50 dark:bg-gray-750 rounded-lg">
-              <svg class="mx-auto h-12 w-12 text-gray-400 dark:text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 5a1 1 0 011-1h14a1 1 0 011 1v2a1 1 0 01-1 1H5a1 1 0 01-1-1V5zM4 13a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H5a1 1 0 01-1-1v-6zM16 13a1 1 0 011-1h2a1 1 0 011 1v6a1 1 0 01-1 1h-2a1 1 0 01-1-1v-6z" />
               </svg>
               <h3 class="mt-2 text-base font-medium text-gray-900 dark:text-white">
@@ -1184,8 +1204,8 @@
               {:else}
                 <div class="h-96 w-full bg-gray-100 dark:bg-gray-700 rounded-xl flex items-center justify-center shadow-lg border-2 border-gray-200 dark:border-gray-600">
                   <div class="text-center p-8">
-                    <svg class="mx-auto h-12 w-12 text-gray-400 dark:text-gray-500 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.172 16l-7-7m0 0l7-7m-7 7h18m-6 4h-5m6 4h5m-6 4h-5m-6-7h11m-6 7h6m6-7h5m-6 7h5m-7 6h12m-6-7h6m6-7v-1a1 1 0 00-1-1H8a1 1 0 00-1 1v12a1 1 0 001 1h2.5a1 1 0 001-1V10a1 1 0 00-1-1H6a1 1 0 001-1h2a1 1 0 001 1v7.5a1 1 0 001 1V10a1 1 0 001 1h2a1 1 0 001-1V4a1 1 0 011-1h1z" />
+                    <svg class="mx-auto h-12 w-12 text-gray-400 dark:text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.172 16l-7-7m0 0l7-7m-7 7h18m-6 4h-5m6 4h5m-6 4h-5m-6-7h11m-6 7h6m6-7v-1a1 1 0 00-1-1H8a1 1 0 00-1 1v12a1 1 0 001 1h2.5a1 1 0 001-1V10a1 1 0 00-1-1H6a1 1 0 001-1h2a1 1 0 001 1v7.5a1 1 0 001 1V10a1 1 0 001 1h2a1 1 0 001-1V4a1 1 0 011-1h1z" />
                     </svg>
                     <p class="text-gray-500 dark:text-gray-400">
                       {$t('property.noLocationData')}
@@ -1301,7 +1321,7 @@
           
           {#if filteredMedia.length > 0}
             <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-5">
-              {#each filteredMedia as mediaItem, index}
+              {#each filteredMedia as mediaItem, index (mediaItem.id)}
                 <div 
                   class="rounded-lg overflow-hidden shadow-md group relative transition-all hover:shadow-lg hover:-translate-y-1 cursor-pointer border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800"
                   on:click={() => { activeImageIndex = index; toggleGallery(); }}
@@ -1336,7 +1356,7 @@
                     {:else}
                       <div class="w-full h-full flex items-center justify-center bg-gray-100 dark:bg-gray-800">
                         <svg class="w-12 h-12 text-gray-400 group-hover:text-gray-500 transition-colors" fill="currentColor" viewBox="0 0 20 20">
-                          <path fill-rule="evenodd" d="M4 4a2 2 0 00-2 2v8a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2H4zm12 12H4V6h12v10z" clip-rule="evenodd" />
+                          <path fill-rule="evenodd" d="M4 4a2 2 0 00-2 2v8a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2H4zm2 3a1 1 0 011-1h6a1 1 0 110 2H7a1 1 0 01-1-1zm1 3a1 1 0 100 2h6a1 1 0 100-2H7z" />
                         </svg>
                       </div>
                     {/if}
@@ -1421,7 +1441,7 @@
                             {$t(`auction.status.${auction.status}`)}
                           </span>
                           
-                          <span class="ml-2 inline-flex items-center px-2.5 py-0.5 rounded-md text-sm font-medium bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-200">
+                          <span class="ml-2 inline-flex items-center px-2.5 py-0.5 rounded-md text-sm font-medium bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300">
                             {$t(`auction.type.${auction.auction_type}`)}
                           </span>
                         </div>
@@ -1457,7 +1477,7 @@
                     <div class="mt-4 flex flex-wrap justify-between pt-4 border-t border-gray-200 dark:border-gray-700">
                       <div class="flex items-center text-sm text-gray-500 dark:text-gray-400">
                         <svg class="h-4 w-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8h2a2 2 0 012 2v6a2 2 0 01-2 2H7a2 2 0 01-2-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2v4l-4-4H5a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2V6a2 2 0 00-2-2H5z" />
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8h2a2 2 0 012 2v6m-7 4h10a2 2 0 002 2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2m9-9v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v2a2 2 0 002 2h2v-2a2 2 0 01-2-2H9a2 2 0 00-2 2z" />
                         </svg>
                         {auction.bid_count} {$t('auction.bids')}
                       </div>
@@ -1483,7 +1503,7 @@
               {/each}
             </div>
           {:else if property.status === 'available'}
-            <div class="bg-gradient-to-r from-primary-50 to-secondary-50 dark:from-primary-900/20 dark:to-secondary-900/20 rounded-xl shadow-md overflow-hidden p-6 text-center">
+            <div class="bg-gradient-to-r from-primary-50 to-secondary-50 dark:from-primary-900/20 dark:to-secondary-900/30 rounded-xl shadow-md overflow-hidden p-6 text-center">
               <svg class="mx-auto h-12 w-12 text-primary-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
               </svg>
@@ -1638,7 +1658,7 @@
                   </svg>
                 {:else}
                   <svg class="w-6 h-6 text-gray-400" fill="currentColor" viewBox="0 0 20 20">
-                    <path fill-rule="evenodd" d="M4 4a2 2 0 00-2 2v8a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2H4zm12 12H4V6h12v10z" clip-rule="evenodd" />
+                    <path fill-rule="evenodd" d="M4 4a2 2 0 00-2 2v8a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2H4zm2 3a1 1 0 011-1h6a1 1 0 110 2H7a1 1 0 01-1-1zm1 3a1 1 0 100 2h6a1 1 0 100-2H7z" />
                   </svg>
                 {/if}
               </div>

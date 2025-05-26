@@ -170,7 +170,7 @@
   <meta name="description" content={$t('properties.subtitle')} />
 </svelte:head>
 
-<div class="min-h-screen bg-gray-50 dark:bg-gray-900">
+<div class="min-h-screen ">
   <!-- Enhanced Hero Section with Gradient Backdrop -->
   <div class="relative bg-white dark:bg-gray-800 shadow-md">
     <div class="absolute inset-0 bg-gradient-to-r from-primary-50 to-secondary-50 dark:from-primary-900/30 dark:to-secondary-900/30 opacity-50"></div>

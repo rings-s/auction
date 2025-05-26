@@ -1,14 +1,15 @@
 <!-- src/lib/components/messages/ContactForm.svelte -->
 <script>
-  import { createEventDispatcher, onMount } from 'svelte';
+  import { createEventDispatcher, onMount, tick } from 'svelte';
   import { fade, slide, scale, fly } from 'svelte/transition';
   import { t, locale } from '$lib/i18n/i18n';
-  import { user } from '$lib/stores/user';
-  import { contactPropertyOwner } from '$lib/api/messages';
+  import { user as loggedInUserStore } from '$lib/stores/user';
+  import { contactPropertyOwner, sendMessage } from '$lib/api/messages';
+  import { getUserById } from '$lib/api/user';
   import Button from '$lib/components/ui/Button.svelte';
   
   export let property = null;
-  export let recipient = null;
+  export const recipient = ''; // User ID of the recipient, if applicable
   export let initialSubject = '';
   export let initialMessage = '';
   export let compact = false;
@@ -29,7 +30,56 @@
   let fieldErrors = {};
   let touched = {};
   let mounted = false;
-  
+  let recipientDisplayName = ''; // For displaying recipient's name
+
+  // Reactive statement to update recipientDisplayName when 'recipient' prop changes
+  // or when the loggedInUserStore changes (in case recipient IS the logged-in user)
+  $: if (recipient && $loggedInUserStore) {
+    if (recipient === $loggedInUserStore.id) {
+      recipientDisplayName = $loggedInUserStore.username || $loggedInUserStore.email; // Fallback to email
+    } else {
+      // Fetch recipient's name if it's a different user
+      loading = true; // Indicate loading while fetching name
+      getUserById(recipient).then(userProfile => {
+        if (userProfile && userProfile.username) {
+          recipientDisplayName = userProfile.username;
+        } else if (userProfile && userProfile.email) {
+          recipientDisplayName = userProfile.email; // Fallback to email if username not present
+        } else {
+          recipientDisplayName = $t('messages.unknownUser'); // Fallback for unknown user
+        }
+        loading = false;
+      }).catch(err => {
+        console.error('Error fetching recipient details:', err);
+        recipientDisplayName = $t('messages.errorFetchingUser'); // Fallback on error
+        loading = false;
+      });
+    }
+  } else if (recipient) {
+    // LoggedInUserStore not yet available, or recipient is set but no logged-in user context
+    // This might happen on initial load if recipient is passed before user store hydration
+    // We'll re-trigger fetching when loggedInUserStore becomes available via the reactive block
+    // Or, if no login is required to send to a recipient ID, fetch directly.
+    loading = true;
+    getUserById(recipient).then(userProfile => {
+      if (userProfile && userProfile.username) {
+        recipientDisplayName = userProfile.username;
+      } else if (userProfile && userProfile.email) {
+        recipientDisplayName = userProfile.email;
+      } else {
+        recipientDisplayName = $t('messages.unknownUser');
+      }
+      loading = false;
+    }).catch(err => {
+      console.error('Error fetching recipient details (no user context):', err);
+      recipientDisplayName = $t('messages.errorFetchingUser');
+      loading = false;
+    });
+
+  } else {
+    recipientDisplayName = ''; // Clear if no recipient ID
+  }
+
   // Form validation
   let validationState = {
     subject: { isValid: false, message: '' },
@@ -71,7 +121,7 @@
   $: canSubmit = validationState.subject.isValid && 
                  validationState.body.isValid && 
                  !loading && 
-                 $user;
+                 $loggedInUserStore;
   
   // Priority options with enhanced design
   const priorityOptions = [
@@ -240,8 +290,9 @@
       </div>
       
       {#if compact}
-        <button
+        <Button
           type="button"
+          size="small"
           on:click={toggleFullForm}
           class="p-2 rounded-xl hover:bg-white/60 dark:hover:bg-gray-700/50 transition-all duration-200 group"
           aria-label={showFullForm ? $t('common.collapse') : $t('common.expand')}
@@ -254,7 +305,7 @@
           >
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
           </svg>
-        </button>
+        </Button>
       {/if}
     </div>
   </div>
@@ -262,7 +313,7 @@
   <!-- Enhanced Form Content -->
   {#if showFullForm}
     <div class="p-6" transition:slide={{ duration: 400, easing: (t) => t * (2 - t) }}>
-      {#if !$user}
+      {#if !$loggedInUserStore && !recipient} 
         <!-- Enhanced Login Required State -->
         <div class="text-center py-12" in:fade={{ duration: 300 }}>
           <div class="mx-auto w-20 h-20 bg-primary-100 dark:bg-primary-900/30 rounded-2xl flex items-center justify-center mb-6">
@@ -292,7 +343,7 @@
             <Button
               href="/register"
               variant="outline"
-              size="large"
+              size="small"
               rounded="full"
               class="inline-flex items-center"
             >
@@ -361,19 +412,19 @@
             <div class="flex items-center">
               <div class="relative">
                 <div class="w-14 h-14 bg-gradient-to-br from-primary-500 to-secondary-500 rounded-2xl flex items-center justify-center text-white font-bold text-lg shadow-lg">
-                  {$user.first_name?.charAt(0)}{$user.last_name?.charAt(0)}
+                  {$loggedInUserStore.first_name?.charAt(0)}{$loggedInUserStore.last_name?.charAt(0)}
                 </div>
                 <div class="absolute -bottom-1 -right-1 w-5 h-5 bg-green-400 rounded-full border-2 border-white dark:border-gray-800"></div>
               </div>
               <div class="{isRTL ? 'mr-4' : 'ml-4'} flex-1">
                 <p class="text-lg font-bold text-gray-900 dark:text-white">
-                  {$user.first_name} {$user.last_name}
+                  {$loggedInUserStore.first_name} {$loggedInUserStore.last_name}
                 </p>
                 <p class="text-sm text-gray-600 dark:text-gray-400 flex items-center gap-2">
                   <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
                   </svg>
-                  {$user.email}
+                  {$loggedInUserStore.email}
                 </p>
               </div>
               <div class="text-xs bg-primary-100 dark:bg-primary-900/30 text-primary-700 dark:text-primary-300 px-3 py-1 rounded-full font-medium">
@@ -382,6 +433,15 @@
             </div>
           </div>
           
+          <!-- Display Recipient Name if available -->
+          {#if recipientDisplayName}
+            <div class="mb-4 p-3 bg-primary-50 dark:bg-primary-900/20 border border-primary-200 dark:border-primary-800 rounded-lg">
+              <p class="text-sm font-medium text-primary-700 dark:text-primary-300">
+                {$t('messages.to', { values: { name: recipientDisplayName } })}
+              </p>
+            </div>
+          {/if}
+
           <!-- Enhanced Subject Field -->
           <div class="space-y-2">
             <label for="contact-subject" class="flex items-center justify-between text-sm font-semibold text-gray-700 dark:text-gray-300">
@@ -431,11 +491,11 @@
           </div>
           
           <!-- Enhanced Priority Selection -->
-          <div class="space-y-3">
-            <label class="block text-sm font-semibold text-gray-700 dark:text-gray-300">
+          <fieldset class="space-y-3">
+            <legend class="block text-sm font-semibold text-gray-700 dark:text-gray-300">
               {$t('messages.form.priority')}
               <span class="text-red-500 text-base {isRTL ? 'mr-1' : 'ml-1'}">*</span>
-            </label>
+            </legend>
             <div class="grid grid-cols-2 lg:grid-cols-4 gap-3">
               {#each priorityOptions as option (option.value)}
                 <button
@@ -462,7 +522,7 @@
                 </button>
               {/each}
             </div>
-          </div>
+          </fieldset>
           
           <!-- Enhanced Message Body -->
           <div class="space-y-2">
@@ -519,7 +579,7 @@
           <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 pt-6 border-t-2 border-gray-100 dark:border-gray-700">
             <div class="text-sm text-gray-600 dark:text-gray-400 flex items-start gap-2">
               <svg class="w-4 h-4 text-primary-500 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
               </svg>
               <span>{$t('messages.messageDisclaimer')}</span>
             </div>

@@ -366,7 +366,7 @@
   <title>{$t('property.createProperty')}</title>
 </svelte:head>
 
-<div class="bg-gray-50 dark:bg-gray-900 min-h-screen py-12">
+<div class=" min-h-screen py-12">
   <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
     <!-- Page Header with gradient text effect -->
     <div class="mb-12 text-center">
