@@ -2,7 +2,7 @@
 <script>
   import { page } from '$app/stores';
   import { user } from '$lib/stores/user';
-  import { t } from '../../../../../i18n';
+	import { t, locale } from '$lib/i18n';
   import { theme } from '$lib/stores/theme';
   import ThemeToggle from '$lib/components/ui/ThemeToggle.svelte';
   import LanguageSelector from '../shared/LanguageSelector.svelte';

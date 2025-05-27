@@ -1,6 +1,6 @@
 <!-- src/lib/components/ShareButtons.svelte -->
 <script>
-    import { t } from '../../../../../i18n';
+    import { t, locale } from '$lib/i18n'; // Fixed import path
     import { onMount } from 'svelte';
     
     export let url = '';

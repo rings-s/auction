@@ -2,7 +2,7 @@
   import { onMount } from 'svelte';
   import { goto } from '$app/navigation';
   import { fade, slide, scale } from 'svelte/transition';
-  import { t, locale } from '../../../../../i18n'; // $locale will be auto-subscribed
+  import { t, locale } from '$lib/i18n';
   import { user } from '$lib/stores/user'; // $user (if needed, for auto-subscription)
   import { sendMessage, replyToMessage, getMessage } from '$lib/api/messages';
   import { toast } from '$lib/stores/toastStore';

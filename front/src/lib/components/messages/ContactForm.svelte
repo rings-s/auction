@@ -2,7 +2,7 @@
 <script>
   import { createEventDispatcher, onMount, tick } from 'svelte';
   import { fade, slide, scale, fly } from 'svelte/transition';
-  import { t, locale } from '../../../../../i18n';
+  import { t, locale } from '$lib/i18n';
   import { user as loggedInUserStore } from '$lib/stores/user';
   import { contactPropertyOwner, sendMessage } from '$lib/api/messages';
   import { getUserById } from '$lib/api/user';

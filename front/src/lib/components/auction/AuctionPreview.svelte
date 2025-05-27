@@ -1,26 +1,26 @@
 <!-- src/lib/components/AuctionPreview.svelte -->
 <script>
-    import { t } from '../../../../../i18n';
-    import AuctionStatus from '../auction/AuctionStatus.svelte';
-    import CountdownTimer from '../auction/CountdownTimer.svelte';
-    
-    export let auction = {};
-    
-    function formatDateTime(dateString) {
-      try {
-        const date = new Date(dateString);
-        return new Intl.DateTimeFormat('default', {
-          year: 'numeric',
-          month: 'long',
-          day: 'numeric',
-          hour: '2-digit',
-          minute: '2-digit'
-        }).format(date);
-      } catch (e) {
-        return dateString;
-      }
+  import { t } from '$lib/i18n';
+  import AuctionStatus from '../auction/AuctionStatus.svelte';
+  import CountdownTimer from '../auction/CountdownTimer.svelte';
+  
+  export let auction = {};
+  
+  function formatDateTime(dateString) {
+    try {
+      const date = new Date(dateString);
+      return new Intl.DateTimeFormat('default', {
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit'
+      }).format(date);
+    } catch (e) {
+      return dateString;
     }
-  </script>
+  }
+</script>
   
   <div class="bg-gray-50 dark:bg-gray-900 p-6 rounded-lg">
     <div class="mb-8">

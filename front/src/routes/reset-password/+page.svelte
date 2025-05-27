@@ -3,7 +3,7 @@
   import { goto } from '$app/navigation';
   import { page } from '$app/stores';
   import { requestPasswordReset } from '$lib/api/auth';
-  import { t } from '../../../../i18n';
+  import { t } from '$lib/i18n';
   import { onMount } from 'svelte';
 
   let email = '';

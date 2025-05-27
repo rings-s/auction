@@ -1,7 +1,7 @@
 <!-- src/lib/components/MediaUploader.svelte -->
 <script>
   import { createEventDispatcher, onMount } from 'svelte';
-  import { t } from '../../../../../i18n';
+  import { t, locale } from '$lib/i18n'; // Fixed import path
   
   export let maxFiles = 10;
   export let maxSize = 10 * 1024 * 1024; // 10MB

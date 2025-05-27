@@ -1,7 +1,7 @@
 <script>
   import { onMount } from 'svelte';
   import { fade, slide, fly } from 'svelte/transition';
-  import { t, locale } from '../../../../i18n';
+  import { t, locale } from '$lib/i18n';
   import { user } from '$lib/stores/user';
   import { 
     getMessages, 

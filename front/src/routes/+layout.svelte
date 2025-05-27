@@ -4,7 +4,7 @@
 	import { onMount } from 'svelte';
 	import { theme } from '$lib/stores/theme';
 
-	import { locale } from '../../../i18n';
+	import { locale } from '$lib/i18n';
 	import { user } from '$lib/stores/user';
 	import { fetchUserProfile } from '$lib/api/auth';
 	

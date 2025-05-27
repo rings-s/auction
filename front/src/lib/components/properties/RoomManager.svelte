@@ -1,7 +1,7 @@
 <!-- src/lib/components/RoomManager.svelte -->
 <script>
   import { createEventDispatcher, onMount } from 'svelte';
-  import { t } from '../../../../../i18n';
+  import { t, locale } from '$lib/i18n'; // Fixed import path
   import { fly, fade, slide, scale } from 'svelte/transition';
   import { quintOut, elasticOut } from 'svelte/easing';
   import TagSelector from '$lib/components/ui/TagSelector.svelte';

@@ -2,7 +2,7 @@
 <script>
   import { onMount } from 'svelte';
   import { goto } from '$app/navigation';
-  import { t } from '../../../../../i18n';
+  import { t } from '$lib/i18n';
   import { user } from '$lib/stores/user';
   import { createAuction } from '$lib/api/auction';
   import AuctionForm from '$lib/components/auction/AuctionForm.svelte';

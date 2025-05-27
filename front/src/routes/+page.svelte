@@ -1,6 +1,6 @@
 <script>
   import { onMount } from 'svelte';
-  import { locale, t } from '../../../i18n';
+  import { locale, t } from '$lib/i18n';
   import { fade, fly, scale } from 'svelte/transition';
   import { cubicOut } from 'svelte/easing';
   import Button from '$lib/components/ui/Button.svelte';

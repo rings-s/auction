@@ -1,7 +1,7 @@
 <!-- src/lib/components/auction/AuctionForm.svelte -->
 <script>
   import { onMount } from 'svelte';
-  import { t } from '../../../../../i18n';
+  import { t } from '$lib/i18n';
   import { getProperties } from '$lib/api/property';
   import { user } from '$lib/stores/user';
   import Tabs from '$lib/components/ui/Tabs.svelte';
