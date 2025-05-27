@@ -9,147 +9,46 @@
   let mounted = false;
   let prefersReducedMotion = false;
   let scrollY = 0;
-  let currentTestimonial = 0;
   
   // Computed value for RTL mode
   $: isRTL = $locale === 'ar';
 
-  // Local translations fallback
+  // Simplified translations with fewer text elements
   const translations = {
     en: {
       badge: {
         live: 'Live Now',
-        activeCount: '24 Active Auctions'
+        count: '24 Active'
       },
-      headline: {
-        line1: 'Discover Premium',
-        line2: 'Real Estate',
-        line3: 'Through Smart Auctions'
-      },
-      subheadline: 'Join thousands of successful buyers and sellers in our transparent auction marketplace. Find your dream property with confidence.',
+      headline: 'Auctions',
+      subheadline: 'Discover exclusive properties through transparent auctions. Join thousands of successful buyers and sellers.',
       cta: {
-        explore: 'Browse Properties',
-        learnMore: 'How It Works'
+        primary: 'Start Bidding',
+        secondary: 'View Properties'
       },
-      metrics: {
-        properties: {
-          value: '$2.5M+',
-          label: 'Properties Sold'
-        },
-        success: {
-          value: '98%',
-          label: 'Success Rate'
-        },
-        users: {
-          value: '15K+',
-          label: 'Happy Clients'
-        },
-        satisfaction: {
-          value: '4.9★',
-          label: 'Client Rating'
-        }
-      },
-      features: {
-        verified: {
-          title: 'Verified Properties',
-          description: '100% authenticated listings'
-        },
-        transparent: {
-          title: 'Transparent Bidding',
-          description: 'Real-time auction updates'
-        },
-        secure: {
-          title: 'Secure Transactions',
-          description: 'Bank-level security'
-        }
-      },
-      testimonials: [
-        {
-          name: 'Sarah Johnson',
-          role: 'Property Investor',
-          content: 'Found my perfect investment property through their auction platform. The process was transparent and efficient.',
-          rating: 5
-        },
-        {
-          name: 'Ahmed Al-Rashid',
-          role: 'First-time Buyer',
-          content: 'Amazing experience! The team guided me through every step of my first property purchase.',
-          rating: 5
-        },
-        {
-          name: 'Maria Rodriguez',
-          role: 'Real Estate Agent',
-          content: 'This platform has revolutionized how I help my clients find and bid on properties.',
-          rating: 5
-        }
+      metrics: [
+        { value: '$2.5M+', label: 'Sold' },
+        { value: '98%', label: 'Success' },
+        { value: '15K+', label: 'Users' },
+        { value: '4.9★', label: 'Rating' }
       ]
     },
     ar: {
       badge: {
         live: 'مباشر الآن',
-        activeCount: '24 مزاد نشط'
+        count: '24 نشط'
       },
-      headline: {
-        line1: 'اكتشف العقارات',
-        line2: 'المميزة',
-        line3: 'عبر المزادات الذكية'
-      },
-      subheadline: 'انضم لآلاف المشترين والبائعين الناجحين في منصة المزادات الشفافة. اعثر على عقار أحلامك بثقة.',
+      headline: 'أكشن',
+      subheadline: 'اكتشف العقارات الحصرية من خلال المزادات الشفافة. انضم لآلاف المشترين والبائعين الناجحين.',
       cta: {
-        explore: 'تصفح العقارات',
-        learnMore: 'كيف يعمل'
+        primary: 'ابدأ المزايدة',
+        secondary: 'عرض العقارات'
       },
-      metrics: {
-        properties: {
-          value: '+2.5 مليون$',
-          label: 'عقار مباع'
-        },
-        success: {
-          value: '98%',
-          label: 'معدل النجاح'
-        },
-        users: {
-          value: '+15 ألف',
-          label: 'عميل سعيد'
-        },
-        satisfaction: {
-          value: '★4.9',
-          label: 'تقييم العملاء'
-        }
-      },
-      features: {
-        verified: {
-          title: 'عقارات موثقة',
-          description: '100% قوائم معتمدة'
-        },
-        transparent: {
-          title: 'مزايدة شفافة',
-          description: 'تحديثات المزاد الفورية'
-        },
-        secure: {
-          title: 'معاملات آمنة',
-          description: 'أمان بمستوى البنوك'
-        }
-      },
-      testimonials: [
-        {
-          name: 'سارة أحمد',
-          role: 'مستثمرة عقارية',
-          content: 'وجدت عقار الاستثمار المثالي من خلال منصة المزادات. العملية كانت شفافة وفعالة.',
-          rating: 5
-        },
-        {
-          name: 'أحمد الراشد',
-          role: 'مشتري لأول مرة',
-          content: 'تجربة رائعة! الفريق أرشدني خلال كل خطوة في شراء أول عقار لي.',
-          rating: 5
-        },
-        {
-          name: 'مريم محمد',
-          role: 'وكيلة عقارية',
-          content: 'هذه المنصة ثورت طريقة مساعدة عملائي في إيجاد والمزايدة على العقارات.',
-          rating: 5
-        }
+      metrics: [
+        { value: '+2.5م$', label: 'مباع' },
+        { value: '98%', label: 'نجاح' },
+        { value: '+15ألف', label: 'مستخدم' },
+        { value: '★4.9', label: 'تقييم' }
       ]
     }
   };
@@ -170,16 +69,9 @@
     return value;
   }
 
-  // Testimonial rotation
-  function rotateTestimonial() {
-    const testimonials = getText('testimonials');
-    currentTestimonial = (currentTestimonial + 1) % testimonials.length;
-  }
-
   onMount(() => {
     mounted = true;
     
-    // Check for reduced motion preference
     if (typeof window !== 'undefined') {
       const mediaQuery = window.matchMedia('(prefers-reduced-motion: reduce)');
       prefersReducedMotion = mediaQuery.matches;
@@ -187,13 +79,6 @@
       mediaQuery.addEventListener('change', (e) => {
         prefersReducedMotion = e.matches;
       });
-
-      // Auto-rotate testimonials
-      const testimonialInterval = setInterval(rotateTestimonial, 4000);
-      
-      return () => {
-        clearInterval(testimonialInterval);
-      };
     }
   });
 </script>
@@ -205,857 +90,238 @@
 
 <svelte:window bind:scrollY />
 
-<!-- Hero Section with Modern Layout -->
-<section class="hero" aria-label="Hero section">
-  <!-- Animated Background -->
-  <div class="hero__background" aria-hidden="true">
-    <div class="hero__gradient"></div>
-    <div class="hero__pattern"></div>
-    <div class="hero__orbs">
-      <div class="hero__orb hero__orb--1"></div>
-      <div class="hero__orb hero__orb--2"></div>
-      <div class="hero__orb hero__orb--3"></div>
-    </div>
+<!-- F-Layout Hero Section with Tailwind -->
+<section class="relative min-h-screen flex items-center overflow-hidden py-32 pb-16 bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-900 dark:to-slate-800" aria-label="Hero section">
+  
+  <!-- Dynamic SVG Background -->
+  <div class="absolute inset-0 z-0 overflow-hidden" aria-hidden="true">
+    <svg class="absolute top-0 -right-[10%] w-[70%] h-full opacity-60 dark:opacity-80 animate-pulse" viewBox="0 0 1200 800" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <!-- Animated building outlines -->
+      <g class="animate-bounce" style="animation-duration: 8s;">
+        <!-- Building 1 - Skyscraper -->
+        <path class="animate-pulse" style="animation-delay: 0s; animation-duration: 6s;" d="M100 700 L100 200 L160 180 L160 700 Z" stroke="url(#gradient1)" stroke-width="2" fill="url(#buildingFill1)" opacity="0.8"/>
+        <rect class="opacity-60" x="110" y="220" width="8" height="12" fill="url(#gradient1)"/>
+        <rect class="opacity-60" x="130" y="240" width="8" height="12" fill="url(#gradient1)"/>
+        <rect class="opacity-60" x="140" y="260" width="8" height="12" fill="url(#gradient1)"/>
+        
+        <!-- Building 2 - Modern tower -->
+        <path class="animate-pulse" style="animation-delay: 1s; animation-duration: 6s;" d="M200 700 L200 150 L280 140 L280 700 Z" stroke="url(#gradient2)" stroke-width="2" fill="url(#buildingFill2)" opacity="0.7"/>
+        <path class="opacity-80" d="M200 150 L240 130 L280 140 Z" stroke="url(#gradient2)" stroke-width="2" fill="url(#accent1)"/>
+        
+        <!-- Building 3 - Residential -->
+        <path class="animate-pulse" style="animation-delay: 2s; animation-duration: 6s;" d="M320 700 L320 300 L420 280 L420 700 Z" stroke="url(#gradient3)" stroke-width="2" fill="url(#buildingFill3)" opacity="0.6"/>
+        <path class="opacity-70" d="M320 300 L370 250 L420 280 Z" stroke="url(#gradient3)" stroke-width="2" fill="url(#accent2)"/>
+        
+        <!-- Building 4 - Commercial -->
+        <path class="animate-pulse" style="animation-delay: 3s; animation-duration: 6s;" d="M450 700 L450 350 L550 330 L550 700 Z" stroke="url(#gradient1)" stroke-width="2" fill="url(#buildingFill1)" opacity="0.5"/>
+      </g>
+      
+      <!-- Fluid growth curves -->
+      <g class="animate-pulse" style="animation-duration: 12s;">
+        <path class="opacity-80 animate-pulse" style="animation-delay: 0s; animation-duration: 8s;" d="M50 600 Q200 500 400 450 T800 380" stroke="url(#growthGradient)" stroke-width="3" fill="none"/>
+        <path class="opacity-60 animate-pulse" style="animation-delay: 2s; animation-duration: 8s;" d="M100 650 Q300 550 500 500 T900 430" stroke="url(#growthGradient2)" stroke-width="2" fill="none"/>
+        <path class="opacity-40 animate-pulse" style="animation-delay: 4s; animation-duration: 8s;" d="M150 680 Q350 580 600 530 T1000 460" stroke="url(#growthGradient3)" stroke-width="2" fill="none"/>
+      </g>
+      
+      <!-- Floating data points -->
+      <g class="animate-bounce" style="animation-duration: 4s;">
+        <circle class="animate-ping opacity-80" style="animation-delay: 0s; animation-duration: 3s;" cx="300" cy="450" r="4" fill="url(#accent1)"/>
+        <circle class="animate-ping opacity-70" style="animation-delay: 0.5s; animation-duration: 3s;" cx="500" cy="400" r="3" fill="url(#accent2)"/>
+        <circle class="animate-ping opacity-90" style="animation-delay: 1s; animation-duration: 3s;" cx="700" cy="380" r="5" fill="url(#accent3)"/>
+        <circle class="animate-ping opacity-60" style="animation-delay: 1.5s; animation-duration: 3s;" cx="450" cy="420" r="3" fill="url(#accent1)"/>
+      </g>
+      
+      <!-- Gradient definitions -->
+      <defs>
+        <linearGradient id="gradient1" x1="0%" y1="0%" x2="100%" y2="100%">
+          <stop offset="0%" style="stop-color:#3B82F6;stop-opacity:1" />
+          <stop offset="100%" style="stop-color:#1D4ED8;stop-opacity:1" />
+        </linearGradient>
+        <linearGradient id="gradient2" x1="0%" y1="0%" x2="100%" y2="100%">
+          <stop offset="0%" style="stop-color:#8B5CF6;stop-opacity:1" />
+          <stop offset="100%" style="stop-color:#7C3AED;stop-opacity:1" />
+        </linearGradient>
+        <linearGradient id="gradient3" x1="0%" y1="0%" x2="100%" y2="100%">
+          <stop offset="0%" style="stop-color:#10B981;stop-opacity:1" />
+          <stop offset="100%" style="stop-color:#059669;stop-opacity:1" />
+        </linearGradient>
+        <linearGradient id="growthGradient" x1="0%" y1="0%" x2="100%" y2="0%">
+          <stop offset="0%" style="stop-color:#3B82F6;stop-opacity:0.8" />
+          <stop offset="50%" style="stop-color:#8B5CF6;stop-opacity:0.6" />
+          <stop offset="100%" style="stop-color:#10B981;stop-opacity:0.4" />
+        </linearGradient>
+        <linearGradient id="growthGradient2" x1="0%" y1="0%" x2="100%" y2="0%">
+          <stop offset="0%" style="stop-color:#F59E0B;stop-opacity:0.6" />
+          <stop offset="100%" style="stop-color:#EF4444;stop-opacity:0.4" />
+        </linearGradient>
+        <linearGradient id="growthGradient3" x1="0%" y1="0%" x2="100%" y2="0%">
+          <stop offset="0%" style="stop-color:#06B6D4;stop-opacity:0.4" />
+          <stop offset="100%" style="stop-color:#8B5CF6;stop-opacity:0.2" />
+        </linearGradient>
+        <radialGradient id="buildingFill1" cx="50%" cy="50%" r="50%">
+          <stop offset="0%" style="stop-color:#3B82F6;stop-opacity:0.1" />
+          <stop offset="100%" style="stop-color:#1D4ED8;stop-opacity:0.05" />
+        </radialGradient>
+        <radialGradient id="buildingFill2" cx="50%" cy="50%" r="50%">
+          <stop offset="0%" style="stop-color:#8B5CF6;stop-opacity:0.1" />
+          <stop offset="100%" style="stop-color:#7C3AED;stop-opacity:0.05" />
+        </radialGradient>
+        <radialGradient id="buildingFill3" cx="50%" cy="50%" r="50%">
+          <stop offset="0%" style="stop-color:#10B981;stop-opacity:0.1" />
+          <stop offset="100%" style="stop-color:#059669;stop-opacity:0.05" />
+        </radialGradient>
+        <radialGradient id="accent1" cx="50%" cy="50%" r="50%">
+          <stop offset="0%" style="stop-color:#3B82F6;stop-opacity:1" />
+          <stop offset="100%" style="stop-color:#1D4ED8;stop-opacity:0.8" />
+        </radialGradient>
+        <radialGradient id="accent2" cx="50%" cy="50%" r="50%">
+          <stop offset="0%" style="stop-color:#F59E0B;stop-opacity:1" />
+          <stop offset="100%" style="stop-color:#D97706;stop-opacity:0.8" />
+        </radialGradient>
+        <radialGradient id="accent3" cx="50%" cy="50%" r="50%">
+          <stop offset="0%" style="stop-color:#10B981;stop-opacity:1" />
+          <stop offset="100%" style="stop-color:#059669;stop-opacity:0.8" />
+        </radialGradient>
+      </defs>
+    </svg>
+    
+    <!-- Gradient overlay -->
+    <div class="absolute inset-0 bg-gradient-to-br from-blue-500/3 via-purple-500/2 to-emerald-500/3"></div>
   </div>
 
-  <!-- Main Container -->
-  <div class="hero__container">
+  <!-- F-Layout Container -->
+  <div class="relative z-10 w-full max-w-7xl mx-auto px-4 sm:px-6 md:px-8 lg:px-12 xl:px-16">
     {#if mounted}
-      <!-- Status Badge -->
-      <div 
-        in:fade={{ duration: 400, delay: 100, easing: cubicOut }}
-        class="hero__badge"
-        role="status"
-        aria-live="polite"
-      >
-        <span class="hero__badge-indicator" aria-hidden="true"></span>
-        <span class="hero__badge-text">{getText('badge.live')}</span>
-        <span class="hero__badge-count">{getText('badge.activeCount')}</span>
+      <!-- F-Layout: Top horizontal bar - Status badge -->
+      <div class="flex justify-start mb-12">
+        <div 
+          in:fade={{ duration: 400, delay: 100, easing: cubicOut }}
+          class="inline-flex items-center gap-3 px-6 py-3.5 bg-blue-500/8 border border-blue-500/20 rounded-full text-sm font-semibold backdrop-blur-sm transition-all duration-300 hover:bg-blue-500/12 hover:-translate-y-0.5 hover:shadow-lg hover:shadow-blue-500/10"
+          role="status"
+          aria-live="polite"
+        >
+          <span class="w-2.5 h-2.5 bg-emerald-500 rounded-full animate-pulse" aria-hidden="true"></span>
+          <span class="text-blue-600 font-bold">{getText('badge.live')}</span>
+          <span class="text-slate-600 text-xs font-medium">{getText('badge.count')}</span>
+        </div>
       </div>
 
-      <!-- Main Content Grid -->
-      <div class="hero__content">
-        <!-- Left Column: Text Content -->
-        <div class="hero__text-column">
-          <!-- Main Headline -->
-          <h1 
-            in:fly={{ y: prefersReducedMotion ? 0 : 32, duration: 600, delay: 200, easing: cubicOut }}
-            class="hero__headline"
-          >
-            <span class="hero__headline-line">{getText('headline.line1')}</span>
-            <span class="hero__headline-accent">{getText('headline.line2')}</span>
-            <span class="hero__headline-line">{getText('headline.line3')}</span>
-          </h1>
+      <!-- F-Layout: Main content grid -->
+      <div class="grid grid-cols-1 lg:grid-cols-5 gap-16 lg:gap-24 items-start">
+        
+        <!-- Left column: Primary F-pattern content (wider - 3/5 of space) -->
+        <div class="lg:col-span-3 space-y-8">
           
-          <!-- Subheadline -->
-          <p 
-            in:fly={{ y: prefersReducedMotion ? 0 : 24, duration: 600, delay: 300, easing: cubicOut }}
-            class="hero__subheadline"
-          >
-            {getText('subheadline')}
-          </p>
+          <!-- Main headline - top horizontal scan (wider typography) -->
+          <div class="max-w-4xl">
+            <h1 
+              in:fly={{ y: prefersReducedMotion ? 0 : 32, duration: 600, delay: 200, easing: cubicOut }}
+              class="text-5xl sm:text-6xl md:text-7xl lg:text-8xl font-black leading-[0.9] tracking-tight text-slate-900 dark:text-slate-50"
+            >
+              <span class="block bg-gradient-to-r from-blue-600 via-purple-600 to-emerald-600 bg-clip-text text-transparent animate-pulse">
+                {getText('headline')}
+              </span>
+            </h1>
+          </div>
           
-          <!-- CTA Buttons -->
+          <!-- Subheadline - second horizontal scan (wider) -->
+          <div class="max-w-3xl">
+            <p 
+              in:fly={{ y: prefersReducedMotion ? 0 : 24, duration: 600, delay: 300, easing: cubicOut }}
+              class="text-xl sm:text-2xl leading-relaxed text-slate-600 dark:text-slate-300 font-medium"
+            >
+              {getText('subheadline')}
+            </p>
+          </div>
+          
+          <!-- CTA buttons - positioned along F-pattern -->
+          <!-- Updated CTA section in your +page.svelte -->
           <div 
-            in:fly={{ y: prefersReducedMotion ? 0 : 24, duration: 600, delay: 400, easing: cubicOut }}
-            class="hero__cta-group"
+          in:fly={{ y: prefersReducedMotion ? 0 : 24, duration: 600, delay: 400, easing: cubicOut }}
+          class="flex flex-col sm:flex-row gap-4 pt-4"
           >
             <Button 
               variant="primary" 
-              size="large" 
-              href="/properties" 
-              class_="hero__cta-primary"
+              size="small" 
+              href="/auctions"
             >
-              <span>{getText('cta.explore')}</span>
+              <span>{getText('cta.primary')}</span>
               <svg 
-                class="hero__cta-icon" 
+                class="w-4 h-4 transition-transform duration-200 group-hover:translate-x-0.5" 
                 fill="none" 
                 stroke="currentColor" 
                 viewBox="0 0 24 24"
                 aria-hidden="true"
+                slot="iconRight"
               >
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6" />
               </svg>
             </Button>
-            
+
             <Button 
               variant="outline" 
-              size="large" 
-              href="/how-it-works" 
-              class_="hero__cta-secondary"
+              size="small" 
+              href="/properties"
             >
-              <span>{getText('cta.learnMore')}</span>
+              <span>{getText('cta.secondary')}</span>
             </Button>
           </div>
 
-          <!-- Trust Metrics -->
+          <!-- Trust metrics - bottom of F-pattern -->
           <div 
             in:fade={{ duration: 600, delay: 500, easing: cubicOut }}
-            class="hero__metrics"
+            class="grid grid-cols-2 sm:grid-cols-4 gap-6 pt-8"
             role="region"
             aria-label="Platform statistics"
           >
-            {#each Object.entries(getText('metrics')) as [key, metric], index}
-              <div class="hero__metric" in:scale={{ duration: 400, delay: 500 + (index * 100) }}>
-                <span class="hero__metric-value">{metric.value}</span>
-                <span class="hero__metric-label">{metric.label}</span>
+            {#each getText('metrics') as metric, index}
+              <div 
+                class="text-center p-6 bg-white/70 dark:bg-slate-800/70 border border-slate-200/50 dark:border-slate-700/50 rounded-2xl backdrop-blur-sm transition-all duration-300 hover:-translate-y-2 hover:shadow-lg hover:shadow-slate-200/50 dark:hover:shadow-slate-800/50 hover:border-blue-500/30" 
+                in:scale={{ duration: 400, delay: 600 + (index * 100), easing: cubicOut }}
+              >
+                <span class="block text-2xl sm:text-3xl font-black text-slate-900 dark:text-slate-50 leading-none">
+                  {metric.value}
+                </span>
+                <span class="block text-sm text-slate-600 dark:text-slate-400 font-medium mt-2">
+                  {metric.label}
+                </span>
               </div>
-              {#if index < Object.keys(getText('metrics')).length - 1}
-                <div class="hero__metric-divider" aria-hidden="true"></div>
-              {/if}
             {/each}
           </div>
         </div>
 
-        <!-- Right Column: Interactive Elements -->
-        <div class="hero__visual-column">
-          <!-- Feature Cards -->
-          <div class="hero__feature-cards">
-            {#each Object.entries(getText('features')) as [key, feature], index}
-              <div 
-                class="hero__feature-card"
-                in:fly={{ y: prefersReducedMotion ? 0 : 32, duration: 600, delay: 600 + (index * 150), easing: cubicOut }}
-              >
-                <div class="hero__feature-icon">
-                  {#if key === 'verified'}
-                    <svg fill="currentColor" viewBox="0 0 20 20" aria-hidden="true">
-                      <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" />
-                    </svg>
-                  {:else if key === 'transparent'}
-                    <svg fill="currentColor" viewBox="0 0 20 20" aria-hidden="true">
-                      <path d="M10 12a2 2 0 100-4 2 2 0 000 4z" />
-                      <path fill-rule="evenodd" d="M.458 10C1.732 5.943 5.522 3 10 3s8.268 2.943 9.542 7c-1.274 4.057-5.064 7-9.542 7S1.732 14.057.458 10zM14 10a4 4 0 11-8 0 4 4 0 018 0z" clip-rule="evenodd" />
-                    </svg>
-                  {:else}
-                    <svg fill="currentColor" viewBox="0 0 20 20" aria-hidden="true">
-                      <path fill-rule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clip-rule="evenodd" />
-                    </svg>
-                  {/if}
-                </div>
-                <div class="hero__feature-content">
-                  <h3 class="hero__feature-title">{feature.title}</h3>
-                  <p class="hero__feature-description">{feature.description}</p>
-                </div>
-              </div>
-            {/each}
-          </div>
-
-          <!-- Floating Testimonial Card -->
+        <!-- Right column: Visual elements (2/5 of space) -->
+        <div class="lg:col-span-2 space-y-8">
+          <!-- Market trend visualization -->
           <div 
-            class="hero__testimonial-card"
-            in:fly={{ y: prefersReducedMotion ? 0 : 40, duration: 800, delay: 1000, easing: cubicOut }}
+            class="bg-white/95 dark:bg-slate-800/95 border border-slate-200/80 dark:border-slate-700/80 rounded-3xl p-8 backdrop-blur-2xl shadow-xl shadow-slate-200/20 dark:shadow-slate-900/20 transition-all duration-300 hover:-translate-y-2 hover:shadow-2xl"
+            in:fly={{ y: prefersReducedMotion ? 0 : 40, duration: 800, delay: 600, easing: cubicOut }}
           >
-            {#each getText('testimonials') as testimonial, index}
-              {#if index === currentTestimonial}
-                <div 
-                  class="hero__testimonial-content"
-                  in:fade={{ duration: 300 }}
-                  out:fade={{ duration: 300 }}
-                >
-                  <div class="hero__testimonial-rating">
-                    {#each Array(testimonial.rating) as _}
-                      <svg class="hero__testimonial-star" fill="currentColor" viewBox="0 0 20 20">
-                        <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
-                      </svg>
-                    {/each}
-                  </div>
-                  <blockquote class="hero__testimonial-quote">
-                    "{testimonial.content}"
-                  </blockquote>
-                  <div class="hero__testimonial-author">
-                    <div class="hero__testimonial-avatar">
-                      {testimonial.name.charAt(0)}
-                    </div>
-                    <div>
-                      <cite class="hero__testimonial-name">{testimonial.name}</cite>
-                      <p class="hero__testimonial-role">{testimonial.role}</p>
-                    </div>
-                  </div>
-                </div>
-              {/if}
-            {/each}
+            <div class="flex justify-between items-center mb-6">
+              <h3 class="text-xl font-bold text-slate-900 dark:text-slate-50">Market Growth</h3>
+              <span class="text-sm text-slate-600 dark:text-slate-400 font-medium">12 months</span>
+            </div>
+            
+            <div class="mb-6">
+              <svg class="w-full h-16" viewBox="0 0 200 60" fill="none">
+                <path class="animate-pulse" style="animation-duration: 3s;" d="M10 50 Q50 30 100 25 T190 15" stroke="url(#chartGradient)" stroke-width="2" fill="none"/>
+                <circle class="animate-bounce" style="animation-duration: 2s;" cx="190" cy="15" r="3" fill="#10B981"/>
+                <defs>
+                  <linearGradient id="chartGradient" x1="0%" y1="0%" x2="100%" y2="0%">
+                    <stop offset="0%" style="stop-color:#3B82F6;stop-opacity:1" />
+                    <stop offset="100%" style="stop-color:#10B981;stop-opacity:1" />
+                  </linearGradient>
+                </defs>
+              </svg>
+            </div>
+            
+            <div class="space-y-1">
+              <span class="block text-3xl font-black text-emerald-600">+24.5%</span>
+              <span class="block text-sm text-slate-600 dark:text-slate-400">Average growth</span>
+            </div>
           </div>
         </div>
       </div>
     {/if}
   </div>
 </section>
-
-<style>
-  /* Hero Section */
-  .hero {
-    position: relative;
-    min-height: 100vh;
-    display: flex;
-    align-items: center;
-    overflow: hidden;
-    padding: 6rem 0;
-  }
-
-  /* Animated Background */
-  .hero__background {
-    position: absolute;
-    inset: 0;
-    z-index: -1;
-  }
-
-  .hero__gradient {
-    position: absolute;
-    inset: 0;
-    background: linear-gradient(135deg, 
-      rgba(59, 130, 246, 0.05) 0%, 
-      rgba(139, 92, 246, 0.05) 50%, 
-      rgba(16, 185, 129, 0.05) 100%
-    );
-    animation: gradientShift 8s ease-in-out infinite;
-  }
-
-  :global(.dark) .hero__gradient {
-    background: linear-gradient(135deg, 
-      rgba(59, 130, 246, 0.1) 0%, 
-      rgba(139, 92, 246, 0.1) 50%, 
-      rgba(16, 185, 129, 0.1) 100%
-    );
-  }
-
-  .hero__pattern {
-    position: absolute;
-    inset: 0;
-    opacity: 0.3;
-    background-image: 
-      radial-gradient(circle at 25% 25%, rgba(59, 130, 246, 0.1) 0%, transparent 50%),
-      radial-gradient(circle at 75% 75%, rgba(139, 92, 246, 0.1) 0%, transparent 50%),
-      radial-gradient(circle at 50% 10%, rgba(16, 185, 129, 0.08) 0%, transparent 40%);
-  }
-
-  .hero__orbs {
-    position: absolute;
-    inset: 0;
-    pointer-events: none;
-  }
-
-  .hero__orb {
-    position: absolute;
-    border-radius: 50%;
-    filter: blur(1px);
-    animation: float 6s ease-in-out infinite;
-  }
-
-  .hero__orb--1 {
-    width: 300px;
-    height: 300px;
-    background: radial-gradient(circle, rgba(59, 130, 246, 0.15) 0%, transparent 70%);
-    top: 10%;
-    right: 10%;
-    animation-delay: 0s;
-  }
-
-  .hero__orb--2 {
-    width: 200px;
-    height: 200px;
-    background: radial-gradient(circle, rgba(139, 92, 246, 0.1) 0%, transparent 70%);
-    bottom: 20%;
-    left: 5%;
-    animation-delay: 2s;
-  }
-
-  .hero__orb--3 {
-    width: 150px;
-    height: 150px;
-    background: radial-gradient(circle, rgba(16, 185, 129, 0.12) 0%, transparent 70%);
-    top: 60%;
-    right: 30%;
-    animation-delay: 4s;
-  }
-
-  /* Container System (matches auction page exactly) */
-  .hero__container {
-    width: 100%;
-    max-width: 1280px;
-    margin: 0 auto;
-    padding: 0 2rem;
-  }
-
-  @media (min-width: 640px) {
-    .hero__container {
-      padding: 0 2.5rem;
-    }
-  }
-
-  @media (min-width: 768px) {
-    .hero__container {
-      padding: 0 3rem;
-    }
-  }
-
-  @media (min-width: 1024px) {
-    .hero__container {
-      padding: 0 3rem;
-    }
-  }
-
-  @media (min-width: 1280px) {
-    .hero__container {
-      padding: 0 4rem;
-    }
-  }
-
-  /* Content Layout */
-  .hero__content {
-    display: grid;
-    grid-template-columns: 1fr;
-    gap: 4rem;
-    align-items: center;
-  }
-
-  @media (min-width: 1024px) {
-    .hero__content {
-      grid-template-columns: 5fr 4fr;
-      gap: 6rem;
-    }
-  }
-
-  /* Badge */
-  .hero__badge {
-    display: inline-flex;
-    align-items: center;
-    gap: 0.5rem;
-    padding: 0.75rem 1.25rem;
-    background: rgba(59, 130, 246, 0.08);
-    border: 1px solid rgba(59, 130, 246, 0.2);
-    border-radius: 50px;
-    font-size: 0.875rem;
-    font-weight: 500;
-    margin-bottom: 2rem;
-    backdrop-filter: blur(12px);
-    transition: all 0.3s ease;
-  }
-
-  .hero__badge:hover {
-    background: rgba(59, 130, 246, 0.12);
-    transform: translateY(-2px);
-  }
-
-  .hero__badge-indicator {
-    width: 8px;
-    height: 8px;
-    background: #10b981;
-    border-radius: 50%;
-    animation: pulse 2s infinite;
-  }
-
-  .hero__badge-text {
-    color: #3b82f6;
-    font-weight: 600;
-  }
-
-  .hero__badge-count {
-    color: #6b7280;
-    font-size: 0.8125rem;
-  }
-
-  /* Typography */
-  .hero__headline {
-    font-size: clamp(2.5rem, 5vw, 4rem);
-    font-weight: 800;
-    line-height: 1.1;
-    letter-spacing: -0.025em;
-    margin-bottom: 1.5rem;
-  }
-
-  .hero__headline-line {
-    display: block;
-    color: #0f172a;
-  }
-
-  :global(.dark) .hero__headline-line {
-    color: #f8fafc;
-  }
-
-  .hero__headline-accent {
-    display: block;
-    background: linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
-    animation: textShimmer 3s ease-in-out infinite;
-  }
-
-  .hero__subheadline {
-    font-size: 1.25rem;
-    line-height: 1.6;
-    color: #64748b;
-    margin-bottom: 2.5rem;
-    max-width: 540px;
-  }
-
-  :global(.dark) .hero__subheadline {
-    color: #cbd5e1;
-  }
-
-  /* CTA Group */
-  .hero__cta-group {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 1rem;
-    margin-bottom: 3rem;
-  }
-
-  :global(.hero__cta-primary) {
-    background: #3b82f6;
-    color: white;
-    padding: 1rem 2rem;
-    border-radius: 12px;
-    font-weight: 600;
-    font-size: 1rem;
-    display: inline-flex;
-    align-items: center;
-    gap: 0.5rem;
-    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    box-shadow: 0 4px 6px -1px rgba(59, 130, 246, 0.25);
-    border: 2px solid transparent;
-  }
-
-  :global(.hero__cta-primary:hover) {
-    background: #2563eb;
-    transform: translateY(-2px);
-    box-shadow: 0 8px 25px -3px rgba(59, 130, 246, 0.35);
-  }
-
-  .hero__cta-icon {
-    width: 1.25rem;
-    height: 1.25rem;
-    transition: transform 0.2s ease;
-  }
-
-  :global(.hero__cta-primary:hover) .hero__cta-icon {
-    transform: translateX(2px);
-  }
-
-  :global(.hero__cta-secondary) {
-    background: white;
-    color: #374151;
-    padding: 1rem 2rem;
-    border: 2px solid #e5e7eb;
-    border-radius: 12px;
-    font-weight: 600;
-    font-size: 1rem;
-    transition: all 0.3s ease;
-    backdrop-filter: blur(8px);
-  }
-
-  :global(.dark .hero__cta-secondary) {
-    background: rgba(31, 41, 55, 0.8);
-    color: #f3f4f6;
-    border-color: #374151;
-  }
-
-  :global(.hero__cta-secondary:hover) {
-    border-color: #3b82f6;
-    color: #3b82f6;
-    background: rgba(248, 250, 252, 0.9);
-    transform: translateY(-1px);
-  }
-
-  /* Metrics */
-  .hero__metrics {
-    display: flex;
-    align-items: center;
-    gap: 2rem;
-    flex-wrap: wrap;
-  }
-
-  .hero__metric {
-    text-align: center;
-    transition: transform 0.3s ease;
-  }
-
-  .hero__metric:hover {
-    transform: translateY(-4px);
-  }
-
-  .hero__metric-value {
-    display: block;
-    font-size: 1.875rem;
-    font-weight: 700;
-    color: #0f172a;
-    line-height: 1.2;
-  }
-
-  :global(.dark) .hero__metric-value {
-    color: #f8fafc;
-  }
-
-  .hero__metric-label {
-    display: block;
-    font-size: 0.875rem;
-    color: #6b7280;
-    margin-top: 0.25rem;
-  }
-
-  :global(.dark) .hero__metric-label {
-    color: #9ca3af;
-  }
-
-  .hero__metric-divider {
-    width: 1px;
-    height: 2.5rem;
-    background: #e5e7eb;
-  }
-
-  :global(.dark) .hero__metric-divider {
-    background: #374151;
-  }
-
-  /* Visual Column */
-  .hero__visual-column {
-    position: relative;
-    display: flex;
-    flex-direction: column;
-    gap: 2rem;
-  }
-
-  /* Feature Cards */
-  .hero__feature-cards {
-    display: flex;
-    flex-direction: column;
-    gap: 1rem;
-  }
-
-  .hero__feature-card {
-    background: rgba(255, 255, 255, 0.95);
-    border: 1px solid rgba(229, 231, 235, 0.8);
-    border-radius: 16px;
-    padding: 1.5rem;
-    display: flex;
-    align-items: start;
-    gap: 1rem;
-    backdrop-filter: blur(12px);
-    transition: all 0.3s ease;
-    cursor: pointer;
-  }
-
-  :global(.dark) .hero__feature-card {
-    background: rgba(31, 41, 55, 0.95);
-    border-color: rgba(55, 65, 81, 0.8);
-  }
-
-  .hero__feature-card:hover {
-    transform: translateY(-4px);
-    box-shadow: 0 12px 32px -4px rgba(0, 0, 0, 0.1);
-    border-color: rgba(59, 130, 246, 0.3);
-  }
-
-  .hero__feature-icon {
-    width: 2.5rem;
-    height: 2.5rem;
-    border-radius: 12px;
-    background: linear-gradient(135deg, #3b82f6, #8b5cf6);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    color: white;
-    flex-shrink: 0;
-  }
-
-  .hero__feature-icon svg {
-    width: 1.25rem;
-    height: 1.25rem;
-  }
-
-  .hero__feature-content {
-    flex: 1;
-  }
-
-  .hero__feature-title {
-    font-size: 1rem;
-    font-weight: 600;
-    color: #0f172a;
-    margin-bottom: 0.25rem;
-  }
-
-  :global(.dark) .hero__feature-title {
-    color: #f8fafc;
-  }
-
-  .hero__feature-description {
-    font-size: 0.875rem;
-    color: #6b7280;
-    line-height: 1.4;
-  }
-
-  :global(.dark) .hero__feature-description {
-    color: #9ca3af;
-  }
-
-  /* Testimonial Card */
-  .hero__testimonial-card {
-    background: rgba(255, 255, 255, 0.98);
-    border: 1px solid rgba(229, 231, 235, 0.8);
-    border-radius: 20px;
-    padding: 2rem;
-    backdrop-filter: blur(16px);
-    box-shadow: 0 20px 50px -12px rgba(0, 0, 0, 0.15);
-    animation: floatTestimonial 8s ease-in-out infinite;
-    position: relative;
-    overflow: hidden;
-  }
-
-  :global(.dark) .hero__testimonial-card {
-    background: rgba(31, 41, 55, 0.98);
-    border-color: rgba(55, 65, 81, 0.8);
-  }
-
-  .hero__testimonial-card::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    height: 3px;
-    background: linear-gradient(90deg, #3b82f6, #8b5cf6, #10b981);
-    animation: shimmer 2s ease-in-out infinite;
-  }
-
-  .hero__testimonial-content {
-    position: relative;
-  }
-
-  .hero__testimonial-rating {
-    display: flex;
-    gap: 0.25rem;
-    margin-bottom: 1rem;
-  }
-
-  .hero__testimonial-star {
-    width: 1rem;
-    height: 1rem;
-    color: #fbbf24;
-  }
-
-  .hero__testimonial-quote {
-    font-size: 1rem;
-    line-height: 1.6;
-    color: #374151;
-    margin-bottom: 1.5rem;
-    font-style: italic;
-  }
-
-  :global(.dark) .hero__testimonial-quote {
-    color: #d1d5db;
-  }
-
-  .hero__testimonial-author {
-    display: flex;
-    align-items: center;
-    gap: 0.75rem;
-  }
-
-  .hero__testimonial-avatar {
-    width: 2.5rem;
-    height: 2.5rem;
-    border-radius: 50%;
-    background: linear-gradient(135deg, #3b82f6, #8b5cf6);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    color: white;
-    font-weight: 600;
-    font-size: 1rem;
-  }
-
-  .hero__testimonial-name {
-    font-weight: 600;
-    color: #0f172a;
-    font-size: 0.875rem;
-    display: block;
-  }
-
-  :global(.dark) .hero__testimonial-name {
-    color: #f8fafc;
-  }
-
-  .hero__testimonial-role {
-    color: #6b7280;
-    font-size: 0.75rem;
-    margin: 0;
-  }
-
-  :global(.dark) .hero__testimonial-role {
-    color: #9ca3af;
-  }
-
-  /* Animations */
-  @keyframes gradientShift {
-    0%, 100% { 
-      background: linear-gradient(135deg, 
-        rgba(59, 130, 246, 0.05) 0%, 
-        rgba(139, 92, 246, 0.05) 50%, 
-        rgba(16, 185, 129, 0.05) 100%
-      );
-    }
-    50% { 
-      background: linear-gradient(135deg, 
-        rgba(16, 185, 129, 0.05) 0%, 
-        rgba(59, 130, 246, 0.05) 50%, 
-        rgba(139, 92, 246, 0.05) 100%
-      );
-    }
-  }
-
-  @keyframes float {
-    0%, 100% { transform: translateY(0) rotate(0deg) scale(1); }
-    33% { transform: translateY(-20px) rotate(2deg) scale(1.05); }
-    66% { transform: translateY(-10px) rotate(-1deg) scale(0.95); }
-  }
-
-  @keyframes floatTestimonial {
-    0%, 100% { transform: translateY(0) rotate(0deg); }
-    50% { transform: translateY(-8px) rotate(1deg); }
-  }
-
-  @keyframes pulse {
-    0%, 100% { opacity: 1; }
-    50% { opacity: 0.5; }
-  }
-
-  @keyframes textShimmer {
-    0%, 100% { 
-      background: linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%);
-      -webkit-background-clip: text;
-      background-clip: text;
-    }
-    50% { 
-      background: linear-gradient(135deg, #8b5cf6 0%, #10b981 100%);
-      -webkit-background-clip: text;
-      background-clip: text;
-    }
-  }
-
-  @keyframes shimmer {
-    0% { transform: translateX(-100%); }
-    100% { transform: translateX(100%); }
-  }
-
-  /* RTL Support */
-  :global(.rtl) .hero__content {
-    direction: rtl;
-  }
-
-  :global(.rtl) .hero__cta-icon {
-    transform: scaleX(-1);
-  }
-
-  :global(.rtl .hero__cta-primary:hover) .hero__cta-icon {
-    transform: scaleX(-1) translateX(-2px);
-  }
-
-  /* Mobile Responsive */
-  @media (max-width: 1023px) {
-    .hero {
-      padding: 4rem 0;
-    }
-
-    .hero__container {
-      padding: 0 1.5rem;
-    }
-
-    .hero__content {
-      gap: 3rem;
-    }
-
-    .hero__visual-column {
-      order: -1;
-    }
-
-    .hero__testimonial-card {
-      padding: 1.5rem;
-    }
-  }
-
-  @media (max-width: 767px) {
-    .hero {
-      min-height: auto;
-      padding: 3rem 0;
-    }
-
-    .hero__container {
-      padding: 0 1rem;
-    }
-
-    .hero__content {
-      gap: 2.5rem;
-    }
-
-    .hero__headline {
-      font-size: clamp(2rem, 8vw, 2.5rem);
-      margin-bottom: 1rem;
-    }
-
-    .hero__subheadline {
-      font-size: 1.125rem;
-      margin-bottom: 2rem;
-    }
-
-    .hero__cta-group {
-      flex-direction: column;
-      gap: 0.75rem;
-    }
-
-    :global(.hero__cta-primary),
-    :global(.hero__cta-secondary) {
-      width: 100%;
-      justify-content: center;
-    }
-
-    .hero__metrics {
-      justify-content: space-between;
-      width: 100%;
-      gap: 1rem;
-    }
-
-    .hero__metric-value {
-      font-size: 1.5rem;
-    }
-
-    .hero__feature-cards {
-      gap: 0.75rem;
-    }
-
-    .hero__feature-card {
-      padding: 1.25rem;
-    }
-  }
-
-  /* Accessibility */
-  @media (prefers-reduced-motion: reduce) {
-    .hero__orb,
-    .hero__testimonial-card,
-    .hero__badge-indicator,
-    .hero__gradient,
-    .hero__headline-accent {
-      animation: none;
-    }
-
-    .hero__feature-card:hover,
-    .hero__metric:hover,
-    :global(.hero__cta-primary:hover),
-    :global(.hero__cta-secondary:hover) {
-      transform: none;
-    }
-  }
-
-  /* High Contrast */
-  @media (prefers-contrast: high) {
-    .hero__badge,
-    .hero__feature-card,
-    .hero__testimonial-card {
-      border-width: 2px;
-    }
-
-    :global(.hero__cta-primary),
-    :global(.hero__cta-secondary) {
-      border-width: 3px;
-    }
-  }
-</style>

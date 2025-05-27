@@ -2,20 +2,10 @@
 <script>
   import { goto } from '$app/navigation';
   import { register } from '$lib/api/auth';
-  import { t, locale } from '$lib/i18n';
+  import { t } from '$lib/i18n';
   import { onMount } from 'svelte';
   import { user } from '$lib/stores/user';
-
-  let userData = {
-    email: '',
-    password: '',
-    confirm_password: '',
-    first_name: '',
-    last_name: '',
-    phone_number: '',
-    date_of_birth: '',
-    role: 'user' // Default role
-  };
+  import RegisterForm from '$lib/components/auth/RegisterForm.svelte';
 
   let loading = false;
   let error = '';
@@ -27,16 +17,13 @@
     }
   });
 
-  async function handleSubmit() {
+  async function handleRegister(event) {
+    const userData = event.detail;
+    
     try {
       loading = true;
       error = '';
       success = '';
-
-      // Validation
-      if (userData.password !== userData.confirm_password) {
-        throw new Error($t('error.passwordMismatch'));
-      }
 
       // Debug log
       console.log("Sending registration data:", {...userData, password: "[REDACTED]"});
@@ -46,10 +33,8 @@
       
       success = $t('auth.registrationSuccess');
       
-      // Redirect to verification page after short delay
-      setTimeout(() => {
-        goto(`/verify-email?email=${encodeURIComponent(userData.email)}`);
-      }, 2000);
+      // Immediately redirect to verification page
+      goto(`/verify-email?email=${encodeURIComponent(userData.email)}`);
       
     } catch (err) {
       console.error('Registration error:', err);
@@ -112,150 +97,9 @@
       </div>
     {/if}
 
-    <form class="mt-6 space-y-6" on:submit|preventDefault={handleSubmit}>
-      <div class="space-y-4">
-        <!-- First name and Last name -->
-        <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
-          <div>
-            <label for="first_name" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-              {$t('auth.firstName')}
-            </label>
-            <input
-              type="text"
-              id="first_name"
-              bind:value={userData.first_name}
-              required
-              class="appearance-none block w-full px-3 py-3 border border-gray-300 dark:border-gray-600 rounded-lg shadow-sm placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 text-gray-900 dark:text-white dark:bg-gray-700 transition-colors duration-200"
-            />
-          </div>
-          <div>
-            <label for="last_name" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-              {$t('auth.lastName')}
-            </label>
-            <input
-              type="text"
-              id="last_name"
-              bind:value={userData.last_name}
-              required
-              class="appearance-none block w-full px-3 py-3 border border-gray-300 dark:border-gray-600 rounded-lg shadow-sm placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 text-gray-900 dark:text-white dark:bg-gray-700 transition-colors duration-200"
-            />
-          </div>
-        </div>
-
-        <!-- Email -->
-        <div>
-          <label for="email" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-            {$t('auth.email')}
-          </label>
-          <input
-            type="email"
-            id="email"
-            bind:value={userData.email}
-            required
-            class="appearance-none block w-full px-3 py-3 border border-gray-300 dark:border-gray-600 rounded-lg shadow-sm placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 text-gray-900 dark:text-white dark:bg-gray-700 transition-colors duration-200"
-          />
-        </div>
-
-        <!-- Phone and DOB -->
-        <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
-          <div>
-            <label for="phone_number" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-              {$t('auth.phoneNumber')}
-            </label>
-            <input
-              type="tel"
-              id="phone_number"
-              bind:value={userData.phone_number}
-              class="appearance-none block w-full px-3 py-3 border border-gray-300 dark:border-gray-600 rounded-lg shadow-sm placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 text-gray-900 dark:text-white dark:bg-gray-700 transition-colors duration-200"
-            />
-          </div>
-          <div>
-            <label for="date_of_birth" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-              {$t('auth.dateOfBirth')}
-            </label>
-            <input
-              type="date"
-              id="date_of_birth"
-              bind:value={userData.date_of_birth}
-              class="appearance-none block w-full px-3 py-3 border border-gray-300 dark:border-gray-600 rounded-lg shadow-sm placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 text-gray-900 dark:text-white dark:bg-gray-700 transition-colors duration-200"
-            />
-          </div>
-        </div>
-        
-        <!-- User Role -->
-        <div>
-          <label for="role" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-            {$t('auth.userRole')}
-          </label>
-          <div class="relative">
-            <select
-              id="role"
-              bind:value={userData.role}
-              class="appearance-none block w-full px-3 py-3 border border-gray-300 dark:border-gray-600 rounded-lg shadow-sm placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 text-gray-900 dark:text-white dark:bg-gray-700 transition-colors duration-200"
-            >
-              <option value="user">{$t('auth.roleUser')}</option>
-              <option value="owner">{$t('auth.roleOwner')}</option>
-              <option value="appraiser">{$t('auth.roleAppraiser')}</option>
-              <option value="data_entry">{$t('auth.roleDataEntry')}</option>
-            </select>
-            <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-700 dark:text-gray-300">
-              <svg class="fill-current h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20">
-                <path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z"/>
-              </svg>
-            </div>
-          </div>
-          <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">
-            {$t('auth.roleHelp')}
-          </p>
-        </div>
-
-        <!-- Password -->
-        <div>
-          <label for="password" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-            {$t('auth.password')}
-          </label>
-          <input
-            type="password"
-            id="password"
-            bind:value={userData.password}
-            required
-            minlength="8"
-            class="appearance-none block w-full px-3 py-3 border border-gray-300 dark:border-gray-600 rounded-lg shadow-sm placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 text-gray-900 dark:text-white dark:bg-gray-700 transition-colors duration-200"
-          />
-        </div>
-
-        <!-- Confirm Password -->
-        <div>
-          <label for="confirm_password" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-            {$t('auth.confirmPassword')}
-          </label>
-          <input
-            type="password"
-            id="confirm_password"
-            bind:value={userData.confirm_password}
-            required
-            minlength="8"
-            class="appearance-none block w-full px-3 py-3 border border-gray-300 dark:border-gray-600 rounded-lg shadow-sm placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 text-gray-900 dark:text-white dark:bg-gray-700 transition-colors duration-200"
-          />
-        </div>
-      </div>
-
-      <!-- Submit Button -->
-      <div class="pt-2">
-        <button
-          type="submit"
-          disabled={loading}
-          class="group relative w-full flex justify-center py-3 px-4 border border-transparent text-sm font-medium rounded-lg text-white bg-gradient-to-br from-primary-600 to-primary-700 hover:from-primary-700 hover:to-primary-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 disabled:opacity-50 disabled:cursor-not-allowed shadow-lg hover:shadow-xl transition-all duration-200 transform hover:-translate-y-0.5"
-        >
-          {#if loading}
-            <svg class="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-              <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-              <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-            </svg>
-          {/if}
-          {$t('auth.register')}
-        </button>
-      </div>
-    </form>
+    <RegisterForm
+      {loading}
+      on:submit={handleRegister}
+    />
   </div>
 </div>

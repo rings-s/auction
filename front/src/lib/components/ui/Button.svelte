@@ -7,7 +7,7 @@
   // Props
   /** @type {'primary' | 'secondary' | 'outline' | 'danger' | 'success' | 'ghost'} */
   export let variant = 'primary'; 
-  /** @type {'small' | 'default' | 'large' | 'xl'} */
+  /** @type {'compact' | 'default' | 'large'} */
   export let size = 'default'; 
   /** @type {'button' | 'submit' | 'reset'} */
   export let type = 'button'; 
@@ -21,88 +21,115 @@
   export let class_ = '';
   export let iconLeft = null;
   export let iconRight = null;
-  export let rounded = 'default'; // 'none' | 'default' | 'full'
   
   // Export "class" prop as "class_" because "class" is a reserved word
   export { class_ as class };
   
-  // Define variant classes with dark mode support
+  // Modern variant classes with subtle shadows and elevated look
   const variants = {
     primary: `
-      bg-primary-600 hover:bg-primary-700 active:bg-primary-800
-      focus:ring-primary-500 focus:ring-opacity-50
-      text-white border border-transparent
+      bg-gradient-to-b from-blue-500 to-blue-600 
+      hover:from-blue-600 hover:to-blue-700 
+      active:from-blue-700 active:to-blue-800
+      text-white border-0
       shadow-sm hover:shadow-md active:shadow-sm
-      dark:bg-primary-500 dark:hover:bg-primary-600 dark:active:bg-primary-700
+      focus:ring-2 focus:ring-blue-500/40 focus:ring-offset-2
+      dark:from-blue-600 dark:to-blue-700 
+      dark:hover:from-blue-700 dark:hover:to-blue-800
     `,
     secondary: `
-      bg-secondary-600 hover:bg-secondary-700 active:bg-secondary-800
-      focus:ring-secondary-500 focus:ring-opacity-50
-      text-white border border-transparent
+      bg-gradient-to-b from-slate-100 to-slate-200 
+      hover:from-slate-200 hover:to-slate-300 
+      active:from-slate-300 active:to-slate-400
+      text-slate-700 border border-slate-300/50
       shadow-sm hover:shadow-md active:shadow-sm
-      dark:bg-secondary-500 dark:hover:bg-secondary-600 dark:active:bg-secondary-700
+      focus:ring-2 focus:ring-slate-500/40 focus:ring-offset-2
+      dark:from-slate-700 dark:to-slate-800 
+      dark:hover:from-slate-600 dark:hover:to-slate-700
+      dark:text-slate-200 dark:border-slate-600/50
     `,
     outline: `
-      bg-white hover:bg-gray-50 active:bg-gray-100
-      text-gray-700 border border-gray-300 hover:border-gray-400
-      focus:ring-primary-500 focus:ring-opacity-50
+      bg-white/80 hover:bg-white 
+      active:bg-slate-50
+      text-slate-600 hover:text-slate-700
+      border border-slate-300/60 hover:border-slate-400/80
       shadow-sm hover:shadow-md active:shadow-sm
-      dark:bg-gray-800 dark:hover:bg-gray-700 dark:active:bg-gray-600
-      dark:text-gray-200 dark:border-gray-600 dark:hover:border-gray-500
+      focus:ring-2 focus:ring-blue-500/40 focus:ring-offset-2
+      backdrop-blur-sm
+      dark:bg-slate-800/80 dark:hover:bg-slate-800
+      dark:text-slate-300 dark:border-slate-600/60
     `,
     danger: `
-      bg-red-600 hover:bg-red-700 active:bg-red-800
-      focus:ring-red-500 focus:ring-opacity-50
-      text-white border border-transparent
+      bg-gradient-to-b from-red-500 to-red-600 
+      hover:from-red-600 hover:to-red-700 
+      active:from-red-700 active:to-red-800
+      text-white border-0
       shadow-sm hover:shadow-md active:shadow-sm
-      dark:bg-red-500 dark:hover:bg-red-600 dark:active:bg-red-700
+      focus:ring-2 focus:ring-red-500/40 focus:ring-offset-2
+      dark:from-red-600 dark:to-red-700
     `,
     success: `
-      bg-green-600 hover:bg-green-700 active:bg-green-800
-      focus:ring-green-500 focus:ring-opacity-50
-      text-white border border-transparent
+      bg-gradient-to-b from-emerald-500 to-emerald-600 
+      hover:from-emerald-600 hover:to-emerald-700 
+      active:from-emerald-700 active:to-emerald-800
+      text-white border-0
       shadow-sm hover:shadow-md active:shadow-sm
-      dark:bg-green-500 dark:hover:bg-green-600 dark:active:bg-green-700
+      focus:ring-2 focus:ring-emerald-500/40 focus:ring-offset-2
+      dark:from-emerald-600 dark:to-emerald-700
     `,
     ghost: `
-      bg-transparent hover:bg-gray-100 active:bg-gray-200
-      text-gray-700 border border-transparent
-      focus:ring-primary-500 focus:ring-opacity-50
-      dark:hover:bg-gray-800 dark:active:bg-gray-700
-      dark:text-gray-200
+      bg-transparent hover:bg-slate-100/80 
+      active:bg-slate-200/80
+      text-slate-600 hover:text-slate-700
+      border-0
+      focus:ring-2 focus:ring-slate-500/40 focus:ring-offset-2
+      dark:hover:bg-slate-800/80 dark:active:bg-slate-700/80
+      dark:text-slate-400 dark:hover:text-slate-300
     `
   };
   
-  // Define size classes
+  // Compact, touch-friendly size classes (min 40x40px touch targets)
   const sizes = {
-    small: 'px-3 py-1.5 text-xs gap-1.5',
-    default: 'px-4 py-2 text-sm gap-2',
-    large: 'px-6 py-3 text-base gap-2.5',
-    xl: 'px-8 py-4 text-lg gap-3'
+    compact: `
+      min-h-[40px] px-3 py-2 
+      text-xs font-semibold 
+      gap-1.5
+    `,
+    default: `
+      min-h-[44px] px-4 py-2.5 
+      text-sm font-semibold 
+      gap-2
+    `,
+    large: `
+      min-h-[48px] px-6 py-3 
+      text-base font-semibold 
+      gap-2.5
+    `
   };
   
-  // Define rounded classes
-  const roundedClasses = {
-    none: 'rounded-none',
-    default: 'rounded-lg',
-    full: 'rounded-full'
-  };
+  // Modern border radius (8-12px range)
+  const borderRadius = 'rounded-xl'; // 12px
   
-  // Base classes
+  // Base classes with modern styling principles
   const baseClasses = `
     inline-flex items-center justify-center
-    font-medium leading-tight
-    focus:outline-none focus:ring-2 focus:ring-offset-2
-    transition-all duration-200 ease-in-out
-    select-none
+    font-semibold leading-tight tracking-wide
+    focus:outline-none 
+    transition-all duration-200 ease-out
+    select-none relative overflow-hidden
+    ${borderRadius}
   `;
   
-  // State classes
+  // Enhanced state classes with smooth micro-interactions
   $: stateClasses = (() => {
     if (disabled || loading) {
-      return 'opacity-50 cursor-not-allowed pointer-events-none';
+      return 'opacity-60 cursor-not-allowed pointer-events-none';
     }
-    return 'transform hover:-translate-y-0.5 active:translate-y-0 cursor-pointer';
+    return `
+      cursor-pointer
+      transform hover:scale-[1.02] hover:-translate-y-0.5 
+      active:scale-[0.98] active:translate-y-0
+    `;
   })();
   
   // Generate final class string
@@ -110,7 +137,6 @@
     baseClasses,
     sizes[size] || sizes.default,
     variants[variant] || variants.primary,
-    roundedClasses[rounded] || roundedClasses.default,
     fullWidth ? 'w-full' : '',
     stateClasses,
     class_
@@ -129,16 +155,6 @@
     
     dispatch('click', event);
   }
-  
-  // Loading spinner component
-  function LoadingSpinner() {
-    return `
-      <svg class="animate-spin h-4 w-4 text-current" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-      </svg>
-    `;
-  }
 </script>
 
 {#if href}
@@ -152,29 +168,35 @@
     on:click={handleClick}
     role="button"
   >
-    <!-- Left Icon or Loading Spinner -->
-    {#if loading}
-      <svg class="animate-spin h-4 w-4 text-current" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-      </svg>
-    {:else if iconLeft}
-      <span class="button-icon button-icon--left">
-        {@html iconLeft}
-      </span>
-    {/if}
+    <!-- Subtle shine effect overlay for elevated look -->
+    <div class="absolute inset-0 bg-gradient-to-b from-white/20 to-transparent opacity-0 hover:opacity-100 transition-opacity duration-200 {borderRadius}" aria-hidden="true"></div>
     
-    <!-- Button Content -->
-    <span class="button-content" class:sr-only={loading && !$$slots.default}>
-      <slot></slot>
-    </span>
-    
-    <!-- Right Icon -->
-    {#if iconRight && !loading}
-      <span class="button-icon button-icon--right">
-        {@html iconRight}
+    <!-- Content container -->
+    <div class="relative z-10 flex items-center justify-center gap-inherit">
+      <!-- Left Icon or Loading Spinner -->
+      {#if loading}
+        <svg class="animate-spin w-4 h-4 text-current" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+          <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+          <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+        </svg>
+      {:else if iconLeft}
+        <span class="flex items-center justify-center flex-shrink-0">
+          {@html iconLeft}
+        </span>
+      {/if}
+      
+      <!-- Button Content -->
+      <span class="flex items-center justify-center" class:sr-only={loading && !$$slots.default}>
+        <slot></slot>
       </span>
-    {/if}
+      
+      <!-- Right Icon -->
+      {#if iconRight && !loading}
+        <span class="flex items-center justify-center flex-shrink-0">
+          {@html iconRight}
+        </span>
+      {/if}
+    </div>
   </a>
 {:else}
   <button
@@ -184,34 +206,40 @@
     aria-disabled={disabled}
     on:click={handleClick}
   >
-    <!-- Left Icon or Loading Spinner -->
-    {#if loading}
-      <svg class="animate-spin h-4 w-4 text-current" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-      </svg>
-    {:else if iconLeft}
-      <span class="button-icon button-icon--left">
-        {@html iconLeft}
-      </span>
-    {/if}
+    <!-- Subtle shine effect overlay for elevated look -->
+    <div class="absolute inset-0 bg-gradient-to-b from-white/20 to-transparent opacity-0 hover:opacity-100 transition-opacity duration-200 {borderRadius}" aria-hidden="true"></div>
     
-    <!-- Button Content -->
-    <span class="button-content" class:sr-only={loading && !$$slots.default}>
-      <slot></slot>
-    </span>
-    
-    <!-- Right Icon -->
-    {#if iconRight && !loading}
-      <span class="button-icon button-icon--right">
-        {@html iconRight}
+    <!-- Content container -->
+    <div class="relative z-10 flex items-center justify-center gap-inherit">
+      <!-- Left Icon or Loading Spinner -->
+      {#if loading}
+        <svg class="animate-spin w-4 h-4 text-current" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+          <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+          <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+        </svg>
+      {:else if iconLeft}
+        <span class="flex items-center justify-center flex-shrink-0">
+          {@html iconLeft}
+        </span>
+      {/if}
+      
+      <!-- Button Content -->
+      <span class="flex items-center justify-center" class:sr-only={loading && !$$slots.default}>
+        <slot></slot>
       </span>
-    {/if}
+      
+      <!-- Right Icon -->
+      {#if iconRight && !loading}
+        <span class="flex items-center justify-center flex-shrink-0">
+          {@html iconRight}
+        </span>
+      {/if}
+    </div>
   </button>
 {/if}
 
 <style>
-  /* Icon styling */
+  /* Enhanced icon styling */
   :global(.button-icon) {
     display: inline-flex;
     align-items: center;
@@ -246,35 +274,44 @@
     border: 0;
   }
   
-  /* Focus styles for better accessibility */
+  /* Enhanced focus styles for better accessibility */
   :global(button:focus-visible),
   :global(a[role="button"]:focus-visible) {
     outline: 2px solid transparent;
     outline-offset: 2px;
   }
   
-  /* Improve contrast in high contrast mode */
+  /* High contrast mode support */
   @media (prefers-contrast: high) {
     :global(button),
     :global(a[role="button"]) {
-      border-width: 2px;
+      border-width: 2px !important;
+      box-shadow: none !important;
     }
   }
   
-  /* Disable animations for users who prefer reduced motion */
+  /* Reduced motion support */
   @media (prefers-reduced-motion: reduce) {
     :global(button),
     :global(a[role="button"]) {
-      transition: none;
+      transition: none !important;
     }
     
     :global(button:hover),
     :global(a[role="button"]:hover) {
-      transform: none;
+      transform: none !important;
     }
     
     :global(.animate-spin) {
-      animation: none;
+      animation: none !important;
+    }
+  }
+  
+  /* Touch device optimizations */
+  @media (pointer: coarse) {
+    :global(button),
+    :global(a[role="button"]) {
+      min-height: 44px;
     }
   }
 </style>

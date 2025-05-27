@@ -470,7 +470,18 @@ export const arTranslations = {
       'مواصلات عامة': 'وسائل النقل العام',
       'مطاعم': 'مطاعم',
       'وصولللشاطئ': 'وصول للشاطئ',
-      'وصول للشاطئ': 'وصول للشاطئ'
+      'وصول للشاطئ': 'وصول للشاطئ',
+      // English keys for direct lookup
+      'schools': 'مدارس',
+      'hospitals': 'مستشفيات',
+      'shopping centers': 'مراكز تسوق',
+      'shoppingCenters': 'مراكز تسوق',
+      'parks': 'منتزهات',
+      'public transportation': 'وسائل النقل العام',
+      'publicTransportation': 'وسائل النقل العام',
+      'restaurants': 'مطاعم',
+      'beach access': 'وصول للشاطئ',
+      'beachAccess': 'وصول للشاطئ'
     },
 
     buildingTypes: {
@@ -796,6 +807,7 @@ export const arTranslations = {
     verificationCode: 'رمز التحقق',
     verifyAccount: 'التحقق من الحساب',
     verifyInstructions: 'أدخل رمز التحقق المرسل إلى بريدك الإلكتروني لتفعيل حسابك.',
+    verifyingEmail: 'التحقق من البريد الإلكتروني',
     resendCode: 'إعادة إرسال الرمز',
     updateProfile: 'تحديث ملفك الشخصي',
     update: 'تحديث',
@@ -811,8 +823,11 @@ export const arTranslations = {
     resetCode: 'رمز إعادة التعيين',
     newPassword: 'كلمة المرور الجديدة',
     enterNewPassword: 'أدخل كلمة المرور الجديدة الخاصة بك',
+    resetPasswordFor: 'إعادة تعيين كلمة المرور لـ',
+    resetLinkSent: 'تم إرسال رابط إعادة تعيين كلمة المرور إلى بريدك الإلكتروني',
     verificationCodeResent: 'تم إعادة إرسال رمز التحقق إلى بريدك الإلكتروني',
-    registrationSuccess: 'تم التسجيل بنجاح! يرجى مراجعة بريدك الإلكتروني للحصول على تعليمات التحقق.'
+    registrationSuccess: 'تم التسجيل بنجاح! يرجى مراجعة بريدك الإلكتروني للحصول على تعليمات التحقق.',
+    passwordResetSuccess: 'تم إعادة تعيين كلمة المرور الخاصة بك بنجاح.'
   },
 
   profile: {

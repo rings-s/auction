@@ -714,6 +714,7 @@ export const enTranslations = {
     verificationCode: 'Verification code',
     verifyAccount: 'Verify account',
     verifyInstructions: 'Enter the verification code sent to your email to activate your account.',
+    verifyingEmail: 'Verifying email',
     resendCode: 'Resend code',
     updateProfile: 'Update your profile',
     update: 'Update',
@@ -729,8 +730,11 @@ export const enTranslations = {
     resetCode: 'Reset Code',
     newPassword: 'New Password',
     enterNewPassword: 'Enter your new password',
+    resetPasswordFor: 'Reset password for',
+    resetLinkSent: 'Password reset link has been sent to your email',
     verificationCodeResent: 'Verification code has been resent to your email',
-    registrationSuccess: 'Registration successful! Please check your email for verification instructions.'
+    registrationSuccess: 'Registration successful! Please check your email for verification instructions.',
+    passwordResetSuccess: 'Your password has been reset successfully.'
   },
 
   profile: {

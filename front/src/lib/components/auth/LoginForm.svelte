@@ -3,20 +3,30 @@
     import { t } from '$lib/i18n';
     import { fly, fade } from 'svelte/transition';
     import { toast } from '$lib/stores/toastStore';
+    import { onMount } from 'svelte';
     
     export let loading = false;
     export let redirectTo = '/';
+    export let initialEmail = '';
     
     const dispatch = createEventDispatcher();
     
-    let email = '';
+    let email = initialEmail || '';
     let password = '';
     let rememberMe = false;
     let showPassword = false;
     let emailError = '';
     let passwordError = '';
-    let emailTouched = false;
+    let emailTouched = initialEmail ? true : false;
     let passwordTouched = false;
+    
+    // Set focus to password field if email is already provided
+    let passwordInput;
+    onMount(() => {
+      if (initialEmail && passwordInput) {
+        setTimeout(() => passwordInput.focus(), 100);
+      }
+    });
     
     // Real-time validation
     $: if (emailTouched) emailError = validateEmail(email);
@@ -113,6 +123,7 @@
         </div>
         <input
           id="password"
+          bind:this={passwordInput}
           type={showPassword ? 'text' : 'password'}
           bind:value={password}
           on:blur={() => passwordTouched = true}

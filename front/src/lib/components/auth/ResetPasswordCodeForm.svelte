@@ -6,6 +6,7 @@
     export let loading = false;
     export let email = '';
     export let resetCode = '';
+    export let emailReceived = false;
     
     const dispatch = createEventDispatcher();
     
@@ -89,33 +90,43 @@
   </script>
   
   <form on:submit|preventDefault={handleSubmit} class="space-y-5">
-    <!-- Email -->
-    <div class="space-y-1">
-      <label for="email" class="block text-sm font-medium text-gray-700 dark:text-gray-300">
-        {$t('auth.email')}
-      </label>
-      <input
-        id="email"
-        type="email"
-        bind:value={email}
-        on:blur={() => handleBlur('email')}
-        required
-        class="
-          appearance-none block w-full px-3 py-2.5
-          border {errors.email && touched.email ? 'border-red-300 dark:border-red-600' : 'border-gray-300 dark:border-gray-600'}
-          rounded-lg shadow-sm placeholder-gray-400 dark:placeholder-gray-500
-          focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500
-          text-gray-900 dark:text-white bg-white dark:bg-gray-800
-          transition-all duration-200
-        "
-        placeholder="email@example.com"
-      />
-      {#if errors.email && touched.email}
-        <p class="text-sm text-red-600 dark:text-red-400" in:fly={{ y: -5, duration: 200 }}>
-          {errors.email}
+    <!-- Email Display -->
+    {#if emailReceived}
+      <div class="p-4 bg-gray-50 dark:bg-gray-700 rounded-lg shadow-inner mb-4">
+        <p class="text-sm font-medium text-gray-700 dark:text-gray-300">
+          <span class="block mb-1">{$t('auth.resetPasswordFor')}:</span>
+          <span class="text-primary-600 dark:text-primary-400 font-semibold">{email}</span>
         </p>
-      {/if}
-    </div>
+      </div>
+    {:else}
+      <!-- Email Input (only if not received) -->
+      <div class="space-y-1">
+        <label for="email" class="block text-sm font-medium text-gray-700 dark:text-gray-300">
+          {$t('auth.email')}
+        </label>
+        <input
+          id="email"
+          type="email"
+          bind:value={email}
+          on:blur={() => handleBlur('email')}
+          required
+          class="
+            appearance-none block w-full px-3 py-2.5
+            border {errors.email && touched.email ? 'border-red-300 dark:border-red-600' : 'border-gray-300 dark:border-gray-600'}
+            rounded-lg shadow-sm placeholder-gray-400 dark:placeholder-gray-500
+            focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500
+            text-gray-900 dark:text-white bg-white dark:bg-gray-800
+            transition-all duration-200
+          "
+          placeholder="email@example.com"
+        />
+        {#if errors.email && touched.email}
+          <p class="text-sm text-red-600 dark:text-red-400" in:fly={{ y: -5, duration: 200 }}>
+            {errors.email}
+          </p>
+        {/if}
+      </div>
+    {/if}
   
     <!-- Reset Code -->
     <div class="space-y-1">
