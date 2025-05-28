@@ -807,6 +807,10 @@ export const enTranslations = {
   footer: {
     about: 'About Us',
     aboutText: 'We are a leading real estate auction platform connecting buyers and sellers for residential, commercial, and land properties.',
+    quickLinks: 'Quick Links',
+    support: 'Support',
+    help: 'Help Center',
+    faq: 'FAQ',
     links: 'Quick Links',
     legal: 'Legal',
     terms: 'Terms of Service',
@@ -814,8 +818,14 @@ export const enTranslations = {
     cookies: 'Cookie Policy',
     contact: 'Contact Us',
     rights: 'All rights reserved.',
-    developedBy: 'This platform has been made by {name}.',
-    developerName: 'Ahmed Bashir Ali'
+    madeBy: 'Made by',
+    followUs: 'Follow us',
+    newsletter: {
+      title: 'Stay Updated',
+      description: 'Get the latest properties and auctions delivered straight to your inbox',
+      placeholder: 'Enter your email',
+      subscribe: 'Subscribe'
+    }
   },
 
   hero: {

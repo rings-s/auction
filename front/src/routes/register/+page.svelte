@@ -49,7 +49,7 @@
   <title>{$t('auth.register')} | Real Estate Platform</title>
 </svelte:head>
 
-<div class="min-h-screen flex flex-col items-center justify-center py-8 px-4 sm:px-6 lg:px-8 bg-gradient-to-b from-gray-50 to-gray-100 dark:from-gray-900 dark:to-gray-800">
+<div class="min-h-screen flex flex-col items-center justify-center py-8 px-4 sm:px-6 lg:px-8 ">
   <div class="w-full max-w-lg space-y-6 bg-white dark:bg-gray-800 p-8 rounded-xl shadow-lg transform transition-all">
     <div>
       <h2 class="mt-2 text-center text-3xl font-bold tracking-tight text-gray-900 dark:text-white">

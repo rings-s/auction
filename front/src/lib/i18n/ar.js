@@ -899,7 +899,11 @@ export const arTranslations = {
 
   footer: {
     about: 'حول',
-    aboutText: 'نحن منصة مزادات عبر الإنترنت متخصصة في العقارات',
+    aboutText: 'نحن منصة رائدة لمزادات العقارات تربط بين المشترين والبائعين للعقارات السكنية والتجارية والأراضي.',
+    quickLinks: 'روابط سريعة',
+    support: 'الدعم',
+    help: 'المساعدة',
+    faq: 'الأسئلة الشائعة',
     links: 'روابط سريعة',
     legal: 'قانوني',
     terms: 'الشروط والأحكام',
@@ -907,8 +911,14 @@ export const arTranslations = {
     cookies: 'سياسة ملفات تعريف الارتباط',
     contact: 'اتصل بنا',
     rights: 'جميع الحقوق محفوظة',
-    developedBy: 'تم تطوير هذه المنصة بواسطة {name}.',
-    developerName: 'أحمد بشير علي'
+    madeBy: 'صُنع بواسطة',
+    followUs: 'تابعنا على',
+    newsletter: {
+      title: 'ابق على اطلاع',
+      description: 'احصل على آخر العقارات والمزادات مباشرة في بريدك الإلكتروني',
+      placeholder: 'أدخل بريدك الإلكتروني',
+      subscribe: 'اشتراك'
+    }
   },
 
   hero: {

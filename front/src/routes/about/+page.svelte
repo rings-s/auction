@@ -1,613 +1,714 @@
 <!-- src/routes/about/+page.svelte -->
 <script>
-    import { onMount } from 'svelte';
-    import { fade, fly, scale } from 'svelte/transition';
-    import { cubicOut } from 'svelte/easing';
-    import { locale } from '$lib/i18n';
-    import Button from '$lib/components/ui/Button.svelte';
-    
-    let mounted = false;
-    let scrollY = 0;
-    let prefersReducedMotion = false;
-    let intersectionObserver;
-    
-    // RTL computed value
-    $: isRTL = $locale === 'ar';
-    
-    // Enhanced data structure
-    const aboutData = {
-      en: {
-        topSection: {
-          badge: "About Our Company",
-          title: "Revolutionizing Real Estate",
-          subtitle: "Through Innovation & Trust",
-          description: "We're pioneering the future of property transactions with cutting-edge technology and unwavering commitment to transparency."
-        },
-        hero: {
-          title: "Building Tomorrow's Real Estate Marketplace",
-          subtitle: "Connecting investors, buyers, and sellers through our advanced auction platform powered by transparency and innovation.",
-          stats: [
-            { value: "2019", label: "Founded", icon: "calendar" },
-            { value: "50K+", label: "Properties", icon: "building" },
-            { value: "15", label: "Countries", icon: "globe" }
-          ]
-        },
-        mission: {
-          title: "Our Mission & Vision",
-          content: "To democratize real estate investing by creating the world's most transparent, efficient, and accessible property auction platform.",
-          vision: "A world where everyone has equal access to premium real estate opportunities.",
-          values: [
-            { 
-              title: "Transparency", 
-              desc: "Every transaction is open and verifiable with complete audit trails",
-              icon: "eye"
-            },
-            { 
-              title: "Innovation", 
-              desc: "Leveraging cutting-edge technology to simplify complex processes",
-              icon: "lightbulb"
-            },
-            { 
-              title: "Trust", 
-              desc: "Building lasting relationships through reliability and excellence",
-              icon: "shield"
-            }
-          ]
-        },
-        cta: {
-          title: "Ready to Transform Your Real Estate Journey?",
-          subtitle: "Join thousands of successful investors who trust our platform for their property transactions.",
-          primaryBtn: "Get Started Today",
-          secondaryBtn: "Contact Our Team"
-        }
+  import { onMount } from 'svelte';
+  import { fade, fly } from 'svelte/transition';
+  import { locale } from '$lib/i18n';
+  import Button from '$lib/components/ui/Button.svelte';
+  
+  let mounted = false;
+  let scrollY = 0;
+  let prefersReducedMotion = false;
+  
+  // RTL support
+  $: isRTL = $locale === 'ar';
+  
+  // Content structure
+  const content = {
+    en: {
+      hero: {
+        title: "We're building the future of real estate",
+        description: "Our platform transforms how people buy, sell, and invest in properties through transparent auctions and cutting-edge technology.",
+        stats: [
+          { number: "50K+", label: "Properties Listed" },
+          { number: "98%", label: "Success Rate" },
+          { number: "15", label: "Countries" }
+        ]
       },
-      ar: {
-        topSection: {
-          badge: "عن شركتنا",
-          title: "ثورة في مجال العقارات",
-          subtitle: "من خلال الابتكار والثقة",
-          description: "نحن نقود مستقبل معاملات العقارات بالتكنولوجيا المتطورة والالتزام الثابت بالشفافية."
-        },
-        hero: {
-          title: "بناء سوق العقارات للمستقبل",
-          subtitle: "ربط المستثمرين والمشترين والبائعين من خلال منصة المزادات المتطورة المدعومة بالشفافية والابتكار.",
-          stats: [
-            { value: "2019", label: "التأسيس", icon: "calendar" },
-            { value: "50+", label: "ألف عقار", icon: "building" },
-            { value: "15", label: "دولة", icon: "globe" }
-          ]
-        },
-        mission: {
-          title: "مهمتنا ورؤيتنا",
-          content: "إضفاء الطابع الديمقراطي على الاستثمار العقاري من خلال إنشاء منصة مزادات العقارات الأكثر شفافية وكفاءة وإمكانية وصول في العالم.",
-          vision: "عالم يتمتع فيه الجميع بوصول متساوٍ إلى فرص العقارات المميزة.",
-          values: [
-            { 
-              title: "الشفافية", 
-              desc: "كل معاملة مفتوحة وقابلة للتحقق مع مسارات تدقيق كاملة",
-              icon: "eye"
-            },
-            { 
-              title: "الابتكار", 
-              desc: "الاستفادة من التكنولوجيا المتطورة لتبسيط العمليات المعقدة",
-              icon: "lightbulb"
-            },
-            { 
-              title: "الثقة", 
-              desc: "بناء علاقات دائمة من خلال الموثوقية والتميز",
-              icon: "shield"
-            }
-          ]
-        },
-        cta: {
-          title: "هل أنت مستعد لتغيير رحلة العقارات الخاصة بك؟",
-          subtitle: "انضم لآلاف المستثمرين الناجحين الذين يثقون بمنصتنا لمعاملاتهم العقارية.",
-          primaryBtn: "ابدأ اليوم",
-          secondaryBtn: "تواصل مع فريقنا"
-        }
-      }
-    };
-    
-    function getText(key) {
-      const lang = $locale || 'en';
-      const keys = key.split('.');
-      let value = aboutData[lang] || aboutData.en;
-      
-      for (const k of keys) {
-        if (value && value[k]) {
-          value = value[k];
-        } else {
-          return key;
-        }
-      }
-      return value;
-    }
-    
-    // Icon mapping
-    const iconMap = {
-      calendar: "M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z",
-      building: "M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4",
-      globe: "M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9m0 18c-1.657 0-3-4.03-3-9s1.343-9 3-9m-9 9a9 9 0 019-9",
-      eye: "M15 12a3 3 0 11-6 0 3 3 0 016 0z M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z",
-      lightbulb: "M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z",
-      shield: "M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"
-    };
-    
-    onMount(() => {
-      mounted = true;
-      
-      if (typeof window !== 'undefined') {
-        const mediaQuery = window.matchMedia('(prefers-reduced-motion: reduce)');
-        prefersReducedMotion = mediaQuery.matches;
-        
-        mediaQuery.addEventListener('change', (e) => {
-          prefersReducedMotion = e.matches;
-        });
-        
-        // Intersection Observer for scroll animations
-        intersectionObserver = new IntersectionObserver(
-          (entries) => {
-            entries.forEach((entry) => {
-              if (entry.isIntersecting) {
-                entry.target.classList.add('animate-in');
-              }
-            });
+      story: {
+        title: "Our Story",
+        content: "Born from a vision to democratize real estate investing, we started with a simple belief: everyone should have access to transparent property transactions. What began as a small team in 2019 has grown into a global platform serving thousands of satisfied customers.",
+        highlight: "We believe in transparency, innovation, and building trust through every interaction."
+      },
+      values: {
+        title: "What drives us",
+        items: [
+          {
+            title: "Transparency First",
+            description: "Every bid, every transaction, every detail - open and verifiable."
           },
-          { threshold: 0.1, rootMargin: '0px 0px -50px 0px' }
-        );
-        
-        // Observe elements
-        setTimeout(() => {
-          document.querySelectorAll('.observe').forEach((el) => {
-            intersectionObserver.observe(el);
-          });
-        }, 100);
+          {
+            title: "Innovation Always", 
+            description: "Pushing boundaries with technology to simplify complex processes."
+          },
+          {
+            title: "Trust Through Action",
+            description: "Building lasting relationships by delivering on our promises."
+          }
+        ]
+      },
+      team: {
+        title: "Leadership",
+        subtitle: "Guided by experience, driven by purpose",
+        members: [
+          { name: "Sarah Chen", role: "CEO & Co-founder", bio: "20+ years in proptech" },
+          { name: "Marcus Johnson", role: "CTO & Co-founder", bio: "Former Google engineer" },
+          { name: "Elena Rodriguez", role: "Head of Operations", bio: "Real estate veteran" }
+        ]
+      },
+      cta: {
+        title: "Ready to join our journey?",
+        description: "Experience the future of real estate auctions today.",
+        primaryBtn: "Get Started",
+        secondaryBtn: "Talk to Sales"
       }
+    },
+    ar: {
+      hero: {
+        title: "نبني مستقبل العقارات",
+        description: "منصتنا تحول كيفية شراء وبيع والاستثمار في العقارات من خلال المزادات الشفافة والتكنولوجيا المتطورة.",
+        stats: [
+          { number: "50+", label: "ألف عقار" },
+          { number: "98%", label: "معدل النجاح" },
+          { number: "15", label: "دولة" }
+        ]
+      },
+      story: {
+        title: "قصتنا",
+        content: "وُلدت من رؤية لإضفاء الطابع الديمقراطي على الاستثمار العقاري، بدأنا بإيمان بسيط: يجب أن يتمتع الجميع بإمكانية الوصول إلى معاملات عقارية شفافة. ما بدأ كفريق صغير في 2019 نما إلى منصة عالمية تخدم آلاف العملاء الراضين.",
+        highlight: "نؤمن بالشفافية والابتكار وبناء الثقة من خلال كل تفاعل."
+      },
+      values: {
+        title: "ما يحركنا",
+        items: [
+          {
+            title: "الشفافية أولاً",
+            description: "كل عرض، كل معاملة، كل تفصيل - مفتوح وقابل للتحقق."
+          },
+          {
+            title: "الابتكار دائماً",
+            description: "دفع الحدود بالتكنولوجيا لتبسيط العمليات المعقدة."
+          },
+          {
+            title: "الثقة من خلال العمل",
+            description: "بناء علاقات دائمة من خلال الوفاء بوعودنا."
+          }
+        ]
+      },
+      team: {
+        title: "القيادة",
+        subtitle: "موجهون بالخبرة، مدفوعون بالهدف",
+        members: [
+          { name: "سارة تشين", role: "الرئيس التنفيذي والمؤسس المشارك", bio: "20+ سنة في تقنية العقارات" },
+          { name: "ماركوس جونسون", role: "المدير التقني والمؤسس المشارك", bio: "مهندس سابق في جوجل" },
+          { name: "إيلينا رودريغيز", role: "رئيس العمليات", bio: "خبيرة عقارات" }
+        ]
+      },
+      cta: {
+        title: "مستعد للانضمام إلى رحلتنا؟",
+        description: "جرب مستقبل مزادات العقارات اليوم.",
+        primaryBtn: "ابدأ الآن",
+        secondaryBtn: "تحدث إلى المبيعات"
+      }
+    }
+  };
+  
+  function getText(path) {
+    const lang = $locale || 'en';
+    const keys = path.split('.');
+    let value = content[lang] || content.en;
+    
+    for (const key of keys) {
+      value = value?.[key];
+      if (!value) return path;
+    }
+    return value;
+  }
+  
+  onMount(() => {
+    mounted = true;
+    
+    if (typeof window !== 'undefined') {
+      const mediaQuery = window.matchMedia('(prefers-reduced-motion: reduce)');
+      prefersReducedMotion = mediaQuery.matches;
       
-      return () => {
-        if (intersectionObserver) {
-          intersectionObserver.disconnect();
-        }
-      };
-    });
-    
-    // Enhanced parallax effects
-    $: scrollOffset = scrollY * 0.1;
-    $: scrollOffsetSlow = scrollY * 0.05;
-  </script>
+      mediaQuery.addEventListener('change', (e) => {
+        prefersReducedMotion = e.matches;
+      });
+    }
+  });
+</script>
+
+<svelte:head>
+  <title>About Us | Transforming Real Estate Through Innovation</title>
+  <meta name="description" content="Learn about our mission to democratize real estate through transparent auctions and innovative technology.">
+</svelte:head>
+
+<svelte:window bind:scrollY />
+
+<div class="relative overflow-hidden" dir={isRTL ? 'rtl' : 'ltr'}>
   
-  <svelte:head>
-    <title>About Us | Premier Real Estate Auctions</title>
-    <meta name="description" content="Learn about our mission to transform real estate through innovative auction technology.">
-  </svelte:head>
-  
-  <svelte:window bind:scrollY />
-  
-  <!-- Main Container -->
-  <div class={`bg-white dark:bg-slate-900 ${isRTL ? 'rtl' : 'ltr'}`} dir={isRTL ? 'rtl' : 'ltr'}>
-    
-    <!-- Simplified Advanced SVG Background -->
-    <div class="fixed inset-0 overflow-hidden pointer-events-none" aria-hidden="true">
-      <svg 
-        class="absolute inset-0 w-full h-full opacity-20 dark:opacity-30" 
-        viewBox="0 0 1440 900" 
-        fill="none" 
-        xmlns="http://www.w3.org/2000/svg"
-      >
-        <defs>
-          <!-- Simplified Advanced Gradients -->
-          <linearGradient id="modernGradient1" x1="0%" y1="0%" x2="100%" y2="100%">
-            <stop offset="0%" style="stop-color:#3b82f6;stop-opacity:0.6"/>
-            <stop offset="50%" style="stop-color:#8b5cf6;stop-opacity:0.4"/>
-            <stop offset="100%" style="stop-color:#06b6d4;stop-opacity:0.3"/>
-          </linearGradient>
+  {#if mounted}
+    <!-- Hero Section with Real Estate Theme -->
+    <section class="relative min-h-screen flex items-center py-20 sm:py-24 lg:py-32">
+      <div class="relative z-10 w-full max-w-7xl mx-auto px-6 sm:px-8 lg:px-12">
+        <!-- Asymmetric Grid: 5/7 split -->
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-16 items-center">
           
-          <radialGradient id="modernGradient2" cx="50%" cy="50%" r="50%">
-            <stop offset="0%" style="stop-color:#f59e0b;stop-opacity:0.5"/>
-            <stop offset="100%" style="stop-color:#ef4444;stop-opacity:0.2"/>
-          </radialGradient>
-          
-          <linearGradient id="modernGradient3" x1="0%" y1="0%" x2="100%" y2="0%">
-            <stop offset="0%" style="stop-color:#10b981;stop-opacity:0.4"/>
-            <stop offset="100%" style="stop-color:#3b82f6;stop-opacity:0.2"/>
-          </linearGradient>
-        </defs>
-        
-        <!-- Simplified Modern Shapes -->
-        <g transform="translate({scrollOffset}, 0)">
-          <!-- Clean Geometric Shape 1 -->
-          <rect x="200" y="100" width="300" height="200" rx="60" fill="url(#modernGradient1)" opacity="0.3">
-            <animateTransform attributeName="transform" type="rotate" 
-              values="0 350 200;5 350 200;0 350 200" dur="8s" repeatCount="indefinite"/>
-          </rect>
-          
-          <!-- Modern Circle -->
-          <circle cx="800" cy="300" r="100" fill="url(#modernGradient2)" opacity="0.4">
-            <animate attributeName="r" values="80;120;80" dur="6s" repeatCount="indefinite"/>
-          </circle>
-          
-          <!-- Flowing Wave Shape -->
-          <path d="M0,400 Q360,300 720,400 T1440,400 L1440,500 Q1080,600 720,500 T0,500 Z" 
-                fill="url(#modernGradient3)" opacity="0.2">
-            <animate attributeName="d" 
-              values="M0,400 Q360,300 720,400 T1440,400 L1440,500 Q1080,600 720,500 T0,500 Z;
-                      M0,420 Q360,320 720,420 T1440,420 L1440,520 Q1080,620 720,520 T0,520 Z;
-                      M0,400 Q360,300 720,400 T1440,400 L1440,500 Q1080,600 720,500 T0,500 Z"
-              dur="10s" repeatCount="indefinite"/>
-          </path>
-        </g>
-        
-        <!-- Slow Moving Elements -->
-        <g transform="translate({scrollOffsetSlow}, 0)">
-          <!-- Minimalist Line Pattern -->
-          <g opacity="0.3">
-            <line x1="100" y1="600" x2="400" y2="650" stroke="url(#modernGradient1)" stroke-width="2"/>
-            <line x1="600" y1="650" x2="900" y2="600" stroke="url(#modernGradient1)" stroke-width="2"/>
-            <line x1="1000" y1="600" x2="1300" y2="650" stroke="url(#modernGradient1)" stroke-width="2"/>
-          </g>
-        </g>
-      </svg>
-    </div>
-  
-    {#if mounted}
-      <!-- Top White Space Section with Advanced UI -->
-      <section class="relative z-10 bg-gradient-to-b from-slate-50 via-white to-slate-50 dark:from-slate-900 dark:via-slate-800 dark:to-slate-900 px-6 sm:px-8 lg:px-12">
-        <div class="max-w-4xl mx-auto pt-24 pb-20">
-          
-          <!-- Top Badge -->
-          <div 
-            in:fade={{ duration: 800, delay: 100, easing: cubicOut }}
-            class="flex justify-center mb-10"
-          >
-            <div class="inline-flex items-center gap-3 px-6 py-3 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-full text-sm font-semibold text-blue-700 dark:text-blue-300 shadow-sm">
-              <div class="w-2 h-2 bg-blue-500 rounded-full animate-pulse"></div>
-              {getText('topSection.badge')}
-            </div>
-          </div>
-          
-          <!-- Main Heading -->
-          <div class="text-center space-y-8 mb-16">
-            <div 
-              in:fly={{ y: prefersReducedMotion ? 0 : 40, duration: 800, delay: 200, easing: cubicOut }}
+          <!-- Left Content - 5 columns -->
+          <div class="lg:col-span-5 space-y-8">
+            <h1
+              in:fly={{ y: prefersReducedMotion ? 0 : 30, duration: 800, delay: 200 }}
+              class="text-5xl sm:text-6xl lg:text-7xl font-bold leading-[0.95] tracking-tight text-slate-900 dark:text-white"
             >
-              <h1 class="text-5xl sm:text-6xl lg:text-7xl font-black text-slate-900 dark:text-white leading-[0.9] tracking-tight mb-6">
-                {getText('topSection.title')}
-              </h1>
-              <div class="text-3xl sm:text-4xl lg:text-5xl font-bold bg-gradient-to-r from-blue-600 via-purple-600 to-emerald-600 bg-clip-text text-transparent">
-                {getText('topSection.subtitle')}
-              </div>
-            </div>
+              {getText('hero.title')}
+            </h1>
             
-            <!-- Description with narrower width and better padding -->
-            <div 
-              in:fly={{ y: prefersReducedMotion ? 0 : 30, duration: 800, delay: 400, easing: cubicOut }}
-              class="max-w-2xl mx-auto px-4"
+            <p
+              in:fly={{ y: prefersReducedMotion ? 0 : 20, duration: 800, delay: 300 }}
+              class="text-lg leading-relaxed text-slate-600 dark:text-slate-300 max-w-md"
             >
-              <p class="text-lg text-slate-600 dark:text-slate-300 leading-relaxed font-medium">
-                {getText('topSection.description')}
-              </p>
+              {getText('hero.description')}
+            </p>
+            
+            <!-- Stats with animated underlines -->
+            <div
+              in:fly={{ y: prefersReducedMotion ? 0 : 20, duration: 800, delay: 400 }}
+              class="flex flex-wrap gap-8 pt-4"
+            >
+              {#each getText('hero.stats') as stat, i}
+                <div class="text-center relative">
+                  <div class="text-3xl font-bold text-slate-900 dark:text-white">
+                    {stat.number}
+                  </div>
+                  <div class="text-sm text-slate-500 dark:text-slate-400 mt-1">
+                    {stat.label}
+                  </div>
+                  <!-- Animated underline -->
+                  <div class="expand-line-stat w-full h-0.5 bg-gradient-to-r from-amber-500 to-orange-500 mt-2 motion-reduce:w-full" style="animation-delay: {(i + 1) * 200 + 600}ms;"></div>
+                </div>
+              {/each}
             </div>
           </div>
           
-          <!-- Advanced Visual Element with Better Padding -->
-          <div 
-            in:scale={{ duration: 1000, delay: 600, easing: cubicOut }}
-            class="relative max-w-3xl mx-auto"
-          >
-            <!-- Main Card with Enhanced Padding -->
-            <div class="bg-white/90 dark:bg-slate-800/90 backdrop-blur-xl border border-slate-200/60 dark:border-slate-700/60 rounded-3xl p-10 sm:p-12 shadow-2xl shadow-slate-900/10 dark:shadow-slate-900/30">
-              
-              <!-- Stats Grid with Better Spacing -->
-              <div class="grid grid-cols-1 sm:grid-cols-3 gap-10 sm:gap-12">
-                {#each getText('hero.stats') as stat, index}
-                  <div 
-                    class="text-center group"
-                    in:fly={{ 
-                      y: prefersReducedMotion ? 0 : 30, 
-                      duration: 600, 
-                      delay: 800 + (index * 150), 
-                      easing: cubicOut 
-                    }}
-                  >
-                    <!-- Icon with Better Spacing -->
-                    <div class="w-18 h-18 mx-auto mb-6 bg-gradient-to-br from-blue-500 to-purple-600 rounded-2xl flex items-center justify-center shadow-lg shadow-blue-500/30 group-hover:scale-110 transition-transform duration-300">
-                      <svg class="w-9 h-9 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d={iconMap[stat.icon]}/>
-                      </svg>
-                    </div>
+          <!-- Right Visual - 7 columns with Real Estate SVG -->
+          <div class="lg:col-span-7 relative">
+            <div
+              in:fly={{ x: prefersReducedMotion ? 0 : 50, duration: 1000, delay: 500 }}
+              class="relative"
+            >
+              <!-- Real Estate Auction Illustration -->
+              <div class="relative w-full aspect-square max-w-lg mx-auto">
+                <svg viewBox="0 0 400 400" class="w-full h-full">
+                  <defs>
+                    <linearGradient id="buildingGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                      <stop offset="0%" class="text-amber-500/80" stop-color="currentColor" />
+                      <stop offset="100%" class="text-orange-500/60" stop-color="currentColor" />
+                    </linearGradient>
+                    <linearGradient id="accentGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                      <stop offset="0%" class="text-amber-600" stop-color="currentColor" />
+                      <stop offset="100%" class="text-orange-600" stop-color="currentColor" />
+                    </linearGradient>
+                  </defs>
+                  
+                  <g stroke="url(#buildingGrad)" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round">
+                    <!-- Main Building -->
+                    <rect 
+                      x="120" y="180" width="160" height="180" 
+                      class="draw-line-hero motion-reduce:opacity-100"
+                      style="animation-delay: 1s;"
+                    />
                     
-                    <!-- Stat Value -->
-                    <div class="text-4xl font-black text-slate-900 dark:text-white mb-3">
-                      {stat.value}
-                    </div>
+                    <!-- Building Roof -->
+                    <polygon 
+                      points="110,180 200,130 290,180" 
+                      class="draw-line-hero motion-reduce:opacity-100"
+                      style="animation-delay: 1.5s;"
+                    />
                     
-                    <!-- Stat Label -->
-                    <div class="text-sm font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
-                      {stat.label}
-                    </div>
-                  </div>
-                {/each}
+                    <!-- Windows Grid -->
+                    <rect 
+                      x="140" y="200" width="25" height="25" 
+                      class="draw-line-hero motion-reduce:opacity-100"
+                      style="animation-delay: 2s;"
+                    />
+                    <rect 
+                      x="175" y="200" width="25" height="25" 
+                      class="draw-line-hero motion-reduce:opacity-100"
+                      style="animation-delay: 2.2s;"
+                    />
+                    <rect 
+                      x="210" y="200" width="25" height="25" 
+                      class="draw-line-hero motion-reduce:opacity-100"
+                      style="animation-delay: 2.4s;"
+                    />
+                    <rect 
+                      x="245" y="200" width="25" height="25" 
+                      class="draw-line-hero motion-reduce:opacity-100"
+                      style="animation-delay: 2.6s;"
+                    />
+                    
+                    <!-- Second row of windows -->
+                    <rect 
+                      x="140" y="240" width="25" height="25" 
+                      class="draw-line-hero motion-reduce:opacity-100"
+                      style="animation-delay: 2.8s;"
+                    />
+                    <rect 
+                      x="175" y="240" width="25" height="25" 
+                      class="draw-line-hero motion-reduce:opacity-100"
+                      style="animation-delay: 3s;"
+                    />
+                    <rect 
+                      x="210" y="240" width="25" height="25" 
+                      class="draw-line-hero motion-reduce:opacity-100"
+                      style="animation-delay: 3.2s;"
+                    />
+                    <rect 
+                      x="245" y="240" width="25" height="25" 
+                      class="draw-line-hero motion-reduce:opacity-100"
+                      style="animation-delay: 3.4s;"
+                    />
+                    
+                    <!-- Door -->
+                    <rect 
+                      x="185" y="300" width="30" height="60" 
+                      class="draw-line-hero motion-reduce:opacity-100"
+                      style="animation-delay: 3.6s;"
+                    />
+                    
+                    <!-- Auction Gavel -->
+                    <g stroke="url(#accentGrad)" stroke-width="3">
+                      <!-- Gavel Handle -->
+                      <line 
+                        x1="320" y1="120" x2="360" y2="80" 
+                        class="draw-line-hero motion-reduce:opacity-100"
+                        style="animation-delay: 4s;"
+                      />
+                      <!-- Gavel Head -->
+                      <rect 
+                        x="310" y="115" width="20" height="10" 
+                        class="draw-line-hero motion-reduce:opacity-100"
+                        style="animation-delay: 4.2s;"
+                      />
+                    </g>
+                    
+                    <!-- Dollar Signs (Auction Bids) -->
+                    <g stroke="url(#accentGrad)" stroke-width="2" fill="url(#accentGrad)" fill-opacity="0.2">
+                      <text 
+                        x="80" y="100" 
+                        font-family="serif" 
+                        font-size="24" 
+                        font-weight="bold"
+                        class="draw-text motion-reduce:opacity-100"
+                        style="animation-delay: 4.5s;"
+                      >$</text>
+                      <text 
+                        x="340" y="200" 
+                        font-family="serif" 
+                        font-size="20" 
+                        font-weight="bold"
+                        class="draw-text motion-reduce:opacity-100"
+                        style="animation-delay: 4.7s;"
+                      >$</text>
+                      <text 
+                        x="60" y="280" 
+                        font-family="serif" 
+                        font-size="18" 
+                        font-weight="bold"
+                        class="draw-text motion-reduce:opacity-100"
+                        style="animation-delay: 4.9s;"
+                      >$</text>
+                    </g>
+                    
+                    <!-- Property Lines/Boundaries -->
+                    <g stroke="url(#buildingGrad)" stroke-width="1" stroke-dasharray="5,5">
+                      <rect 
+                        x="80" y="140" width="240" height="240" 
+                        class="draw-line-hero motion-reduce:opacity-100"
+                        style="animation-delay: 5s;"
+                      />
+                    </g>
+                    
+                    <!-- Location Pin -->
+                    <g stroke="url(#accentGrad)" stroke-width="2" fill="url(#accentGrad)" fill-opacity="0.3">
+                      <circle 
+                        cx="200" cy="80" r="15" 
+                        class="draw-line-hero motion-reduce:opacity-100"
+                        style="animation-delay: 5.2s;"
+                      />
+                      <polygon 
+                        points="200,95 190,110 210,110" 
+                        class="draw-line-hero motion-reduce:opacity-100"
+                        style="animation-delay: 5.4s;"
+                      />
+                    </g>
+                  </g>
+                </svg>
               </div>
             </div>
-            
-            <!-- Decorative Elements -->
-            <div class="absolute -top-6 -left-6 w-32 h-32 bg-gradient-to-br from-blue-400/20 to-purple-400/20 rounded-full blur-2xl"></div>
-            <div class="absolute -bottom-6 -right-6 w-40 h-40 bg-gradient-to-br from-emerald-400/20 to-blue-400/20 rounded-full blur-2xl"></div>
           </div>
         </div>
-      </section>
-  
-      <!-- Hero Section with FIXED Light Mode Colors -->
-      <section class="relative z-10 bg-slate-900 dark:bg-slate-900 px-6 sm:px-8 lg:px-12 py-24 observe">
-        <div class="max-w-6xl mx-auto">
-          
-          <!-- Content Grid with Better Padding -->
-          <div class="grid grid-cols-1 lg:grid-cols-2 gap-16 lg:gap-20 items-center">
+      </div>
+    </section>
+    
+    <!-- Story Section -->
+    <section class="relative py-24 lg:py-32">
+      <div class="relative">
+        <div class="max-w-7xl mx-auto px-6 sm:px-8 lg:px-12 py-24">
+          <div class="grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-16 items-start">
             
-            <!-- Text Content with Enhanced Padding -->
-            <div class={`space-y-10 ${isRTL ? 'lg:order-2 text-right' : 'lg:order-1 text-left'} px-4 lg:px-0`}>
-              <div class="space-y-8">
-                <!-- FIXED: Always white text on dark background -->
-                <h2 class="text-4xl sm:text-5xl lg:text-6xl font-bold text-white leading-tight">
-                  {getText('hero.title')}
-                </h2>
-                
-                <!-- Narrower paragraph width with better padding -->
-                <div class="max-w-lg pr-4">
-                  <p class="text-lg text-slate-300 leading-relaxed">
-                    {getText('hero.subtitle')}
-                  </p>
-                </div>
-              </div>
-              
-              <!-- CTA Buttons with Better Spacing -->
-              <div class="flex flex-col sm:flex-row gap-5 pt-6">
-                <Button variant="primary" size="large" href="/properties" class_="w-full sm:w-auto px-8 py-4">
-                  {isRTL ? 'ابدأ الآن' : 'Get Started'}
-                </Button>
-                <Button variant="outline" size="large" href="/contact" class_="w-full sm:w-auto px-8 py-4">
-                  {isRTL ? 'تعرف أكثر' : 'Learn More'}
-                </Button>
-              </div>
-            </div>
-            
-            <!-- Advanced Visual Element with Enhanced Padding -->
-            <div class={`${isRTL ? 'lg:order-1' : 'lg:order-2'} px-4 lg:px-0`}>
-              <div class="relative">
-                <!-- Main Feature Card with Better Internal Padding -->
-                <div class="bg-slate-800/90 backdrop-blur-xl border border-slate-700/50 rounded-3xl p-10 shadow-2xl shadow-slate-900/50">
-                  
-                  <!-- Header with Better Spacing -->
-                  <div class="flex items-center gap-5 mb-10">
-                    <div class="w-14 h-14 bg-gradient-to-br from-emerald-400 to-blue-500 rounded-xl flex items-center justify-center">
-                      <svg class="w-7 h-7 text-white" fill="currentColor" viewBox="0 0 24 24">
-                        <path d="M13 10V3L4 14h7v7l9-11h-7z"/>
-                      </svg>
-                    </div>
-                    <div>
-                      <h3 class="text-xl font-bold text-white">Platform Analytics</h3>
-                      <p class="text-sm text-slate-400">Real-time insights</p>
-                    </div>
-                  </div>
-                  
-                  <!-- Mock Chart with Better Spacing -->
-                  <div class="space-y-6">
-                    <div class="flex items-center justify-between">
-                      <span class="text-sm text-slate-400">Active Auctions</span>
-                      <span class="text-2xl font-bold text-emerald-400">247</span>
-                    </div>
-                    
-                    <div class="w-full bg-slate-700 rounded-full h-3">
-                      <div class="bg-gradient-to-r from-emerald-400 to-blue-500 h-3 rounded-full w-3/4 animate-pulse"></div>
-                    </div>
-                    
-                    <div class="grid grid-cols-2 gap-6 pt-6">
-                      <div class="text-center p-4">
-                        <div class="text-2xl font-bold text-blue-400">$2.5M</div>
-                        <div class="text-xs text-slate-500 mt-1">This Month</div>
-                      </div>
-                      <div class="text-center p-4">
-                        <div class="text-2xl font-bold text-purple-400">98%</div>
-                        <div class="text-xs text-slate-500 mt-1">Success Rate</div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-                
-                <!-- Floating Elements -->
-                <div class="absolute -top-4 -right-4 w-24 h-24 bg-gradient-to-br from-blue-500/30 to-purple-500/30 rounded-full blur-xl animate-pulse"></div>
-                <div class="absolute -bottom-4 -left-4 w-32 h-32 bg-gradient-to-br from-emerald-500/20 to-blue-500/20 rounded-full blur-xl"></div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-  
-      <!-- Mission Section with Enhanced Layout and Padding -->
-      <section class="relative z-10 bg-gradient-to-b from-slate-50 to-white dark:from-slate-800 dark:to-slate-900 px-6 sm:px-8 lg:px-12 py-24 observe">
-        <div class="max-w-6xl mx-auto">
-          
-          <!-- Section Header with Better Padding -->
-          <div class="text-center mb-20 px-4">
-            <h2 class="text-4xl sm:text-5xl font-bold text-slate-900 dark:text-white mb-8">
-              {getText('mission.title')}
-            </h2>
-            
-            <!-- Narrower content width with enhanced padding -->
-            <div class="max-w-3xl mx-auto space-y-8">
-              <p class="text-xl text-slate-600 dark:text-slate-300 leading-relaxed px-4">
-                {getText('mission.content')}
-              </p>
-              <div class="max-w-2xl mx-auto">
-                <p class="text-lg text-slate-500 dark:text-slate-400 italic px-4">
-                  {getText('mission.vision')}
-                </p>
-              </div>
-            </div>
-          </div>
-          
-          <!-- Values Grid with Enhanced Cards and Padding -->
-          <div class="grid grid-cols-1 md:grid-cols-3 gap-10 px-4">
-            {#each getText('mission.values') as value, index}
-              <div 
-                class="group relative"
-                in:fly={{ 
-                  y: prefersReducedMotion ? 0 : 40, 
-                  duration: 800, 
-                  delay: 200 + (index * 150), 
-                  easing: cubicOut 
-                }}
-              >
-                <!-- Card with Enhanced Internal Padding -->
-                <div class="bg-white/90 dark:bg-slate-800/90 backdrop-blur-lg border border-slate-200/60 dark:border-slate-700/40 rounded-3xl p-10 h-full transition-all duration-500 hover:bg-white dark:hover:bg-slate-800 hover:border-slate-300 dark:hover:border-slate-600 hover:transform hover:-translate-y-4 hover:shadow-2xl hover:shadow-slate-900/20">
-                  
-                  <!-- Icon with Better Spacing -->
-                  <div class="w-18 h-18 bg-gradient-to-br from-blue-500 to-purple-600 rounded-2xl flex items-center justify-center mb-8 group-hover:scale-110 group-hover:rotate-3 transition-all duration-300 shadow-lg shadow-blue-500/30">
-                    <svg class="w-9 h-9 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d={iconMap[value.icon]}/>
-                    </svg>
-                  </div>
-                  
-                  <!-- Content with Better Spacing -->
-                  <h3 class="text-2xl font-bold text-slate-900 dark:text-white mb-6">
-                    {value.title}
-                  </h3>
-                  
-                  <!-- Narrower description with padding -->
-                  <div class="max-w-sm">
-                    <p class="text-slate-600 dark:text-slate-300 leading-relaxed">
-                      {value.desc}
-                    </p>
-                  </div>
-                </div>
-                
-                <!-- Decorative gradient behind card -->
-                <div class="absolute inset-0 bg-gradient-to-br from-blue-500/5 to-purple-500/5 rounded-3xl transform rotate-1 -z-10 group-hover:rotate-2 transition-transform duration-300"></div>
-              </div>
-            {/each}
-          </div>
-        </div>
-      </section>
-  
-      <!-- CTA Section with FIXED Light Mode Colors and Enhanced Padding -->
-      <section class="relative z-10 bg-slate-900 dark:bg-slate-900 px-6 sm:px-8 lg:px-12 py-24 observe">
-        <div class="max-w-4xl mx-auto text-center px-4">
-          
-          <!-- Enhanced CTA Design with Better Padding -->
-          <div class="relative">
-            <!-- Main CTA Card with Enhanced Internal Padding -->
-            <div class="bg-slate-800/90 backdrop-blur-xl border border-slate-700/50 rounded-3xl p-12 sm:p-16 shadow-2xl shadow-slate-900/50">
-              <!-- FIXED: Always white text on dark background -->
-              <h2 class="text-4xl sm:text-5xl font-bold text-white mb-8">
-                {getText('cta.title')}
+            <!-- Left - 4 columns -->
+            <div 
+              in:fly={{ x: prefersReducedMotion ? 0 : -30, duration: 800, delay: 100 }}
+              class="lg:col-span-4"
+            >
+              <h2 class="text-4xl font-bold text-slate-900 dark:text-white mb-8">
+                {getText('story.title')}
               </h2>
               
-              <!-- Narrower CTA description with better padding -->
-              <div class="max-w-2xl mx-auto mb-10 px-4">
-                <p class="text-lg text-slate-300 leading-relaxed">
-                  {getText('cta.subtitle')}
-                </p>
-              </div>
-              
-              <!-- CTA Buttons with Enhanced Spacing -->
-              <div class="flex flex-col sm:flex-row gap-5 justify-center">
-                <Button variant="primary" size="large" href="/register" class_="w-full sm:w-auto px-10 py-4">
-                  {getText('cta.primaryBtn')}
-                </Button>
-                <Button variant="outline" size="large" href="/contact" class_="w-full sm:w-auto px-10 py-4">
-                  {getText('cta.secondaryBtn')}
-                </Button>
+              <!-- Clean decorative lines -->
+              <div class="space-y-2">
+                <div class="expand-line-story w-24 h-1 bg-gradient-to-r from-amber-500 to-orange-500 rounded-full motion-reduce:w-24"></div>
+                <div class="expand-line-story-2 w-16 h-0.5 bg-amber-300 motion-reduce:w-16"></div>
+                <div class="expand-line-story-3 w-8 h-0.5 bg-orange-300 motion-reduce:w-8"></div>
               </div>
             </div>
             
-            <!-- Decorative Elements -->
-            <div class="absolute -top-8 -left-8 w-40 h-40 bg-gradient-to-br from-blue-500/20 to-purple-500/20 rounded-full blur-2xl"></div>
-            <div class="absolute -bottom-8 -right-8 w-48 h-48 bg-gradient-to-br from-emerald-500/20 to-blue-500/20 rounded-full blur-2xl"></div>
+            <!-- Right - 8 columns -->
+            <div 
+              in:fly={{ x: prefersReducedMotion ? 0 : 30, duration: 800, delay: 200 }}
+              class="lg:col-span-8 space-y-6"
+            >
+              <p class="text-lg leading-relaxed text-slate-600 dark:text-slate-300">
+                {getText('story.content')}
+              </p>
+              
+              <blockquote class="border-l-4 border-amber-500 pl-6 py-2 my-8 relative">
+                <p class="text-xl italic text-slate-700 dark:text-slate-200">
+                  {getText('story.highlight')}
+                </p>
+              </blockquote>
+            </div>
           </div>
         </div>
-      </section>
-    {/if}
-  </div>
-  
-  <style>
-    /* Enhanced animations */
-    .observe {
+      </div>
+    </section>
+    
+    <!-- Values Section -->
+    <section class="relative py-24 lg:py-32">
+      <div class="relative max-w-7xl mx-auto px-6 sm:px-8 lg:px-12">
+        <div 
+          in:fade={{ duration: 800, delay: 100 }}
+          class="text-center mb-16"
+        >
+          <h2 class="text-4xl font-bold text-slate-900 dark:text-white mb-4">
+            {getText('values.title')}
+          </h2>
+          <!-- Clean underline -->
+          <div class="expand-line-title w-32 h-1 bg-gradient-to-r from-amber-500 to-orange-500 mx-auto motion-reduce:w-32"></div>
+        </div>
+        
+        <!-- Values Grid -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-8 lg:gap-12">
+          {#each getText('values.items') as value, i}
+            <div
+              in:fly={{ y: prefersReducedMotion ? 0 : 40, duration: 800, delay: 200 + i * 100 }}
+              class="group relative transform transition-all duration-500 hover:-translate-y-2"
+              style="margin-top: {i === 1 ? '3rem' : '0'}"
+            >
+              <div class="bg-white dark:bg-slate-800 rounded-2xl p-8 lg:p-10 shadow-lg shadow-stone-200/50 dark:shadow-slate-900/50 hover:shadow-xl transition-shadow duration-500 relative overflow-hidden border border-slate-100 dark:border-slate-700">
+                <!-- Clean geometric accent -->
+                <div class="absolute top-6 right-6 w-8 h-8 border-2 border-amber-200 dark:border-amber-800 rotate-45 opacity-20"></div>
+                
+                <!-- Number with line -->
+                <div class="relative mb-6">
+                  <div class="text-6xl font-bold text-amber-200 dark:text-amber-900/50 mb-2">
+                    0{i + 1}
+                  </div>
+                  <div class="expand-line-value w-12 h-1 bg-gradient-to-r from-amber-500 to-orange-500 motion-reduce:w-12" style="animation-delay: {i * 200 + 500}ms;"></div>
+                </div>
+                
+                <h3 class="text-2xl font-semibold text-slate-900 dark:text-white mb-4">
+                  {value.title}
+                </h3>
+                
+                <p class="text-base text-slate-600 dark:text-slate-300 leading-relaxed">
+                  {value.description}
+                </p>
+              </div>
+            </div>
+          {/each}
+        </div>
+      </div>
+    </section>
+    
+    <!-- Team Section -->
+    <section class="relative py-24 lg:py-32">
+      <div class="relative max-w-7xl mx-auto px-6 sm:px-8 lg:px-12">
+        <div 
+          in:fade={{ duration: 800, delay: 100 }}
+          class="text-center mb-16"
+        >
+          <h2 class="text-4xl font-bold text-slate-900 dark:text-white mb-4">
+            {getText('team.title')}
+          </h2>
+          <p class="text-lg text-slate-600 dark:text-slate-300 mb-4">
+            {getText('team.subtitle')}
+          </p>
+          <div class="expand-line-team w-24 h-0.5 bg-amber-500 mx-auto motion-reduce:w-24"></div>
+        </div>
+        
+        <!-- Team Grid -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-8 lg:gap-12">
+          {#each getText('team.members') as member, i}
+            <div
+              in:fly={{ y: prefersReducedMotion ? 0 : 30, duration: 800, delay: 200 + i * 100 }}
+              class="group text-center"
+            >
+              <!-- Clean Geometric Avatar -->
+              <div class="relative w-48 h-48 mx-auto mb-6">
+                <div class="absolute inset-0 bg-gradient-to-br from-amber-100 to-orange-100 dark:from-amber-800/30 dark:to-orange-800/30 rounded-full flex items-center justify-center transform transition-transform duration-500 group-hover:scale-110 border-2 border-amber-200 dark:border-amber-700">
+                  <!-- Simple geometric pattern -->
+                  <div class="relative">
+                    <span class="text-4xl font-bold text-slate-700 dark:text-slate-300">
+                      {member.name.charAt(0)}
+                    </span>
+                    <!-- Decorative lines -->
+                    <div class="absolute -top-4 -left-4 w-8 h-0.5 bg-amber-500 transform -rotate-45"></div>
+                    <div class="absolute -bottom-4 -right-4 w-8 h-0.5 bg-orange-500 transform -rotate-45"></div>
+                  </div>
+                </div>
+              </div>
+              
+              <h3 class="text-xl font-semibold text-slate-900 dark:text-white mb-1">
+                {member.name}
+              </h3>
+              <p class="text-base text-amber-600 dark:text-amber-400 mb-2">
+                {member.role}
+              </p>
+              <p class="text-sm text-slate-500 dark:text-slate-400 mb-3">
+                {member.bio}
+              </p>
+              
+              <!-- Simple underline -->
+              <div class="expand-line-member w-16 h-0.5 bg-amber-400 mx-auto motion-reduce:w-16" style="animation-delay: {i * 300 + 800}ms;"></div>
+            </div>
+          {/each}
+        </div>
+      </div>
+    </section>
+    
+    <!-- CTA Section -->
+    <section class="relative py-24 lg:py-32 overflow-hidden">
+      <div class="relative max-w-4xl mx-auto px-6 sm:px-8 lg:px-12 text-center">
+        <h2 
+          in:fade={{ duration: 800, delay: 100 }}
+          class="text-4xl sm:text-5xl font-bold text-slate-900 dark:text-white mb-6"
+        >
+          {getText('cta.title')}
+        </h2>
+        
+        <!-- Clean line under title -->
+        <div class="expand-line-cta w-32 h-1 bg-gradient-to-r from-amber-500 to-orange-500 mx-auto mb-6 motion-reduce:w-32"></div>
+        
+        <p 
+          in:fade={{ duration: 800, delay: 200 }}
+          class="text-lg text-slate-600 dark:text-slate-300 mb-10 max-w-2xl mx-auto"
+        >
+          {getText('cta.description')}
+        </p>
+        
+        <div 
+          in:fly={{ y: prefersReducedMotion ? 0 : 20, duration: 800, delay: 300 }}
+          class="flex flex-col sm:flex-row gap-4 justify-center"
+        >
+          <Button 
+            variant="primary" 
+            size="large" 
+            href="/register" 
+            class="bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white border-0 px-8 py-4 relative overflow-hidden group transition-all duration-300"
+          >
+            <span class="relative z-10">{getText('cta.primaryBtn')}</span>
+            <div class="absolute bottom-0 left-0 w-full h-0.5 bg-white/30 transform scale-x-0 group-hover:scale-x-100 transition-transform duration-300"></div>
+          </Button>
+          
+          <Button 
+            variant="outline" 
+            size="large" 
+            href="/contact" 
+            class="border-2 border-amber-500 text-amber-600 hover:bg-amber-50 dark:border-amber-400 dark:text-amber-400 dark:hover:bg-amber-900/20 px-8 py-4 relative overflow-hidden group transition-all duration-300"
+          >
+            <span class="relative z-10">{getText('cta.secondaryBtn')}</span>
+            <div class="absolute bottom-2 left-4 right-4 h-0.5 bg-amber-500 transform scale-x-0 group-hover:scale-x-100 transition-transform duration-300"></div>
+          </Button>
+        </div>
+      </div>
+    </section>
+  {/if}
+</div>
+
+<style>
+  /* Custom Keyframes for Line Animations */
+  @keyframes drawLine {
+    from {
+      stroke-dasharray: 1000;
+      stroke-dashoffset: 1000;
       opacity: 0;
-      transform: translateY(40px);
-      transition: all 1s cubic-bezier(0.16, 1, 0.3, 1);
     }
-    
-    .observe.animate-in {
+    to {
+      stroke-dasharray: 1000;
+      stroke-dashoffset: 0;
       opacity: 1;
-      transform: translateY(0);
     }
-    
-    /* RTL-specific enhancements */
-    .rtl {
-      direction: rtl;
+  }
+  
+  @keyframes expandWidth {
+    from {
+      width: 0;
     }
-    
-    .rtl .text-left {
-      text-align: right;
+    to {
+      width: 100%;
     }
-    
-    .rtl h1, .rtl h2, .rtl h3 {
-      font-family: 'Cairo', 'Segoe UI', system-ui, sans-serif;
-      line-height: 1.4;
+  }
+  
+  @keyframes fadeInText {
+    from {
+      opacity: 0;
+      transform: scale(0.8);
     }
-    
-    .rtl p {
-      font-family: 'Cairo', 'Segoe UI', system-ui, sans-serif;
-      line-height: 1.8;
+    to {
+      opacity: 1;
+      transform: scale(1);
     }
-    
-    /* Enhanced hover effects */
-    .group:hover .group-hover\:scale-110 {
-      transform: scale(1.1);
-    }
-    
-    .group:hover .group-hover\:rotate-3 {
-      transform: rotate(3deg) scale(1.1);
-    }
-    
-    /* Accessibility improvements */
-    @media (prefers-reduced-motion: reduce) {
-      *, *::before, *::after {
-        animation-duration: 0.01ms !important;
-        animation-iteration-count: 1 !important;
-        transition-duration: 0.01ms !important;
-        scroll-behavior: auto !important;
-      }
-      
-      .observe {
-        opacity: 1 !important;
-        transform: none !important;
-      }
-    }
-    
-    /* High contrast support */
-    @media (prefers-contrast: high) {
-      .bg-white\/90, .bg-slate-800\/90 {
-        background-opacity: 1 !important;
-      }
-      
-      .border-slate-200\/60, .border-slate-700\/40 {
-        border-width: 2px !important;
-        border-opacity: 1 !important;
-      }
-    }
-    
-    /* Enhanced typography */
+  }
+  
+  /* Line drawing classes */
+  .draw-line-hero {
+    stroke-dasharray: 1000;
+    stroke-dashoffset: 1000;
+    opacity: 0;
+    animation: drawLine 2s ease-out forwards;
+  }
+  
+  .draw-text {
+    opacity: 0;
+    animation: fadeInText 1s ease-out forwards;
+  }
+  
+  /* Width expansion classes */
+  .expand-line-stat {
+    width: 0;
+    animation: expandWidth 0.8s ease-out forwards;
+  }
+  
+  .expand-line-story {
+    width: 0;
+    animation: expandWidth 1s ease-out 0.2s forwards;
+  }
+  
+  .expand-line-story-2 {
+    width: 0;
+    animation: expandWidth 0.8s ease-out 0.5s forwards;
+  }
+  
+  .expand-line-story-3 {
+    width: 0;
+    animation: expandWidth 0.6s ease-out 0.8s forwards;
+  }
+  
+  .expand-line-title {
+    width: 0;
+    animation: expandWidth 1s ease-out 0.3s forwards;
+  }
+  
+  .expand-line-value {
+    width: 0;
+    animation: expandWidth 0.6s ease-out forwards;
+  }
+  
+  .expand-line-team {
+    width: 0;
+    animation: expandWidth 0.8s ease-out 0.3s forwards;
+  }
+  
+  .expand-line-member {
+    width: 0;
+    animation: expandWidth 0.5s ease-out forwards;
+  }
+  
+  .expand-line-cta {
+    width: 0;
+    animation: expandWidth 0.8s ease-out 0.3s forwards;
+  }
+  
+  /* Ensure animations respect reduced motion */
+  @media (prefers-reduced-motion: reduce) {
     * {
-      -webkit-font-smoothing: antialiased;
-      -moz-osx-font-smoothing: grayscale;
-      text-rendering: optimizeLegibility;
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
     }
     
-    /* Focus management */
-    :global(:focus-visible) {
-      outline: 2px solid #3b82f6;
-      outline-offset: 2px;
-      border-radius: 4px;
+    .draw-line-hero {
+      stroke-dasharray: none;
+      stroke-dashoffset: 0;
+      opacity: 1;
     }
-  </style>
+    
+    .draw-text {
+     opacity: 1;
+     transform: scale(1);
+   }
+   
+   .expand-line-stat,
+   .expand-line-story,
+   .expand-line-story-2,
+   .expand-line-story-3,
+   .expand-line-title,
+   .expand-line-value,
+   .expand-line-team,
+   .expand-line-member,
+   .expand-line-cta {
+     width: 100% !important;
+   }
+ }
+ 
+ /* RTL support */
+ [dir="rtl"] .expand-line-stat,
+ [dir="rtl"] .expand-line-story,
+ [dir="rtl"] .expand-line-story-2,
+ [dir="rtl"] .expand-line-story-3,
+ [dir="rtl"] .expand-line-title,
+ [dir="rtl"] .expand-line-value,
+ [dir="rtl"] .expand-line-team,
+ [dir="rtl"] .expand-line-member,
+ [dir="rtl"] .expand-line-cta {
+   transform-origin: right;
+ }
+ 
+ /* Enhanced focus states */
+ :global(:focus-visible) {
+   outline: 2px solid #f59e0b;
+   outline-offset: 2px;
+   border-radius: 0.25rem;
+ }
+ 
+ :global(.dark :focus-visible) {
+   outline-color: #fbbf24;
+ }
+ 
+ /* Subtle hover effects for interactive elements */
+ .group:hover .draw-line-hero {
+   stroke-width: 2.5;
+   transition: stroke-width 0.3s ease;
+ }
+ 
+ /* Clean card styling */
+ .bg-white {
+   background-color: rgba(255, 255, 255, 0.95);
+ }
+ 
+ .dark .bg-white {
+   background-color: rgba(30, 41, 59, 0.95);
+ }
+</style>

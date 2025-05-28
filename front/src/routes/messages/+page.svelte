@@ -199,7 +199,7 @@
   <title>{$t('messages.title')} | {$t('app.name')}</title>
 </svelte:head>
 
-<div class="min-h-screen bg-gray-50 dark:bg-gray-900">
+<div class="min-h-screen">
   <div class="max-w-7xl mx-auto">
     <!-- Header -->
     <div class="px-4 sm:px-6 lg:px-8 py-6 sm:py-8">
@@ -223,8 +223,8 @@
         <Button
           href="/messages/compose"
           variant="primary"
-          size="sm"
-          class="hidden sm:inline-flex"
+          size="default"
+          class="hidden lg:inline-flex"
         >
           <svg class="w-4 h-4 {isRTL ? 'ml-2' : 'mr-2'}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />

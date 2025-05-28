@@ -445,7 +445,6 @@ class Auction(BaseModel):
         ('public', _('عام')),
         ('private', _('خاص')),
         ('sealed', _('مغلق')),
-        ('dutch', _('هولندي')),
     ]
     
     STATUS_CHOICES = [

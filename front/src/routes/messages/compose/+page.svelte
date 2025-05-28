@@ -225,7 +225,7 @@
   <title>{isReply ? $t('messages.reply') : $t('messages.compose')} | {$t('app.name')}</title>
 </svelte:head>
 
-<div class="min-h-screen bg-gray-50 dark:bg-gray-900">
+<div class="min-h-screen ">
   <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8">
     <div class="mb-6">
       <Button

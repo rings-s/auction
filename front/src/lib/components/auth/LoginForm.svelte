@@ -6,7 +6,7 @@
     import { onMount } from 'svelte';
     
     export let loading = false;
-    export let redirectTo = '/';
+    export const redirectTo = '/';
     export let initialEmail = '';
     
     const dispatch = createEventDispatcher();
@@ -65,7 +65,7 @@
     }
   </script>
   
-  <form on:submit|preventDefault={handleSubmit} class="space-y-6" on:keydown={handleKeydown}>
+  <form on:submit|preventDefault={handleSubmit} class="space-y-6">
     <!-- Email Field -->
     <div class="space-y-1">
       <label for="email" class="block text-sm font-medium text-gray-700 dark:text-gray-300">

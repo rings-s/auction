@@ -116,7 +116,7 @@
   <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
     <div class="flex justify-between h-16">
       <!-- Logo area -->
-      <div class="flex">
+      <div class="flex lg:gap-x-12">
         <div class="flex-shrink-0 flex items-center">
           <a 
             href="/" 
@@ -129,8 +129,8 @@
           </a>
         </div>
         
-        <!-- Desktop links -->
-        <div class="hidden lg:ml-8 lg:flex" class:lg:space-x-10={document.documentElement.dir !== 'rtl'} class:lg:space-x-reverse={document.documentElement.dir === 'rtl'} class:lg:mr-8={document.documentElement.dir === 'rtl'}>
+        <!-- Desktop links with fixed spacing -->
+        <div class="hidden lg:flex lg:space-x-8">
           <slot name="nav-links">
             <a 
               href="/" 
@@ -303,7 +303,7 @@
           >
             <span class={`mr-3 text-lg ${$page.url.pathname.startsWith('/properties') ? 'text-secondary-500' : 'text-gray-400'}`}>
               <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                <path d="M4 4a2 2 0 012-2h8a2 2 0 012 2v12a1 1 0 01-1 1H5a1 1 0 01-1-1V4z" />
+                <path d="M4 4a2 2 0 012-2h7a2 2 0 012 2v4a2 2 0 01-2 2H9l-3 3v-3H4a2 2 0 01-2-2V4z" />
               </svg>
             </span>
             {$t('nav.properties')}

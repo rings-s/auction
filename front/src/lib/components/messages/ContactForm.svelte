@@ -1,4 +1,4 @@
-<!-- src/lib/components/messages/ContactForm.svelte -->
+<!-- ContactForm.svelte - Updated submission logic -->
 <script>
   import { createEventDispatcher, onMount, tick } from 'svelte';
   import { fade, slide, scale, fly } from 'svelte/transition';
@@ -9,7 +9,7 @@
   import Button from '$lib/components/ui/Button.svelte';
   
   export let property = null;
-  export const recipient = ''; // User ID of the recipient, if applicable
+  export let recipient = ''; // User ID of the recipient, if applicable
   export let initialSubject = '';
   export let initialMessage = '';
   export let compact = false;
@@ -30,36 +30,31 @@
   let fieldErrors = {};
   let touched = {};
   let mounted = false;
-  let recipientDisplayName = ''; // For displaying recipient's name
+  let recipientDisplayName = '';
 
   // Reactive statement to update recipientDisplayName when 'recipient' prop changes
-  // or when the loggedInUserStore changes (in case recipient IS the logged-in user)
   $: if (recipient && $loggedInUserStore) {
     if (recipient === $loggedInUserStore.id) {
-      recipientDisplayName = $loggedInUserStore.username || $loggedInUserStore.email; // Fallback to email
+      recipientDisplayName = $loggedInUserStore.username || $loggedInUserStore.email;
     } else {
       // Fetch recipient's name if it's a different user
-      loading = true; // Indicate loading while fetching name
+      loading = true;
       getUserById(recipient).then(userProfile => {
         if (userProfile && userProfile.username) {
           recipientDisplayName = userProfile.username;
         } else if (userProfile && userProfile.email) {
-          recipientDisplayName = userProfile.email; // Fallback to email if username not present
+          recipientDisplayName = userProfile.email;
         } else {
-          recipientDisplayName = $t('messages.unknownUser'); // Fallback for unknown user
+          recipientDisplayName = $t('messages.unknownUser');
         }
         loading = false;
       }).catch(err => {
         console.error('Error fetching recipient details:', err);
-        recipientDisplayName = $t('messages.errorFetchingUser'); // Fallback on error
+        recipientDisplayName = $t('messages.errorFetchingUser');
         loading = false;
       });
     }
   } else if (recipient) {
-    // LoggedInUserStore not yet available, or recipient is set but no logged-in user context
-    // This might happen on initial load if recipient is passed before user store hydration
-    // We'll re-trigger fetching when loggedInUserStore becomes available via the reactive block
-    // Or, if no login is required to send to a recipient ID, fetch directly.
     loading = true;
     getUserById(recipient).then(userProfile => {
       if (userProfile && userProfile.username) {
@@ -75,9 +70,8 @@
       recipientDisplayName = $t('messages.errorFetchingUser');
       loading = false;
     });
-
   } else {
-    recipientDisplayName = ''; // Clear if no recipient ID
+    recipientDisplayName = '';
   }
 
   // Form validation
@@ -156,13 +150,13 @@
   ];
   
   // Handle form submission with enhanced UX
-  async function handleSubmit() {
+  async function handleSubmit() {    
     if (!canSubmit) return;
     
+    loading = true;
+    error = null;
+    
     try {
-      loading = true;
-      error = null;
-      
       const messageData = {
         subject: formData.subject.trim(),
         body: formData.body.trim(),
@@ -170,8 +164,14 @@
       };
       
       let response;
-      if (property) {
+      
+      // FIXED: Always use contactPropertyOwner when property is provided
+      if (property && property.id) {
+        console.log('Sending property inquiry to property ID:', property.id);
         response = await contactPropertyOwner(property.id, messageData);
+      } else if (recipient) {
+        // For direct messaging (not implemented yet)
+        throw new Error($t('messages.directMessagingNotAvailable'));
       } else {
         throw new Error($t('messages.directMessagingNotAvailable'));
       }
@@ -186,7 +186,7 @@
       // Reset form after success
       setTimeout(() => {
         formData = {
-          subject: '',
+          subject: property ? `${$t('messages.inquiryAbout')} ${property.title}` : '',
           body: '',
           priority: 'normal'
         };
@@ -200,7 +200,28 @@
       
     } catch (err) {
       console.error('Error sending message:', err);
-      error = err.message || $t('messages.sendError');
+      
+      // Enhanced error handling
+      if (err.response && err.response.data) {
+        // Handle API validation errors
+        const apiErrors = err.response.data;
+        if (typeof apiErrors === 'object') {
+          const errorMessages = [];
+          for (const [field, messages] of Object.entries(apiErrors)) {
+            if (Array.isArray(messages)) {
+              errorMessages.push(...messages);
+            } else {
+              errorMessages.push(messages);
+            }
+          }
+          error = errorMessages.join(', ');
+        } else {
+          error = apiErrors;
+        }
+      } else {
+        error = err.message || $t('messages.sendError');
+      }
+      
       dispatch('error', { error: err.message });
     } finally {
       loading = false;
@@ -239,14 +260,15 @@
   });
 </script>
 
+<!-- Rest of the template remains the same -->
 <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-xl border border-gray-200 dark:border-gray-700 overflow-hidden backdrop-blur-sm">
   <!-- Enhanced Header with Property Context -->
-  <div class="bg-gradient-to-r from-primary-50 via-white to-secondary-50 dark:from-primary-900/10 dark:via-gray-800 dark:to-secondary-900/10 px-6 py-5">
+  <div class="bg-gradient-to-r from-blue-50 via-white to-green-50 dark:from-blue-900/10 dark:via-gray-800 dark:to-green-900/10 px-6 py-5">
     <div class="flex items-start justify-between">
       <div class="flex-1">
         <div class="flex items-center gap-3 mb-2">
-          <div class="p-2 bg-primary-100 dark:bg-primary-900/30 rounded-xl">
-            <svg class="w-5 h-5 text-primary-600 dark:text-primary-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <div class="p-2 bg-blue-100 dark:bg-blue-900/30 rounded-xl">
+            <svg class="w-5 h-5 text-blue-600 dark:text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
             </svg>
           </div>
@@ -298,7 +320,7 @@
           aria-label={showFullForm ? $t('common.collapse') : $t('common.expand')}
         >
           <svg 
-            class="w-5 h-5 text-gray-600 dark:text-gray-400 transition-all duration-300 group-hover:text-primary-600 dark:group-hover:text-primary-400 {showFullForm ? 'rotate-180' : ''}" 
+            class="w-5 h-5 text-gray-600 dark:text-gray-400 transition-all duration-300 group-hover:text-blue-600 dark:group-hover:text-blue-400 {showFullForm ? 'rotate-180' : ''}" 
             fill="none" 
             stroke="currentColor" 
             viewBox="0 0 24 24"
@@ -316,8 +338,8 @@
       {#if !$loggedInUserStore && !recipient} 
         <!-- Enhanced Login Required State -->
         <div class="text-center py-12" in:fade={{ duration: 300 }}>
-          <div class="mx-auto w-20 h-20 bg-primary-100 dark:bg-primary-900/30 rounded-2xl flex items-center justify-center mb-6">
-            <svg class="h-10 w-10 text-primary-600 dark:text-primary-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <div class="mx-auto w-20 h-20 bg-blue-100 dark:bg-blue-900/30 rounded-2xl flex items-center justify-center mb-6">
+            <svg class="h-10 w-10 text-blue-600 dark:text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
             </svg>
           </div>
@@ -411,7 +433,7 @@
           <div class="bg-gradient-to-r from-gray-50 to-blue-50 dark:from-gray-800 dark:to-blue-900/20 rounded-2xl p-6 border border-gray-200 dark:border-gray-700">
             <div class="flex items-center">
               <div class="relative">
-                <div class="w-14 h-14 bg-gradient-to-br from-primary-500 to-secondary-500 rounded-2xl flex items-center justify-center text-white font-bold text-lg shadow-lg">
+                <div class="w-14 h-14 bg-gradient-to-br from-blue-500 to-green-500 rounded-2xl flex items-center justify-center text-white font-bold text-lg shadow-lg">
                   {$loggedInUserStore.first_name?.charAt(0)}{$loggedInUserStore.last_name?.charAt(0)}
                 </div>
                 <div class="absolute -bottom-1 -right-1 w-5 h-5 bg-green-400 rounded-full border-2 border-white dark:border-gray-800"></div>
@@ -427,7 +449,7 @@
                   {$loggedInUserStore.email}
                 </p>
               </div>
-              <div class="text-xs bg-primary-100 dark:bg-primary-900/30 text-primary-700 dark:text-primary-300 px-3 py-1 rounded-full font-medium">
+              <div class="text-xs bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 px-3 py-1 rounded-full font-medium">
                 {$t('messages.sender')}
               </div>
             </div>
@@ -435,8 +457,8 @@
           
           <!-- Display Recipient Name if available -->
           {#if recipientDisplayName}
-            <div class="mb-4 p-3 bg-primary-50 dark:bg-primary-900/20 border border-primary-200 dark:border-primary-800 rounded-lg">
-              <p class="text-sm font-medium text-primary-700 dark:text-primary-300">
+            <div class="mb-4 p-3 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg">
+              <p class="text-sm font-medium text-blue-700 dark:text-blue-300">
                 {$t('messages.to', { values: { name: recipientDisplayName } })}
               </p>
             </div>
@@ -466,7 +488,7 @@
                     ? 'border-green-300 bg-green-50/30 dark:border-green-600 dark:bg-green-900/10 focus:border-green-400 focus:ring-green-200'
                     : !validationState.subject.isValid && touched.subject
                     ? 'border-red-300 bg-red-50/30 dark:border-red-600 dark:bg-red-900/10 focus:border-red-400 focus:ring-red-200'
-                    : 'border-gray-300 dark:border-gray-600 focus:border-primary-400 focus:ring-primary-200'
+                    : 'border-gray-300 dark:border-gray-600 focus:border-blue-400 focus:ring-blue-200'
                   }
                   dark:bg-gray-700 dark:text-white placeholder-gray-400 focus:ring-4 focus:ring-opacity-20"
                 required
@@ -552,7 +574,7 @@
                     ? 'border-green-300 bg-green-50/30 dark:border-green-600 dark:bg-green-900/10 focus:border-green-400 focus:ring-green-200'
                     : !validationState.body.isValid && touched.body
                     ? 'border-red-300 bg-red-50/30 dark:border-red-600 dark:bg-red-900/10 focus:border-red-400 focus:ring-red-200'
-                    : 'border-gray-300 dark:border-gray-600 focus:border-primary-400 focus:ring-primary-200'
+                    : 'border-gray-300 dark:border-gray-600 focus:border-blue-400 focus:ring-blue-200'
                   }
                   dark:bg-gray-700 dark:text-white placeholder-gray-400 focus:ring-4 focus:ring-opacity-20"
                 required
@@ -578,7 +600,7 @@
           <!-- Enhanced Submit Section -->
           <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 pt-6 border-t-2 border-gray-100 dark:border-gray-700">
             <div class="text-sm text-gray-600 dark:text-gray-400 flex items-start gap-2">
-              <svg class="w-4 h-4 text-primary-500 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg class="w-4 h-4 text-blue-500 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
               </svg>
               <span>{$t('messages.messageDisclaimer')}</span>
@@ -613,6 +635,7 @@
   {/if}
 </div>
 
+<!-- Rest of the styles remain the same -->
 <style>
   /* Enhanced animations */
   @keyframes shake {
