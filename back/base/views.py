@@ -340,13 +340,15 @@ class PropertyOwnerContactView(generics.CreateAPIView):
         data = request.data.copy()
         data['related_property'] = property_obj.id
         data['subject'] = data.get('subject', f"Inquiry about {property_obj.title}")
+        # ADD THIS LINE - provide the recipient_email that the serializer expects
+        data['recipient_email'] = property_obj.owner.email
         
         serializer = self.get_serializer(data=data)
         serializer.is_valid(raise_exception=True)
-        serializer.save(sender=request.user, recipient=property_obj.owner)
+        # Remove the manual recipient setting since the serializer handles it now
+        serializer.save(sender=request.user)
         
         return Response(serializer.data, status=status.HTTP_201_CREATED)
-
 
 class MessageStatsView(APIView):
     """API endpoint to get message statistics for user"""

@@ -2,7 +2,7 @@
 import { API_BASE_URL } from '$lib/constants';
 import { refreshToken } from './auth';
 
-const MESSAGES_URL = `${API_BASE_URL}/messages`;
+const MESSAGES_URL = `${API_BASE_URL}/messages/`;
 
 /**
  * Enhanced API request handler with better error handling
@@ -123,7 +123,7 @@ export async function getMessages(filters = {}) {
     }
   });
   
-  const url = `${MESSAGES_URL}/?${queryParams.toString()}`;
+  const url = `${MESSAGES_URL}?${queryParams.toString()}`;
   return await apiRequest(url, { method: 'GET' });
 }
 
@@ -134,7 +134,7 @@ export async function getMessage(id, includeThread = false) {
   if (!id) throw new Error('Message ID is required');
   
   const queryParams = includeThread ? '?include_thread=true' : '';
-  return await apiRequest(`${MESSAGES_URL}/${id}/${queryParams}`, { method: 'GET' });
+  return await apiRequest(`${MESSAGES_URL}${id}/${queryParams}`, { method: 'GET' });
 }
 
 /**
@@ -156,7 +156,7 @@ export async function replyToMessage(messageId, replyData) {
   if (!messageId) throw new Error('Message ID is required');
   if (!replyData) throw new Error('Reply data is required');
   
-  return await apiRequest(`${MESSAGES_URL}/${messageId}/reply/`, {
+  return await apiRequest(`${MESSAGES_URL}${messageId}/reply/`, {
     method: 'POST',
     body: JSON.stringify({
       ...replyData,
@@ -172,7 +172,7 @@ export async function updateMessageStatus(id, status) {
   if (!id) throw new Error('Message ID is required');
   if (!status) throw new Error('Status is required');
   
-  return await apiRequest(`${MESSAGES_URL}/${id}/`, {
+  return await apiRequest(`${MESSAGES_URL}${id}/`, {
     method: 'PATCH',
     body: JSON.stringify({ status })
   });
@@ -198,14 +198,14 @@ export async function archiveMessage(id) {
 export async function getMessageThread(threadId) {
   if (!threadId) throw new Error('Thread ID is required');
   
-  return await apiRequest(`${MESSAGES_URL}/thread/${threadId}/`, { method: 'GET' });
+  return await apiRequest(`${MESSAGES_URL}thread/${threadId}/`, { method: 'GET' });
 }
 
 /**
  * Get message statistics
  */
 export async function getMessageStats() {
-  return await apiRequest(`${MESSAGES_URL}/stats/`, { method: 'GET' });
+  return await apiRequest(`${MESSAGES_URL}stats/`, { method: 'GET' });
 }
 
 /**
@@ -227,7 +227,7 @@ export async function contactPropertyOwner(propertyId, messageData) {
 export async function deleteMessage(id) {
   if (!id) throw new Error('Message ID is required');
   
-  await apiRequest(`${MESSAGES_URL}/${id}/`, { method: 'DELETE' });
+  await apiRequest(`${MESSAGES_URL}${id}/`, { method: 'DELETE' });
   return true;
 }
 

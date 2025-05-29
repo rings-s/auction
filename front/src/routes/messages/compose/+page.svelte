@@ -186,15 +186,9 @@
           parent_message: originalMessage.id // It's good practice to ensure this is the correct field name expected by API
         });
       } else {
-        // This part of your logic implies that sending a new message (not a reply)
-        // is not fully implemented for recipient handling yet.
-        // For this conversion, I'll keep your existing logic.
-        // If you were to implement it, you'd use formData.recipient_email here.
-        // messagePayload.recipient_email = formData.recipient_email;
-        // response = await sendMessage(messagePayload);
-        toast.error($t('messages.directMessagingNotImplemented'));
-        sending = false; // Reset sending state as we are returning early
-        return;
+        // Enable direct messaging
+        messagePayload.recipient_email = formData.recipient_email;
+        response = await sendMessage(messagePayload);
       }
 
       toast.success($t('messages.messageSentSuccess'));

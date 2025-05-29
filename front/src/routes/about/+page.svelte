@@ -69,7 +69,6 @@
         stats: [
           { number: "50+", label: "ألف عقار" },
           { number: "98%", label: "معدل النجاح" },
-          { number: "15", label: "دولة" }
         ]
       },
       story: {
@@ -351,96 +350,143 @@
       </div>
     </section>
     
-    <!-- Story Section -->
-    <section class="relative py-24 lg:py-32">
-      <div class="relative">
-        <div class="max-w-7xl mx-auto px-6 sm:px-8 lg:px-12 py-24">
-          <div class="grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-16 items-start">
-            
-            <!-- Left - 4 columns -->
-            <div 
-              in:fly={{ x: prefersReducedMotion ? 0 : -30, duration: 800, delay: 100 }}
-              class="lg:col-span-4"
-            >
-              <h2 class="text-4xl font-bold text-slate-900 dark:text-white mb-8">
-                {getText('story.title')}
-              </h2>
+    <!-- Enhanced Story Section with Timeline -->
+    <section class="relative py-24 lg:py-32 overflow-hidden">
+      <!-- Background decorative elements -->
+      <div class="absolute inset-0 pointer-events-none overflow-hidden">
+        <div class="absolute top-20 left-0 w-64 h-64 bg-amber-100 dark:bg-amber-900/20 rounded-full blur-3xl opacity-30 transform -translate-x-1/2"></div>
+        <div class="absolute bottom-20 right-0 w-80 h-80 bg-orange-100 dark:bg-orange-900/20 rounded-full blur-3xl opacity-30 transform translate-x-1/2"></div>
+        <svg class="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-full h-full max-w-7xl" viewBox="0 0 1200 800" fill="none" xmlns="http://www.w3.org/2000/svg" style="opacity: 0.05">
+          <path d="M600 100C600 100 300 300 300 400C300 500 600 700 600 700" stroke="currentColor" stroke-width="2" stroke-dasharray="8 8"/>
+          <path d="M600 100C600 100 900 300 900 400C900 500 600 700 600 700" stroke="currentColor" stroke-width="2" stroke-dasharray="8 8"/>
+        </svg>
+      </div>
+      
+      <div class="relative max-w-7xl mx-auto px-6 sm:px-8 lg:px-12">
+        <!-- Section Header -->
+        <div class="text-center mb-16">
+          <h2 
+            in:fly={{ y: prefersReducedMotion ? 0 : -20, duration: 800, delay: 100 }}
+            class="text-4xl md:text-5xl font-bold text-slate-900 dark:text-white mb-4 tracking-tight"
+          >
+            {getText('story.title')}
+          </h2>
+          <div class="expand-line-title w-32 h-1 bg-gradient-to-r from-amber-500 to-orange-500 mx-auto rounded-full motion-reduce:w-32 mb-6"></div>
+        </div>
+        
+        <!-- Story Content with Timeline -->
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-x-12 gap-y-16 items-start">
+          <!-- Left - Visual Timeline -->
+          <div 
+            in:fly={{ x: prefersReducedMotion ? 0 : -30, duration: 800, delay: 200 }}
+            class="lg:col-span-5 relative"
+          >
+            <div class="sticky top-32 space-y-12">
+              <!-- Timeline visual -->
+              <div class="relative pl-8 border-l-2 border-amber-500 dark:border-amber-400 py-4">
+                <div class="absolute left-0 top-0 w-4 h-4 rounded-full bg-amber-500 dark:bg-amber-400 transform -translate-x-1/2"></div>
+                <div class="absolute left-0 bottom-0 w-4 h-4 rounded-full bg-orange-500 dark:bg-orange-400 transform -translate-x-1/2"></div>
+                
+                <!-- Timeline content -->
+                <div class="space-y-8">
+                  <div class="relative">
+                    <div class="absolute left-0 top-3 w-3 h-3 rounded-full bg-amber-400 dark:bg-amber-300 transform -translate-x-[calc(0.5rem+1px)]"></div>
+                    <h3 class="text-xl font-bold text-amber-600 dark:text-amber-300 mb-2">2019</h3>
+                    <p class="text-slate-600 dark:text-slate-300">Founded with a vision to transform real estate transactions</p>
+                  </div>
+                  
+                  <div class="relative">
+                    <div class="absolute left-0 top-3 w-3 h-3 rounded-full bg-amber-400 dark:bg-amber-300 transform -translate-x-[calc(0.5rem+1px)]"></div>
+                    <h3 class="text-xl font-bold text-amber-600 dark:text-amber-300 mb-2">2021</h3>
+                    <p class="text-slate-600 dark:text-slate-300">Expanded to international markets with our innovative platform</p>
+                  </div>
+                  
+                  <div class="relative">
+                    <div class="absolute left-0 top-3 w-3 h-3 rounded-full bg-amber-400 dark:bg-amber-300 transform -translate-x-[calc(0.5rem+1px)]"></div>
+                    <h3 class="text-xl font-bold text-amber-600 dark:text-amber-300 mb-2">Today</h3>
+                    <p class="text-slate-600 dark:text-slate-300">Leading the industry with thousands of successful transactions</p>
+                  </div>
+                </div>
+              </div>
               
-              <!-- Clean decorative lines -->
-              <div class="space-y-2">
-                <div class="expand-line-story w-24 h-1 bg-gradient-to-r from-amber-500 to-orange-500 rounded-full motion-reduce:w-24"></div>
-                <div class="expand-line-story-2 w-16 h-0.5 bg-amber-300 motion-reduce:w-16"></div>
-                <div class="expand-line-story-3 w-8 h-0.5 bg-orange-300 motion-reduce:w-8"></div>
+              <!-- Stats cards -->
+              <div class="grid grid-cols-2 gap-4">
+                <div class="bg-white dark:bg-slate-800 rounded-xl shadow-lg p-6 transform transition-all duration-300 hover:-translate-y-1 hover:shadow-xl border border-slate-100 dark:border-slate-700">
+                  <div class="text-3xl font-bold text-amber-500 dark:text-amber-400 mb-1">50K+</div>
+                  <div class="text-sm text-slate-600 dark:text-slate-300">{getText('hero.stats')[0].label}</div>
+                </div>
+                
+                <div class="bg-white dark:bg-slate-800 rounded-xl shadow-lg p-6 transform transition-all duration-300 hover:-translate-y-1 hover:shadow-xl border border-slate-100 dark:border-slate-700">
+                  <div class="text-3xl font-bold text-orange-500 dark:text-orange-400 mb-1">98%</div>
+                  <div class="text-sm text-slate-600 dark:text-slate-300">{getText('hero.stats')[1].label}</div>
+                </div>
               </div>
             </div>
-            
-            <!-- Right - 8 columns -->
-            <div 
-              in:fly={{ x: prefersReducedMotion ? 0 : 30, duration: 800, delay: 200 }}
-              class="lg:col-span-8 space-y-6"
-            >
-              <p class="text-lg leading-relaxed text-slate-600 dark:text-slate-300">
+          </div>
+          
+          <!-- Right - Story Content -->
+          <div 
+            in:fly={{ x: prefersReducedMotion ? 0 : 30, duration: 800, delay: 300 }}
+            class="lg:col-span-7 space-y-8"
+          >
+            <!-- Main story content -->
+            <div class="bg-white dark:bg-slate-800/90 rounded-2xl shadow-xl p-8 lg:p-10 border border-slate-100 dark:border-slate-700">
+              <p class="text-lg leading-relaxed text-slate-700 dark:text-slate-300 mb-8">
                 {getText('story.content')}
               </p>
               
-              <blockquote class="border-l-4 border-amber-500 pl-6 py-2 my-8 relative">
-                <p class="text-xl italic text-slate-700 dark:text-slate-200">
-                  {getText('story.highlight')}
+              <!-- Highlight quote -->
+              <div class="relative">
+                <svg class="absolute -top-6 -left-6 h-12 w-12 text-amber-200 dark:text-amber-700 opacity-50" fill="currentColor" viewBox="0 0 24 24">
+                  <path d="M14.017 21v-7.391c0-5.704 3.731-9.57 8.983-10.609l.995 2.151c-2.432.917-3.995 3.638-3.995 5.849h4v10h-9.983zm-14.017 0v-7.391c0-5.704 3.748-9.57 9-10.609l.996 2.151c-2.433.917-3.996 3.638-3.996 5.849h3.983v10h-9.983z" />
+                </svg>
+                <blockquote class="bg-gradient-to-r from-amber-50 to-orange-50 dark:from-amber-900/20 dark:to-orange-900/20 rounded-xl p-6 border-l-4 border-amber-500 dark:border-amber-400">
+                  <p class="text-xl italic text-slate-800 dark:text-slate-200 leading-relaxed">
+                    {getText('story.highlight')}
+                  </p>
+                </blockquote>
+              </div>
+            </div>
+            
+            <!-- Mission & Vision cards -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <!-- Mission card -->
+              <div class="bg-white dark:bg-slate-800/90 rounded-xl shadow-lg p-6 border border-slate-100 dark:border-slate-700 transform transition-all duration-300 hover:-translate-y-1 hover:shadow-xl">
+                <div class="flex items-center mb-4">
+                  <div class="p-2 bg-amber-100 dark:bg-amber-900/30 rounded-lg mr-4">
+                    <svg class="w-6 h-6 text-amber-600 dark:text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
+                    </svg>
+                  </div>
+                  <h3 class="text-xl font-bold text-slate-900 dark:text-white">Our Mission</h3>
+                </div>
+                <p class="text-slate-600 dark:text-slate-300">
+                  To democratize real estate by creating the most transparent and accessible property marketplace in the world.
                 </p>
-              </blockquote>
+              </div>
+              
+              <!-- Vision card -->
+              <div class="bg-white dark:bg-slate-800/90 rounded-xl shadow-lg p-6 border border-slate-100 dark:border-slate-700 transform transition-all duration-300 hover:-translate-y-1 hover:shadow-xl">
+                <div class="flex items-center mb-4">
+                  <div class="p-2 bg-orange-100 dark:bg-orange-900/30 rounded-lg mr-4">
+                    <svg class="w-6 h-6 text-orange-600 dark:text-orange-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                    </svg>
+                  </div>
+                  <h3 class="text-xl font-bold text-slate-900 dark:text-white">Our Vision</h3>
+                </div>
+                <p class="text-slate-600 dark:text-slate-300">
+                  A world where everyone can participate in real estate opportunities with complete confidence and clarity.
+                </p>
+              </div>
             </div>
           </div>
         </div>
       </div>
     </section>
     
-    <!-- Values Section -->
-    <section class="relative py-24 lg:py-32">
-      <div class="relative max-w-7xl mx-auto px-6 sm:px-8 lg:px-12">
-        <div 
-          in:fade={{ duration: 800, delay: 100 }}
-          class="text-center mb-16"
-        >
-          <h2 class="text-4xl font-bold text-slate-900 dark:text-white mb-4">
-            {getText('values.title')}
-          </h2>
-          <!-- Clean underline -->
-          <div class="expand-line-title w-32 h-1 bg-gradient-to-r from-amber-500 to-orange-500 mx-auto motion-reduce:w-32"></div>
-        </div>
-        
-        <!-- Values Grid -->
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-8 lg:gap-12">
-          {#each getText('values.items') as value, i}
-            <div
-              in:fly={{ y: prefersReducedMotion ? 0 : 40, duration: 800, delay: 200 + i * 100 }}
-              class="group relative transform transition-all duration-500 hover:-translate-y-2"
-              style="margin-top: {i === 1 ? '3rem' : '0'}"
-            >
-              <div class="bg-white dark:bg-slate-800 rounded-2xl p-8 lg:p-10 shadow-lg shadow-stone-200/50 dark:shadow-slate-900/50 hover:shadow-xl transition-shadow duration-500 relative overflow-hidden border border-slate-100 dark:border-slate-700">
-                <!-- Clean geometric accent -->
-                <div class="absolute top-6 right-6 w-8 h-8 border-2 border-amber-200 dark:border-amber-800 rotate-45 opacity-20"></div>
-                
-                <!-- Number with line -->
-                <div class="relative mb-6">
-                  <div class="text-6xl font-bold text-amber-200 dark:text-amber-900/50 mb-2">
-                    0{i + 1}
-                  </div>
-                  <div class="expand-line-value w-12 h-1 bg-gradient-to-r from-amber-500 to-orange-500 motion-reduce:w-12" style="animation-delay: {i * 200 + 500}ms;"></div>
-                </div>
-                
-                <h3 class="text-2xl font-semibold text-slate-900 dark:text-white mb-4">
-                  {value.title}
-                </h3>
-                
-                <p class="text-base text-slate-600 dark:text-slate-300 leading-relaxed">
-                  {value.description}
-                </p>
-              </div>
-            </div>
-          {/each}
-        </div>
-      </div>
-    </section>
+
     
     <!-- Team Section -->
     <section class="relative py-24 lg:py-32">
