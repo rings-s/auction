@@ -171,9 +171,8 @@
 </svelte:head>
 
 <div class="min-h-screen" dir={isRTL ? 'rtl' : 'ltr'}>
-  <!-- Enhanced Hero Section with Gradient Backdrop -->
-  <div class="relative bg-white dark:bg-gray-800 shadow-md">
-    <div class="absolute inset-0 bg-gradient-to-r from-primary-50 to-secondary-50 dark:from-primary-900/30 dark:to-secondary-900/30 opacity-50"></div>
+  <div class="relative shadow-md">
+    <div class="absolute inset-0"></div>
     <div class="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 md:py-12">
       <div class="md:flex md:items-center md:justify-between">
         <div>

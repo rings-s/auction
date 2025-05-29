@@ -552,7 +552,7 @@
   <meta name="description" content={property?.meta_description || property?.description?.substr(0, 160) || ''} />
 </svelte:head>
 
-<div class="bg-gray-50 dark:bg-gray-900 min-h-screen pb-16">
+<div class="min-h-screen pb-16">
   <!-- Back Button -->
   <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-6">
     <a 

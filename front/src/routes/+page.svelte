@@ -1,6 +1,7 @@
 <script>
   import { onMount } from 'svelte';
   import { locale, t } from '$lib/i18n';
+  $: isRTL = $locale === 'ar';
   import { fade, fly, scale } from 'svelte/transition';
   import { cubicOut } from 'svelte/easing';
   import Button from '$lib/components/ui/Button.svelte';
@@ -94,51 +95,52 @@
 <section class="hero-section relative min-h-screen flex items-center overflow-hidden py-32 pb-16 bg-transparent z-10" aria-label="Hero section">
   
   <!-- Enhanced Dynamic SVG Background - Center Right -->
-  <div class="absolute top-1/2 left-0 transform -translate-y-1/2 w-[70%] h-[90%] z-0 overflow-visible opacity-40" aria-hidden="true">
-    <svg class="w-full h-full animate-pulse" viewBox="0 0 1200 800" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <div class="absolute top-1/2 w-[70%] h-[90%] z-0 overflow-visible opacity-40 {isRTL ? 'left-0' : 'right-0'} -translate-y-1/2" aria-hidden="true">
+    <svg class="w-full h-full animate-pulse rtl:scale-x-[-1]" viewBox="0 0 1200 800" fill="none" xmlns="http://www.w3.org/2000/svg">
+
       <!-- Enhanced animated building outlines -->
       <g class="animate-bounce" style="animation-duration: 12s;">
         <!-- Building 1 - Modern Skyscraper -->
-        <path class="building-element animate-pulse" style="animation-delay: 0s; animation-duration: 8s;" d="M200 700 L200 150 L280 130 L280 700 Z" stroke="url(#gradient1)" stroke-width="3" fill="url(#buildingFill1)"/>
-        <path d="M200 150 L240 120 L280 130 Z" stroke="url(#gradient1)" stroke-width="2" fill="url(#accent1)"/>
+        <path class="building-element animate-pulse" style="animation-delay: 0s; animation-duration: 8s;" d="M500 700 L500 150 L580 130 L580 700 Z" stroke="url(#gradient1)" stroke-width="3" fill="url(#buildingFill1)"/>
+        <path d="M500 150 L540 120 L580 130 Z" stroke="url(#gradient1)" stroke-width="2" fill="url(#accent1)"/>
         <!-- Windows -->
-        <rect x="220" y="180" width="12" height="16" fill="url(#windowGlow)" rx="2"/>
-        <rect x="240" y="200" width="12" height="16" fill="url(#windowGlow)" rx="2"/>
-        <rect x="220" y="240" width="12" height="16" fill="url(#windowGlow)" rx="2"/>
-        <rect x="240" y="260" width="12" height="16" fill="url(#windowGlow)" rx="2"/>
+        <rect x="520" y="180" width="12" height="16" fill="url(#windowGlow)" rx="2"/>
+        <rect x="540" y="200" width="12" height="16" fill="url(#windowGlow)" rx="2"/>
+        <rect x="520" y="240" width="12" height="16" fill="url(#windowGlow)" rx="2"/>
+        <rect x="540" y="260" width="12" height="16" fill="url(#windowGlow)" rx="2"/>
         
         <!-- Building 2 - Corporate Tower -->
-        <path class="building-element animate-pulse" style="animation-delay: 1.5s; animation-duration: 8s;" d="M320 700 L320 100 L420 80 L420 700 Z" stroke="url(#gradient2)" stroke-width="3" fill="url(#buildingFill2)"/>
-        <path d="M320 100 L370 60 L420 80 Z" stroke="url(#gradient2)" stroke-width="2" fill="url(#accent2)"/>
+        <path class="building-element animate-pulse" style="animation-delay: 1.5s; animation-duration: 8s;" d="M620 700 L620 100 L720 80 L720 700 Z" stroke="url(#gradient2)" stroke-width="3" fill="url(#buildingFill2)"/>
+        <path d="M620 100 L670 60 L720 80 Z" stroke="url(#gradient2)" stroke-width="2" fill="url(#accent2)"/>
         <!-- Glass facade -->
-        <rect x="340" y="120" width="60" height="200" fill="url(#glassFacade)" opacity="0.6" rx="4"/>
+        <rect x="640" y="120" width="60" height="200" fill="url(#glassFacade)" opacity="0.6" rx="4"/>
         
         <!-- Building 3 - Residential Complex -->
-        <path class="building-element animate-pulse" style="animation-delay: 3s; animation-duration: 8s;" d="M450 700 L450 200 L580 180 L580 700 Z" stroke="url(#gradient3)" stroke-width="3" fill="url(#buildingFill3)"/>
-        <path d="M450 200 L515 160 L580 180 Z" stroke="url(#gradient3)" stroke-width="2" fill="url(#accent3)"/>
+        <path class="building-element animate-pulse" style="animation-delay: 3s; animation-duration: 8s;" d="M750 700 L750 200 L880 180 L880 700 Z" stroke="url(#gradient3)" stroke-width="3" fill="url(#buildingFill3)"/>
+        <path d="M750 200 L815 160 L880 180 Z" stroke="url(#gradient3)" stroke-width="2" fill="url(#accent3)"/>
         
         <!-- Building 4 - Mixed Use -->
-        <path class="building-element animate-pulse" style="animation-delay: 4.5s; animation-duration: 8s;" d="M600 700 L600 250 L720 230 L720 700 Z" stroke="url(#gradient4)" stroke-width="3" fill="url(#buildingFill4)"/>
+        <path class="building-element animate-pulse" style="animation-delay: 4.5s; animation-duration: 8s;" d="M900 700 L900 250 L1020 230 L1020 700 Z" stroke="url(#gradient4)" stroke-width="3" fill="url(#buildingFill4)"/>
         
         <!-- Building 5 - Luxury Towers -->
-        <path class="building-element animate-pulse" style="animation-delay: 6s; animation-duration: 8s;" d="M750 700 L750 120 L850 100 L850 700 Z" stroke="url(#gradient1)" stroke-width="3" fill="url(#buildingFill1)"/>
-        <path d="M750 120 L800 80 L850 100 Z" stroke="url(#gradient1)" stroke-width="2" fill="url(#accent1)"/>
+        <path class="building-element animate-pulse" style="animation-delay: 6s; animation-duration: 8s;" d="M1050 700 L1050 120 L1150 100 L1150 700 Z" stroke="url(#gradient1)" stroke-width="3" fill="url(#buildingFill1)"/>
+        <path d="M1050 120 L1100 80 L1150 100 Z" stroke="url(#gradient1)" stroke-width="2" fill="url(#accent1)"/>
       </g>
       
       <!-- Enhanced fluid growth curves -->
       <g class="animate-pulse" style="animation-duration: 15s;">
-        <path class="growth-curve animate-pulse" style="animation-delay: 0s; animation-duration: 10s;" d="M100 600 Q300 450 500 380 Q700 310 900 250" stroke="url(#growthGradient)" stroke-width="4" fill="none"/>
-        <path class="growth-curve animate-pulse" style="animation-delay: 2s; animation-duration: 10s;" d="M150 650 Q350 500 550 430 Q750 360 950 300" stroke="url(#growthGradient2)" stroke-width="3" fill="none"/>
-        <path class="growth-curve animate-pulse" style="animation-delay: 4s; animation-duration: 10s;" d="M200 680 Q400 530 600 460 Q800 390 1000 330" stroke="url(#growthGradient3)" stroke-width="2" fill="none"/>
+        <path class="growth-curve animate-pulse" style="animation-delay: 0s; animation-duration: 10s;" d="M375 600 Q575 450 775 380 Q975 310 1175 250" stroke="url(#growthGradient)" stroke-width="4" fill="none"/>
+        <path class="growth-curve animate-pulse" style="animation-delay: 2s; animation-duration: 10s;" d="M425 650 Q625 500 825 430 Q1025 360 1225 300" stroke="url(#growthGradient2)" stroke-width="3" fill="none"/>
+        <path class="growth-curve animate-pulse" style="animation-delay: 4s; animation-duration: 10s;" d="M475 680 Q675 530 875 460 Q1075 390 1275 330" stroke="url(#growthGradient3)" stroke-width="2" fill="none"/>
       </g>
       
       <!-- Enhanced floating data points -->
       <g class="animate-bounce" style="animation-duration: 6s;">
-        <circle class="data-point animate-ping" style="animation-delay: 0s; animation-duration: 4s;" cx="400" cy="400" r="6" fill="url(#accent1)"/>
-        <circle class="data-point animate-ping" style="animation-delay: 1s; animation-duration: 4s;" cx="600" cy="350" r="5" fill="url(#accent2)"/>
-        <circle class="data-point animate-ping" style="animation-delay: 2s; animation-duration: 4s;" cx="800" cy="300" r="7" fill="url(#accent3)"/>
-        <circle class="data-point animate-ping" style="animation-delay: 0.5s; animation-duration: 4s;" cx="500" cy="380" r="4" fill="url(#accent4)"/>
-        <circle class="data-point animate-ping" style="animation-delay: 1.5s; animation-duration: 4s;" cx="700" cy="320" r="5" fill="url(#accent1)"/>
+        <circle class="data-point animate-ping" style="animation-delay: 0s; animation-duration: 4s;" cx="675" cy="400" r="6" fill="url(#accent1)"/>
+        <circle class="data-point animate-ping" style="animation-delay: 1s; animation-duration: 4s;" cx="875" cy="350" r="5" fill="url(#accent2)"/>
+        <circle class="data-point animate-ping" style="animation-delay: 2s; animation-duration: 4s;" cx="1075" cy="300" r="7" fill="url(#accent3)"/>
+        <circle class="data-point animate-ping" style="animation-delay: 0.5s; animation-duration: 4s;" cx="775" cy="380" r="4" fill="url(#accent4)"/>
+        <circle class="data-point animate-ping" style="animation-delay: 1.5s; animation-duration: 4s;" cx="975" cy="320" r="5" fill="url(#accent1)"/>
       </g>
       
       <!-- Enhanced gradient definitions -->

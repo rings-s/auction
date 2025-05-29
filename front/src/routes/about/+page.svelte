@@ -488,105 +488,88 @@
     
 
     
-    <!-- Team Section -->
-    <section class="relative py-24 lg:py-32">
-      <div class="relative max-w-7xl mx-auto px-6 sm:px-8 lg:px-12">
-        <div 
-          in:fade={{ duration: 800, delay: 100 }}
-          class="text-center mb-16"
-        >
-          <h2 class="text-4xl font-bold text-slate-900 dark:text-white mb-4">
-            {getText('team.title')}
-          </h2>
-          <p class="text-lg text-slate-600 dark:text-slate-300 mb-4">
-            {getText('team.subtitle')}
-          </p>
-          <div class="expand-line-team w-24 h-0.5 bg-amber-500 mx-auto motion-reduce:w-24"></div>
-        </div>
-        
-        <!-- Team Grid -->
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-8 lg:gap-12">
-          {#each getText('team.members') as member, i}
-            <div
-              in:fly={{ y: prefersReducedMotion ? 0 : 30, duration: 800, delay: 200 + i * 100 }}
-              class="group text-center"
-            >
-              <!-- Clean Geometric Avatar -->
-              <div class="relative w-48 h-48 mx-auto mb-6">
-                <div class="absolute inset-0 bg-gradient-to-br from-amber-100 to-orange-100 dark:from-amber-800/30 dark:to-orange-800/30 rounded-full flex items-center justify-center transform transition-transform duration-500 group-hover:scale-110 border-2 border-amber-200 dark:border-amber-700">
-                  <!-- Simple geometric pattern -->
-                  <div class="relative">
-                    <span class="text-4xl font-bold text-slate-700 dark:text-slate-300">
-                      {member.name.charAt(0)}
-                    </span>
-                    <!-- Decorative lines -->
-                    <div class="absolute -top-4 -left-4 w-8 h-0.5 bg-amber-500 transform -rotate-45"></div>
-                    <div class="absolute -bottom-4 -right-4 w-8 h-0.5 bg-orange-500 transform -rotate-45"></div>
-                  </div>
-                </div>
-              </div>
-              
-              <h3 class="text-xl font-semibold text-slate-900 dark:text-white mb-1">
-                {member.name}
-              </h3>
-              <p class="text-base text-amber-600 dark:text-amber-400 mb-2">
-                {member.role}
-              </p>
-              <p class="text-sm text-slate-500 dark:text-slate-400 mb-3">
-                {member.bio}
-              </p>
-              
-              <!-- Simple underline -->
-              <div class="expand-line-member w-16 h-0.5 bg-amber-400 mx-auto motion-reduce:w-16" style="animation-delay: {i * 300 + 800}ms;"></div>
-            </div>
-          {/each}
-        </div>
-      </div>
-    </section>
+   
     
-    <!-- CTA Section -->
+    <!-- Enhanced CTA Section -->
     <section class="relative py-24 lg:py-32 overflow-hidden">
-      <div class="relative max-w-4xl mx-auto px-6 sm:px-8 lg:px-12 text-center">
-        <h2 
-          in:fade={{ duration: 800, delay: 100 }}
-          class="text-4xl sm:text-5xl font-bold text-slate-900 dark:text-white mb-6"
-        >
-          {getText('cta.title')}
-        </h2>
+      <!-- Background elements -->
+      <div class="absolute inset-0 pointer-events-none">
+        <div class="absolute top-0 left-1/4 w-96 h-96 bg-amber-100 dark:bg-amber-900/20 rounded-full blur-3xl opacity-30"></div>
+        <div class="absolute bottom-0 right-1/4 w-96 h-96 bg-orange-100 dark:bg-orange-900/20 rounded-full blur-3xl opacity-30"></div>
         
-        <!-- Clean line under title -->
-        <div class="expand-line-cta w-32 h-1 bg-gradient-to-r from-amber-500 to-orange-500 mx-auto mb-6 motion-reduce:w-32"></div>
-        
-        <p 
-          in:fade={{ duration: 800, delay: 200 }}
-          class="text-lg text-slate-600 dark:text-slate-300 mb-10 max-w-2xl mx-auto"
-        >
-          {getText('cta.description')}
-        </p>
-        
+        <!-- Decorative shapes -->
+        <div class="hidden lg:block absolute top-20 left-20 w-16 h-16 border-4 border-amber-200 dark:border-amber-800/40 rounded-lg transform rotate-12 opacity-40"></div>
+        <div class="hidden lg:block absolute bottom-20 right-20 w-12 h-12 border-4 border-orange-200 dark:border-orange-800/40 rounded-full opacity-40"></div>
+      </div>
+      
+      <!-- Content container -->
+      <div class="relative max-w-5xl mx-auto px-6 sm:px-8 lg:px-12">
+        <!-- Card with gradient border -->
         <div 
-          in:fly={{ y: prefersReducedMotion ? 0 : 20, duration: 800, delay: 300 }}
-          class="flex flex-col sm:flex-row gap-4 justify-center"
+          in:fade={{ duration: 800, delay: 100 }}
+          class="bg-white/90 dark:bg-slate-800/90 rounded-2xl shadow-xl p-8 md:p-12 lg:p-16 border border-slate-100 dark:border-slate-700 relative overflow-hidden"
         >
-          <Button 
-            variant="primary" 
-            size="large" 
-            href="/register" 
-            class="bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white border-0 px-8 py-4 relative overflow-hidden group transition-all duration-300"
-          >
-            <span class="relative z-10">{getText('cta.primaryBtn')}</span>
-            <div class="absolute bottom-0 left-0 w-full h-0.5 bg-white/30 transform scale-x-0 group-hover:scale-x-100 transition-transform duration-300"></div>
-          </Button>
+          <!-- Gradient border effect -->
+          <div class="absolute inset-0 rounded-2xl overflow-hidden pointer-events-none">
+            <div class="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-amber-500 to-orange-500"></div>
+            <div class="absolute inset-y-0 right-0 w-1 bg-gradient-to-b from-orange-500 to-amber-500"></div>
+            <div class="absolute inset-x-0 bottom-0 h-1 bg-gradient-to-r from-orange-500 to-amber-500"></div>
+            <div class="absolute inset-y-0 left-0 w-1 bg-gradient-to-b from-amber-500 to-orange-500"></div>
+          </div>
           
-          <Button 
-            variant="outline" 
-            size="large" 
-            href="/contact" 
-            class="border-2 border-amber-500 text-amber-600 hover:bg-amber-50 dark:border-amber-400 dark:text-amber-400 dark:hover:bg-amber-900/20 px-8 py-4 relative overflow-hidden group transition-all duration-300"
-          >
-            <span class="relative z-10">{getText('cta.secondaryBtn')}</span>
-            <div class="absolute bottom-2 left-4 right-4 h-0.5 bg-amber-500 transform scale-x-0 group-hover:scale-x-100 transition-transform duration-300"></div>
-          </Button>
+          <div class="text-center">
+            <!-- Title with enhanced typography -->
+            <h2 
+              in:fade={{ duration: 800, delay: 200 }}
+              class="text-4xl sm:text-5xl font-bold text-slate-900 dark:text-white mb-6 tracking-tight"
+            >
+              {getText('cta.title')}
+            </h2>
+            
+            <!-- Description with improved spacing -->
+            <p 
+              in:fade={{ duration: 800, delay: 300 }}
+              class="text-lg md:text-xl text-slate-600 dark:text-slate-300 mb-10 max-w-2xl mx-auto leading-relaxed"
+            >
+              {getText('cta.description')}
+            </p>
+            
+            <!-- Button group with enhanced styling -->
+            <div 
+              in:fly={{ y: prefersReducedMotion ? 0 : 20, duration: 800, delay: 400 }}
+              class="flex flex-col sm:flex-row gap-6 justify-center"
+            >
+              <!-- Primary button with enhanced hover effect -->
+              <Button 
+                variant="primary" 
+                size="large" 
+                href="/register" 
+                class="bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white border-0 px-8 py-4 rounded-xl shadow-lg hover:shadow-amber-500/20 dark:hover:shadow-amber-800/30 transition-all duration-300 transform hover:-translate-y-1"
+              >
+                <span class="flex items-center justify-center">
+                  <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
+                  </svg>
+                  {getText('cta.primaryBtn')}
+                </span>
+              </Button>
+              
+              <!-- Secondary button with enhanced hover effect -->
+              <Button 
+                variant="outline" 
+                size="large" 
+                href="/contact" 
+                class="border-2 border-amber-500 text-amber-600 hover:bg-amber-50 dark:border-amber-400 dark:text-amber-400 dark:hover:bg-amber-900/20 px-8 py-4 rounded-xl shadow-md hover:shadow-lg transition-all duration-300 transform hover:-translate-y-1"
+              >
+                <span class="flex items-center justify-center">
+                  <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+                  </svg>
+                  {getText('cta.secondaryBtn')}
+                </span>
+              </Button>
+            </div>
+          </div>
         </div>
       </div>
     </section>
