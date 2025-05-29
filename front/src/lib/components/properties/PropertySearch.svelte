@@ -162,18 +162,37 @@
             <button
               type="button"
               on:click={() => toggleDropdown('type')}
-              class="inline-flex items-center justify-between w-full px-5 py-3 rounded-full bg-white dark:bg-gray-700 shadow-sm border border-gray-200 dark:border-gray-600 text-sm font-medium text-gray-700 dark:text-gray-100 hover:bg-gray-50 dark:hover:bg-gray-600 transition-all {searchParams.propertyType ? 'border-primary-300 dark:border-primary-600 ring-2 ring-primary-100 dark:ring-primary-900' : ''}"
+              class="inline-flex items-center justify-center
+                  font-semibold leading-tight tracking-wide
+                  focus:outline-none 
+                  transition-all duration-200 ease-out
+                  select-none relative overflow-hidden
+                  rounded-xl
+                  min-h-[44px] px-4 py-2.5 
+                  text-sm font-semibold 
+                  gap-2
+                  bg-gradient-to-b from-blue-500 to-blue-600 
+                  hover:from-blue-600 hover:to-blue-700 
+                  active:from-blue-700 active:to-blue-800
+                  text-white border-0
+                  shadow-sm hover:shadow-md active:shadow-sm
+                  focus:ring-2 focus:ring-blue-500/40 focus:ring-offset-2
+                  dark:from-blue-600 dark:to-blue-700 
+                  dark:hover:from-blue-700 dark:hover:to-blue-800
+                  cursor-pointer
+                  transform hover:scale-[1.02] hover:-translate-y-0.5 
+                  active:scale-[0.98] active:translate-y-0
+                  w-full"
+              aria-haspopup="true"
+              aria-expanded={showFilterDropdown.type}
             >
-              <span class="truncate">
-                {#if searchParams.propertyType}
-                  {$t(propertyTypes.find(p => p.value === searchParams.propertyType)?.label)}
-                {:else}
-                  {$t('search.propertyType')}
-                {/if}
-              </span>
-              <svg class="w-5 h-5 {isRTL ? 'mr-2' : 'ml-2'} text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
-              </svg>
+              <div aria-hidden="true" class="absolute inset-0 bg-gradient-to-b from-white/20 to-transparent opacity-0 hover:opacity-100 transition-opacity duration-200 rounded-xl"></div>
+              <div class="relative z-10 flex items-center justify-center gap-inherit">
+                <span class="truncate">{searchParams.propertyType ? $t(propertyTypes.find(type => type.value === searchParams.propertyType)?.label) : $t('search.propertyType')}</span>
+                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" class="w-5 h-5 ml-2 -mr-1 text-gray-400 transition-all duration-300 group-hover:text-blue-600 dark:group-hover:text-blue-400">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                </svg>
+              </div>
             </button>
             
             {#if showFilterDropdown.type}

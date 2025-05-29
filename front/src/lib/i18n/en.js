@@ -691,6 +691,109 @@ export const enTranslations = {
     }
   },
 
+  dashboard: {
+    title: 'Dashboard',
+    description: 'Manage your properties, auctions, and account',
+    welcome: 'Welcome back, {name}!',
+    
+    // Stats
+    totalProperties: 'Total Properties',
+    totalAuctions: 'Total Auctions', 
+    totalBids: 'Total Bids',
+    unreadMessages: 'Unread Messages',
+    publishedProperties: 'Published',
+    activeAuctions: 'Active',
+    winningBids: 'Winning',
+    
+    // Performance
+    performanceMetrics: 'Performance Metrics',
+    propertiesThisMonth: 'Properties This Month',
+    auctionsThisMonth: 'Auctions This Month',
+    avgPropertyValue: 'Avg Property Value',
+    
+    // Actions
+    quickActions: 'Quick Actions',
+    browseProperties: 'Browse Properties',
+    viewAuctions: 'View Auctions',
+    addProperty: 'Add Property',
+    createAuction: 'Create Auction',
+    
+    // Activity
+    recentActivity: 'Recent Activity',
+    noRecentActivity: 'No recent activity',
+    
+    // System
+    systemDashboard: 'System Dashboard',
+    userPriority: 'User Priority',
+    
+    // Properties
+    properties: 'My Properties',
+    manageProperties: 'Manage your property listings',
+    noProperties: 'No properties found',
+    noPropertiesDesc: 'You haven\'t added any properties yet. Create your first property listing to get started.',
+    
+    // Auctions
+    auctions: 'My Auctions',
+    manageAuctions: 'Manage your auction listings',
+    noAuctions: 'No auctions found',
+    noAuctionsDesc: 'You haven\'t created any auctions yet. Start an auction for one of your properties.',
+    
+    // Bids
+    bids: 'My Bids',
+    manageBids: 'View and manage your bids',
+    noBids: 'No bids found',
+    noBidsDesc: 'You haven\'t placed any bids yet. Browse active auctions to start bidding.',
+    
+    // Status
+    verified: 'Verified',
+    unverified: 'Unverified',
+    showing: 'Showing',
+    
+    // Messages
+    loadError: 'Failed to load dashboard data',
+    refreshed: 'Dashboard refreshed successfully',
+    refreshError: 'Failed to refresh dashboard',
+    loadPropertiesError: 'Failed to load properties',
+    loadAuctionsError: 'Failed to load auctions',
+    loadBidsError: 'Failed to load bids',
+
+    systemOverview: 'System-wide overview and statistics',
+    userStatistics: 'User Statistics',
+    propertyStatistics: 'Property Statistics', 
+    auctionStatistics: 'Auction Statistics',
+    biddingStatistics: 'Bidding Statistics',
+    
+    // System Stats
+    activeToday: 'Active Today',
+    newThisWeek: 'New This Week',
+    completedAuctions: 'Completed',
+    totalAuctionValue: 'Total Auction Value',
+    uniqueBidders: 'Unique Bidders',
+    totalBidValue: 'Total Bid Value',
+    avgBidAmount: 'Avg Bid Amount',
+    
+    // Activity
+    todayActivity: 'Today\'s Activity',
+    bidsToday: 'Bids Today',
+    auctionsEndingSoon: 'Auctions Ending Soon',
+    pendingVerifications: 'Pending Verifications',
+    topCities: 'Top Cities',
+    noData: 'No data available',
+    
+    // Common
+    viewAll: 'View All',
+    daysAgo: 'days ago',
+    to: 'to',
+    of: 'of',
+    yes: 'Yes',
+    no: 'No',
+    view: 'View',
+    activeOnly: 'Active Only',
+    winningOnly: 'Winning Only',
+    maxBid: 'Max Bid',
+    viewAuction: 'View Auction'
+  },
+
   auth: {
     login: 'Login to your account',
     email: 'Email address',
@@ -734,7 +837,66 @@ export const enTranslations = {
     resetLinkSent: 'Password reset link has been sent to your email',
     verificationCodeResent: 'Verification code has been resent to your email',
     registrationSuccess: 'Registration successful! Please check your email for verification instructions.',
-    passwordResetSuccess: 'Your password has been reset successfully.'
+    passwordResetSuccess: 'Your password has been reset successfully.',
+
+    passwordStrength: {
+      label: 'Password Strength',
+      weak: 'Weak',
+      fair: 'Fair',
+      good: 'Good',
+      strong: 'Strong',
+      veryStrong: 'Very Strong'
+    },
+    
+    // Password Requirements
+    passwordRequirements: {
+      title: 'Password Requirements',
+      minLength: 'At least 8 characters',
+      uppercase: 'One uppercase letter',
+      lowercase: 'One lowercase letter', 
+      number: 'One number',
+      special: 'One special character',
+      noCommon: 'Not a common password'
+    },
+    
+    // Password Validation Messages
+    passwordValidation: {
+      tooShort: 'Password must be at least 8 characters long',
+      tooLong: 'Password cannot exceed 128 characters',
+      noUppercase: 'Password must contain at least one uppercase letter',
+      noLowercase: 'Password must contain at least one lowercase letter',
+      noNumber: 'Password must contain at least one number',
+      noSpecial: 'Password must contain at least one special character',
+      tooCommon: 'This password is too common, please choose a different one',
+      containsEmail: 'Password cannot contain your email address',
+      containsName: 'Password cannot contain your name'
+    },
+    
+    // Additional Auth Messages
+    passwordHint: 'Use a mix of letters, numbers, and symbols for a strong password',
+    showPassword: 'Show password',
+    hidePassword: 'Hide password',
+    passwordVisible: 'Password is visible',
+    passwordHidden: 'Password is hidden',
+    
+    // Account Status
+    accountStatus: {
+      active: 'Active',
+      inactive: 'Inactive',
+      suspended: 'Suspended',
+      pending: 'Pending Verification',
+      banned: 'Banned'
+    },
+    
+    // Security
+    security: {
+      title: 'Account Security',
+      twoFactor: 'Two-Factor Authentication',
+      loginHistory: 'Login History',
+      activeSession: 'Active Sessions',
+      changePassword: 'Change Password',
+      deleteAccount: 'Delete Account'
+    }
   },
 
   profile: {

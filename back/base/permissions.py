@@ -1,7 +1,7 @@
 from rest_framework.permissions import BasePermission, SAFE_METHODS
 from django.utils.translation import gettext_lazy as _
 from django.contrib.contenttypes.models import ContentType
-from .models import Property, Auction, Media
+from .models import *
 
 class IsVerifiedUser(BasePermission):
     message = _('User account must be verified.')
@@ -143,3 +143,37 @@ class CanSendMessages(BasePermission):
     def has_permission(self, request, view):
         return (request.user and request.user.is_authenticated and 
                 getattr(request.user, 'is_verified', False) and request.user.is_active)
+
+
+
+# these new permission classes is four the dashboard 
+
+class CanAccessDashboard(BasePermission):
+    message = _('You need appropriate permissions to access dashboard features.')
+    
+    def has_permission(self, request, view):
+        return (request.user and request.user.is_authenticated and 
+                getattr(request.user, 'is_verified', False))
+
+class CanAccessAdvancedDashboard(BasePermission):
+    message = _('Advanced dashboard features require elevated permissions.')
+    
+    def has_permission(self, request, view):
+        return (request.user and request.user.is_authenticated and 
+                request.user.role in ['appraiser', 'data_entry'] or 
+                request.user.is_staff or request.user.is_superuser)
+
+class CanAccessAdminDashboard(BasePermission):
+    message = _('Admin dashboard access requires administrator privileges.')
+    
+    def has_permission(self, request, view):
+        return (request.user and request.user.is_authenticated and 
+                (request.user.is_staff or request.user.is_superuser))
+
+class CanManageAuctions(BasePermission):
+    message = _('You need appraiser or owner permissions to manage auctions.')
+    
+    def has_permission(self, request, view):
+        return (request.user and request.user.is_authenticated and 
+                request.user.role in ['appraiser', 'owner'] or 
+                request.user.is_superuser)

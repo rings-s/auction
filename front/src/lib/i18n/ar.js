@@ -827,7 +827,66 @@ export const arTranslations = {
     resetLinkSent: 'تم إرسال رابط إعادة تعيين كلمة المرور إلى بريدك الإلكتروني',
     verificationCodeResent: 'تم إعادة إرسال رمز التحقق إلى بريدك الإلكتروني',
     registrationSuccess: 'تم التسجيل بنجاح! يرجى مراجعة بريدك الإلكتروني للحصول على تعليمات التحقق.',
-    passwordResetSuccess: 'تم إعادة تعيين كلمة المرور الخاصة بك بنجاح.'
+    passwordResetSuccess: 'تم إعادة تعيين كلمة المرور الخاصة بك بنجاح.',
+
+    passwordStrength: {
+      label: 'قوة كلمة المرور',
+      weak: 'ضعيفة',
+      fair: 'مقبولة',
+      good: 'جيدة',
+      strong: 'قوية',
+      veryStrong: 'قوية جداً'
+    },
+    
+    // Password Requirements
+    passwordRequirements: {
+      title: 'متطلبات كلمة المرور',
+      minLength: '8 أحرف على الأقل',
+      uppercase: 'حرف كبير واحد',
+      lowercase: 'حرف صغير واحد',
+      number: 'رقم واحد',
+      special: 'رمز خاص واحد',
+      noCommon: 'ليست كلمة مرور شائعة'
+    },
+    
+    // Password Validation Messages
+    passwordValidation: {
+      tooShort: 'يجب أن تكون كلمة المرور 8 أحرف على الأقل',
+      tooLong: 'لا يمكن أن تتجاوز كلمة المرور 128 حرف',
+      noUppercase: 'يجب أن تحتوي كلمة المرور على حرف كبير واحد على الأقل',
+      noLowercase: 'يجب أن تحتوي كلمة المرور على حرف صغير واحد على الأقل',
+      noNumber: 'يجب أن تحتوي كلمة المرور على رقم واحد على الأقل',
+      noSpecial: 'يجب أن تحتوي كلمة المرور على رمز خاص واحد على الأقل',
+      tooCommon: 'كلمة المرور هذه شائعة جداً، يرجى اختيار كلمة مرور أخرى',
+      containsEmail: 'لا يمكن أن تحتوي كلمة المرور على عنوان بريدك الإلكتروني',
+      containsName: 'لا يمكن أن تحتوي كلمة المرور على اسمك'
+    },
+    
+    // Additional Auth Messages
+    passwordHint: 'استخدم مزيجاً من الأحرف والأرقام والرموز للحصول على كلمة مرور قوية',
+    showPassword: 'إظهار كلمة المرور',
+    hidePassword: 'إخفاء كلمة المرور',
+    passwordVisible: 'كلمة المرور مرئية',
+    passwordHidden: 'كلمة المرور مخفية',
+    
+    // Account Status
+    accountStatus: {
+      active: 'نشط',
+      inactive: 'غير نشط',
+      suspended: 'معلق',
+      pending: 'في انتظار التحقق',
+      banned: 'محظور'
+    },
+    
+    // Security
+    security: {
+      title: 'أمان الحساب',
+      twoFactor: 'المصادقة الثنائية',
+      loginHistory: 'سجل تسجيل الدخول',
+      activeSession: 'الجلسات النشطة',
+      changePassword: 'تغيير كلمة المرور',
+      deleteAccount: 'حذف الحساب'
+    }
   },
 
   profile: {
@@ -932,5 +991,110 @@ export const arTranslations = {
     users: 'أكثر من 15 ألف مستخدم',
     viewAuctions: 'عرض المزادات',
     browseProperties: 'تصفح العقارات'
+  },
+
+dashboard: {
+  title: 'لوحة التحكم',
+  description: 'إدارة العقارات والمزادات والحساب',
+  welcome: 'مرحباً بعودتك، {name}!',
+  
+  // Stats
+  totalProperties: 'إجمالي العقارات',
+  totalAuctions: 'إجمالي المزادات',
+  totalBids: 'إجمالي المزايدات',
+  unreadMessages: 'الرسائل غير المقروءة',
+  publishedProperties: 'منشورة',
+  activeAuctions: 'نشطة',
+  winningBids: 'فائزة',
+  
+  // Performance
+  performanceMetrics: 'مقاييس الأداء',
+  propertiesThisMonth: 'العقارات هذا الشهر',
+  auctionsThisMonth: 'المزادات هذا الشهر',
+  avgPropertyValue: 'متوسط قيمة العقار',
+  
+  // Actions
+  quickActions: 'إجراءات سريعة',
+  browseProperties: 'تصفح العقارات',
+  viewAuctions: 'عرض المزادات',
+  addProperty: 'إضافة عقار',
+  createAuction: 'إنشاء مزاد',
+  
+  // Activity
+  recentActivity: 'النشاط الأخير',
+  noRecentActivity: 'لا يوجد نشاط حديث',
+  
+  // System
+  systemDashboard: 'لوحة تحكم النظام',
+  userPriority: 'أولوية المستخدم',
+  
+  // Properties
+  properties: 'عقاراتي',
+  manageProperties: 'إدارة قوائم العقارات الخاصة بك',
+  noProperties: 'لم يتم العثور على عقارات',
+  noPropertiesDesc: 'لم تقم بإضافة أي عقارات بعد. أنشئ أول قائمة عقار للبدء.',
+  
+  // Auctions
+  auctions: 'مزاداتي',
+  manageAuctions: 'إدارة قوائم المزادات الخاصة بك',
+  noAuctions: 'لم يتم العثور على مزادات',
+  noAuctionsDesc: 'لم تقم بإنشاء أي مزادات بعد. ابدأ مزاداً لأحد عقاراتك.',
+  
+  // Bids
+  bids: 'مزايداتي',
+  manageBids: 'عرض وإدارة مزايداتك',
+  noBids: 'لم يتم العثور على مزايدات',
+  noBidsDesc: 'لم تقم بتقديم أي مزايدات بعد. تصفح المزادات النشطة لبدء المزايدة.',
+  
+  // Status
+  verified: 'موثق',
+  unverified: 'غير موثق',
+  showing: 'عرض',
+  
+  // Messages
+  loadError: 'فشل في تحميل بيانات لوحة التحكم',
+  refreshed: 'تم تحديث لوحة التحكم بنجاح',
+  refreshError: 'فشل في تحديث لوحة التحكم',
+  loadPropertiesError: 'فشل في تحميل العقارات',
+  loadAuctionsError: 'فشل في تحميل المزادات',
+  loadBidsError: 'فشل في تحميل المزايدات',
+
+
+  // System Dashboard
+  systemOverview: 'نظرة عامة وإحصائيات النظام',
+  userStatistics: 'إحصائيات المستخدمين',
+  propertyStatistics: 'إحصائيات العقارات',
+  auctionStatistics: 'إحصائيات المزادات',
+  biddingStatistics: 'إحصائيات المزايدات',
+  
+  // System Stats
+  activeToday: 'نشط اليوم',
+  newThisWeek: 'جديد هذا الأسبوع',
+  completedAuctions: 'مكتملة',
+  totalAuctionValue: 'إجمالي قيمة المزادات',
+  uniqueBidders: 'مزايدون فريدون',
+  totalBidValue: 'إجمالي قيمة المزايدات',
+  avgBidAmount: 'متوسط مبلغ المزايدة',
+  
+  // Activity
+  todayActivity: 'نشاط اليوم',
+  bidsToday: 'مزايدات اليوم',
+  auctionsEndingSoon: 'مزادات تنتهي قريباً',
+  pendingVerifications: 'تحققات معلقة',
+  topCities: 'أهم المدن',
+  noData: 'لا توجد بيانات متاحة',
+  
+  // Common
+  viewAll: 'عرض الكل',
+  daysAgo: 'أيام مضت',
+  to: 'إلى',
+  of: 'من',
+  yes: 'نعم',
+  no: 'لا',
+  view: 'عرض',
+  activeOnly: 'النشطة فقط',
+  winningOnly: 'الفائزة فقط',
+  maxBid: 'أعلى مزايدة',
+  viewAuction: 'عرض المزاد'
   }
 };

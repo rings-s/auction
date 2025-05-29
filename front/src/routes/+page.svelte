@@ -11,9 +11,6 @@
   let prefersReducedMotion = false;
   let scrollY = 0;
   
-  // Computed value for RTL mode
-  $: isRTL = $locale === 'ar';
-
   // Simplified translations with fewer text elements
   const translations = {
     en: {

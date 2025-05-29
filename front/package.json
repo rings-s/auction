@@ -38,6 +38,7 @@
 	},
 	"dependencies": {
 		"chart.js": "^4.4.9",
+		"date-fns": "^4.1.0",
 		"leaflet": "^1.9.4"
 	},
 	"overrides": {

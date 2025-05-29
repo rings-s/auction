@@ -12,6 +12,8 @@ import random
 from PIL import Image
 from io import BytesIO
 from django.core.files.base import ContentFile
+from django.db.models import Q, Count, Sum, Avg
+from datetime import timedelta
 # -------------------------------------------------------------------------
 # Base Model
 # -------------------------------------------------------------------------
@@ -902,3 +904,21 @@ class MessageAttachment(BaseModel):
                 return f"{self.file_size:.1f} {unit}"
             self.file_size /= 1024.0
         return f"{self.file_size:.1f} TB"
+
+
+
+
+class DashboardMetrics(BaseModel):
+    """Store cached dashboard metrics for performance"""
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='dashboard_metrics')
+    metric_type = models.CharField(max_length=50)  # 'properties', 'auctions', 'bids', etc.
+    metric_data = models.JSONField(default=dict)
+    last_updated = models.DateTimeField(auto_now=True)
+    
+    class Meta:
+        verbose_name = _('مقاييس لوحة التحكم')
+        verbose_name_plural = _('مقاييس لوحات التحكم')
+        unique_together = ['user', 'metric_type']
+        
+    def __str__(self):
+        return f"{self.user.email} - {self.metric_type}"

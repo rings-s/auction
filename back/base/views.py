@@ -10,17 +10,17 @@ from rest_framework.exceptions import PermissionDenied
 import django_filters.rest_framework as drf_django_filters
 from rest_framework.views import APIView
 
-from .models import Media, Property, Room, Auction, Bid, Location, Message
-from .serializers import (
-    MediaSerializer, PropertySerializer, RoomSerializer, AuctionSerializer, 
-    BidSerializer, LocationSerializer, MessageSerializer, MessageReplySerializer
-)
-from .permissions import (
-    IsVerifiedUser, IsObjectOwner, IsPropertyOwnerOrAppraiserOrDataEntry,
-    IsPropertyOwnerOrAppraiser, IsAdminUser, IsMediaManager, 
-    IsMessageParticipant, CanSendMessages, IsAppraiserOrDataEntry
-)
+from .models import *
+from .serializers import *
+from .permissions import *
 from .filters import AuctionFilterSet, PropertyFilterSet
+
+
+from django.utils import timezone
+from datetime import timedelta
+from django.db.models import Q, Count, Sum, Avg, Max, Min
+from rest_framework.decorators import api_view, permission_classes
+from django.contrib.auth import get_user_model
 
 logger = logging.getLogger(__name__)
 
@@ -373,3 +373,304 @@ class MessageStatsView(APIView):
         }
         
         return Response(data=stats)
+
+
+
+
+
+
+
+class UserDashboardView(APIView):
+    """Main dashboard view for authenticated users"""
+    permission_classes = [drf_permissions.IsAuthenticated, CanAccessDashboard]
+    
+    def get(self, request):
+        user = request.user
+        
+        # Get user-accessible data based on role
+        properties = user.get_accessible_properties()
+        auctions = user.get_accessible_auctions()
+        bids = user.get_accessible_bids()
+        
+        # Calculate date ranges
+        now = timezone.now()
+        week_ago = now - timedelta(days=7)
+        month_ago = now - timedelta(days=30)
+        
+        # Property statistics
+        property_stats = {
+            'total_properties': properties.count(),
+            'published_properties': properties.filter(is_published=True).count(),
+            'draft_properties': properties.filter(is_published=False).count(),
+            'featured_properties': properties.filter(is_featured=True).count(),
+            'verified_properties': properties.filter(is_verified=True).count(),
+            'properties_value': properties.aggregate(Sum('market_value'))['market_value__sum'] or 0,
+        }
+        
+        # Auction statistics
+        auction_stats = {
+            'total_auctions': auctions.count(),
+            'active_auctions': auctions.filter(status='live').count(),
+            'scheduled_auctions': auctions.filter(status='scheduled').count(),
+            'ended_auctions': auctions.filter(status='ended').count(),
+        }
+        
+        # Bid statistics
+        bid_stats = {
+            'total_bids': bids.count(),
+            'winning_bids': bids.filter(status='winning').count(),
+            'total_bid_amount': bids.aggregate(Sum('bid_amount'))['bid_amount__sum'] or 0,
+        }
+        
+        # Activity statistics
+        activity_stats = {
+            'recent_properties': properties.filter(created_at__gte=week_ago).count(),
+            'recent_auctions': auctions.filter(created_at__gte=week_ago).count(),
+            'recent_bids': bids.filter(created_at__gte=week_ago).count(),
+            'messages_unread': Message.objects.filter(recipient=user, status='unread').count(),
+        }
+        
+        # Role-specific stats
+        role_stats = {}
+        if user.role in ['appraiser', 'data_entry']:
+            role_stats.update({
+                'properties_this_month': properties.filter(created_at__gte=month_ago).count(),
+                'auctions_this_month': auctions.filter(created_at__gte=month_ago).count(),
+                'avg_property_value': properties.aggregate(Avg('market_value'))['market_value__avg'] or 0,
+            })
+        
+        # Combine all stats
+        dashboard_data = {
+            'user_priority': user.get_dashboard_priority(),
+            'user_role': user.role,
+            'user_role_display': user.get_role_display(),
+            **property_stats,
+            **auction_stats,
+            **bid_stats,
+            **activity_stats,
+            **role_stats,
+        }
+        
+        serializer = UserDashboardStatsSerializer(dashboard_data)
+        return Response(serializer.data)
+
+class SystemDashboardView(APIView):
+    """System-wide dashboard for admins and appraisers"""
+    permission_classes = [drf_permissions.IsAuthenticated, CanAccessAdvancedDashboard]
+    
+    def get(self, request):
+        now = timezone.now()
+        today = now.date()
+        week_ago = now - timedelta(days=7)
+        month_ago = now - timedelta(days=30)
+        
+        # User statistics
+        user_stats = {
+            'total_users': User.objects.count(),
+            'verified_users': User.objects.filter(is_verified=True).count(),
+            'active_users_today': User.objects.filter(last_login__date=today).count(),
+            'new_users_this_week': User.objects.filter(date_joined__gte=week_ago).count(),
+        }
+        
+        # Property statistics
+        properties = Property.objects.all()
+        property_stats = {
+            'total_properties': properties.count(),
+            'published_properties': properties.filter(is_published=True).count(),
+            'properties_this_month': properties.filter(created_at__gte=month_ago).count(),
+            'avg_property_value': properties.aggregate(Avg('market_value'))['market_value__avg'] or 0,
+            'highest_property_value': properties.aggregate(Max('market_value'))['market_value__max'] or 0,
+        }
+        
+        # Auction statistics
+        auctions = Auction.objects.all()
+        auction_stats = {
+            'total_auctions': auctions.count(),
+            'active_auctions': auctions.filter(status='live').count(),
+            'completed_auctions': auctions.filter(status='completed').count(),
+            'total_auction_value': auctions.aggregate(Sum('current_bid'))['current_bid__sum'] or 0,
+        }
+        
+        # Bid statistics
+        bids = Bid.objects.all()
+        bid_stats = {
+            'total_bids': bids.count(),
+            'unique_bidders': bids.values('bidder').distinct().count(),
+            'total_bid_value': bids.aggregate(Sum('bid_amount'))['bid_amount__sum'] or 0,
+            'avg_bid_amount': bids.aggregate(Avg('bid_amount'))['bid_amount__avg'] or 0,
+        }
+        
+        # Activity statistics
+        activity_stats = {
+            'bids_today': bids.filter(created_at__date=today).count(),
+            'auctions_ending_soon': auctions.filter(
+                end_date__gte=now,
+                end_date__lte=now + timedelta(hours=24),
+                status='live'
+            ).count(),
+            'pending_verifications': properties.filter(is_verified=False).count(),
+        }
+        
+        # Geographic statistics
+        top_cities = Location.objects.annotate(
+            property_count=Count('properties')
+        ).filter(property_count__gt=0).order_by('-property_count')[:5]
+        
+        top_cities_data = [
+            {'city': loc.city, 'state': loc.state, 'count': loc.property_count}
+            for loc in top_cities
+        ]
+        
+        # Combine all stats
+        dashboard_data = {
+            **user_stats,
+            **property_stats,
+            **auction_stats,
+            **bid_stats,
+            **activity_stats,
+            'top_cities': top_cities_data,
+        }
+        
+        serializer = SystemDashboardStatsSerializer(dashboard_data)
+        return Response(serializer.data)
+
+class RecentActivityView(APIView):
+    """Recent activity feed for dashboard"""
+    permission_classes = [drf_permissions.IsAuthenticated, CanAccessDashboard]
+    
+    def get(self, request):
+        user = request.user
+        limit = int(request.query_params.get('limit', 20))
+        
+        activities = []
+        now = timezone.now()
+        week_ago = now - timedelta(days=7)
+        
+        # Get recent properties based on user access
+        properties = user.get_accessible_properties().filter(created_at__gte=week_ago)
+        for prop in properties[:10]:
+            activities.append({
+                'activity_type': 'property',
+                'title': f'New Property: {prop.title}',
+                'description': f'Property added in {prop.location.city if prop.location else "Unknown"}',
+                'timestamp': prop.created_at,
+                'related_id': prop.id,
+                'related_slug': prop.slug,
+                'priority': 'medium' if prop.is_featured else 'low',
+                'user_name': f'{prop.owner.first_name} {prop.owner.last_name}' if prop.owner else 'Unknown'
+            })
+        
+        # Get recent auctions
+        auctions = user.get_accessible_auctions().filter(created_at__gte=week_ago)
+        for auction in auctions[:10]:
+            priority = 'high' if auction.status == 'live' else 'medium'
+            activities.append({
+                'activity_type': 'auction',
+                'title': f'Auction: {auction.title}',
+                'description': f'Status: {auction.get_status_display()}',
+                'timestamp': auction.created_at,
+                'related_id': auction.id,
+                'related_slug': auction.slug,
+                'priority': priority,
+            })
+        
+        # Get recent bids
+        bids = user.get_accessible_bids().filter(created_at__gte=week_ago)
+        for bid in bids[:10]:
+            priority = 'urgent' if bid.status == 'winning' else 'medium'
+            activities.append({
+                'activity_type': 'bid',
+                'title': f'Bid: ${bid.bid_amount:,.2f}',
+                'description': f'On {bid.auction.title}',
+                'timestamp': bid.created_at,
+                'related_id': bid.id,
+                'priority': priority,
+                'user_name': bid.bidder_name
+            })
+        
+        # Sort by timestamp and limit
+        activities.sort(key=lambda x: x['timestamp'], reverse=True)
+        activities = activities[:limit]
+        
+        serializer = RecentActivitySerializer(activities, many=True)
+        return Response(serializer.data)
+
+class DashboardPropertiesView(generics.ListAPIView):
+    """Properties for dashboard with pagination"""
+    serializer_class = PropertyDashboardSerializer
+    permission_classes = [drf_permissions.IsAuthenticated, CanAccessDashboard]
+    filter_backends = [filters.SearchFilter, filters.OrderingFilter]
+    search_fields = ['title', 'property_number', 'location__city']
+    ordering_fields = ['created_at', 'market_value', 'view_count']
+    ordering = ['-created_at']
+    
+    def get_queryset(self):
+        user = self.request.user
+        queryset = user.get_accessible_properties().select_related('location')
+        
+        # Filter by status if requested
+        status = self.request.query_params.get('status')
+        if status:
+            queryset = queryset.filter(status=status)
+            
+        # Filter by verification status
+        verified = self.request.query_params.get('verified')
+        if verified is not None:
+            queryset = queryset.filter(is_verified=verified.lower() == 'true')
+            
+        return queryset
+
+class DashboardAuctionsView(generics.ListAPIView):
+    """Auctions for dashboard with pagination"""
+    serializer_class = AuctionDashboardSerializer
+    permission_classes = [drf_permissions.IsAuthenticated, CanAccessDashboard]
+    filter_backends = [filters.SearchFilter, filters.OrderingFilter]
+    search_fields = ['title', 'related_property__title']
+    ordering_fields = ['created_at', 'start_date', 'end_date', 'bid_count']
+    ordering = ['-created_at']
+    
+    def get_queryset(self):
+        user = self.request.user
+        queryset = user.get_accessible_auctions().select_related('related_property')
+        
+        # Filter by status if requested
+        status = self.request.query_params.get('status')
+        if status:
+            queryset = queryset.filter(status=status)
+            
+        # Filter active auctions
+        active_only = self.request.query_params.get('active_only')
+        if active_only and active_only.lower() == 'true':
+            now = timezone.now()
+            queryset = queryset.filter(
+                status='live',
+                start_date__lte=now,
+                end_date__gt=now
+            )
+            
+        return queryset
+
+class DashboardBidsView(generics.ListAPIView):
+    """Bids for dashboard with pagination"""
+    serializer_class = BidDashboardSerializer
+    permission_classes = [drf_permissions.IsAuthenticated, CanAccessDashboard]
+    filter_backends = [filters.SearchFilter, filters.OrderingFilter]
+    search_fields = ['auction__title', 'auction__related_property__title']
+    ordering_fields = ['created_at', 'bid_amount', 'bid_time']
+    ordering = ['-created_at']
+    
+    def get_queryset(self):
+        user = self.request.user
+        queryset = user.get_accessible_bids().select_related('auction', 'auction__related_property', 'bidder')
+        
+        # Filter by status if requested
+        status = self.request.query_params.get('status')
+        if status:
+            queryset = queryset.filter(status=status)
+            
+        # Filter winning bids only
+        winning_only = self.request.query_params.get('winning_only')
+        if winning_only and winning_only.lower() == 'true':
+            queryset = queryset.filter(status='winning')
+            
+        return queryset

@@ -129,6 +129,55 @@ class CustomUser(AbstractUser):
         if is_new:
             UserProfile.objects.get_or_create(user=self)
 
+
+
+    #### ############################
+    #### the Dashboard methods ######
+
+    def get_dashboard_priority(self):
+        """Get user dashboard priority based on role"""
+        priority_map = {
+            'owner': 3,
+            'appraiser': 4,
+            'data_entry': 2,
+            'user': 1,
+        }
+        base_priority = priority_map.get(self.role, 1)
+        if self.is_superuser:
+            base_priority = 5
+        elif self.is_staff:
+            base_priority += 1
+        return base_priority
+
+    def get_accessible_properties(self):
+        """Get properties accessible based on user role"""
+        if self.is_superuser or self.role in ['appraiser', 'data_entry']:
+            return Property.objects.all()
+        elif self.role == 'owner':
+            return Property.objects.filter(owner=self)
+        else:
+            return Property.objects.filter(is_published=True)
+
+    def get_accessible_auctions(self):
+        """Get auctions accessible based on user role"""
+        if self.is_superuser or self.role == 'appraiser':
+            return Auction.objects.all()
+        elif self.role == 'owner':
+            return Auction.objects.filter(related_property__owner=self)
+        else:
+            return Auction.objects.filter(is_published=True)
+
+    def get_accessible_bids(self):
+        """Get bids accessible based on user role"""
+        if self.is_superuser or self.role == 'appraiser':
+            return Bid.objects.all()
+        elif self.role == 'owner':
+            return Bid.objects.filter(auction__related_property__owner=self)
+        else:
+            return Bid.objects.filter(bidder=self)
+
+
+
 class UserProfile(models.Model):
     user = models.OneToOneField(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='profile', primary_key=True)
     bio = models.TextField(blank=True, verbose_name=_('نبذة شخصية'))

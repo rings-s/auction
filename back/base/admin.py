@@ -3,7 +3,7 @@ from django.utils.translation import gettext_lazy as _
 from django.utils.html import format_html
 from django.contrib.contenttypes.admin import GenericTabularInline
 from django.db.models import Count
-from .models import Media, Location, Property, Room, Auction, Bid
+from .models import *
 
 class MediaInline(GenericTabularInline):
     model = Media
@@ -117,3 +117,16 @@ class BidAdmin(admin.ModelAdmin):
     
     def mark_as_verified(self, request, queryset):
         queryset.update(is_verified=True)
+
+
+
+
+@admin.register(DashboardMetrics)
+class DashboardMetricsAdmin(admin.ModelAdmin):
+    list_display = ('user', 'metric_type', 'last_updated')
+    list_filter = ('metric_type', 'last_updated')
+    search_fields = ('user__email', 'metric_type')
+    readonly_fields = ('last_updated',)
+    
+    def has_add_permission(self, request):
+        return False  # Metrics are auto-generated

@@ -3,8 +3,14 @@ from django.utils.translation import gettext_lazy as _
 from django.db import transaction
 from django.contrib.contenttypes.models import ContentType
 from django.contrib.auth import get_user_model
-from .models import Media, Property, Room, Auction, Bid, Location, Message, MessageAttachment
+from .models import *
+
 import json, logging
+from django.utils import timezone
+from datetime import timedelta
+from django.db.models import Q, Count, Sum, Avg, Max
+
+
 
 User = get_user_model()
 
@@ -442,3 +448,173 @@ class MessageReplySerializer(serializers.ModelSerializer):
             parent_message.mark_as_replied()
         
         return super().create(validated_data)
+
+
+
+
+
+class DashboardMetricsSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = DashboardMetrics
+        fields = '__all__'
+        read_only_fields = ['user', 'last_updated']
+
+class PropertyDashboardSerializer(serializers.ModelSerializer):
+    """Simplified property serializer for dashboard"""
+    location_display = serializers.SerializerMethodField()
+    status_display = serializers.CharField(source='get_status_display', read_only=True)
+    property_type_display = serializers.CharField(source='get_property_type_display', read_only=True)
+    days_since_created = serializers.SerializerMethodField()
+    
+    class Meta:
+        model = Property
+        fields = [
+            'id', 'title', 'slug', 'property_number', 'property_type', 'property_type_display',
+            'status', 'status_display', 'market_value', 'size_sqm', 'location_display',
+            'is_published', 'is_featured', 'is_verified', 'view_count', 'created_at',
+            'days_since_created'
+        ]
+        
+    def get_location_display(self, obj):
+        if obj.location:
+            return f"{obj.location.city}, {obj.location.state}"
+        return None
+        
+    def get_days_since_created(self, obj):
+        if obj.created_at:
+            return (timezone.now() - obj.created_at).days
+        return 0
+
+class AuctionDashboardSerializer(serializers.ModelSerializer):
+    """Simplified auction serializer for dashboard"""
+    property_title = serializers.CharField(source='related_property.title', read_only=True)
+    status_display = serializers.CharField(source='get_status_display', read_only=True)
+    auction_type_display = serializers.CharField(source='get_auction_type_display', read_only=True)
+    time_remaining = serializers.SerializerMethodField()
+    is_active = serializers.SerializerMethodField()
+    days_until_start = serializers.SerializerMethodField()
+    
+    class Meta:
+        model = Auction
+        fields = [
+            'id', 'title', 'slug', 'auction_type', 'auction_type_display', 'status', 'status_display',
+            'start_date', 'end_date', 'starting_bid', 'current_bid', 'bid_count',
+            'property_title', 'is_published', 'is_featured', 'view_count',
+            'time_remaining', 'is_active', 'days_until_start', 'created_at'
+        ]
+        
+    def get_time_remaining(self, obj):
+        return obj.time_remaining
+        
+    def get_is_active(self, obj):
+        return obj.is_active()
+        
+    def get_days_until_start(self, obj):
+        if obj.start_date and obj.start_date > timezone.now():
+            return (obj.start_date - timezone.now()).days
+        return 0
+
+class BidDashboardSerializer(serializers.ModelSerializer):
+    """Simplified bid serializer for dashboard"""
+    auction_title = serializers.CharField(source='auction.title', read_only=True)
+    property_title = serializers.CharField(source='auction.related_property.title', read_only=True)
+    bidder_name = serializers.SerializerMethodField()
+    status_display = serializers.CharField(source='get_status_display', read_only=True)
+    is_winning = serializers.SerializerMethodField()
+    
+    class Meta:
+        model = Bid
+        fields = [
+            'id', 'auction', 'auction_title', 'property_title', 'bid_amount',
+            'max_bid_amount', 'status', 'status_display', 'bid_time', 'bidder_name',
+            'is_verified', 'is_winning', 'created_at'
+        ]
+        
+    def get_bidder_name(self, obj):
+        return obj.bidder_name
+        
+    def get_is_winning(self, obj):
+        return obj.status == 'winning'
+
+class UserDashboardStatsSerializer(serializers.Serializer):
+    """User-specific dashboard statistics"""
+    user_priority = serializers.IntegerField()
+    user_role = serializers.CharField()
+    user_role_display = serializers.CharField()
+    
+    # Property stats
+    total_properties = serializers.IntegerField()
+    published_properties = serializers.IntegerField()
+    draft_properties = serializers.IntegerField()
+    featured_properties = serializers.IntegerField()
+    verified_properties = serializers.IntegerField()
+    properties_value = serializers.DecimalField(max_digits=20, decimal_places=2)
+    
+    # Auction stats
+    total_auctions = serializers.IntegerField()
+    active_auctions = serializers.IntegerField()
+    scheduled_auctions = serializers.IntegerField()
+    ended_auctions = serializers.IntegerField()
+    
+    # Bid stats
+    total_bids = serializers.IntegerField()
+    winning_bids = serializers.IntegerField()
+    total_bid_amount = serializers.DecimalField(max_digits=20, decimal_places=2)
+    
+    # Activity stats
+    recent_properties = serializers.IntegerField()
+    recent_auctions = serializers.IntegerField()
+    recent_bids = serializers.IntegerField()
+    messages_unread = serializers.IntegerField()
+    
+    # Performance metrics (for appraisers/data_entry)
+    properties_this_month = serializers.IntegerField(required=False)
+    auctions_this_month = serializers.IntegerField(required=False)
+    avg_property_value = serializers.DecimalField(max_digits=20, decimal_places=2, required=False)
+
+class SystemDashboardStatsSerializer(serializers.Serializer):
+    """System-wide dashboard statistics for admins/appraisers"""
+    
+    # Overall system stats
+    total_users = serializers.IntegerField()
+    verified_users = serializers.IntegerField()
+    active_users_today = serializers.IntegerField()
+    new_users_this_week = serializers.IntegerField()
+    
+    # Property stats
+    total_properties = serializers.IntegerField()
+    published_properties = serializers.IntegerField()
+    properties_this_month = serializers.IntegerField()
+    avg_property_value = serializers.DecimalField(max_digits=20, decimal_places=2)
+    highest_property_value = serializers.DecimalField(max_digits=20, decimal_places=2)
+    
+    # Auction stats
+    total_auctions = serializers.IntegerField()
+    active_auctions = serializers.IntegerField()
+    completed_auctions = serializers.IntegerField()
+    total_auction_value = serializers.DecimalField(max_digits=20, decimal_places=2)
+    
+    # Bid stats
+    total_bids = serializers.IntegerField()
+    unique_bidders = serializers.IntegerField()
+    total_bid_value = serializers.DecimalField(max_digits=20, decimal_places=2)
+    avg_bid_amount = serializers.DecimalField(max_digits=20, decimal_places=2)
+    
+    # Activity stats
+    bids_today = serializers.IntegerField()
+    auctions_ending_soon = serializers.IntegerField()
+    pending_verifications = serializers.IntegerField()
+    
+    # Geographic stats
+    top_cities = serializers.ListField(child=serializers.DictField())
+    
+class RecentActivitySerializer(serializers.Serializer):
+    """Recent activity feed for dashboard"""
+    activity_type = serializers.CharField()  # 'property', 'auction', 'bid', 'message'
+    title = serializers.CharField()
+    description = serializers.CharField()
+    timestamp = serializers.DateTimeField()
+    related_id = serializers.IntegerField()
+    related_slug = serializers.CharField(required=False)
+    priority = serializers.CharField()  # 'low', 'medium', 'high', 'urgent'
+    user_name = serializers.CharField(required=False)

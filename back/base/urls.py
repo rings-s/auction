@@ -56,5 +56,14 @@ urlpatterns = [
     path('messages/<int:pk>/reply/', views.MessageReplyView.as_view(), name='message-reply'),
     path('messages/thread/<uuid:thread_id>/', views.MessageReplyView.as_view(), name='message-thread'),
     path('messages/stats/', views.MessageStatsView.as_view(), name='message-stats'),
+
+
+    # Dashboard
+    path('dashboard/', views.UserDashboardView.as_view(), name='user-dashboard'),
+    path('dashboard/system/', views.SystemDashboardView.as_view(), name='system-dashboard'),
+    path('dashboard/activity/', views.RecentActivityView.as_view(), name='dashboard-activity'),
+    path('dashboard/properties/', views.DashboardPropertiesView.as_view(), name='dashboard-properties'),
+    path('dashboard/auctions/', views.DashboardAuctionsView.as_view(), name='dashboard-auctions'),
+    path('dashboard/bids/', views.DashboardBidsView.as_view(), name='dashboard-bids'),
     
 ]
