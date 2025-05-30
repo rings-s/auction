@@ -11,7 +11,8 @@
   placeBid,
   updateAuction,
   canAuctionAcceptBids,  
-  debugAuctionBiddingState  
+  debugAuctionBiddingState,
+  getAuctionStatus
 } from '$lib/api/auction';
   
   import Breadcrumb from '$lib/components/ui/Breadcrumb.svelte';
@@ -113,15 +114,26 @@ $: canBid = (
       const auctionData = await fetchAuctionBySlug(slug);
       auction = auctionData;
       
-      // Get real-time status
+      // Get real-time status using the backend endpoint
       if (auction.id) {
         const statusInfo = await getAuctionStatus(auction.id);
         auction = { 
           ...auction, 
           is_biddable: statusInfo.is_biddable,
           is_active: statusInfo.is_active,
-          time_remaining: statusInfo.time_remaining
+          time_remaining: statusInfo.time_remaining,
+          current_bid: statusInfo.current_bid,
+          minimum_next_bid: statusInfo.minimum_next_bid
         };
+        
+        console.log('✅ AUCTION LOADED WITH STATUS:', {
+          id: auction.id,
+          status: auction.status,
+          is_biddable: auction.is_biddable,
+          is_active: auction.is_active,
+          current_bid: auction.current_bid,
+          minimum_next_bid: auction.minimum_next_bid
+        });
       }
       
       if (auction.related_property) {

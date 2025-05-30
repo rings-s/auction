@@ -142,7 +142,7 @@ export async function fetchAuctionById(id) {
   return await apiRequest(`${AUCTION_URL}/${id}/`, { method: 'GET' });
 }
 
-// Fetch an auction by slug
+// Fetch an auction by slug - FIXED
 export async function fetchAuctionBySlug(slug) {
   if (!slug) throw new Error('Auction slug is required');
   const encodedSlug = encodeURIComponent(slug);
@@ -172,6 +172,15 @@ export async function fetchAuctionBids(auctionId) {
   
   const url = `${BID_URL}/?auction=${auctionId}&ordering=-bid_time`;
   return await apiRequest(url, { method: 'GET' });
+}
+
+/**
+ * NEW: Get auction status and real-time data - FIXED
+ */
+export async function getAuctionStatus(auctionId) {
+  if (!auctionId) throw new Error('Auction ID is required');
+  
+  return await apiRequest(`${AUCTION_URL}/${auctionId}/status/`, { method: 'GET' });
 }
 
 /**
@@ -268,15 +277,6 @@ export async function placeBidBySlug(slug, bidAmount, maxBidAmount = null) {
     console.error('Error placing bid by slug:', error);
     throw error;
   }
-}
-
-/**
- * NEW: Get auction status and real-time data
- */
-export async function getAuctionStatus(auctionId) {
-  if (!auctionId) throw new Error('Auction ID is required');
-  
-  return await apiRequest(`${AUCTION_URL}/${auctionId}/status/`, { method: 'GET' });
 }
 
 /**
@@ -409,6 +409,67 @@ export async function debugAuctionBiddingState(auctionId) {
     console.error('Error debugging auction:', error);
     throw error;
   }
+}
+
+// WebSocket connection for real-time updates
+export function createAuctionWebSocket(auctionId, callbacks = {}) {
+  const token = localStorage.getItem('accessToken');
+  const wsUrl = `ws://localhost:8000/ws/auction/${auctionId}/`;
+  
+  const socket = new WebSocket(wsUrl);
+  
+  socket.onopen = function(event) {
+    console.log('WebSocket connected for auction:', auctionId);
+    if (callbacks.onOpen) callbacks.onOpen(event);
+  };
+  
+  socket.onmessage = function(event) {
+    const data = JSON.parse(event.data);
+    console.log('WebSocket message received:', data);
+    
+    if (data.type === 'auction_update' && callbacks.onAuctionUpdate) {
+      callbacks.onAuctionUpdate(data.auction);
+    }
+    
+    if (data.type === 'auction_update' && data.new_bid && callbacks.onNewBid) {
+      callbacks.onNewBid(data.new_bid);
+    }
+    
+    if (data.type === 'status_changed' && callbacks.onStatusChange) {
+      callbacks.onStatusChange(data);
+    }
+    
+    if (data.type === 'error' && callbacks.onError) {
+      callbacks.onError(data.message);
+    }
+  };
+  
+  socket.onclose = function(event) {
+    console.log('WebSocket closed for auction:', auctionId);
+    if (callbacks.onClose) callbacks.onClose(event);
+  };
+  
+  socket.onerror = function(error) {
+    console.error('WebSocket error for auction:', auctionId, error);
+    if (callbacks.onError) callbacks.onError('WebSocket connection error');
+  };
+  
+  return socket;
+}
+
+// Send bid through WebSocket
+export function sendBidThroughWebSocket(socket, auctionId, bidAmount, maxBidAmount = null) {
+  const bidData = {
+    type: 'place_bid',
+    auction: auctionId,
+    amount: parseFloat(bidAmount)
+  };
+  
+  if (maxBidAmount) {
+    bidData.max_bid = parseFloat(maxBidAmount);
+  }
+  
+  socket.send(JSON.stringify(bidData));
 }
 
 // Remaining export functions stay the same...

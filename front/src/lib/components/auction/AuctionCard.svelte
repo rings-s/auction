@@ -266,7 +266,7 @@
       {/if}
       
       <!-- Live Indicator for Enhanced Mode -->
-      {#if enhanced && isLive}
+      {#if enhanced && isLive && !auction.is_featured}
         <div class="absolute top-3 left-3">
           <div class="flex items-center space-x-1 bg-red-500 text-white px-2 py-1 rounded-full text-xs font-bold">
             <span class="w-2 h-2 bg-white rounded-full animate-pulse"></span>
