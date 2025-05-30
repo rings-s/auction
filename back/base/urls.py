@@ -41,6 +41,7 @@ urlpatterns = [
     # Auctions
     path('auctions/', views.AuctionListCreateView.as_view(), name='auctions'),
     path('auctions/<int:pk>/', views.AuctionDetailView.as_view(), name='auction'),
+    path('auctions/<int:auction_id>/status/', views.AuctionStatusView.as_view(), name='auction-status'),
     path('auctions/<arabicslug:slug>/', views.AuctionSlugDetailView.as_view(), name='auction-by-slug'),
     
     # Bids

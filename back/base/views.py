@@ -214,6 +214,31 @@ class AuctionDetailView(BaseDetailView):
 class AuctionSlugDetailView(AuctionDetailView):
     lookup_field = 'slug'
 
+class AuctionStatusView(APIView):
+    """Simple endpoint to check and update auction status"""
+    permission_classes = [drf_permissions.AllowAny]
+    
+    def get(self, request, auction_id):
+        try:
+            auction = Auction.objects.get(id=auction_id)
+            old_status = auction.status
+            auction.update_status_based_on_time()
+            
+            return Response({
+                'id': auction.id,
+                'status': auction.status,
+                'status_display': auction.get_status_display(),
+                'is_biddable': auction.is_biddable(),
+                'is_active': auction.is_active(),
+                'time_remaining': auction.time_remaining,
+                'current_bid': float(auction.get_current_high_bid()),
+                'minimum_next_bid': float(auction.get_minimum_next_bid()),
+                'status_changed': old_status != auction.status
+            })
+        except Auction.DoesNotExist:
+            return Response({'error': 'Auction not found'}, status=404)
+
+
 # Bid Views
 class BidListCreateView(BaseListCreateView):
     serializer_class = BidSerializer
@@ -229,35 +254,54 @@ class BidListCreateView(BaseListCreateView):
         auction_id = request.data.get('auction')
         bid_amount = request.data.get('bid_amount')
         
-        if not all([auction_id, bid_amount]):
-            return Response({'error': 'Auction and bid amount are required'}, status=status.HTTP_400_BAD_REQUEST)
-
+        # Basic validation
         try:
+            auction = Auction.objects.select_for_update().get(id=auction_id)
             bid_amount = float(bid_amount)
-            if bid_amount <= 0:
-                raise ValueError()
-        except (ValueError, TypeError):
-            return Response({'error': 'Invalid bid amount'}, status=status.HTTP_400_BAD_REQUEST)
-
-        try:
-            auction = Auction.objects.get(id=auction_id)
-        except Auction.DoesNotExist:
-            return Response({'error': 'Auction not found'}, status=status.HTTP_404_NOT_FOUND)
-
-        if not auction.can_accept_bids():
-            return Response({'error': 'Auction is not accepting bids'}, status=status.HTTP_400_BAD_REQUEST)
-
-        current_bid = auction.current_bid or auction.starting_bid
-        minimum_required = float(current_bid) + float(auction.minimum_increment)
+        except (Auction.DoesNotExist, ValueError, TypeError):
+            return Response({
+                'error': 'Invalid auction or bid amount',
+                'code': 'INVALID_REQUEST'
+            }, status=status.HTTP_400_BAD_REQUEST)
         
-        if bid_amount < minimum_required:
-            return Response({'error': f'Bid must be at least ${minimum_required:,.2f}'}, status=status.HTTP_400_BAD_REQUEST)
-
+        # Check if auction can accept bids (includes auto-activation)
+        if not auction.is_biddable():
+            return Response({
+                'error': f'Auction is {auction.get_status_display().lower()} and not accepting bids',
+                'code': 'AUCTION_NOT_ACTIVE',
+                'auction_status': auction.status
+            }, status=status.HTTP_400_BAD_REQUEST)
+        
+        # Calculate minimum bid
+        current_high = auction.current_bid or auction.starting_bid
+        min_bid = float(current_high) + float(auction.minimum_increment)
+        
+        if bid_amount < min_bid:
+            return Response({
+                'error': f'Minimum bid is ${min_bid:,.2f}',
+                'code': 'BID_TOO_LOW',
+                'minimum_bid': min_bid,
+                'current_bid': float(current_high)
+            }, status=status.HTTP_400_BAD_REQUEST)
+        
+        # Create the bid
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
-        bid = serializer.save(bidder=request.user, ip_address=request.META.get('REMOTE_ADDR'), is_verified=request.user.is_verified)
+        bid = serializer.save(
+            bidder=request.user,
+            ip_address=request.META.get('REMOTE_ADDR'),
+            is_verified=getattr(request.user, 'is_verified', False),
+            status='accepted'  # Auto-accept valid bids
+        )
         
-        return Response(serializer.data, status=status.HTTP_201_CREATED)
+        return Response({
+            'message': 'Bid placed successfully',
+            'bid': serializer.data,
+            'auction_status': auction.status
+        }, status=status.HTTP_201_CREATED)
+
+
+
 
 class BidDetailView(BaseDetailView):
     queryset = Bid.objects.select_related('auction', 'bidder')

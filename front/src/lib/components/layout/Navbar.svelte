@@ -89,15 +89,22 @@
   $: activeSection = 
     $page.url.pathname === '/' ? 'home' :
     $page.url.pathname.startsWith('/properties') ? 'properties' :
-    $page.url.pathname.startsWith('/auctions') ? 'auctions' : 'default';
+    $page.url.pathname.startsWith('/auctions') ? 'auctions' :
+    $page.url.pathname.startsWith('/dashboard') ? 'dashboard' :
+    $page.url.pathname.startsWith('/messages') ? 'messages' : 'default';
     
   // Define accent colors based on active section
   $: accentColor = {
     home: 'primary',
     properties: 'secondary',
     auctions: 'success',
+    dashboard: 'purple',
+    messages: 'info',
     default: 'primary'
   }[activeSection];
+
+  // Check if user can access dashboard
+  $: canAccessDashboard = $user && $user.is_verified;
 </script>
 
 <svelte:window bind:scrollY on:scroll={handleScroll} />
@@ -158,12 +165,24 @@
                   : 'border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300'
               }`}
             >{$t('nav.auctions')}</a>
+
+            <!-- Dashboard Link - Only show for authenticated users -->
+            {#if canAccessDashboard}
+              <a 
+                href="/dashboard" 
+                class={`inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium transition-all duration-300 ${
+                  $page.url.pathname.startsWith('/dashboard') 
+                    ? `border-purple-500 text-purple-600 dark:text-purple-400` 
+                    : 'border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300'
+                }`}
+              >{$t('nav.dashboard')}</a>
+            {/if}
             
             <a 
               href="/messages" 
               class={`inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium transition-all duration-300 ${
                 $page.url.pathname.startsWith('/messages') 
-                  ? `border-primary-500 text-primary-600 dark:text-primary-400` 
+                  ? `border-info-500 text-info-600 dark:text-info-400` 
                   : 'border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300'
               }`}
             >{$t('nav.messages')}</a>
@@ -303,7 +322,7 @@
           >
             <span class={`mr-3 text-lg ${$page.url.pathname.startsWith('/properties') ? 'text-secondary-500' : 'text-gray-400'}`}>
               <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                <path d="M4 4a2 2 0 012-2h7a2 2 0 012 2v4a2 2 0 01-2 2H9l-3 3v-3H4a2 2 0 01-2-2V4z" />
+                <path d="M10.707 2.293a1 1 0 00-1.414 0l-7 7a1 1 0 001.414 1.414L4 10.414V17a1 1 0 001 1h2a1 1 0 001-1v-2a1 1 0 011-1h2a1 1 0 011 1v2a1 1 0 001 1h2a1 1 0 001-1v-6.586l.293.293a1 1 0 001.414-1.414l-7-7z" />
               </svg>
             </span>
             {$t('nav.properties')}
@@ -326,18 +345,39 @@
             </span>
             {$t('nav.auctions')}
           </a>
+
+          <!-- Dashboard Link - Mobile -->
+          {#if canAccessDashboard}
+            <a 
+              href="/dashboard" 
+              class={`flex items-center pl-3 pr-4 py-3 rounded-lg transition-all duration-300 ${
+                $page.url.pathname.startsWith('/dashboard') 
+                  ? `bg-purple-50/50 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300` 
+                  : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100/50 dark:hover:bg-gray-700/50'
+              }`}
+              on:click={() => isOpen = false}
+              in:fly={{ x: -10, duration: 300, delay: 350 }}
+            >
+              <span class={`mr-3 text-lg ${$page.url.pathname.startsWith('/dashboard') ? 'text-purple-500' : 'text-gray-400'}`}>
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                  <path d="M3 4a1 1 0 011-1h12a1 1 0 011 1v2a1 1 0 01-1 1H4a1 1 0 01-1-1V4zM3 10a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H4a1 1 0 01-1-1v-6zM14 9a1 1 0 00-1 1v6a1 1 0 001 1h2a1 1 0 001-1v-6a1 1 0 00-1-1h-2z" />
+                </svg>
+              </span>
+              {$t('nav.dashboard')}
+            </a>
+          {/if}
           
           <a 
             href="/messages" 
             class={`flex items-center pl-3 pr-4 py-3 rounded-lg transition-all duration-300 ${
               $page.url.pathname.startsWith('/messages') 
-                ? `bg-primary-50/50 dark:bg-primary-900/30 text-primary-700 dark:text-primary-300` 
+                ? `bg-info-50/50 dark:bg-info-900/30 text-info-700 dark:text-info-300` 
                 : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100/50 dark:hover:bg-gray-700/50'
             }`}
             on:click={() => isOpen = false}
-            in:fly={{ x: -10, duration: 300, delay: 350 }}
+            in:fly={{ x: -10, duration: 300, delay: 400 }}
           >
-            <span class={`mr-3 text-lg ${$page.url.pathname.startsWith('/messages') ? 'text-primary-500' : 'text-gray-400'}`}>
+            <span class={`mr-3 text-lg ${$page.url.pathname.startsWith('/messages') ? 'text-info-500' : 'text-gray-400'}`}>
               <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
                 <path d="M2 5a2 2 0 012-2h7a2 2 0 012 2v4a2 2 0 01-2 2H9l-3 3v-3H4a2 2 0 01-2-2V5z" />
                 <path d="M15 7v2a4 4 0 01-4 4H9.828l-1.766 1.767c.28.149.599.233.938.233h2l3 3v-3h2a2 2 0 002-2V9a2 2 0 00-2-2h-1z" />

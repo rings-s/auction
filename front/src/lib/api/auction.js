@@ -175,57 +175,7 @@ export async function fetchAuctionBids(auctionId) {
 }
 
 /**
- * Debug auction state for bidding
- */
-export async function debugAuctionBiddingState(auctionId) {
-  try {
-    const auction = await fetchAuctionById(auctionId);
-    const now = new Date();
-    const startDate = new Date(auction.start_date);
-    const endDate = new Date(auction.end_date);
-    
-    console.log('🔍 AUCTION DEBUGGING INFO:');
-    console.log('Auction ID:', auctionId);
-    console.log('Auction Status:', auction.status);
-    console.log('Is Published:', auction.is_published);
-    console.log('Current Time:', now.toISOString());
-    console.log('Start Date:', startDate.toISOString());
-    console.log('End Date:', endDate.toISOString());
-    console.log('Is Current Time After Start?', now >= startDate);
-    console.log('Is Current Time Before End?', now < endDate);
-    console.log('Starting Bid:', auction.starting_bid);
-    console.log('Current Bid:', auction.current_bid);
-    console.log('Minimum Increment:', auction.minimum_increment);
-    
-    // Calculate if auction should be active
-    const shouldBeActive = (
-      auction.status === 'live' &&
-      auction.is_published &&
-      now >= startDate &&
-      now < endDate
-    );
-    
-    console.log('Should Be Active:', shouldBeActive);
-    
-    return {
-      auction,
-      debugInfo: {
-        shouldBeActive,
-        currentTime: now,
-        isAfterStart: now >= startDate,
-        isBeforeEnd: now < endDate,
-        isPublished: auction.is_published,
-        status: auction.status
-      }
-    };
-  } catch (error) {
-    console.error('Error debugging auction:', error);
-    throw error;
-  }
-}
-
-/**
- * FIXED: Place a bid on an auction with comprehensive debugging
+ * ENHANCED: Place a bid with improved status checking
  */
 export async function placeBid(auctionId, bidAmount, maxBidAmount = null) {
   try {
@@ -245,45 +195,16 @@ export async function placeBid(auctionId, bidAmount, maxBidAmount = null) {
     }
 
     console.log('🔍 PLACING BID - DEBUG INFO:');
-    
-    // Debug auction state first
-    const debugInfo = await debugAuctionBiddingState(auctionId);
-    
-    if (!debugInfo.debugInfo.shouldBeActive) {
-      console.error('❌ AUCTION NOT ACTIVE:');
-      console.error('Status:', debugInfo.auction.status);
-      console.error('Published:', debugInfo.auction.is_published);
-      console.error('Current Time:', debugInfo.debugInfo.currentTime);
-      console.error('Is After Start:', debugInfo.debugInfo.isAfterStart);
-      console.error('Is Before End:', debugInfo.debugInfo.isBeforeEnd);
-      
-      // Provide specific error message based on issue
-      if (debugInfo.auction.status !== 'live') {
-        throw new Error(`Auction status is "${debugInfo.auction.status}" but must be "live" to accept bids`);
-      }
-      if (!debugInfo.auction.is_published) {
-        throw new Error('Auction is not published and cannot accept bids');
-      }
-      if (!debugInfo.debugInfo.isAfterStart) {
-        throw new Error('Auction has not started yet');
-      }
-      if (!debugInfo.debugInfo.isBeforeEnd) {
-        throw new Error('Auction has already ended');
-      }
-    }
-
-    // Calculate minimum bid
-    const currentBid = debugInfo.auction.current_bid || debugInfo.auction.starting_bid;
-    const minimumBid = parseFloat(currentBid) + parseFloat(debugInfo.auction.minimum_increment);
-    
-    console.log('💰 BID AMOUNT VALIDATION:');
+    console.log('Auction ID:', auctionId);
     console.log('Bid Amount:', bidAmount);
-    console.log('Current Bid:', currentBid);
-    console.log('Minimum Required:', minimumBid);
-    console.log('Is Valid:', parseFloat(bidAmount) >= minimumBid);
-    
-    if (parseFloat(bidAmount) < minimumBid) {
-      throw new Error(`Bid amount must be at least $${minimumBid.toLocaleString()}`);
+    console.log('Max Bid Amount:', maxBidAmount);
+
+    // First check auction status using the new endpoint
+    const statusCheck = await getAuctionStatus(auctionId);
+    console.log('📊 AUCTION STATUS CHECK:', statusCheck);
+
+    if (!statusCheck.is_biddable) {
+      throw new Error(`Auction is ${statusCheck.status_display} and not accepting bids`);
     }
 
     // Prepare bid data
@@ -324,34 +245,14 @@ export async function placeBid(auctionId, bidAmount, maxBidAmount = null) {
       errorMessage = 'Your bid amount is too low. Please increase your bid.';
     } else if (errorMessage.includes('ended')) {
       errorMessage = 'This auction has ended and is no longer accepting bids';
-    } else if (errorMessage.includes('own auction')) {
-      errorMessage = 'You cannot bid on your own auction';
+    } else if (errorMessage.includes('scheduled')) {
+      errorMessage = 'This auction has not started yet';
     }
     
     // Create enhanced error object
     const enhancedError = new Error(errorMessage);
     enhancedError.originalError = error;
     throw enhancedError;
-  }
-}
-
-/**
- * Check if auction can accept bids
- */
-export async function canAuctionAcceptBids(auctionId) {
-  try {
-    const debugInfo = await debugAuctionBiddingState(auctionId);
-    return {
-      canAcceptBids: debugInfo.debugInfo.shouldBeActive,
-      reason: debugInfo.debugInfo.shouldBeActive ? 'Auction is active' : 'Auction is not active',
-      details: debugInfo.debugInfo
-    };
-  } catch (error) {
-    return {
-      canAcceptBids: false,
-      reason: error.message,
-      details: null
-    };
   }
 }
 
@@ -366,6 +267,35 @@ export async function placeBidBySlug(slug, bidAmount, maxBidAmount = null) {
   } catch (error) {
     console.error('Error placing bid by slug:', error);
     throw error;
+  }
+}
+
+/**
+ * NEW: Get auction status and real-time data
+ */
+export async function getAuctionStatus(auctionId) {
+  if (!auctionId) throw new Error('Auction ID is required');
+  
+  return await apiRequest(`${AUCTION_URL}/${auctionId}/status/`, { method: 'GET' });
+}
+
+/**
+ * Check if auction can accept bids
+ */
+export async function canAuctionAcceptBids(auctionId) {
+  try {
+    const statusInfo = await getAuctionStatus(auctionId);
+    return {
+      canAcceptBids: statusInfo.is_biddable,
+      reason: statusInfo.is_biddable ? 'Auction is active' : `Auction is ${statusInfo.status_display}`,
+      details: statusInfo
+    };
+  } catch (error) {
+    return {
+      canAcceptBids: false,
+      reason: error.message,
+      details: null
+    };
   }
 }
 
@@ -422,41 +352,8 @@ export async function fetchUserBids() {
   return await apiRequest(`${BID_URL}/?bidder=current`, { method: 'GET' });
 }
 
-// Extend auction
-export async function extendAuction(id, extensionData) {
-  if (!id) throw new Error('Auction ID is required');
-  
-  return await apiRequest(`${AUCTION_URL}/${id}/`, {
-    method: 'PATCH',
-    body: JSON.stringify({
-      action: 'extend',
-      ...extensionData
-    })
-  });
-}
-
-// Complete auction
-export async function completeAuction(id, completionData) {
-  if (!id) throw new Error('Auction ID is required');
-  
-  return await apiRequest(`${AUCTION_URL}/${id}/`, {
-    method: 'PATCH',
-    body: JSON.stringify({
-      action: 'complete',
-      ...completionData
-    })
-  });
-}
-
-// Get auction statistics for owners
-export async function getAuctionStats(id) {
-  if (!id) throw new Error('Auction ID is required');
-  
-  return await apiRequest(`${AUCTION_URL}/${id}/stats/`, { method: 'GET' });
-}
-
 /**
- * Check if user can bid on auction
+ * NEW: Check if user can bid on auction
  */
 export async function checkBiddingEligibility(auctionId) {
   if (!auctionId) throw new Error('Auction ID is required');
@@ -467,7 +364,11 @@ export async function checkBiddingEligibility(auctionId) {
   }
 
   try {
-    return await apiRequest(`${AUCTION_URL}/${auctionId}/can-bid/`, { method: 'GET' });
+    const statusInfo = await getAuctionStatus(auctionId);
+    return { 
+      canBid: statusInfo.is_biddable, 
+      reason: statusInfo.is_biddable ? 'Ready to bid' : `Auction is ${statusInfo.status_display}`
+    };
   } catch (error) {
     console.error('Error checking bidding eligibility:', error);
     return { canBid: false, reason: error.message || 'Failed to check eligibility' };
@@ -475,46 +376,58 @@ export async function checkBiddingEligibility(auctionId) {
 }
 
 /**
- * Register for an auction
+ * Debug auction state for bidding (Enhanced)
  */
+export async function debugAuctionBiddingState(auctionId) {
+  try {
+    const auction = await fetchAuctionById(auctionId);
+    const statusInfo = await getAuctionStatus(auctionId);
+    
+    console.log('🔍 ENHANCED AUCTION DEBUGGING INFO:');
+    console.log('Auction ID:', auctionId);
+    console.log('Auction Status:', auction.status);
+    console.log('Is Published:', auction.is_published);
+    console.log('Starting Bid:', auction.starting_bid);
+    console.log('Current Bid:', auction.current_bid);
+    console.log('Minimum Increment:', auction.minimum_increment);
+    console.log('Time Remaining:', auction.time_remaining);
+    console.log('Is Active (from backend):', statusInfo.is_active);
+    console.log('Is Biddable (from backend):', statusInfo.is_biddable);
+    
+    return {
+      auction,
+      statusInfo,
+      debugInfo: {
+        shouldBeActive: statusInfo.is_biddable,
+        currentTime: new Date(),
+        isPublished: auction.is_published,
+        status: auction.status,
+        backendChecked: true
+      }
+    };
+  } catch (error) {
+    console.error('Error debugging auction:', error);
+    throw error;
+  }
+}
+
+// Remaining export functions stay the same...
 export async function registerForAuction(auctionId) {
   if (!auctionId) throw new Error('Auction ID is required');
-  
   return await apiRequest(`${AUCTION_URL}/${auctionId}/register/`, { method: 'POST' });
 }
 
-/**
- * Get auction status and real-time data
- */
-export async function getAuctionStatus(auctionId) {
-  if (!auctionId) throw new Error('Auction ID is required');
-  
-  return await apiRequest(`${AUCTION_URL}/${auctionId}/status/`, { method: 'GET' });
-}
-
-/**
- * Watch an auction (add to watchlist)
- */
 export async function watchAuction(auctionId) {
   if (!auctionId) throw new Error('Auction ID is required');
-  
   return await apiRequest(`${AUCTION_URL}/${auctionId}/watch/`, { method: 'POST' });
 }
 
-/**
- * Unwatch an auction (remove from watchlist)
- */
 export async function unwatchAuction(auctionId) {
   if (!auctionId) throw new Error('Auction ID is required');
-  
   return await apiRequest(`${AUCTION_URL}/${auctionId}/watch/`, { method: 'DELETE' });
 }
 
-/**
- * Cancel a bid (if allowed)
- */
 export async function cancelBid(bidId) {
   if (!bidId) throw new Error('Bid ID is required');
-  
   return await apiRequest(`${BID_URL}/${bidId}/`, { method: 'DELETE' });
 }

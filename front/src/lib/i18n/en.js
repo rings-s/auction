@@ -48,6 +48,7 @@ export const enTranslations = {
     register: 'Create Account',
     logout: 'Logout',
     profile: 'My Profile',
+    dashboard: 'Dashboard',
     propertyTypes: {
       residential: 'Residential',
       commercial: 'Commercial',

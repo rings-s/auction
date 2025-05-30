@@ -5,6 +5,7 @@ from django.contrib.auth.models import AbstractUser, BaseUserManager
 from django.utils.translation import gettext_lazy as _
 from django.conf import settings
 from django.core.validators import RegexValidator, MinValueValidator
+from base.models import Property, Auction, Bid
 
 def user_avatar_path(instance, filename):
     timestamp = timezone.now().strftime('%Y%m%d%H%M%S')

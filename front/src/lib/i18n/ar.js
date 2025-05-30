@@ -57,6 +57,8 @@ export const arTranslations = {
     register: 'تسجيل',
     logout: 'تسجيل الخروج',
     profile: 'الملف الشخصي',
+    dashboard: 'لوحة التحكم',
+
     propertyTypes: {
       residential: 'سكني',
       commercial: 'تجاري',

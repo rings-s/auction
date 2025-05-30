@@ -2,7 +2,7 @@
 <script>
   import { goto } from '$app/navigation';
   import { page } from '$app/stores';
-  import { verifyEmail } from '$lib/api/auth';
+  import { verifyEmail } from '$lib/api/auth'; // Make sure this import is correct
   import { t } from '$lib/i18n';
   import { user } from '$lib/stores/user';
   import { onMount } from 'svelte';
@@ -15,6 +15,9 @@
   let resendSuccess = false;
   let emailReceived = false;
   let autoVerify = false;
+
+  // Debug: Check if verifyEmail is imported correctly
+  console.log('verifyEmail function:', verifyEmail);
 
   onMount(() => {
     // If user is already logged in and verified, redirect to profile
@@ -49,6 +52,13 @@
     try {
       loading = true;
       error = '';
+      
+      console.log('About to call verifyEmail with:', { email: verifyEmail, code: verificationCode });
+      
+      // Make sure verifyEmail function exists
+      if (typeof verifyEmail !== 'function') {
+        throw new Error('verifyEmail function is not available');
+      }
       
       const response = await verifyEmail(verifyEmail, verificationCode);
       

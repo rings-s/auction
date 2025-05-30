@@ -9,11 +9,16 @@ from django.core.cache import cache
 import uuid
 import os
 import random
+import logging
 from PIL import Image
 from io import BytesIO
 from django.core.files.base import ContentFile
 from django.db.models import Q, Count, Sum, Avg
 from datetime import timedelta
+
+# Get an instance of a logger
+logger = logging.getLogger(__name__)
+
 # -------------------------------------------------------------------------
 # Base Model
 # -------------------------------------------------------------------------
@@ -441,8 +446,7 @@ class Room(BaseModel):
 # Auction Model
 # -------------------------------------------------------------------------
 class Auction(BaseModel):
-    
-    """Auction model with integrated auction types"""
+    """Enhanced Auction model with auto-status management"""
     AUCTION_TYPES = [
         ('public', _('عام')),
         ('private', _('خاص')),
@@ -474,7 +478,7 @@ class Auction(BaseModel):
     current_bid = models.DecimalField(_('المزايدة الحالية'), max_digits=14, decimal_places=2, null=True, blank=True)
     minimum_increment = models.DecimalField(_('الحد الأدنى للزيادة'), max_digits=14, decimal_places=2, default=100.00)
     minimum_participants = models.PositiveIntegerField(_('الحد الأدنى للمشاركين'), default=1)
-    auto_extend_minutes = models.PositiveIntegerField(_('تمديد تلقائي (دقائق)'), default=0)
+    auto_extend_minutes = models.PositiveIntegerField(_('تمديد تلقائي (دقائق)'), default=5)
 
     is_published = models.BooleanField(_('منشور'), default=False)
     is_featured = models.BooleanField(_('مميز'), default=False)
@@ -482,6 +486,11 @@ class Auction(BaseModel):
     view_count = models.PositiveIntegerField(_('عدد المشاهدات'), default=0)
     bid_count = models.PositiveIntegerField(_('عدد المزايدات'), default=0)
     registered_bidders = models.PositiveIntegerField(_('المزايدين المسجلين'), default=0)
+
+    # Auto-extension tracking
+    last_bid_time = models.DateTimeField(_('وقت آخر مزايدة'), null=True, blank=True)
+    extension_count = models.PositiveIntegerField(_('عدد التمديدات'), default=0)
+    max_extensions = models.PositiveIntegerField(_('الحد الأقصى للتمديدات'), default=3)
 
     media = GenericRelation(Media, related_query_name='auction')
 
@@ -493,13 +502,9 @@ class Auction(BaseModel):
             models.Index(fields=['slug']),
             models.Index(fields=['status']),
             models.Index(fields=['start_date']),
+            models.Index(fields=['end_date']),
             models.Index(fields=['related_property']),
         ]
-
-    @property
-    def registered_bidders_count(self):
-        """Returns the number of users registered for this auction."""
-        return self.registered_users.count()
 
     def __str__(self):
         return self.title
@@ -519,6 +524,9 @@ class Auction(BaseModel):
     def _generate_unique_slug(self):
         """Generate a unique slug for the auction"""
         original_slug = slugify(self.title, allow_unicode=True)
+        if not original_slug:
+            original_slug = f"auction-{random.randint(10000, 99999)}"
+            
         unique_slug = original_slug
         counter = 1
         
@@ -528,10 +536,80 @@ class Auction(BaseModel):
         
         return unique_slug
 
+    def update_status_based_on_time(self):
+        """Automatically update auction status based on current time"""
+        now = timezone.now()
+        old_status = self.status
+        
+        # Auto-start scheduled auctions
+        if self.status == 'scheduled' and self.start_date <= now < self.end_date and self.is_published:
+            self.status = 'live'
+            logger.info(f"Auto-started auction {self.id}: {self.title}")
+        
+        # Auto-end live auctions
+        elif self.status == 'live' and self.end_date <= now:
+            self.status = 'ended'
+            logger.info(f"Auto-ended auction {self.id}: {self.title}")
+        
+        # Save if status changed
+        if old_status != self.status:
+            self.save(update_fields=['status', 'updated_at'])
+            
+            # Update property status when auction ends
+            if self.status == 'ended' and self.related_property:
+                winning_bid = self.bids.filter(status='winning').first()
+                if winning_bid:
+                    self.related_property.status = 'sold'
+                else:
+                    self.related_property.status = 'available'
+                self.related_property.save(update_fields=['status'])
+        
+        return self.status
+
+    def is_biddable(self):
+        """Enhanced check if auction can accept bids"""
+        # Auto-update status first
+        self.update_status_based_on_time()
+        
+        return (
+            self.status == 'live' and 
+            self.is_published and 
+            not self.is_deleted and
+            timezone.now() < self.end_date
+        )
+
+    def can_accept_bids(self):
+        """Alias for backwards compatibility"""
+        return self.is_biddable()
+
+    def check_auto_extension(self, new_bid_time=None):
+        """Check if auction should be auto-extended due to last-minute bid"""
+        if not self.auto_extend_minutes or self.extension_count >= self.max_extensions:
+            return False
+            
+        bid_time = new_bid_time or timezone.now()
+        time_until_end = (self.end_date - bid_time).total_seconds() / 60  # minutes
+        
+        if time_until_end <= self.auto_extend_minutes:
+            # Extend auction
+            self.end_date = self.end_date + timedelta(minutes=self.auto_extend_minutes)
+            self.extension_count += 1
+            self.save(update_fields=['end_date', 'extension_count', 'updated_at'])
+            logger.info(f"Auto-extended auction {self.id} by {self.auto_extend_minutes} minutes")
+            return True
+            
+        return False
+
     @property
     def time_remaining(self):
         """Calculate time remaining until auction end"""
-        if not self.end_date or self.end_date <= timezone.now():
+        if not self.end_date:
+            return {"days": 0, "hours": 0, "minutes": 0, "seconds": 0, "total_seconds": 0}
+            
+        # Auto-update status to get accurate end time
+        self.update_status_based_on_time()
+        
+        if self.end_date <= timezone.now():
             return {"days": 0, "hours": 0, "minutes": 0, "seconds": 0, "total_seconds": 0}
         
         time_left = self.end_date - timezone.now()
@@ -549,23 +627,27 @@ class Auction(BaseModel):
 
     def is_active(self):
         """Check if auction is currently active"""
-        now = timezone.now()
-        return (
-            self.status == 'live' and 
-            self.start_date <= now and 
-            self.end_date > now and 
-            self.is_published
-        )
+        self.update_status_based_on_time()
+        return self.status == 'live' and self.is_published
 
-    def can_accept_bids(self):
-        """Check if auction can accept new bids"""
-        return self.is_active() and not self.is_deleted
+    def get_current_high_bid(self):
+        """Get the current highest bid amount"""
+        return self.current_bid or self.starting_bid
+
+    def get_minimum_next_bid(self):
+        """Get the minimum amount for the next bid"""
+        return self.get_current_high_bid() + self.minimum_increment
 
     def increment_view_count(self):
         """Increment view count efficiently"""
         Auction.objects.filter(pk=self.pk).update(view_count=models.F('view_count') + 1)
         self.refresh_from_db(fields=['view_count'])
         return self.view_count
+
+    @property
+    def registered_bidders_count(self):
+        """Returns the number of users registered for this auction."""
+        return self.bids.values('bidder').distinct().count()
 
     def to_dict(self):
         """Return a dictionary representation for API responses"""
@@ -590,12 +672,18 @@ class Auction(BaseModel):
                 'starting': float(self.starting_bid) if self.starting_bid is not None else None,
                 'current': float(self.current_bid) if self.current_bid is not None else None,
                 'minimum_increment': float(self.minimum_increment) if self.minimum_increment is not None else None,
+                'minimum_next': float(self.get_minimum_next_bid()),
                 'count': self.bid_count,
             },
             'time_remaining': self.time_remaining,
             'is_active': self.is_active(),
+            'is_biddable': self.is_biddable(),
+            'auto_extend_info': {
+                'minutes': self.auto_extend_minutes,
+                'extension_count': self.extension_count,
+                'max_extensions': self.max_extensions,
+            }
         }
-
 # -------------------------------------------------------------------------
 # Bid Model
 # -------------------------------------------------------------------------

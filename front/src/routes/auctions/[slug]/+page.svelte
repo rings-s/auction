@@ -60,15 +60,14 @@
   $: isScheduledAuction = auction?.status === 'scheduled';
   $: isActiveAuction = auction?.status === 'live' || auction?.status === 'scheduled';
   
-  // FIXED: Simplified bidding conditions
-  $: canBid = (
-    $user && 
-    isActiveAuction && 
-    auction && 
-    new Date(auction?.end_date) > new Date() && 
-    !isOwner && 
-    isRegistered
-  );
+
+
+$: canBid = (
+  $user && 
+  auction?.is_biddable && // Use backend-determined biddability
+  !isOwner && 
+  isRegistered
+);
   
   $: canRegister = (isLiveAuction || isScheduledAuction) && $user && !isOwner && !isRegistered;
   $: showBidSection = (isLiveAuction || isScheduledAuction);
@@ -114,6 +113,17 @@
       const auctionData = await fetchAuctionBySlug(slug);
       auction = auctionData;
       
+      // Get real-time status
+      if (auction.id) {
+        const statusInfo = await getAuctionStatus(auction.id);
+        auction = { 
+          ...auction, 
+          is_biddable: statusInfo.is_biddable,
+          is_active: statusInfo.is_active,
+          time_remaining: statusInfo.time_remaining
+        };
+      }
+      
       if (auction.related_property) {
         property = auction.related_property;
       }
@@ -151,7 +161,6 @@
     }
   }
   
-  // FIXED: Enhanced bid submission with better error handling
   async function handleBidSubmission() {
     const bidValue = parseFloat(bidAmount);
     const maxBidValue = maxBidAmount ? parseFloat(maxBidAmount) : null;
@@ -171,8 +180,22 @@
       return;
     }
     
-    if (bidValue < minimumBidAmount) {
-      bidError = `Bid must be at least $${minimumBidAmount.toLocaleString()}`;
+    // Get real-time minimum bid from backend
+    try {
+      const statusCheck = await getAuctionStatus(auction.id);
+      const realTimeMinBid = statusCheck.minimum_next_bid;
+      
+      if (bidValue < realTimeMinBid) {
+        bidError = `Bid must be at least $${realTimeMinBid.toLocaleString()}`;
+        return;
+      }
+      
+      if (!statusCheck.is_biddable) {
+        bidError = `Cannot place bid: Auction is ${statusCheck.status_display}`;
+        return;
+      }
+    } catch (error) {
+      bidError = 'Unable to verify auction status. Please try again.';
       return;
     }
     
@@ -184,21 +207,12 @@
     try {
       placingBid = true;
       
-      console.log('🚀 STARTING BID PROCESS');
+      console.log('🚀 STARTING ENHANCED BID PROCESS');
       console.log('Auction ID:', auction.id);
       console.log('Bid Amount:', bidValue);
       console.log('User:', $user?.email);
       
-      // First, check if auction can accept bids
-      const eligibilityCheck = await canAuctionAcceptBids(auction.id);
-      console.log('🔍 ELIGIBILITY CHECK:', eligibilityCheck);
-      
-      if (!eligibilityCheck.canAcceptBids) {
-        bidError = `Cannot place bid: ${eligibilityCheck.reason}`;
-        return;
-      }
-      
-      // Place bid using API
+      // Place bid using enhanced API
       const bidResponse = await placeBid(auction.id, bidValue, maxBidValue);
       
       console.log('✅ BID SUCCESS:', bidResponse);
