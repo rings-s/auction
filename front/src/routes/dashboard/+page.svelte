@@ -135,8 +135,7 @@
    
    <!-- Header -->
    <div class="mb-6">
-     <Breadcrumb items={breadcrumbItems} class="mb-4" />
-     
+
      <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between">
        <div>
          <h1 class="text-xl font-semibold text-gray-900">

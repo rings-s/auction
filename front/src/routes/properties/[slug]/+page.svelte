@@ -300,7 +300,9 @@
                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" width="14" height="14">
                  <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/>
                </svg>
-             </span>`,
+             </span>
+             ${property.location.house_number ? `<div class="house-number">${property.location.house_number}</div>` : ''}
+             `,
       iconSize: [30, 42],
       iconAnchor: [15, 42]
     });
@@ -424,7 +426,7 @@
       case 'document':
         if (item.url.endsWith('.pdf')) {
           return `<div class="text-center text-white">
-                    <svg class="mx-auto h-20 w-20 text-gray-200" fill="currentColor" viewBox="0 0 24 24">
+                    <svg class="mx-auto h-20 w-20 text-gray-200" fill="currentColor" viewBox="0 0 20 20">
                       <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8l-6-6zm-1 5V3.5L18.5 9H13v-2z"/>
                     </svg>
                     <p class="mt-4 text-lg">${$t('property.pdfDocument')}: ${item.name}</p>
@@ -434,7 +436,7 @@
                   </div>`;
         } else {
           return `<div class="text-center text-white">
-                    <svg class="mx-auto h-20 w-20 text-gray-200" fill="currentColor" viewBox="0 0 24 24">
+                    <svg class="mx-auto h-20 w-20 text-gray-200" fill="currentColor" viewBox="0 0 20 20">
                       <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8l-6-6zm-1 5V3.5L18.5 9H13v-2z"/>
                     </svg>
                     <p class="mt-4 text-lg">${$t('property.document')}: ${item.name}</p>
@@ -445,7 +447,7 @@
         }
       default:
         return `<div class="text-center text-white">
-                  <svg class="mx-auto h-20 w-20 text-gray-200" fill="currentColor" viewBox="0 0 24 24">
+                  <svg class="mx-auto h-20 w-20 text-gray-200" fill="currentColor" viewBox="0 0 20 20">
                     <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8l-6-6zm-1 5V3.5L18.5 9H13v-2z"/>
                   </svg>
                   <p class="mt-4 text-lg">${$t('property.file')}: ${item.name}</p>
@@ -516,7 +518,7 @@
       case 'image':
         return `<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>`;
       case 'gavel':
-        return `<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h9a2 2 0 002 2v1.41a2 2 0 01-2 2H5a2 2 0 01-2-2V7a2 2 0 00-2-2h9m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path></svg>`;
+        return `<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h9a2 2 0 002 2v1.41a2 2 0 01-2 2H5a2 2 0 00-2-2V7a2 2 0 00-2-2h9m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path></svg>`;
       default:
         return '';
     }
@@ -633,12 +635,12 @@
                 </span>
               {/if}
               
-              <span class="inline-flex items-center px-2.5 py-0.5 rounded-md text-sm font-medium bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-200">
+              <span class="inline-flex items-center px-2.5 py-0.5 rounded-md text-sm font-medium bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300">
                 {property.property_type_display || property.property_type?.name}
               </span>
               
               {#if property.building_type_display || property.building_type?.name}
-                <span class="inline-flex items-center px-2.5 py-0.5 rounded-md text-sm font-medium bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-200">
+                <span class="inline-flex items-center px-2.5 py-0.5 rounded-md text-sm font-medium bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300">
                   {property.building_type_display || property.building_type?.name}
                 </span>
               {/if}
@@ -673,10 +675,10 @@
               {#if canEdit}
                 <a 
                   href={`/properties/edit/${property.id}`} 
-                  class="inline-flex items-center px-3 py-1.5 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:ring-2 focus:ring-primary-500 dark:bg-gray-700 dark:text-gray-200 dark:border-gray-600 dark:hover:bg-gray-600 transition-colors"
+                  class="inline-flex items-center px-3 py-1.5 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 dark:bg-gray-700 dark:text-gray-200 dark:border-gray-600 dark:hover:bg-gray-600 transition-colors"
                 >
                   <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2V7a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9L9 10L3.414 6.586A2 2 0 013.414 5H6a2 2 0 012 2v11a2 2 0 01-2 2H5a2 2 0 00-2 2v-5m5.586 0l-1.621 1.621a1.5 1.5 0 01-2.121.879 2 2 0 00-1.749 2.037l-.879 2.121a4 4 0 00-.621 3.677v.105c0 1.795.697 3.511 1.75 4.385A4.002 4.002 0 009 18c0 1.216-.876 2.271-2.121 2.62l2.121.879a4 4 0 0017.5-6.844 4 4 0 00-6.879-7.5l2.121-.879a4.002 4.002 0 002.121-2.62 4 4 0 001.75-4.385V16a4 4 0 00-.879-3.677c0-1.795.697-3.511 1.75-4.385a4.002 4.002 0 002.121-2.62l-.879-2.121a1.5 1.5 0 012.121-2.121l1.621-1.621a2 2 0 012 2v5m-5 4H6a2 2 0 002 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9l1.621 1.621a1.5 1.5 0 002.121 2.121l-1.621 1.621a2 2 0 01-2.828 0l-1.621-1.621a4 4 0 00-3.677-.621V10a4 4 0 00-4.385-1.75t-4.385 1.75V6a2 2 0 012-2h2a2 2 0 012 2v12a2 2 0 01-2 2h-2a2 2 0 01-2-2V10a4 4 0 00-.621-3.677l2.121-.879a4.002 4.002 0 01.879-2.121 4 4 0 00-6.844-7.5l-.879-2.121a4 4 0 00-7.5-6.844V0C2 4.477 4.477 0 9 0h6c4.523 0 8 4.477 8 10v6a4 4 0 01-.879 3.677l-2.121.879z" />
                   </svg>
                   {$t('property.edit')}
                 </a>
@@ -923,7 +925,7 @@
                       <!-- Rooms -->
                       <div class="bg-white dark:bg-gray-800 p-4 rounded-lg flex flex-col items-center shadow-sm hover:shadow-md transition-shadow border border-gray-100 dark:border-gray-700">
                         <svg class="w-6 h-6 text-primary-500 mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 5a1 1 0 011-1h14a1 1 0 011 1v2a1 1 0 01-1 1H5a1 1 0 01-1-1V5zM4 13a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H5a1 1 0 01-1-1v-6zM16 13a1 1 0 011-1h2a1 1 0 011 1v6a1 1 0 01-1 1h-2a1 1 0 01-1-1v-6z" />
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 5a1 1 0 011-1h14a1 1 0 011 1v2a1 1 0 01-1 1H5a1 1 0 01-1-1V5zM4 13a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H5a1 1 0 01-1-1V13z" />
                         </svg>
                         <span class="text-sm text-gray-500 dark:text-gray-400">{$t('property.rooms')}</span>
                         <span class="text-lg font-bold text-gray-900 dark:text-white">{property.rooms?.length || 0}</span>
@@ -932,7 +934,7 @@
                       <!-- Year Built -->
                       <div class="bg-white dark:bg-gray-800 p-4 rounded-lg flex flex-col items-center shadow-sm hover:shadow-md transition-shadow border border-gray-100 dark:border-gray-700">
                         <svg class="w-6 h-6 text-primary-500 mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002 2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
                         </svg>
                         <span class="text-sm text-gray-500 dark:text-gray-400">{$t('property.yearBuilt')}</span>
                         <span class="text-lg font-bold text-gray-900 dark:text-white">{property.year_built || 'N/A'}</span>
@@ -1193,7 +1195,7 @@
                 <div class="h-96 w-full bg-gray-100 dark:bg-gray-700 rounded-xl flex items-center justify-center shadow-lg border-2 border-gray-200 dark:border-gray-600">
                   <div class="text-center p-8">
                     <svg class="mx-auto h-12 w-12 text-gray-400 dark:text-gray-500 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.172 16l-7-7m0 0l7-7m-7 7h18m-6 4h-5m6 4h5m-6 4h-5m-6-7h11m-6 7h6m6-7h5m-6 7h5m-7 6h12m-6-7h6m6-7v-1a1 1 0 00-1-1H8a1 1 0 00-1 1v12a1 1 0 001 1h2.5a1 1 0 001-1V10a1 1 0 00-1-1H6a1 1 0 001-1h2a1 1 0 001 1v7.5a1 1 0 001 1V10a1 1 0 001 1h2a1 1 0 001-1V4a1 1 0 011-1h1z" />
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.172 16l-7-7m0 0l7-7m-7 7h18m-6 4h-5m6 4h5m-6 4h-5m-6-7h11m-6 7h6m6-7v-1a1 1 0 00-1-1H8a1 1 0 00-1 1v12a1 1 0 001 1h2.5a1 1 0 001-1V10a1 1 0 00-1-1H6a1 1 0 001-1h2a1 1 0 001 1v7.5a1 1 0 001 1V10a1 1 0 001 1h2a1 1 0 001-1V4a1 1 0 011-1h1z" />
                     </svg>
                     <p class="text-gray-500 dark:text-gray-400">
                       {$t('property.noLocationData')}
@@ -1503,12 +1505,12 @@
           {#each filteredMedia as item, index}
             <button
               class={`relative mx-1 rounded-lg overflow-hidden flex-shrink-0 h-16 w-16 border-2 transition-all ${activeImageIndex === index ? 'border-primary-500 scale-110 z-10' : 'border-transparent opacity-60 hover:opacity-100'}`}
-              on:click|stopPropagation={() => showMedia(index)}
+              on:click={() => { activeImageIndex = index; toggleGallery(); }}
               aria-label={`View media ${index + 1}`}
             >
               <div class="h-full w-full bg-gray-800 flex items-center justify-center overflow-hidden">
                 {#if item.media_type === 'image'}
-                  <img src={item.url} alt={item.name} class="w-full h-full object-cover" loading="lazy" />
+                  <img src={item.url} alt={item.name} class="w-full h-full object-cover" />
                 {:else if item.media_type === 'video'}
                   <svg class="w-6 h-6 text-white" fill="currentColor" viewBox="0 0 20 20">
                     <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM9.555 7.168A1 1 0 008 8v4a1 1 0 001.555.832l3-2a1 1 0 000-1.664l-3-2z" />

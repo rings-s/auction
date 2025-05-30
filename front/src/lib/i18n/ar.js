@@ -7,6 +7,7 @@ export const arTranslations = {
   common: {
     step: 'الخطوة',
     of: 'من',
+    yes: 'نعم',
     loading: 'جاري التحميل...',
     processing: 'جاري المعالجة...',
     select: 'اختر',
@@ -28,17 +29,30 @@ export const arTranslations = {
     hideFilters: 'إخفاء الفلاتر',
     unknown: 'غير معروف',
     sending: 'جاري الإرسال...',
+    refresh: 'تحديث',
+    viewAll: 'عرض الكل',
+    all: 'الكل',
+    search: 'بحث',
+    view: 'عرض',
+    daysAgo: 'منذ {count} يوم',
     // Social sharing
+    shareOptions: 'خيارات المشاركة',
     facebook: 'مشاركة على فيسبوك',
     twitter: 'مشاركة على تويتر',
     linkedin: 'مشاركة على لينكد إن',
     whatsapp: 'مشاركة على واتساب',
     email: 'مشاركة عبر البريد الإلكتروني',
-    copyLink: 'نسخ الرابط'
+    copyLink: 'نسخ الرابط',
+    contactUs: 'اتصل بنا',
+  },
+
+  contact: {
+    getInTouch: 'كن على اتصال'
   },
 
   share: {
     facebook: 'مشاركة على فيسبوك',
+    copy: 'نسخ',
     twitter: 'مشاركة على تويتر',
     linkedin: 'مشاركة على لينكد إن',
     whatsapp: 'مشاركة على واتساب',
@@ -257,6 +271,7 @@ export const arTranslations = {
     published: 'نشر العقار',
     publishedHelp: 'جعل هذا العقار مرئيًا للمستخدمين',
     featuredHelp: 'إظهار هذا العقار في القوائم المميزة',
+ 
     
     // Room Management
     addRoom: 'إضافة غرفة',
@@ -363,7 +378,6 @@ export const arTranslations = {
       garage: 'مرآب',
       pool: 'حمام سباحة',
       swimmingpool: 'حمام سباحة',
-      'swimming pool': 'حمام سباحة',
       SwimmingPool: 'حمام سباحة',
       garden: 'حديقة',
       security: 'نظام أمان',
@@ -428,10 +442,7 @@ export const arTranslations = {
       shower: 'دش',
       jacuzzi: 'جاكوزي',
       bathroom: 'حمام',
-      // Arabic keys for direct lookup
-      'نافذة': 'نافذة',
-      'تكييف': 'تكييف هواء',
-      'تدفئة': 'تدفئة'
+
     },
 
     amenityItems: {
@@ -461,29 +472,8 @@ export const arTranslations = {
       beachAccess: 'وصول للشاطئ',
       sportsFacilities: 'مرافق رياضية',
       university: 'جامعة',
-      // Arabic keys for direct lookup
-      'مدارس': 'مدارس',
-      'مستشفيات': 'مستشفيات',
-      'مراكزتسوق': 'مراكز تسوق',
-      'مراكز تسوق': 'مراكز تسوق',
-      'حدائقعامة': 'منتزهات',
-      'حدائق عامة': 'منتزهات',
-      'مواصلاتعامة': 'وسائل النقل العام',
-      'مواصلات عامة': 'وسائل النقل العام',
-      'مطاعم': 'مطاعم',
-      'وصولللشاطئ': 'وصول للشاطئ',
-      'وصول للشاطئ': 'وصول للشاطئ',
-      // English keys for direct lookup
-      'schools': 'مدارس',
-      'hospitals': 'مستشفيات',
-      'shopping centers': 'مراكز تسوق',
-      'shoppingCenters': 'مراكز تسوق',
-      'parks': 'منتزهات',
-      'public transportation': 'وسائل النقل العام',
-      'publicTransportation': 'وسائل النقل العام',
-      'restaurants': 'مطاعم',
-      'beach access': 'وصول للشاطئ',
-      'beachAccess': 'وصول للشاطئ'
+
+
     },
 
     buildingTypes: {
@@ -496,6 +486,8 @@ export const arTranslations = {
     },
 
     statusTypes: {
+      draft: 'مسودة',
+      published: 'منشور',
       available: 'متاح',
       underContract: 'تحت العقد',
       sold: 'مباع',
@@ -550,12 +542,104 @@ export const arTranslations = {
     uploadMedia: 'رفع الوسائط',
     termsConditionsDesc: 'الشروط والأحكام الخاصة بالمزاد',
 
+
+    liveBidding: 'المزايدة المباشرة',
+    participants: 'المشاركون: {count}',
+    nextMinBid: 'أقل مزايدة تالية',
+    recentBids: 'المزايدات الأخيرة',
+
+
+    quickBids: 'مزايدات سريعة',
+    quickBidFor: 'مزايدة سريعة بمبلغ {amount}',
+    minBid: 'أقل مزايدة',
+    powerBid: 'مزايدة قوية',
+
+
+    bid: 'زايد',
+    placeBid: 'ضع مزايدة',
+    confirmBid: 'تأكيد المزايدة',
+    bidPlaced: 'تم وضع مزايدتك بنجاح!',
+
+
+     // Custom Bidding
+  customBid: 'مزايدة مخصصة',
+  enterCustomBid: 'أدخل مبلغ مزايدة مخصص',
+  submitCustomBid: 'إرسال مزايدة مخصصة',
+  advancedBidding: 'مزايدة متقدمة',
+  openAdvancedBidding: 'فتح خيارات المزايدة المتقدمة',
+  quickBidSuggestions: 'اقتراحات المزايدة السريعة',
+  advancedOptions: 'خيارات متقدمة',
+  minimumRequired: 'الحد الأدنى المطلوب',
+  bidNotesPlaceholder: 'أضف أي ملاحظات مع مزايدتك...',
+  bidNotes: 'ملاحظات المزايدة',
+  bidNotesHelp: 'أضف أي ملاحظات إضافية مع مزايدتك',
+  autoBidUpTo: 'المزايدة التلقائية حتى هذا المبلغ',
+  toWin: 'للفوز',
+  bidSummary: 'ملخص المزايدة',
+  youWillBid: 'ستقوم بالمزايدة بمبلغ',
+  withAutoUpTo: 'مع المزايدة التلقائية حتى',
+  placeAutoBid: 'وضع مزايدة تلقائية',
+  
+  // Auto Bidding
+  autoBidding: 'المزايدة التلقائية',
+  enableAutoBidding: 'تفعيل المزايدة التلقائية',
+  maxBidAmount: 'أقصى مبلغ للمزايدة',
+  autoBidHelp: 'ضع مزايدات تلقائياً عند تجاوز مزايدتك، حتى المبلغ الأقصى',
+  
+  // Bid Status
+  bidAmount: 'مبلغ المزايدة',
+  bidStatus: 'حالة المزايدة',
+  bidTime: 'وقت المزايدة',
+  bidder: 'المزايد',
+  you: 'أنت',
+  anonymous: 'مجهول',
+  winning: 'فائز حالياً',
+  outbid: 'تم تجاوز مزايدتك',
+  
+  // Errors and Validation
+  bidTooLow: 'يجب أن تكون المزايدة على الأقل {amount}',
+  bidFailed: 'فشل في وضع المزايدة',
+  bidAmountRequired: 'مبلغ المزايدة مطلوب',
+  invalidBidAmount: 'مبلغ مزايدة غير صالح',
+  
+  // Registration
+  registerForAuction: 'سجل للمزاد',
+  registrationRequired: 'التسجيل مطلوب',
+  registered: 'مسجل',
+  
+  // Login Required
+  loginRequired: 'تسجيل الدخول مطلوب',
+  loginToPlaceBid: 'سجل دخول لوضع مزايدة',
+  loginRequiredMessage: 'يجب أن تكون مسجلاً لوضع مزايدة في هذا المزاد',
+  
+  // Bid Agreement
+  bidAgreement: 'اتفاقية المزايدة',
+  bidDisclaimer: 'بوضع مزايدة، فإنك توافق على الشروط والأحكام لهذا المزاد.',
+  
+  // Currency Related
+  minimumBid: 'أقل مزايدة',
+  totalBids: 'إجمالي المزايدات',
+  
+  // Additional Status Messages
+  placingBid: 'جاري وضع المزايدة...',
+  bidSubmitted: 'تم إرسال المزايدة: {amount}',
+  bidUpdated: 'تم تحديث المزايدة إلى {amount}',
+  
+  // Quick Bid Labels
+  minBidLabel: 'أقل مزايدة',
+  incrementLabel: '+{increment}',
+  powerLabel: 'قوية',
+
     timeRemaining: 'الوقت المتبقي',
     days: 'أيام',
     hours: 'ساعات',
     minutes: 'دقائق',
     seconds: 'ثواني',
+    status: 'حالة المزاد',
     statusLive: 'مباشر',
+    activeOnly: 'المزادات النشطة فقط',
+    winningOnly: 'المزادات الفائزة فقط',
+    viewAuction: 'عرض المزاد',
     statusScheduled: 'مجدول',
     statusEnded: 'منتهي',
     statusCompleted: 'مكتمل',
@@ -563,25 +647,43 @@ export const arTranslations = {
     typeSealed: 'عطاءات مغلقة',
     typeReserve: 'بحد أدنى',
     typeNoReserve: 'بدون حد أدنى',
-    placeBid: 'تقديم مزايدة',
-    bidAmount: 'مبلغ المزايدة',
-    minimumBid: 'الحد الأدنى للمزايدة',
+
+    bidDetails: 'تفاصيل المزايدة',
+    biddingOptions: 'خيارات المزايدة',
+
     bidHistory: 'سجل المزايدات',
     noBids: 'لم يتم تقديم أي مزايدات بعد',
     bidderName: 'المزايد',
-    bidTime: 'الوقت',
-    bidStatus: 'الحالة',
+
     auctionDetails: 'تفاصيل المزاد',
     startDate: 'تاريخ البدء',
     endDate: 'تاريخ الانتهاء',
     registrationDeadline: 'الموعد النهائي للتسجيل',
     termsConditions: 'الشروط والأحكام',
-    registerForAuction: 'التسجيل في هذا المزاد',
     auctionEnded: 'انتهى هذا المزاد',
     yourBid: 'مزايدتك',
     highestBid: 'أعلى مزايدة',
-    outbid: 'تمت المزايدة عليك',
-    winning: 'أنت الفائز حاليًا',
+
+
+    beatCurrentBid: 'تجاوز المزايدة الحالية',
+    safeMargin: 'هامش آمن',
+    competitive: 'تنافسية',
+    aggressive: 'قوية',
+    strongBid: 'قوية',
+    optional: 'اختياري',
+    tabOverview: "نظرة عامة",
+    tabHistory: "التاريخ",
+    tabDocuments: "المستندات",
+    nextBid: "المناقصة التالية",
+    safeBid: "مناقصة آمنة",
+    customAmount: "مبلغ مخصص",
+    customBidAmount: "مبلغ مناقصة مخصص",
+    biddingClosed: "المناقصة مغلقة",
+    biddingClosedDescription: "هذا المزاد لم يعد يقبل مناقصات.",
+    scheduled: "مجدول",
+    noImages: "لا توجد صور متاحة",
+    noImagesDescription: "لم يتم تحميل أي صور لهذا المزاد بعد.",
+
     auctionProperty: 'عقار المزاد',
     createAuction: 'إنشاء مزاد جديد',
     createAuctionDesc: 'إعداد مزاد جديد لأحد عقاراتك',
@@ -719,13 +821,39 @@ export const arTranslations = {
     schedule: 'الجدول الزمني',
     keyDetails: 'التفاصيل الرئيسية',
     refresh: 'تحديث',
-    anonymous: 'مجهول',
+    anonymousBidder: 'مزايد مجهول',
     highest: 'الأعلى',
     recentActivity: 'النشاط الأخير',
+    newBidPlaced: 'تم تقديم مزايدة جديدة',
+    by: 'بواسطة',
     viewAllBids: 'عرض جميع المزايدات',
     noTerms: 'لا توجد شروط متاحة',
     contactForTerms: 'اتصل بالدعم للحصول على الشروط والأحكام',
-    status: 'حالة المزاد'
+    liveAuction: 'مزاد مباشر',
+    joinAuction: 'انضم إلى هذا المزاد',
+    registerDesc: 'سجل للمشاركة في هذا المزاد',
+    signInToBid: 'سجل دخول للمزايدة',
+    createAccountDesc: 'أنشئ حساب للمشاركة',
+    preBiddingAvailable: 'المزايدة المسبقة متاحة',
+    preBiddingDesc: 'ضع مزايدات الآن ستصبح نشطة عندما يبدأ المزاد.',
+    participants: '{count} مشاركين',
+    nextBid: 'المزايدة التالية',
+    placeCustomBid: 'تقديم مزايدة مخصصة',
+    // submitCustomBid: 'إرسال مزايدة مخصصة',
+    minBid: 'الحد الأدنى للمزايدة',
+    plusOneInc: 'زيادة واحدة',
+    plusIncrement: 'زيادة واحدة',
+    plusTwoInc: 'زيادتان',
+    plusTwoIncrement: 'زيادتان',
+    power: 'مزايدة قوية',
+    powerBid: 'مزايدة قوية',
+    selectWinner: 'اختيار الفائز بالمزاد',
+    selectWinnerDesc: 'راجع جميع المزايدات واختر الفائز. سينهي هذا الإجراء المزاد ويخطر المزايد الفائز.',
+    closingNotes: 'ملاحظات الإغلاق (اختياري)',
+    closingNotesHelp: 'أضف أي ملاحظات أو شروط للمزايد الفائز',
+    endAuction: 'إنهاء المزاد واختيار الفائز',
+    selectWinnerEndAuction: 'اختيار الفائز وإنهاء المزاد',
+    extend: 'تمديد',
   },
 
   messages: {
@@ -867,6 +995,20 @@ export const arTranslations = {
       containsName: 'لا يمكن أن تحتوي كلمة المرور على اسمك'
     },
     
+    // Form Validation Messages
+    validation: {
+      firstNameRequired: 'الاسم الأول مطلوب',
+      lastNameRequired: 'الاسم الأخير مطلوب',
+      passwordMismatch: 'كلمات المرور غير متطابقة',
+      emailRequired: 'البريد الإلكتروني مطلوب',
+      emailInvalid: 'البريد الإلكتروني غير صالح',
+      passwordRequired: 'كلمة المرور مطلوبة',
+      phoneRequired: 'رقم الهاتف مطلوب',
+      phoneInvalid: 'رقم الهاتف غير صالح',
+      codeInvalid: 'رمز التحقق غير صالح',
+      codeRequired: 'رمز التحقق مطلوب'
+    },
+    
     // Additional Auth Messages
     passwordHint: 'استخدم مزيجاً من الأحرف والأرقام والرموز للحصول على كلمة مرور قوية',
     showPassword: 'إظهار كلمة المرور',
@@ -882,6 +1024,16 @@ export const arTranslations = {
       pending: 'في انتظار التحقق',
       banned: 'محظور'
     },
+    
+    // Roles
+    roleAdmin: 'مدير',
+    roleModerator: 'مشرف',
+    roleUser: 'مستخدم',
+    roleSeller: 'بائع',
+    roleBuyer: 'مشتري',
+    roleAgent: 'وكيل',
+    roleUndefined: 'غير محدد',
+    roleundefinedundefined: 'غير محدد',
     
     // Security
     security: {
@@ -949,6 +1101,7 @@ export const arTranslations = {
     noResults: 'لم يتم العثور على نتائج',
     title: 'خطأ',
     fetchFailed: 'فشل في جلب البيانات',
+    validationFailed: 'فشل التحقق من صحة البيانات',
     bidFailed: 'فشل في تقديم العرض',
     registrationFailed: 'فشل التسجيل',
     profileLoadFailed: 'فشل في تحميل الملف الشخصي',
@@ -1023,6 +1176,7 @@ dashboard: {
   browseProperties: 'تصفح العقارات',
   viewAuctions: 'عرض المزادات',
   addProperty: 'إضافة عقار',
+
   createAuction: 'إنشاء مزاد',
   
   // Activity
