@@ -7,6 +7,7 @@
 	import { locale } from '$lib/i18n';
 	import { user } from '$lib/stores/user';
 	import { fetchUserProfile } from '$lib/api/auth';
+	import { installSilentFetch } from '$lib/utils/silentFetch';
 	
 	import Navbar from '$lib/components/layout/Navbar.svelte';
 	import Footer from '$lib/components/layout/Footer.svelte';
@@ -15,6 +16,9 @@
 	let loading = true;
 	
 	onMount(async () => {
+	  // Install silent fetch to prevent browser console logs in all environments
+	  installSilentFetch();
+	  
 	  // Apply saved theme
 	  const savedTheme = localStorage.getItem('theme');
 	  if (savedTheme) {
@@ -34,7 +38,7 @@
 		try {
 		  await fetchUserProfile();
 		} catch (error) {
-		  console.error('Failed to fetch user profile:', error);
+		//   console.error('Failed to fetch user profile:', error);
 		}
 	  }
 	  

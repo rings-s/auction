@@ -58,7 +58,7 @@
         totalAuctions = response.count || 0;
         
       } catch (error) {
-        console.error('Failed to load auctions:', error);
+        // Removed console.log for production
         toast.error($t('dashboard.loadAuctionsError'));
       } finally {
         dashboardLoading.set(false);

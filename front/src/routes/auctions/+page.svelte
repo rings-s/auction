@@ -193,7 +193,6 @@
       
       auctionsStore.set(auctions);
     } catch (err) {
-      console.error('Error loading auctions:', err);
       error = err.message || $t('error.fetchFailed');
       auctions = [];
     } finally {

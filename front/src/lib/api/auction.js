@@ -24,9 +24,9 @@ async function apiRequest(url, options = {}) {
     },
   };
 
-  console.log(`API Request: ${options.method || 'GET'} ${url}`);
+  // console.log(`API Request: ${options.method || 'GET'} ${url}`);
   if (options.body) {
-    console.log('Request body:', options.body);
+    // console.log('Request body:', options.body);
   }
 
   try {
@@ -34,13 +34,13 @@ async function apiRequest(url, options = {}) {
     
     // Handle token refresh for 401 responses
     if (response.status === 401 && token) {
-      console.log('Token expired, attempting refresh...');
+      // console.log('Token expired, attempting refresh...');
       try {
         const newToken = await refreshToken();
         requestOptions.headers.Authorization = `Bearer ${newToken}`;
         response = await fetch(url, requestOptions);
       } catch (refreshError) {
-        console.error('Token refresh failed:', refreshError);
+        // console.error('Token refresh failed:', refreshError);
         throw new Error('Your session has expired. Please log in again.');
       }
     }
@@ -55,7 +55,7 @@ async function apiRequest(url, options = {}) {
       data = await response.text();
     }
 
-    console.log(`API Response (${response.status}):`, data);
+    // console.log(`API Response (${response.status}):`, data);
 
     // Handle error responses
     if (!response.ok) {
@@ -65,7 +65,7 @@ async function apiRequest(url, options = {}) {
 
     return data;
   } catch (error) {
-    console.error(`API Error (${url}):`, error);
+    // console.error(`API Error (${url}):`, error);
     throw error;
   }
 }
@@ -161,7 +161,7 @@ export async function fetchAuctionBidsBySlug(slug) {
     const url = `${BID_URL}/?auction=${auction.id}&ordering=-bid_time`;
     return await apiRequest(url, { method: 'GET' });
   } catch (error) {
-    console.error('Error fetching auction bids by slug:', error);
+    // console.error('Error fetching auction bids by slug:', error);
     throw error;
   }
 }
@@ -203,14 +203,14 @@ export async function placeBid(auctionId, bidAmount, maxBidAmount = null) {
       throw new Error('Authentication required to place bid');
     }
 
-    console.log('🔍 PLACING BID - DEBUG INFO:');
-    console.log('Auction ID:', auctionId);
-    console.log('Bid Amount:', bidAmount);
-    console.log('Max Bid Amount:', maxBidAmount);
+    // console.log('🔍 PLACING BID - DEBUG INFO:');
+    // console.log('Auction ID:', auctionId);
+    // console.log('Bid Amount:', bidAmount);
+    // console.log('Max Bid Amount:', maxBidAmount);
 
     // First check auction status using the new endpoint
     const statusCheck = await getAuctionStatus(auctionId);
-    console.log('📊 AUCTION STATUS CHECK:', statusCheck);
+    // console.log('📊 AUCTION STATUS CHECK:', statusCheck);
 
     if (!statusCheck.is_biddable) {
       throw new Error(`Auction is ${statusCheck.status_display} and not accepting bids`);
@@ -226,7 +226,7 @@ export async function placeBid(auctionId, bidAmount, maxBidAmount = null) {
       requestData.max_bid_amount = parseFloat(maxBidAmount);
     }
     
-    console.log('📤 SENDING BID REQUEST:', requestData);
+    // console.log('📤 SENDING BID REQUEST:', requestData);
     
     // Make the API request
     const response = await apiRequest(`${BID_URL}/`, {
@@ -234,11 +234,11 @@ export async function placeBid(auctionId, bidAmount, maxBidAmount = null) {
       body: JSON.stringify(requestData)
     });
     
-    console.log('✅ BID PLACED SUCCESSFULLY:', response);
+    // console.log('✅ BID PLACED SUCCESSFULLY:', response);
     return response;
     
   } catch (error) {
-    console.error('❌ ERROR PLACING BID:', error);
+    // console.error('❌ ERROR PLACING BID:', error);
     
     // Enhanced error handling for specific bid errors
     let errorMessage = error.message;
@@ -274,7 +274,7 @@ export async function placeBidBySlug(slug, bidAmount, maxBidAmount = null) {
     // Then place the bid using the auction ID
     return await placeBid(auction.id, bidAmount, maxBidAmount);
   } catch (error) {
-    console.error('Error placing bid by slug:', error);
+    // console.error('Error placing bid by slug:', error);
     throw error;
   }
 }
@@ -370,7 +370,7 @@ export async function checkBiddingEligibility(auctionId) {
       reason: statusInfo.is_biddable ? 'Ready to bid' : `Auction is ${statusInfo.status_display}`
     };
   } catch (error) {
-    console.error('Error checking bidding eligibility:', error);
+    // console.error('Error checking bidding eligibility:', error);
     return { canBid: false, reason: error.message || 'Failed to check eligibility' };
   }
 }
@@ -383,16 +383,16 @@ export async function debugAuctionBiddingState(auctionId) {
     const auction = await fetchAuctionById(auctionId);
     const statusInfo = await getAuctionStatus(auctionId);
     
-    console.log('🔍 ENHANCED AUCTION DEBUGGING INFO:');
-    console.log('Auction ID:', auctionId);
-    console.log('Auction Status:', auction.status);
-    console.log('Is Published:', auction.is_published);
-    console.log('Starting Bid:', auction.starting_bid);
-    console.log('Current Bid:', auction.current_bid);
-    console.log('Minimum Increment:', auction.minimum_increment);
-    console.log('Time Remaining:', auction.time_remaining);
-    console.log('Is Active (from backend):', statusInfo.is_active);
-    console.log('Is Biddable (from backend):', statusInfo.is_biddable);
+    // console.log('🔍 ENHANCED AUCTION DEBUGGING INFO:');
+    // console.log('Auction ID:', auctionId);
+    // console.log('Auction Status:', auction.status);
+    // console.log('Is Published:', auction.is_published);
+    // console.log('Starting Bid:', auction.starting_bid);
+    // console.log('Current Bid:', auction.current_bid);
+    // console.log('Minimum Increment:', auction.minimum_increment);
+    // console.log('Time Remaining:', auction.time_remaining);
+    // console.log('Is Active (from backend):', statusInfo.is_active);
+    // console.log('Is Biddable (from backend):', statusInfo.is_biddable);
     
     return {
       auction,
@@ -406,7 +406,7 @@ export async function debugAuctionBiddingState(auctionId) {
       }
     };
   } catch (error) {
-    console.error('Error debugging auction:', error);
+    // console.error('Error debugging auction:', error);
     throw error;
   }
 }
@@ -419,13 +419,13 @@ export function createAuctionWebSocket(auctionId, callbacks = {}) {
   const socket = new WebSocket(wsUrl);
   
   socket.onopen = function(event) {
-    console.log('WebSocket connected for auction:', auctionId);
+    // console.log('WebSocket connected for auction:', auctionId);
     if (callbacks.onOpen) callbacks.onOpen(event);
   };
   
   socket.onmessage = function(event) {
     const data = JSON.parse(event.data);
-    console.log('WebSocket message received:', data);
+    // console.log('WebSocket message received:', data);
     
     if (data.type === 'auction_update' && callbacks.onAuctionUpdate) {
       callbacks.onAuctionUpdate(data.auction);
@@ -445,12 +445,12 @@ export function createAuctionWebSocket(auctionId, callbacks = {}) {
   };
   
   socket.onclose = function(event) {
-    console.log('WebSocket closed for auction:', auctionId);
+    // console.log('WebSocket closed for auction:', auctionId);
     if (callbacks.onClose) callbacks.onClose(event);
   };
   
   socket.onerror = function(error) {
-    console.error('WebSocket error for auction:', auctionId, error);
+    // console.error('WebSocket error for auction:', auctionId, error);
     if (callbacks.onError) callbacks.onError('WebSocket connection error');
   };
   

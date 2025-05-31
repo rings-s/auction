@@ -86,7 +86,7 @@
             } else {
                  error = message; // Fallback for non-object errors
             }
-            if (authError || error) console.error('Failed to load auction:', err);
+            if (authError || error) 
         } finally {
             loading = false;
         }
@@ -122,7 +122,6 @@
                 errMessage = err.message;
             }
             error = errMessage;
-            console.error('Error updating auction:', err);
         } finally {
             saving = false;
         }
@@ -143,7 +142,6 @@
             } else {
                 error = $t('auction.deleteFailed');
             }
-            console.error('Error deleting auction:', err);
         } finally {
             deleteLoading = false;
             showDeleteModal = false;

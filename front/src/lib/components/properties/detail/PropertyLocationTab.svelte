@@ -9,6 +9,7 @@
     let map;
     let marker;
     let mapInitialized = false;
+    let showNearbyServices = false;
     
     // Format currency display
     function formatCurrency(value) {
@@ -18,6 +19,11 @@
         currency: 'USD',
         maximumFractionDigits: 0
       }).format(value);
+    }
+    
+    // Toggle nearby services
+    function toggleNearbyServices() {
+      showNearbyServices = !showNearbyServices;
     }
     
     // Initialize map with property location
@@ -49,20 +55,31 @@
       
       if (!lat || !lng) return;
       
+      // Create map with custom zoom control position
       map = L.map(mapElement, {
         scrollWheelZoom: false,
-        dragging: !L.Browser.mobile
+        dragging: !L.Browser.mobile,
+        zoomControl: false // Disable default zoom control to reposition it
       }).setView([lat, lng], 15);
       
+      // Add zoom control to bottom right
+      L.control.zoom({
+        position: 'bottomright'
+      }).addTo(map);
+      
+      // Use CARTO Light map tiles for a clean, modern look
       L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
         attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>',
         subdomains: 'abcd',
         maxZoom: 19
       }).addTo(map);
       
+      // Create a modern, animated marker
       const customIcon = L.divIcon({
         className: 'custom-map-marker',
-        html: `<div class="marker-pin"></div>
+        html: `<div class="marker-pin">
+                <div class="marker-pulse"></div>
+               </div>
                <span class="marker-icon">
                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" width="14" height="14">
                    <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/>
@@ -70,27 +87,57 @@
                </span>
                ${property.location.house_number ? `<div class="house-number">${property.location.house_number}</div>` : ''}
                `,
-        iconSize: [30, 42],
-        iconAnchor: [15, 42]
+        iconSize: [40, 52],
+        iconAnchor: [20, 52],
+        popupAnchor: [0, -48]
       });
       
+      // Add marker with enhanced popup
       marker = L.marker([lat, lng], { icon: customIcon }).addTo(map)
         .bindPopup(`
           <div class="map-popup">
-            <h3 class="text-base font-semibold">${property.title}</h3>
-            <p class="text-sm mt-1">${property.location.address}</p>
-            <p class="text-primary-600 font-bold mt-2">${formatCurrency(property.market_value)}</p>
+            <h3 class="popup-title">${property.title}</h3>
+            <div class="popup-address">
+              <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
+                <circle cx="12" cy="10" r="3"></circle>
+              </svg>
+              <span>${property.location.address}</span>
+            </div>
+            <div class="popup-city-region">
+              <span>${property.location.city}, ${property.location.state}</span>
+              ${property.location.postal_code ? `<span>${property.location.postal_code}</span>` : ''}
+            </div>
+            <div class="popup-coords">
+              <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <polygon points="1 6 1 22 8 18 16 22 23 18 23 2 16 6 8 2 1 6"></polygon>
+                <line x1="8" y1="2" x2="8" y2="18"></line>
+                <line x1="16" y1="6" x2="16" y2="22"></line>
+              </svg>
+              <span>${lat.toFixed(6)}, ${lng.toFixed(6)}</span>
+            </div>
+            <div class="popup-price">${formatCurrency(property.market_value)}</div>
           </div>
-        `, { className: 'custom-popup' });
+        `, { className: 'custom-popup', maxWidth: 300 });
       
+      // Add tooltip that shows on hover (before clicking)
+      marker.bindTooltip(`
+        <div class="marker-tooltip">
+          <strong>${property.location.city}, ${property.location.state}</strong>
+          <div>${lat.toFixed(4)}, ${lng.toFixed(4)}</div>
+        </div>
+      `, { offset: [0, -40], direction: 'top' });
+      
+      // Add a subtle blue radius circle
       L.circle([lat, lng], {
         radius: 500,
         fillColor: '#3b82f6',
-        fillOpacity: 0.1,
+        fillOpacity: 0.08,
         color: '#3b82f6',
         weight: 1
       }).addTo(map);
       
+      // Enable scroll wheel zoom when clicking on map
       map.on('click', function() {
         if (!map.scrollWheelZoom.enabled()) {
           map.scrollWheelZoom.enable();
@@ -98,6 +145,7 @@
         }
       });
       
+      // Disable scroll wheel zoom when clicking outside map
       document.addEventListener('click', function(e) {
         if (mapElement && !mapElement.contains(e.target)) {
           map.scrollWheelZoom.disable();
@@ -105,8 +153,22 @@
         }
       });
       
+      // Animate marker on load
+      setTimeout(() => {
+        if (marker) {
+          const markerElement = marker.getElement();
+          if (markerElement) {
+            markerElement.classList.add('marker-bounce');
+            setTimeout(() => {
+              markerElement.classList.remove('marker-bounce');
+            }, 1000);
+          }
+        }
+      }, 500);
+      
       mapInitialized = true;
       
+      // Make sure map renders correctly
       setTimeout(() => {
         if (map) map.invalidateSize();
       }, 400);

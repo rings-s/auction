@@ -36,7 +36,7 @@
       const placeholderCode = 'verify'; // This will be replaced by the actual code from the email
       goto(`/reset-password/${placeholderCode}?email=${encodeURIComponent(submittedEmail)}`);
     } catch (err) {
-      console.error('Password reset request error:', err);
+      // console.error('Password reset request error:', err);
       error = err.message || $t('error.resetRequestFailed');
     } finally {
       loading = false;

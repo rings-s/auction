@@ -145,7 +145,7 @@
       }
       
     } catch (err) {
-      console.error('Error loading original message:', err);
+      // console.error('Error loading original message:', err);
       error = err.message || $t('error.fetchFailed');
       toast.error($t('messages.couldNotLoadReplyMessage'));
     } finally {
@@ -195,7 +195,7 @@
       goto('/messages');
       
     } catch (err) {
-      console.error('Error sending message:', err);
+      // console.error('Error sending message:', err);
       error = err.message || $t('messages.sendError');
       toast.error(error); // Display the specific error
     } finally {

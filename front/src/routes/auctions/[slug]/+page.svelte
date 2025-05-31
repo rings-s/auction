@@ -120,7 +120,6 @@
       }
       
     } catch (err) {
-      console.error('Error loading auction details:', err);
       error = err.message;
     } finally {
       loading = false;
@@ -136,7 +135,6 @@
       const response = await fetchAuctionBidsBySlug(slug);
       bids = Array.isArray(response) ? response : (response.results || []);
     } catch (err) {
-      console.error('Error loading auction bids:', err);
       bids = [];
     } finally {
       bidsLoading = false;
@@ -200,7 +198,6 @@
       quickBidAmounts = generateQuickBidAmounts();
       
     } catch (err) {
-      console.error('❌ BID ERROR:', err);
       bidError = err.message || 'Failed to place bid. Please try again.';
     } finally {
       placingBid = false;
@@ -255,7 +252,6 @@
       showRegisterModal = false;
       bidSuccess = 'Successfully registered for auction! You can now place bids.';
     } catch (err) {
-      console.error('Error registering for auction:', err);
       bidError = 'Failed to register for auction. Please try again.';
     }
   }
@@ -280,7 +276,6 @@
       bidSuccess = `Auction extended by ${extensionHours} hours`;
       
     } catch (err) {
-      console.error('Error extending auction:', err);
       bidError = err.message || 'Failed to extend auction';
     }
   }
@@ -297,7 +292,6 @@
     refreshInterval = setInterval(async () => {
       if (!placingBid) {
         await Promise.all([loadAuctionData(), loadAuctionBids()]);
-        quickBidAmounts = generateQuickBidAmounts();
       }
     }, 30000);
   });

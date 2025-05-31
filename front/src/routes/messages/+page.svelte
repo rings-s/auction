@@ -83,7 +83,7 @@
       }
       
     } catch (err) {
-      console.error('Error loading messages:', err);
+      // console.error('Error loading messages:', err);
       error = err.message || $t('error.fetchFailed');
     } finally {
       loading = false;
@@ -120,7 +120,7 @@
         message.status = 'read';
         stats.unread_count = Math.max(0, (stats.unread_count || 0) - 1);
       } catch (err) {
-        console.error('Error marking message as read:', err);
+        // console.error('Error marking message as read:', err);
       }
     }
   }
@@ -138,7 +138,7 @@
         showMobileDetail = false;
       }
     } catch (err) {
-      console.error('Error archiving message:', err);
+      // console.error('Error archiving message:', err);
     }
   }
   
@@ -154,7 +154,7 @@
         showMobileDetail = false;
       }
     } catch (err) {
-      console.error('Error deleting message:', err);
+      // console.error('Error deleting message:', err);
     }
   }
   

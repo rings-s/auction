@@ -76,7 +76,6 @@
         dashboardStats.set(stats);
         dashboardActivity.set(activity);
     } catch (error) {
-        console.error('Failed to load dashboard data:', error);
         dashboardError.set(error.message);
         toast.error($t('dashboard.loadError'));
     } finally {

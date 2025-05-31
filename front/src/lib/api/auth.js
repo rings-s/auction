@@ -21,7 +21,7 @@ export async function register(userData) {
     const data = await response.json();
     
     // Debug line to see the exact error structure
-    console.log("Registration response:", data);
+    // console.log("Registration response:", data);
 
     if (!response.ok) {
       // Handle different error formats properly
@@ -44,7 +44,7 @@ export async function register(userData) {
 
     return data;
   } catch (error) {
-    console.error("Registration caught error:", error);
+    // console.error("Registration caught error:", error);
     throw error;
   }
 }
@@ -179,7 +179,7 @@ export async function fetchUserProfile() {
     user.set(data.data.user);
     return data.data.user;
   } catch (error) {
-    console.error('Error fetching user profile:', error);
+    // console.error('Error fetching user profile:', error);
     throw error;
   }
 }
@@ -296,10 +296,10 @@ export async function logout() {
 
       if (!response.ok) {
         const data = await response.json();
-        console.error('Logout error:', data.error?.message);
+        // console.error('Logout error:', data.error?.message);
       }
     } catch (error) {
-      console.error('Logout error:', error);
+      // console.error('Logout error:', error);
     }
   }
 

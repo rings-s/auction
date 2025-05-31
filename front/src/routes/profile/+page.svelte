@@ -60,7 +60,7 @@
           });
         }
       } catch (err) {
-        console.error('Error loading profile:', err);
+        // console.error('Error loading profile:', err);
         error = err.message || $t('error.profileLoadFailed');
         goto('/login');
       } finally {
@@ -77,7 +77,7 @@
         const updatedUser = await updateUserProfile(profileData);
         success = $t('profile.updateSuccess');
       } catch (err) {
-        console.error('Error updating profile:', err);
+        // console.error('Error updating profile:', err);
         error = err.message || $t('error.profileUpdateFailed');
       } finally {
         savingProfile = false;
@@ -110,7 +110,7 @@
           confirm_password: ''
         };
       } catch (err) {
-        console.error('Error changing password:', err);
+        // console.error('Error changing password:', err);
         error = err.message || $t('error.passwordChangeFailed');
       } finally {
         changingPassword = false;

@@ -80,7 +80,6 @@
         throw new Error('Invalid response from server');
       }
     } catch (err) {
-      console.error('Error creating auction:', err);
       error = err.message || $t('auction.createFailed');
     } finally {
       submitting = false;

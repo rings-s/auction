@@ -130,7 +130,7 @@
       
       propertiesStore.set(properties);
     } catch (err) {
-      console.error('Error loading properties:', err);
+      // console.error('Error loading properties:', err);
       error = err.message || $t('error.fetchFailed');
       properties = [];
     } finally {

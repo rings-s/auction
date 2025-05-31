@@ -59,7 +59,6 @@
         totalBids = response.count || 0;
         
       } catch (error) {
-        console.error('Failed to load bids:', error);
         toast.error($t('dashboard.loadBidsError'));
       } finally {
         dashboardLoading.set(false);

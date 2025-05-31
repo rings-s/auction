@@ -26,10 +26,10 @@
       success = '';
 
       // Debug log
-      console.log("Sending registration data:", {...userData, password: "[REDACTED]"});
+      // console.log("Sending registration data:", {...userData, password: "[REDACTED]"});
       
       const result = await register(userData);
-      console.log("Registration success:", result);
+      // console.log("Registration success:", result);
       
       success = $t('auth.registrationSuccess');
       
@@ -37,7 +37,7 @@
       goto(`/verify-email?email=${encodeURIComponent(userData.email)}`);
       
     } catch (err) {
-      console.error('Registration error:', err);
+      // console.error('Registration error:', err);
       error = err.message || $t('error.registrationFailed');
     } finally {
       loading = false;

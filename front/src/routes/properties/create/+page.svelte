@@ -303,18 +303,18 @@
               
               // Call API to create room
               const result = await addPropertyRoom(createdPropertyId, roomData);
-              console.log('Room created successfully:', result);
+              // // console.log('Room created successfully:', result);
               return result;
             } catch (roomError) {
-              console.error('Error creating room:', roomData, roomError);
+              // // console.error('Error creating room:', roomData, roomError);
               throw roomError;
             }
           });
 
           await Promise.all(roomPromises);
-          console.log('All rooms created successfully');
+          // // console.log('All rooms created successfully');
         } catch (roomError) {
-          console.error('Error creating rooms:', roomError);
+          // // console.error('Error creating rooms:', roomError);
           // Still consider it a success, but with warning
           success = $t('property.createSuccessRoomsFailed');
         }
@@ -335,7 +335,7 @@
           
           success = $t('property.createSuccess');
         } catch (mediaError) {
-          console.error('Media upload error:', mediaError);
+          // // console.log('Media files to upload:', mediaFiles);
           success = $t('property.createSuccessMediaFailed');
         } finally {
           uploadingMedia = false;
@@ -346,7 +346,7 @@
       
       showSuccessModal = true;
     } catch (err) {
-      console.error('Error creating property:', err);
+      // // console.error('Error in property creation process:', err);
       error = err.message || $t('property.createFailed');
     } finally {
       loading = false;

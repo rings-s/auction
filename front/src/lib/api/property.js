@@ -25,7 +25,7 @@ async function api(endpoint, options = {}) {
   
   // Log request details in development
   if (process.env.NODE_ENV !== 'production') {
-    console.log(`API Request: ${options.method || 'GET'} ${endpoint}`);
+    // console.log(`API Request: ${options.method || 'GET'} ${endpoint}`);
   }
   
   // Make the request
@@ -39,7 +39,7 @@ async function api(endpoint, options = {}) {
         headers.Authorization = `Bearer ${newToken}`;
         response = await fetch(endpoint, { ...options, headers });
       } catch (err) {
-        console.error('Token refresh failed:', err);
+        // console.error('Token refresh failed:', err);
         throw new Error('Your session has expired. Please log in again.');
       }
     }
@@ -61,7 +61,7 @@ async function api(endpoint, options = {}) {
     
     return data.data || data;
   } catch (error) {
-    console.error(`API Error (${endpoint}):`, error);
+    // console.error(`API Error (${endpoint}):`, error);
     throw error;
   }
 }
@@ -101,7 +101,7 @@ async function extractErrorResponse(response) {
     
     return errorData;
   } catch (parseError) {
-    console.error('Failed to parse error response:', parseError);
+    // console.error('Failed to parse error response:', parseError);
     return { 
       status: response.status, 
       message: `Failed to parse error response. Status: ${response.status}`
@@ -252,7 +252,7 @@ export async function getPropertyBySlug(slug) {
     // Make the API request with the encoded slug
     return await api(`${API.PROPERTIES}${encodedSlug}/`, { method: 'GET' });
   } catch (error) {
-    console.error('Error fetching property by slug:', error);
+    // console.error('Error fetching property by slug:', error);
     throw error;
   }
 }
@@ -330,14 +330,14 @@ export async function uploadPropertyMedia(propertyId, file, isPrimary = false) {
   }
   
   // Log what we're uploading for debugging
-  console.log('Uploading media for property:', {
+  /* console.log('Uploading media for property:', {
     propertyId,
     fileName: file.name,
     fileType: file.type,
     fileSize: file.size,
     mediaType,
     isPrimary
-  });
+  }); */
   
   // Add a retry mechanism for better reliability
   let retries = 0;
@@ -345,7 +345,7 @@ export async function uploadPropertyMedia(propertyId, file, isPrimary = false) {
   
   while (retries <= maxRetries) {
     try {
-      console.log(`Attempt ${retries + 1} of ${maxRetries + 1} to upload media`);
+      // console.log(`Attempt ${retries + 1} of ${maxRetries + 1} to upload media`);
       
       const response = await fetch(API.MEDIA, {
         method: 'POST',
@@ -359,14 +359,14 @@ export async function uploadPropertyMedia(propertyId, file, isPrimary = false) {
       // Handle non-200 responses with better error messages
       if (!response.ok) {
         const errorData = await extractErrorResponse(response);
-        console.error(`Media upload failed (attempt ${retries + 1}):`, errorData);
+        // console.error(`Media upload failed (attempt ${retries + 1}):`, errorData);
         
         // If we have retries left, try again after a delay
         if (retries < maxRetries) {
           retries++;
           // Exponential backoff: 1s, 2s, 4s, etc.
           const delay = Math.pow(2, retries) * 1000;
-          console.log(`Retrying in ${delay}ms...`);
+          // console.log(`Retrying in ${delay}ms...`);
           await new Promise(resolve => setTimeout(resolve, delay));
           continue;
         }
@@ -376,19 +376,19 @@ export async function uploadPropertyMedia(propertyId, file, isPrimary = false) {
       
       // Success!
       const result = await response.json();
-      console.log('Media upload successful:', result);
+      // console.log('Media upload successful:', result);
       return result;
     } catch (error) {
       // If this is our last retry, or it's a client-side error (not network related)
       const isTypeError = error && typeof error === 'object' && error.name === 'TypeError';
       if (retries >= maxRetries || !isTypeError) {
-        console.error('Media upload error:', error);
+        // console.error('Media upload error:', error);
         throw error;
       }
       
       retries++;
       const delay = Math.pow(2, retries) * 1000;
-      console.log(`Network error, retrying in ${delay}ms...`);
+      // console.log(`Network error, retrying in ${delay}ms...`);
       await new Promise(resolve => setTimeout(resolve, delay));
     }
   }
@@ -408,7 +408,7 @@ export async function uploadPropertyMediaBatch(propertyId, files, onProgress) {
   let completed = 0;
   const total = files.length;
   
-  console.log(`Starting batch upload of ${total} files for property ID ${propertyId}`);
+  // console.log(`Starting batch upload of ${total} files for property ID ${propertyId}`);
   
   // Find first image to use as primary
   const firstImage = files.find(f => f && f.type && f.type.startsWith('image/'));
@@ -416,13 +416,13 @@ export async function uploadPropertyMediaBatch(propertyId, files, onProgress) {
   // Upload primary image first if available
   if (firstImage) {
     try {
-      console.log(`Uploading primary image: ${firstImage.name}`);
+      // console.log(`Uploading primary image: ${firstImage.name}`);
       const result = await uploadPropertyMedia(propertyId, firstImage, true);
       results.push(result);
     } catch (error) {
       // Get error message safely without TypeScript instanceof
       const errorMessage = error && error.message ? error.message : 'Unknown error';
-      console.error(`Failed to upload primary image: ${firstImage.name}`, error);
+      // console.error(`Failed to upload primary image: ${firstImage.name}`, error);
       errors.push({ file: firstImage.name, error: errorMessage });
     } finally {
       completed++;
@@ -438,13 +438,13 @@ export async function uploadPropertyMediaBatch(propertyId, files, onProgress) {
       // Add a small delay between uploads to prevent server overload
       await new Promise(resolve => setTimeout(resolve, 300));
       
-      console.log(`Uploading file: ${file.name}`);
+      // console.log(`Uploading file: ${file.name}`);
       const result = await uploadPropertyMedia(propertyId, file, false);
       results.push(result);
     } catch (error) {
       // Get error message safely without TypeScript instanceof
       const errorMessage = error && error.message ? error.message : 'Unknown error';
-      console.error(`Failed to upload file: ${file.name}`, error);
+      // console.error(`Failed to upload file: ${file.name}`, error);
       errors.push({ file: file.name, error: errorMessage });
     } finally {
       completed++;
@@ -452,11 +452,11 @@ export async function uploadPropertyMediaBatch(propertyId, files, onProgress) {
     }
   }
   
-  console.log(`Batch upload complete: ${results.length} succeeded, ${errors.length} failed`);
+  // console.log(`Batch upload complete: ${results.length} succeeded, ${errors.length} failed`);
   
   // If all uploads failed, throw an error to notify the caller
   if (results.length === 0 && errors.length > 0) {
-    console.error('All media uploads failed:', errors);
+    // console.error('All media uploads failed:', errors);
     throw new Error(`All ${errors.length} media uploads failed. Check console for details.`);
   }
   
@@ -614,7 +614,7 @@ export async function uploadRoomMedia(roomId, file, isPrimary = false) {
     
     return await response.json();
   } catch (error) {
-    console.error('Room media upload error:', error);
+    // console.error('Room media upload error:', error);
     throw error;
   }
 }

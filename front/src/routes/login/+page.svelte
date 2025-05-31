@@ -56,25 +56,30 @@
     try {
       loading = true;
       error = '';
-      console.log('Attempting login...');
+      // Removed console.log for production
+      // console.log('Attempting login...');
       const response = await login(email, password);
       
-      console.log('Login successful, checking tokens...');
+      // Removed console.log for production
+      // console.log('Login successful, checking tokens...');
       // Verify tokens were stored
       const accessToken = localStorage.getItem('accessToken');
       const refreshToken = localStorage.getItem('refreshToken');
       
       if (!accessToken || !refreshToken) {
-        console.error('Tokens not stored after login!');
+        // Removed console.log for production
+        // console.error('Tokens not stored after login!');
         throw new Error('Login succeeded but tokens were not stored');
       }
       
-      console.log('Tokens stored successfully, redirecting...');
+      // Removed console.log for production
+      // console.log('Tokens stored successfully, redirecting...');
       if (response) {
         goto(redirectTo);
       }
     } catch (err) {
-      console.error('Login error:', err);
+      // Removed console.log for production
+      // console.error('Login error:', err);
       error = (err && err.message) || $t('error.invalidCredentials');
     } finally {
       loading = false;

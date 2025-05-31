@@ -21,7 +21,7 @@
   
   function debugLog(message, data = null) {
     if (DEBUG) {
-      console.log(`[VerifyEmail] ${message}`, data || '');
+      // console.log(`[VerifyEmail] ${message}`, data || '');
     }
   }
 
@@ -34,13 +34,13 @@
     
     // Validate imports
     if (typeof verifyEmail !== 'function') {
-      console.error('[VerifyEmail] verifyEmail function is not properly imported');
+      // console.error('[VerifyEmail] verifyEmail function is not properly imported');
       error = 'Verification service is not available. Please refresh the page.';
       return;
     }
     
     if (!API_BASE_URL) {
-      console.error('[VerifyEmail] API_BASE_URL is not defined');
+      // console.error('[VerifyEmail] API_BASE_URL is not defined');
       error = 'Configuration error. Please contact support.';
       return;
     }
@@ -64,7 +64,7 @@
         emailReceived = true;
         debugLog('Valid email set:', email);
       } else {
-        console.error('[VerifyEmail] Invalid email format in query params:', queryEmail);
+        // console.error('[VerifyEmail] Invalid email format in query params:', queryEmail);
         error = 'Invalid email format in URL. Please try again.';
         return;
       }
@@ -142,7 +142,7 @@
         throw new Error('Verification failed - no response data');
       }
     } catch (err) {
-      console.error('[VerifyEmail] Verification error:', err);
+      // console.error('[VerifyEmail] Verification error:', err);
       
       // Handle specific error types
       if (err.message?.includes('expired')) {

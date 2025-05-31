@@ -1,4 +1,4 @@
-<!-- src/lib/components/LocationPicker.svelte -->
+<!-- src/lib/components/properties/LocationPicker.svelte -->
 <script>
   import { onMount, createEventDispatcher } from 'svelte';
   import { t } from '$lib/i18n';
@@ -47,11 +47,13 @@
         
         if (initAttempts > 20) { // Give up after ~10 seconds
           clearInterval(initInterval);
-          console.error('Gave up trying to initialize map after multiple attempts');
+          // Removed console.log for production
+          // console.error('Gave up trying to initialize map after multiple attempts');
           return;
         }
         
-        console.log('Attempting map initialization again...');
+        // Removed console.log for production
+        // console.log('Attempting map initialization again...');
         initAttempts++;
         loadMapScript();
       }, 500);
@@ -74,7 +76,8 @@
         for (const mutation of mutations) {
           if (mutation.type === 'attributes' && 
               (mutation.attributeName === 'style' || mutation.attributeName === 'class')) {
-            console.log('Map container attributes changed, checking visibility...');
+            // Removed console.log for production
+            // console.log('Map container attributes changed, checking visibility...');
             checkAndInitializeMap();
           }
         }
@@ -90,7 +93,8 @@
   }
   
   function loadMapScript() {
-    console.log('Loading map scripts...');
+    // Removed console.log for production
+    // console.log('Loading map scripts...');
     // Add CSS if not already present
     if (!document.getElementById('leaflet-css')) {
       const cssLink = document.createElement('link');
@@ -102,29 +106,34 @@
     
     // Add script if not already loaded
     if (!window.L) {
-      console.log('Leaflet not loaded, loading script...');
+      // Removed console.log for production
+      // console.log('Leaflet not loaded, loading script...');
       const script = document.createElement('script');
       script.id = 'leaflet-js';
       script.src = 'https://unpkg.com/leaflet@1.9.3/dist/leaflet.js';
       script.onload = () => {
-        console.log('Leaflet script loaded successfully');
+        // Removed console.log for production
+        // console.log('Leaflet script loaded successfully');
         // Add a longer delay to ensure DOM is ready
         setTimeout(checkAndInitializeMap, 500);
       };
       document.head.appendChild(script);
     } else {
-      console.log('Leaflet already loaded');
+      // Removed console.log for production
+      // console.log('Leaflet already loaded');
       // If already loaded, still use a delay
       setTimeout(checkAndInitializeMap, 300);
     }
   }
   
   function checkAndInitializeMap() {
-    console.log('Checking if map element is ready...');
+    // Removed console.log for production
+    // console.log('Checking if map element is ready...');
     if (!mapElement) {
       // Only log once per attempt
       if (!window._lastMapErrorLogged || window._lastMapErrorLogged !== initAttempts) {
-        console.error('Map element not available yet, retrying in 500ms...');
+        // Removed console.log for production
+        // console.error('Map element not available yet, retrying in 500ms...');
         window._lastMapErrorLogged = initAttempts;
       }
       // Also show a user-friendly error after several failed attempts
@@ -136,7 +145,8 @@
     // Only initialize if the element is visible
     if (mapElement.offsetParent === null || mapElement.offsetWidth === 0 || mapElement.offsetHeight === 0) {
       if (!window._lastMapErrorLogged || window._lastMapErrorLogged !== initAttempts) {
-        console.error('Map element is not visible, retrying later...');
+        // Removed console.log for production
+        // console.error('Map element is not visible, retrying later...');
         window._lastMapErrorLogged = initAttempts;
       }
       if (initAttempts > 10) {
@@ -146,16 +156,19 @@
     }
     
     if (!window.L) {
-      console.error('Leaflet library not available yet, retrying in 500ms...');
+      // Removed console.log for production
+      // console.error('Leaflet library not available yet, retrying in 500ms...');
       return false;
     }
     
     // Check if the map element has dimensions
     const rect = mapElement.getBoundingClientRect();
-    console.log('Map element dimensions:', rect.width, 'x', rect.height);
+    // Removed console.log for production
+    // console.log('Map element dimensions:', rect.width, 'x', rect.height);
     
     if (rect.width === 0 || rect.height === 0) {
-      console.error('Map element has zero dimensions, forcing dimensions...');
+      // Removed console.log for production
+      // console.error('Map element has zero dimensions, forcing dimensions...');
       // Force dimensions
       forceMapDimensions();
       return false;
@@ -164,18 +177,21 @@
     // Check if the element is visible
     const style = window.getComputedStyle(mapElement);
     if (style.display === 'none' || style.visibility === 'hidden' || !isElementInViewport(mapElement)) {
-      console.error('Map element is not visible, retrying later...');
+      // Removed console.log for production
+      // console.error('Map element is not visible, retrying later...');
       return false;
     }
     
     // If we already have a map, don't initialize again
     if (map) {
-      console.log('Map already initialized, refreshing size...');
+      // Removed console.log for production
+      // console.log('Map already initialized, refreshing size...');
       map.invalidateSize();
       return true;
     }
     
-    console.log('Map element and Leaflet available, initializing map...');
+    // Removed console.log for production
+    // console.log('Map element and Leaflet available, initializing map...');
     initializeMap();
     return true;
   }
@@ -218,19 +234,22 @@
   
   function initializeMap() {
     if (!window.L || !mapElement) {
-      console.error('Cannot initialize map: Leaflet or map element not available');
+      // Removed console.log for production
+      // console.error('Cannot initialize map: Leaflet or map element not available');
       return;
     }
     
     try {
       // If map already exists, just refresh it
       if (map) {
-        console.log('Map already exists, refreshing size');
+        // Removed console.log for production
+        // console.log('Map already exists, refreshing size');
         map.invalidateSize();
         return;
       }
       
-      console.log('Initializing map with element:', mapElement);
+      // Removed console.log for production
+      // console.log('Initializing map with element:', mapElement);
       const defaultLat = latitude || 24.7136;
       const defaultLng = longitude || 46.6753;
       
@@ -254,7 +273,8 @@
       // Add a delay and then invalidate size to handle any rendering issues
       setTimeout(() => {
         if (map) {
-          console.log('Invalidating map size after delay');
+          // Removed console.log for production
+          // console.log('Invalidating map size after delay');
           map.invalidateSize();
         }
       }, 1000);
@@ -282,7 +302,8 @@
       // Force map to update its size with a longer delay
       setTimeout(() => {
         if (map) {
-          console.log('Invalidating map size');
+          // Removed console.log for production
+          // console.log('Invalidating map size');
           map.invalidateSize(true);
         }
       }, 500);
@@ -302,7 +323,8 @@
         }, 1000);
       }
     } catch (error) {
-      console.error('Error initializing map:', error);
+      // Removed console.log for production
+      // console.error('Error initializing map:', error);
       locationError = $t('location.mapInitFailed');
     }
   }
@@ -342,7 +364,8 @@
       });
       
       const { latitude: lat, longitude: lng } = position.coords;
-      console.log('Location detected:', lat, lng);
+      // Removed console.log for production
+      // console.log('Location detected:', lat, lng);
       
       if (map && marker) {
         // Update map view and marker
@@ -358,7 +381,8 @@
       
       locationSuccess = $t('location.detectionSuccess') || 'Location detected successfully!';
     } catch (error) {
-      console.error('Geolocation error:', error);
+      // Removed console.log for production
+      // console.error('Geolocation error:', error);
       
       // Provide more helpful error messages based on error code
       if (error.code === 1) {
@@ -377,7 +401,8 @@
   
   async function reverseGeocode(lat, lng) {
     try {
-      console.log('Reverse geocoding coordinates:', lat, lng);
+      // Removed console.log for production
+      // console.log('Reverse geocoding coordinates:', lat, lng);
       
       // Use OpenStreetMap Nominatim for reverse geocoding with proper error handling
       const response = await fetch(
@@ -399,7 +424,8 @@
         throw new Error('No address data returned from geocoding service');
       }
       
-      console.log('Geocoding result:', data);
+      // Removed console.log for production
+      // console.log('Geocoding result:', data);
       
       // Extract address components with fallbacks for better reliability
       address = [
@@ -441,9 +467,11 @@
         country
       });
       
-      console.log('Location fields updated:', { address, city, state, postalCode, country });
+      // Removed console.log for production
+      // console.log('Location fields updated:', { address, city, state, postalCode, country });
     } catch (error) {
-      console.error('Reverse geocoding error:', error);
+      // Removed console.log for production
+      // console.error('Reverse geocoding error:', error);
       locationError = $t('location.geocodingFailed') || 'Failed to get address details from coordinates';
       
       // Even if geocoding fails, still update coordinates
@@ -515,7 +543,8 @@
               reverseGeocode(lat, lon);
             }
           } catch (error) {
-            console.error('Search error:', error);
+            // Removed console.log for production
+            // console.error('Search error:', error);
             locationError = $t('location.searchFailed') || 'Location search failed';
           }
         }
