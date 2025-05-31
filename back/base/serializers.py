@@ -263,23 +263,72 @@ class PropertySerializer(serializers.ModelSerializer):
 
 class BidSerializer(serializers.ModelSerializer):
     bidder_info = serializers.SerializerMethodField()
+    user_display_name = serializers.SerializerMethodField()  # Add this field
     auction_info = serializers.SerializerMethodField()
     status_display = serializers.CharField(source='get_status_display', read_only=True)
 
     class Meta:
         model = Bid
-        fields = '__all__'
+        fields = [
+            'id', 'auction', 'bid_amount', 'max_bid_amount', 'bid_time', 'status', 'status_display',
+            'notes', 'ip_address', 'is_verified', 'bidder_info', 'user_display_name', 'auction_info',
+            'created_at', 'updated_at'
+        ]
         read_only_fields = ['bidder', 'bid_time', 'status', 'ip_address', 'is_verified', 'created_at', 'updated_at']
 
     def get_bidder_info(self, obj):
+        """Return comprehensive bidder information"""
         if not obj.bidder:
             return None
+        
+        user = obj.bidder
+        
+        # Get the display name safely
+        display_name = self.get_safe_display_name(user)
+        
         return {
-            'id': obj.bidder.id,
-            'name': obj.bidder_name,
-            'email': obj.bidder.email,
-            'is_verified': getattr(obj.bidder, 'is_verified', False)
+            'id': user.id,
+            'username': getattr(user, 'username', None),
+            'name': display_name,
+            'first_name': getattr(user, 'first_name', ''),
+            'last_name': getattr(user, 'last_name', ''),
+            'email': getattr(user, 'email', ''),
+            'is_verified': getattr(user, 'is_verified', False)
         }
+    
+    def get_user_display_name(self, obj):
+        """Return a safe display name for the user"""
+        if not obj.bidder:
+            return "Anonymous Bidder"
+        
+        return self.get_safe_display_name(obj.bidder)
+    
+    def get_safe_display_name(self, user):
+        """Helper method to safely get a display name"""
+        if not user:
+            return "Anonymous Bidder"
+        
+        # Try different name combinations
+        first_name = getattr(user, 'first_name', '') or ''
+        last_name = getattr(user, 'last_name', '') or ''
+        username = getattr(user, 'username', '') or ''
+        email = getattr(user, 'email', '') or ''
+        
+        # Combine first and last name
+        full_name = f"{first_name} {last_name}".strip()
+        if full_name:
+            return full_name
+        
+        # Use username if available
+        if username:
+            return username
+        
+        # Use email prefix as fallback
+        if email and '@' in email:
+            return email.split('@')[0]
+        
+        # Final fallback
+        return f"User {user.id}" if hasattr(user, 'id') else "Anonymous Bidder"
 
     def get_auction_info(self, obj):
         if not obj.auction:
@@ -296,6 +345,7 @@ class BidSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError("Bid amount must be positive")
         return value
 
+        
 class AuctionSerializer(serializers.ModelSerializer):
     auction_type_display = serializers.CharField(source='get_auction_type_display', read_only=True)
     status_display = serializers.CharField(source='get_status_display', read_only=True)

@@ -132,8 +132,7 @@
       activeBidders = new Set(bids.map(bid => bid.bidder_info?.id)).size;
       
     } catch (err) {
-      console.error('Error loading bids:', err);
-      error = err.message || $t('error.loadingBids');
+      error
     } finally {
       loading = false;
     }
@@ -187,7 +186,6 @@
       generateQuickBidOptions();
       
     } catch (err) {
-      console.error('Error placing bid:', err);
       error = err.message || $t('auction.bidFailed');
     } finally {
       submitting = false;
@@ -221,7 +219,6 @@
       generateQuickBidOptions();
       
     } catch (err) {
-      console.error('Error placing bid:', err);
       error = err.message || $t('auction.bidFailed');
     } finally {
       submitting = false;

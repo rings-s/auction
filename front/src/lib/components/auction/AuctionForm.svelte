@@ -196,7 +196,6 @@
         }))
       ];
     } catch (err) {
-      console.error('Error uploading media:', err);
       mediaError = err.message || $t('error.uploadFailed');
     } finally {
       uploadingMedia = false;

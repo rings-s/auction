@@ -52,7 +52,6 @@
         hasMore = response.has_next || false;
         
       } catch (err) {
-        console.error('Error loading properties:', err);
         propertiesError = err.message || $t('error.fetchFailed');
       } finally {
         loading = false;

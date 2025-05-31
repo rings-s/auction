@@ -34,7 +34,7 @@ function detectInitialLocale() {
       if (SUPPORTED_LOCALES.includes(code)) return code;
     }
   } catch (error) {
-    console.warn('Locale detection failed:', error);
+    // Silently handle locale detection failures
   }
   
   return DEFAULT_LOCALE;
@@ -56,7 +56,7 @@ if (browser) {
         document.documentElement.classList.add(config.dir);
       }
     } catch (error) {
-      console.warn('Failed to update locale settings:', error);
+      // Silently handle locale settings update failures
     }
   });
 }

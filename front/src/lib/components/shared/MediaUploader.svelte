@@ -33,7 +33,6 @@
         previewUrls.set(file, url);
         return url;
       } catch (err) {
-        console.error('Error creating object URL for preview:', err);
         return null;
       }
     }

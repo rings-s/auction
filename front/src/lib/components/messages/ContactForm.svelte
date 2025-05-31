@@ -1,4 +1,3 @@
-<!-- ContactForm.svelte - Updated submission logic -->
 <script>
   import { createEventDispatcher, onMount, tick } from 'svelte';
   import { fade, slide, scale, fly } from 'svelte/transition';
@@ -49,7 +48,6 @@
         }
         loading = false;
       }).catch(err => {
-        console.error('Error fetching recipient details:', err);
         recipientDisplayName = $t('messages.errorFetchingUser');
         loading = false;
       });
@@ -66,7 +64,6 @@
       }
       loading = false;
     }).catch(err => {
-      console.error('Error fetching recipient details (no user context):', err);
       recipientDisplayName = $t('messages.errorFetchingUser');
       loading = false;
     });
@@ -167,7 +164,6 @@
       
       // FIXED: Always use contactPropertyOwner when property is provided
       if (property && property.id) {
-        console.log('Sending property inquiry to property ID:', property.id);
         response = await contactPropertyOwner(property.id, messageData);
       } else if (recipient) {
         // For direct messaging (not implemented yet)
@@ -199,8 +195,6 @@
       });
       
     } catch (err) {
-      console.error('Error sending message:', err);
-      
       // Enhanced error handling
       if (err.response && err.response.data) {
         // Handle API validation errors

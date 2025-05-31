@@ -42,7 +42,6 @@ export function formatCurrency(amount, targetLocale = null) {
       }).format(numericAmount);
     }
   } catch (error) {
-    console.warn('Currency formatting failed:', error);
     // Fallback formatting
     const formattedNumber = numericAmount.toLocaleString();
     return currentLocale === 'ar' 

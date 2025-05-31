@@ -49,7 +49,6 @@ async function authenticatedFetch(url, options = {}) {
           return { data: null, error: { status: response.status, message: `API request failed after token refresh: ${response.statusText}` } };
         }
       } catch (refreshError) {
-        // console.error('Token refresh failed:', refreshError); // Removed
         goto('/login'); // Token refresh itself failed, likely need to re-authenticate
         return { data: null, error: { message: 'Token refresh failed. Please log in again.' } };
       }
@@ -68,7 +67,6 @@ async function authenticatedFetch(url, options = {}) {
     const data = await response.json();
     return { data, error: null };
   } catch (error) {
-    // console.error('API call failed:', error); // Removed
     // This catches network errors or issues with response.json() if response is not valid JSON
     const errorMessage = error instanceof Error ? error.message : 'An unknown network error occurred.';
     return { data: null, error: { message: `API call failed: ${errorMessage}` } };

@@ -37,19 +37,16 @@ export const t = derived(
   locale,
   ($locale) => (key, params = {}) => {
     if (!key || typeof key !== 'string') {
-      console.warn('Translation key must be a non-empty string');
       return key || '';
     }
     
     const translation = translations[$locale];
     if (!translation) {
-      console.warn(`Locale '${$locale}' not found`);
       return key;
     }
     
     const result = getNestedProperty(translation, key);
     if (result === null) {
-      console.warn(`Translation not found for key '${key}' in locale '${$locale}'`);
       return key;
     }
     

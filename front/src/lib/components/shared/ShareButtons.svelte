@@ -195,7 +195,6 @@
       trackShare('copy');
       
     } catch (err) {
-      console.error('Failed to copy: ', err);
       showTooltipMessage('Failed to copy link');
     }
   }
@@ -212,7 +211,7 @@
       trackShare('native');
     } catch (err) {
       if (err.name !== 'AbortError') {
-        console.error('Error sharing:', err);
+        // Error handled silently
       }
     }
   }

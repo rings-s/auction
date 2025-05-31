@@ -165,6 +165,7 @@ class AuctionConsumer(AsyncWebsocketConsumer):
     def auction_exists(self):
         return Auction.objects.filter(id=self.auction_id).exists()
     
+
     @database_sync_to_async
     def get_auction_data(self):
         """Get auction data with auto-status update"""
@@ -212,11 +213,24 @@ class AuctionConsumer(AsyncWebsocketConsumer):
                     {
                         'id': bid.id,
                         'amount': float(bid.bid_amount),
+                        'user_display_name': self._get_safe_bidder_name(bid.bidder),  # FIXED: Use safe method
                         'bidder_info': {
                             'id': bid.bidder.id,
-                            'name': f"{bid.bidder.first_name} {bid.bidder.last_name}".strip() or bid.bidder.email,
+                            'username': bid.bidder.username or '',
+                            'name': self._get_safe_bidder_name(bid.bidder),
+                            'first_name': bid.bidder.first_name or '',
+                            'last_name': bid.bidder.last_name or '',
+                            'email': bid.bidder.email or '',
                             'is_verified': getattr(bid.bidder, 'is_verified', False)
-                        } if bid.bidder else None,
+                        } if bid.bidder else {
+                            'id': None,
+                            'username': '',
+                            'name': 'Anonymous Bidder',
+                            'first_name': '',
+                            'last_name': '',
+                            'email': '',
+                            'is_verified': False
+                        },
                         'bid_time': bid.bid_time.isoformat(),
                         'status': bid.status,
                         'is_verified': bid.is_verified,
@@ -233,7 +247,34 @@ class AuctionConsumer(AsyncWebsocketConsumer):
         except Exception as e:
             logger.error(f"Error getting auction data: {str(e)}")
             return {'type': 'error', 'message': 'Failed to get auction data', 'code': 'DATA_ERROR'}
-    
+
+    def _get_safe_bidder_name(self, bidder):
+        """Helper method to safely get bidder name"""
+        if not bidder:
+            return "Anonymous Bidder"
+        
+        # Try different name combinations
+        if bidder.first_name and bidder.last_name:
+            full_name = f"{bidder.first_name.strip()} {bidder.last_name.strip()}".strip()
+            if full_name and full_name != "":
+                return full_name
+        
+        if bidder.first_name:
+            first_name = bidder.first_name.strip()
+            if first_name:
+                return first_name
+        
+        if bidder.username:
+            username = bidder.username.strip()
+            if username:
+                return username
+        
+        if bidder.email:
+            email_prefix = bidder.email.split('@')[0] if '@' in bidder.email else bidder.email
+            if email_prefix:
+                return email_prefix.strip()
+        
+        return f"User {bidder.id}"
     @database_sync_to_async
     def create_simplified_bid(self, user_id, amount, max_bid=None):
         """Simplified bid creation with enhanced logic"""
