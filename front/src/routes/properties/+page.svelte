@@ -171,7 +171,7 @@
 </svelte:head>
 
 <div class="min-h-screen" dir={isRTL ? 'rtl' : 'ltr'}>
-  <div class="relative shadow-md">
+  <div class="relative ">
     <div class="absolute inset-0"></div>
     <div class="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 md:py-12">
       <div class="md:flex md:items-center md:justify-between">

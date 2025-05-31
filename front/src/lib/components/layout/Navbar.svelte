@@ -112,7 +112,7 @@
 <nav 
   class={`fixed w-full z-30 transition-all duration-500 ${
     navbarSolid 
-      ? 'bg-white/80 dark:bg-gray-900/80 backdrop-blur-lg border-b border-gray-200/30 dark:border-gray-700/30' 
+      ? 'bg-white/80 dark:bg-gray-900/80 backdrop-blur-lg  ' 
       : 'bg-transparent'
   } ${
     isNavbarVisible
@@ -166,17 +166,7 @@
               }`}
             >{$t('nav.auctions')}</a>
 
-            <!-- Dashboard Link - Only show for authenticated users -->
-            {#if canAccessDashboard}
-              <a 
-                href="/dashboard" 
-                class={`inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium transition-all duration-300 ${
-                  $page.url.pathname.startsWith('/dashboard') 
-                    ? `border-purple-500 text-purple-600 dark:text-purple-400` 
-                    : 'border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300'
-                }`}
-              >{$t('nav.dashboard')}</a>
-            {/if}
+            <!-- Dashboard Link moved to dropdown menu -->
             
             <a 
               href="/messages" 
@@ -202,11 +192,12 @@
         {#if $user}
           <!-- User is logged in -->
           <div class="relative group">
-            <a 
-              href="/profile" 
+            <button 
               class="flex text-sm rounded-full focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 transition-all duration-300 hover:scale-105"
+              aria-expanded="false"
+              aria-haspopup="true"
             >
-              <span class="sr-only">Open user profile</span>
+              <span class="sr-only">Open user menu</span>
               {#if $user.avatar_url}
                 <img 
                   class="h-9 w-9 rounded-full ring-2 ring-primary-300/50 dark:ring-primary-700/50 shadow-md" 
@@ -218,20 +209,47 @@
                   {$user.first_name[0]}{$user.last_name[0]}
                 </div>
               {/if}
-              
-              <!-- Tooltip on hover -->
-              <div class="absolute -bottom-10 left-1/2 transform -translate-x-1/2 px-2 py-1 bg-gray-900 dark:bg-gray-800 text-white text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none whitespace-nowrap">
-                {$user.first_name} {$user.last_name}
+            </button>
+            
+            <!-- Dropdown menu -->
+            <div class="absolute right-0 z-50 mt-2 w-48 origin-top-right rounded-xl bg-white dark:bg-gray-800 py-1 shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none transform opacity-0 scale-95 pointer-events-none group-hover:opacity-100 group-hover:scale-100 group-hover:pointer-events-auto transition-all duration-200 ease-in-out">
+              <div class="px-4 py-3 border-b border-gray-200 dark:border-gray-700">
+                <p class="text-sm text-gray-700 dark:text-gray-300 font-medium truncate">{$user.first_name} {$user.last_name}</p>
+                <p class="text-xs text-gray-500 dark:text-gray-400 truncate">{$user.email}</p>
               </div>
-            </a>
+              
+              <a 
+                href="/profile" 
+                class="block px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors duration-200"
+              >
+                {$t('nav.profile')}
+              </a>
+              
+              {#if canAccessDashboard}
+                <a 
+                  href="/dashboard" 
+                  class={`block px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors duration-200 ${
+                    $page.url.pathname.startsWith('/dashboard') 
+                      ? 'bg-purple-50 dark:bg-purple-900/20 text-purple-700 dark:text-purple-300' 
+                      : ''
+                  }`}
+                >
+                  {$t('nav.dashboard')}
+                </a>
+              {/if}
+              
+              <div class="border-t border-gray-200 dark:border-gray-700"></div>
+              
+              <button 
+                on:click={logout}
+                class="block w-full text-left px-4 py-2 text-sm text-danger-600 dark:text-danger-400 hover:bg-danger-50 dark:hover:bg-danger-900/30 transition-colors duration-200"
+              >
+                {$t('nav.logout')}
+              </button>
+            </div>
           </div>
           
-          <button 
-            on:click={logout}
-            class="relative overflow-hidden px-4 py-2 text-sm font-medium rounded-full transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-danger-400 focus:ring-offset-2 bg-white dark:bg-gray-800 text-danger-600 dark:text-danger-400 border border-danger-200 dark:border-danger-700 hover:bg-danger-50 dark:hover:bg-danger-900/30 shadow-sm"
-          >
-            <span class="relative z-10">{$t('nav.logout')}</span>
-          </button>
+          <!-- Logout button removed from top level as it's now in the dropdown -->
         {:else}
           <!-- User is logged out -->
           <a 

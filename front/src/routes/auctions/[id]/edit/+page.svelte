@@ -86,7 +86,9 @@
             } else {
                  error = message; // Fallback for non-object errors
             }
-            if (authError || error) 
+            if (authError || error) {
+                // Handle error here
+            }
         } finally {
             loading = false;
         }

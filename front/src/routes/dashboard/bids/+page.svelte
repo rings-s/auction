@@ -117,7 +117,7 @@
   <title>{$t('dashboard.bids')} - {$t('dashboard.title')} - {$t('app.name')}</title>
 </svelte:head>
   
-<div class="min-h-screen bg-gray-50">
+<div class="min-h-screen ">
   <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
     
     <!-- Header -->

@@ -1182,6 +1182,8 @@ dashboard: {
   // Activity
   recentActivity: 'النشاط الأخير',
   noRecentActivity: 'لا يوجد نشاط حديث',
+  totalUsers: 'إجمالي المستخدمين',
+  verifiedUsers: 'المستخدمين الموثوق بهم',
   
   // System
   systemDashboard: 'لوحة تحكم النظام',

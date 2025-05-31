@@ -1,6 +1,74 @@
 @import 'tailwindcss';
-@plugin '@tailwindcss/forms';
-@plugin '@tailwindcss/typography';
+/* @import '@tailwindcss/forms'; */
+/* @import '@tailwindcss/typography'; */
+
+
+
+
+@font-face {
+    font-family: 'JosefinSansBoldItalic';
+    src: url('/english/JosefinSans-BoldItalic.otf') format('opentype');
+    font-weight: bold;
+    font-style: italic;
+    font-display: swap;
+  }
+  
+  /* English h1 styling */
+  [lang="en"] h1 {
+    font-family: 'JosefinSansBoldItalic', sans-serif;
+    font-weight: 900;
+    font-size: 2.5rem;
+    line-height: 1.2;
+    letter-spacing: -0.015em;
+  }
+  [lang="en"] h2,
+  [lang="en"] h3,
+  [lang="en"] h4,
+  [lang="en"] h5,
+  [lang="en"] h6 {
+    font-weight: 900;
+  }
+/* Almarai Black font for Arabic titles */
+@font-face {
+  font-family: 'Almarai';
+  font-style: normal;
+  font-weight: 900;
+  src: url('/arabic/Almarai-Black.ttf') format('truetype');
+  font-display: swap;
+}
+
+/* Arabic font styling for h1 titles */
+[lang="ar"] h1,
+[lang="ar"] h2,
+[lang="ar"] h3,
+[lang="ar"] h4,
+[lang="ar"] h5,
+[lang="ar"] h6 {
+  font-family: 'Almarai', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  font-weight: 900;
+  line-height: 1.6;
+}
+
+[lang="ar"] h1 {
+  font-size: 2.5rem;
+  line-height: 1.2;
+  letter-spacing: -0.025em;
+}
+
+/* JosefinSans for English titles and h1 */
+@font-face {
+  font-family: 'JosefinSans';
+  font-style: italic;
+  font-weight: bold;
+  src: url('/english/JosefinSans-BoldItalic.ttf') format('truetype');
+  font-display: swap;
+}
+
+[lang="en"] .title {
+  font-family: 'JosefinSans', sans-serif;
+  font-weight: bold;
+  font-style: italic;
+}
 
 /* Enhanced Color Palette for Better UI Flexibility and Accessibility */
 :root {
