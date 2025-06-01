@@ -448,9 +448,10 @@
   onHandleTouchEnd={handleTouchEnd}
 />
 
+
 <style>
   /* Map styling */
-  .active-map {
+  :global(.active-map) {  
     border: 2px solid #3b82f6;
   }
   

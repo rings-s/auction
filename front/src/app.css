@@ -1,50 +1,54 @@
 @import 'tailwindcss';
-/* @import '@tailwindcss/forms'; */
-/* @import '@tailwindcss/typography'; */
 
-
-
-
+/* Font Face Declarations */
 @font-face {
-    font-family: 'JosefinSansBoldItalic';
-    src: url('/english/JosefinSans-BoldItalic.otf') format('opentype');
-    font-weight: bold;
-    font-style: italic;
-    font-display: swap;
-  }
-  
-  /* English h1 styling */
-  [lang="en"] h1 {
-    font-family: 'JosefinSansBoldItalic', sans-serif;
-    font-weight: 900;
-    font-size: 2.5rem;
-    line-height: 1.2;
-    letter-spacing: -0.015em;
-  }
-  [lang="en"] h2,
-  [lang="en"] h3,
-  [lang="en"] h4,
-  [lang="en"] h5,
-  [lang="en"] h6 {
-    font-weight: 900;
-  }
-/* Almarai Black font for Arabic titles */
-@font-face {
-  font-family: 'Almarai';
-  font-style: normal;
-  font-weight: 900;
+  font-family: 'Almarai-Black';
   src: url('/arabic/Almarai-Black.ttf') format('truetype');
+  font-weight: 900;
+  font-style: normal;
   font-display: swap;
 }
 
-/* Arabic font styling for h1 titles */
+@font-face {
+  font-family: 'JosefinSans-BoldItalic';
+  src: url('/english/JosefinSans-BoldItalic.otf') format('opentype');
+  font-weight: 800;
+  font-style: italic;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'JosefinSans';
+  font-style: italic;
+  font-weight: bold;
+  src: url('/english/JosefinSans-BoldItalic.ttf') format('truetype');
+  font-display: swap;
+}
+
+/* Typography Styles */
+[lang="en"] h1 {
+  font-family: 'JosefinSans-BoldItalic', 'JosefinSans', sans-serif;
+  font-weight: 900;
+  font-size: 2.5rem;
+  line-height: 1.2;
+  letter-spacing: -0.015em;
+}
+
+[lang="en"] h2,
+[lang="en"] h3,
+[lang="en"] h4,
+[lang="en"] h5,
+[lang="en"] h6 {
+  font-weight: 900;
+}
+
 [lang="ar"] h1,
 [lang="ar"] h2,
 [lang="ar"] h3,
 [lang="ar"] h4,
 [lang="ar"] h5,
 [lang="ar"] h6 {
-  font-family: 'Almarai', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  font-family: 'Almarai-Black', 'Almarai', 'Cairo', 'Amiri', 'Noto Sans Arabic', sans-serif;
   font-weight: 900;
   line-height: 1.6;
 }
@@ -55,13 +59,9 @@
   letter-spacing: -0.025em;
 }
 
-/* JosefinSans for English titles and h1 */
-@font-face {
-  font-family: 'JosefinSans';
-  font-style: italic;
-  font-weight: bold;
-  src: url('/english/JosefinSans-BoldItalic.ttf') format('truetype');
-  font-display: swap;
+[lang="ar"] .hero-title-ar {
+  font-size: 3.5rem;
+  line-height: 1.3;
 }
 
 [lang="en"] .title {
@@ -70,175 +70,299 @@
   font-style: italic;
 }
 
-/* Enhanced Color Palette for Better UI Flexibility and Accessibility */
-:root {
-    /* Primary: Professional Blue Shades (High Contrast) */
-    --color-primary-50: #eff6ff;
-    --color-primary-100: #dbeafe;
-    --color-primary-200: #bfdbfe;
-    --color-primary-300: #93c5fd;
-    --color-primary-400: #60a5fa;
-    --color-primary-500: #3b82f6;
-    --color-primary-600: #2563eb;
-    --color-primary-700: #1d4ed8;
-    --color-primary-800: #1e40af;
-    --color-primary-900: #1e3a8a;
+/* HERO-MATCHED COLOR PALETTE - Advanced Purple-Blue-Cyan Gradient System */
+@theme {
+    /* Primary: Hero Purple Gradient (Violet to Indigo) */
+    --color-primary-50: #f3f0ff;   /* Very light purple background */
+    --color-primary-100: #e8e3ff;  /* Light purple for subtle highlights */
+    --color-primary-200: #d8cfff;  /* Purple tint for cards */
+    --color-primary-300: #c7b9ff;  /* Medium purple for borders */
+    --color-primary-400: #a78bfa;  /* Purple for interactive elements */
+    --color-primary-500: #8b5cf6;  /* Hero main purple */
+    --color-primary-600: #7c3aed;  /* Hero darker purple */
+    --color-primary-700: #6d28d9;  /* Deep purple for emphasis */
+    --color-primary-800: #5b21b6;  /* Very deep purple */
+    --color-primary-900: #4c1d95;  /* Darkest purple */
 
-    /* Secondary: Teal Accents for Modern Feel */
-    --color-secondary-50: #f0fdfa;
-    --color-secondary-100: #ccfbf1;
-    --color-secondary-200: #99f6e4;
-    --color-secondary-300: #5eead4;
-    --color-secondary-400: #2dd4bf;
-    --color-secondary-500: #14b8a6;
-    --color-secondary-600: #0d9488;
-    --color-secondary-700: #0f766e;
-    --color-secondary-800: #115e59;
-    --color-secondary-900: #134e4a;
+    /* Secondary: Hero Blue Gradient (Indigo to Blue) */
+    --color-secondary-50: #eef2ff;  /* Very light blue background */
+    --color-secondary-100: #e0e7ff; /* Light blue for subtle highlights */
+    --color-secondary-200: #c7d2fe; /* Blue tint for cards */
+    --color-secondary-300: #a5b4fc; /* Medium blue for borders */
+    --color-secondary-400: #818cf8; /* Blue for interactive elements */
+    --color-secondary-500: #6366f1; /* Hero main indigo */
+    --color-secondary-600: #4f46e5; /* Hero darker indigo */
+    --color-secondary-700: #4338ca; /* Deep indigo for emphasis */
+    --color-secondary-800: #3730a3; /* Very deep indigo */
+    --color-secondary-900: #312e81; /* Darkest indigo */
 
-    /* Success: Green Shades for Positive Actions */
-    --color-success-50: #ecfdf5;
-    --color-success-100: #d1fae5;
-    --color-success-200: #a7f3d0;
-    --color-success-300: #6ee7b7;
-    --color-success-400: #34d399;
-    --color-success-500: #10b981;
-    --color-success-600: #059669;
-    --color-success-700: #047857;
-    --color-success-800: #065f46;
-    --color-success-900: #064e3b;
+    /* Accent: Hero Cyan System (Blue to Cyan) */
+    --color-accent-50: #ecfeff;    /* Very light cyan background */
+    --color-accent-100: #cffafe;   /* Light cyan for highlights */
+    --color-accent-200: #a5f3fc;   /* Cyan tint for cards */
+    --color-accent-300: #67e8f9;   /* Medium cyan for borders */
+    --color-accent-400: #22d3ee;   /* Cyan for interactive elements */
+    --color-accent-500: #06b6d4;   /* Hero main cyan */
+    --color-accent-600: #0891b2;   /* Hero darker cyan */
+    --color-accent-700: #0e7490;   /* Deep cyan for emphasis */
+    --color-accent-800: #155e75;   /* Very deep cyan */
+    --color-accent-900: #164e63;   /* Darkest cyan */
 
-    /* Warning: Amber Shades for Alerts */
-    --color-warning-50: #fff7ed;
-    --color-warning-100: #ffedd5;
-    --color-warning-200: #fed7aa;
-    --color-warning-300: #fdba74;
-    --color-warning-400: #fb923c;
-    --color-warning-500: #f97316;
-    --color-warning-600: #ea580c;
-    --color-warning-700: #c2410c;
-    --color-warning-800: #9a3412;
-    --color-warning-900: #7c2d12;
+    /* Tertiary: Hero Blue System (Blue variants) */
+    --color-tertiary-50: #eff6ff;  /* Very light blue */
+    --color-tertiary-100: #dbeafe; /* Light blue */
+    --color-tertiary-200: #bfdbfe; /* Blue tint */
+    --color-tertiary-300: #93c5fd; /* Medium blue */
+    --color-tertiary-400: #60a5fa; /* Blue interactive */
+    --color-tertiary-500: #3b82f6; /* Hero main blue */
+    --color-tertiary-600: #2563eb; /* Hero darker blue */
+    --color-tertiary-700: #1d4ed8; /* Deep blue */
+    --color-tertiary-800: #1e40af; /* Very deep blue */
+    --color-tertiary-900: #1e3a8a; /* Darkest blue */
 
-    /* Danger: Red Shades for Errors */
-    --color-danger-50: #fef2f2;
-    --color-danger-100: #fee2e2;
-    --color-danger-200: #fecaca;
-    --color-danger-300: #fca5a5;
-    --color-danger-400: #f87171;
-    --color-danger-500: #ef4444;
-    --color-danger-600: #dc2626;
-    --color-danger-700: #b91c1c;
-    --color-danger-800: #991b1b;
-    --color-danger-900: #7f1d1d;
+    /* Success: Emerald System (Matches hero success elements) */
+    --color-success-50: #ecfdf5;   /* Very light green */
+    --color-success-100: #d1fae5;  /* Light green */
+    --color-success-200: #a7f3d0;  /* Green tint */
+    --color-success-300: #6ee7b7;  /* Medium green */
+    --color-success-400: #34d399;  /* Green interactive */
+    --color-success-500: #10b981;  /* Main success green */
+    --color-success-600: #059669;  /* Darker success */
+    --color-success-700: #047857;  /* Deep success */
+    --color-success-800: #065f46;  /* Very deep success */
+    --color-success-900: #064e3b;  /* Darkest success */
 
-    /* Neutral: Gray Shades for Text and Backgrounds */
-    --color-neutral-50: #f9fafb;
-    --color-neutral-100: #f3f4f6;
-    --color-neutral-200: #e5e7eb;
-    --color-neutral-300: #d1d5db;
-    --color-neutral-400: #9ca3af;
-    --color-neutral-500: #6b7280;
-    --color-neutral-600: #4b5563;
-    --color-neutral-700: #374151;
-    --color-neutral-800: #1f2937;
-    --color-neutral-900: #111827;
+    /* Warning: Amber System (Warm oranges for balance) */
+    --color-warning-50: #fefce8;   /* Very light amber */
+    --color-warning-100: #fef3c7;  /* Light amber */
+    --color-warning-200: #fde68a;  /* Amber tint */
+    --color-warning-300: #fcd34d;  /* Medium amber */
+    --color-warning-400: #fbbf24;  /* Amber interactive */
+    --color-warning-500: #f59e0b;  /* Main warning */
+    --color-warning-600: #d97706;  /* Darker warning */
+    --color-warning-700: #b45309;  /* Deep warning */
+    --color-warning-800: #92400e;  /* Very deep warning */
+    --color-warning-900: #78350f;  /* Darkest warning */
 
-    /* Info: Blue-Gray for Informational Elements */
-    --color-info-50: #f0f9ff;
-    --color-info-100: #e0f2fe;
-    --color-info-200: #bae6fd;
-    --color-info-300: #7dd3fc;
-    --color-info-400: #38bdf8;
-    --color-info-500: #0ea5e9;
-    --color-info-600: #0284c7;
-    --color-info-700: #0369a1;
-    --color-info-800: #075985;
-    --color-info-900: #0c4a6e;
+    /* Danger: Rose System (Refined reds) */
+    --color-danger-50: #fdf2f8;    /* Very light rose */
+    --color-danger-100: #fce7f3;   /* Light rose */
+    --color-danger-200: #fbcfe8;   /* Rose tint */
+    --color-danger-300: #f9a8d4;   /* Medium rose */
+    --color-danger-400: #f472b6;   /* Rose interactive */
+    --color-danger-500: #ec4899;   /* Main danger */
+    --color-danger-600: #db2777;   /* Darker danger */
+    --color-danger-700: #be185d;   /* Deep danger */
+    --color-danger-800: #9d174d;   /* Very deep danger */
+    --color-danger-900: #831843;   /* Darkest danger */
+
+    /* Neutral: Hero-matched Grays (Cool-toned) */
+    --color-neutral-50: #f8fafc;   /* Hero white background */
+    --color-neutral-100: #f1f5f9;  /* Very light gray */
+    --color-neutral-200: #e2e8f0;  /* Light gray borders */
+    --color-neutral-300: #cbd5e1;  /* Medium gray borders */
+    --color-neutral-400: #94a3b8;  /* Gray interactive */
+    --color-neutral-500: #64748b;  /* Main gray text */
+    --color-neutral-600: #475569;  /* Darker gray text */
+    --color-neutral-700: #334155;  /* Deep gray */
+    --color-neutral-800: #1e293b;  /* Very deep gray */
+    --color-neutral-900: #0f172a;  /* Hero dark text */
+
+    /* Info: Sky System (Light blues for information) */
+    --color-info-50: #f0f9ff;      /* Very light sky */
+    --color-info-100: #e0f2fe;     /* Light sky */
+    --color-info-200: #bae6fd;     /* Sky tint */
+    --color-info-300: #7dd3fc;     /* Medium sky */
+    --color-info-400: #38bdf8;     /* Sky interactive */
+    --color-info-500: #0ea5e9;     /* Main info */
+    --color-info-600: #0284c7;     /* Darker info */
+    --color-info-700: #0369a1;     /* Deep info */
+    --color-info-800: #075985;     /* Very deep info */
+    --color-info-900: #0c4a6e;     /* Darkest info */
 }
 
+/* Dark Theme - Inverted hero palette for consistency */
 @theme .dark {
-    /* Primary: Professional Blue Shades (High Contrast) */
-    --color-primary-50: #1e3a8a;
-    --color-primary-100: #1e40af;
-    --color-primary-200: #1d4ed8;
-    --color-primary-300: #2563eb;
-    --color-primary-400: #3b82f6;
-    --color-primary-500: #60a5fa;
-    --color-primary-600: #93c5fd;
-    --color-primary-700: #bfdbfe;
-    --color-primary-800: #dbeafe;
-    --color-primary-900: #eff6ff;
+    /* Primary: Hero Purple Gradient (Inverted) */
+    --color-primary-50: #4c1d95;   /* Darkest purple */
+    --color-primary-100: #5b21b6;  /* Very deep purple */
+    --color-primary-200: #6d28d9;  /* Deep purple */
+    --color-primary-300: #7c3aed;  /* Hero darker purple */
+    --color-primary-400: #8b5cf6;  /* Hero main purple */
+    --color-primary-500: #a78bfa;  /* Purple interactive */
+    --color-primary-600: #c7b9ff;  /* Medium purple */
+    --color-primary-700: #d8cfff;  /* Purple tint */
+    --color-primary-800: #e8e3ff;  /* Light purple */
+    --color-primary-900: #f3f0ff;  /* Very light purple */
 
-    /* Secondary: Teal Accents for Modern Feel */
-    --color-secondary-50: #134e4a;
-    --color-secondary-100: #115e59;
-    --color-secondary-200: #0f766e;
-    --color-secondary-300: #0d9488;
-    --color-secondary-400: #14b8a6;
-    --color-secondary-500: #2dd4bf;
-    --color-secondary-600: #5eead4;
-    --color-secondary-700: #99f6e4;
-    --color-secondary-800: #ccfbf1;
-    --color-secondary-900: #f0fdfa;
+    /* Secondary: Hero Blue Gradient (Inverted) */
+    --color-secondary-50: #312e81;  /* Darkest indigo */
+    --color-secondary-100: #3730a3; /* Very deep indigo */
+    --color-secondary-200: #4338ca; /* Deep indigo */
+    --color-secondary-300: #4f46e5; /* Hero darker indigo */
+    --color-secondary-400: #6366f1; /* Hero main indigo */
+    --color-secondary-500: #818cf8; /* Blue interactive */
+    --color-secondary-600: #a5b4fc; /* Medium blue */
+    --color-secondary-700: #c7d2fe; /* Blue tint */
+    --color-secondary-800: #e0e7ff; /* Light blue */
+    --color-secondary-900: #eef2ff; /* Very light blue */
 
-    /* Success: Green Shades for Positive Actions */
-    --color-success-50: #064e3b;
-    --color-success-100: #065f46;
-    --color-success-200: #047857;
-    --color-success-300: #059669;
-    --color-success-400: #10b981;
-    --color-success-500: #34d399;
-    --color-success-600: #6ee7b7;
-    --color-success-700: #a7f3d0;
-    --color-success-800: #d1fae5;
-    --color-success-900: #ecfdf5;
+    /* Accent: Hero Cyan System (Inverted) */
+    --color-accent-50: #164e63;    /* Darkest cyan */
+    --color-accent-100: #155e75;   /* Very deep cyan */
+    --color-accent-200: #0e7490;   /* Deep cyan */
+    --color-accent-300: #0891b2;   /* Hero darker cyan */
+    --color-accent-400: #06b6d4;   /* Hero main cyan */
+    --color-accent-500: #22d3ee;   /* Cyan interactive */
+    --color-accent-600: #67e8f9;   /* Medium cyan */
+    --color-accent-700: #a5f3fc;   /* Cyan tint */
+    --color-accent-800: #cffafe;   /* Light cyan */
+    --color-accent-900: #ecfeff;   /* Very light cyan */
 
-    /* Warning: Amber Shades for Alerts */
-    --color-warning-50: #7c2d12;
-    --color-warning-100: #9a3412;
-    --color-warning-200: #c2410c;
-    --color-warning-300: #ea580c;
-    --color-warning-400: #f97316;
-    --color-warning-500: #fb923c;
-    --color-warning-600: #fdba74;
-    --color-warning-700: #fed7aa;
-    --color-warning-800: #ffedd5;
-    --color-warning-900: #fff7ed;
+    /* Tertiary: Hero Blue System (Inverted) */
+    --color-tertiary-50: #1e3a8a;  /* Darkest blue */
+    --color-tertiary-100: #1e40af; /* Very deep blue */
+    --color-tertiary-200: #1d4ed8; /* Deep blue */
+    --color-tertiary-300: #2563eb; /* Hero darker blue */
+    --color-tertiary-400: #3b82f6; /* Hero main blue */
+    --color-tertiary-500: #60a5fa; /* Blue interactive */
+    --color-tertiary-600: #93c5fd; /* Medium blue */
+    --color-tertiary-700: #bfdbfe; /* Blue tint */
+    --color-tertiary-800: #dbeafe; /* Light blue */
+    --color-tertiary-900: #eff6ff; /* Very light blue */
 
-    /* Danger: Red Shades for Errors */
-    --color-danger-50: #7f1d1d;
-    --color-danger-100: #991b1b;
-    --color-danger-200: #b91c1c;
-    --color-danger-300: #dc2626;
-    --color-danger-400: #ef4444;
-    --color-danger-500: #f87171;
-    --color-danger-600: #fca5a5;
-    --color-danger-700: #fecaca;
-    --color-danger-800: #fee2e2;
-    --color-danger-900: #fef2f2;
+    /* Success: Emerald System (Inverted) */
+    --color-success-50: #064e3b;   /* Darkest success */
+    --color-success-100: #065f46;  /* Very deep success */
+    --color-success-200: #047857;  /* Deep success */
+    --color-success-300: #059669;  /* Darker success */
+    --color-success-400: #10b981;  /* Main success */
+    --color-success-500: #34d399;  /* Green interactive */
+    --color-success-600: #6ee7b7;  /* Medium green */
+    --color-success-700: #a7f3d0;  /* Green tint */
+    --color-success-800: #d1fae5;  /* Light green */
+    --color-success-900: #ecfdf5;  /* Very light green */
 
-    /* Neutral: Gray Shades for Text and Backgrounds */
-    --color-neutral-50: #111827;
-    --color-neutral-100: #1f2937;
-    --color-neutral-200: #374151;
-    --color-neutral-300: #4b5563;
-    --color-neutral-400: #6b7280;
-    --color-neutral-500: #9ca3af;
-    --color-neutral-600: #d1d5db;
-    --color-neutral-700: #e5e7eb;
-    --color-neutral-800: #f3f4f6;
-    --color-neutral-900: #e0e2e5;
+    /* Warning: Amber System (Inverted) */
+    --color-warning-50: #78350f;   /* Darkest warning */
+    --color-warning-100: #92400e;  /* Very deep warning */
+    --color-warning-200: #b45309;  /* Deep warning */
+    --color-warning-300: #d97706;  /* Darker warning */
+    --color-warning-400: #f59e0b;  /* Main warning */
+    --color-warning-500: #fbbf24;  /* Amber interactive */
+    --color-warning-600: #fcd34d;  /* Medium amber */
+    --color-warning-700: #fde68a;  /* Amber tint */
+    --color-warning-800: #fef3c7;  /* Light amber */
+    --color-warning-900: #fefce8;  /* Very light amber */
 
-    /* Info: Blue-Gray for Informational Elements */
-    --color-info-50: #0c4a6e;
-    --color-info-100: #075985;
-    --color-info-200: #0369a1;
-    --color-info-300: #0284c7;
-    --color-info-400: #0ea5e9;
-    --color-info-500: #38bdf8;
-    --color-info-600: #7dd3fc;
-    --color-info-700: #bae6fd;
-    --color-info-800: #e0f2fe;
-    --color-info-900: #f0f9ff;
+    /* Danger: Rose System (Inverted) */
+    --color-danger-50: #831843;    /* Darkest danger */
+    --color-danger-100: #9d174d;   /* Very deep danger */
+    --color-danger-200: #be185d;   /* Deep danger */
+    --color-danger-300: #db2777;   /* Darker danger */
+    --color-danger-400: #ec4899;   /* Main danger */
+    --color-danger-500: #f472b6;   /* Rose interactive */
+    --color-danger-600: #f9a8d4;   /* Medium rose */
+    --color-danger-700: #fbcfe8;   /* Rose tint */
+    --color-danger-800: #fce7f3;   /* Light rose */
+    --color-danger-900: #fdf2f8;   /* Very light rose */
+
+    /* Neutral: Hero-matched Grays (Inverted) */
+    --color-neutral-50: #0f172a;   /* Hero dark text */
+    --color-neutral-100: #1e293b;  /* Very deep gray */
+    --color-neutral-200: #334155;  /* Deep gray */
+    --color-neutral-300: #475569;  /* Darker gray text */
+    --color-neutral-400: #64748b;  /* Main gray text */
+    --color-neutral-500: #94a3b8;  /* Gray interactive */
+    --color-neutral-600: #cbd5e1;  /* Medium gray borders */
+    --color-neutral-700: #e2e8f0;  /* Light gray borders */
+    --color-neutral-800: #f1f5f9;  /* Very light gray */
+    --color-neutral-900: #f8fafc;  /* Hero white background */
+
+    /* Info: Sky System (Inverted) */
+    --color-info-50: #0c4a6e;      /* Darkest info */
+    --color-info-100: #075985;     /* Very deep info */
+    --color-info-200: #0369a1;     /* Deep info */
+    --color-info-300: #0284c7;     /* Darker info */
+    --color-info-400: #0ea5e9;     /* Main info */
+    --color-info-500: #38bdf8;     /* Sky interactive */
+    --color-info-600: #7dd3fc;     /* Medium sky */
+    --color-info-700: #bae6fd;     /* Sky tint */
+    --color-info-800: #e0f2fe;     /* Light sky */
+    --color-info-900: #f0f9ff;     /* Very light sky */
+}
+
+/* Hero-inspired utility classes for consistent theming */
+.hero-gradient-primary {
+    background: linear-gradient(135deg, var(--color-primary-500), var(--color-secondary-500));
+}
+
+.hero-gradient-accent {
+    background: linear-gradient(135deg, var(--color-secondary-500), var(--color-accent-500));
+}
+
+.hero-gradient-full {
+    background: linear-gradient(135deg, var(--color-primary-500), var(--color-secondary-500), var(--color-accent-500));
+}
+
+.hero-text-gradient {
+    background: linear-gradient(135deg, var(--color-primary-600), var(--color-secondary-600));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+.hero-glass {
+    background: rgba(255, 255, 255, 0.8);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid rgba(139, 92, 246, 0.2);
+    box-shadow: 0 4px 20px rgba(139, 92, 246, 0.1);
+}
+
+/* Dark theme for hero-glass - moved outside @theme block */
+.dark .hero-glass {
+    background: rgba(15, 23, 42, 0.8);
+    border-color: rgba(167, 139, 250, 0.3);
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+}
+
+/* Enhanced focus states using hero colors */
+*:focus-visible {
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.3);
+}
+
+/* Text selection using hero colors */
+::selection {
+    background: rgba(139, 92, 246, 0.2);
+    color: var(--color-primary-800);
+}
+
+.dark ::selection {
+    background: rgba(167, 139, 250, 0.3);
+    color: var(--color-primary-200);
+}
+
+/* Smooth scrolling */
+html {
+    scroll-behavior: smooth;
+}
+
+/* Custom scrollbar with hero colors */
+::-webkit-scrollbar {
+    width: 6px;
+}
+
+::-webkit-scrollbar-track {
+    background: var(--color-neutral-100);
+}
+
+::-webkit-scrollbar-thumb {
+    background: var(--color-primary-400);
+    border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: var(--color-primary-500);
 }

@@ -112,7 +112,7 @@ main() {
     if [ "$ENVIRONMENT" = "production" ]; then
         echo_info "Starting Gunicorn server..."
         exec gunicorn back.asgi:application \
-            --bind 0.0.0.0:8000 \
+            --bind 0.0.0.0:7500 \
             --workers ${GUNICORN_WORKERS:-3} \
             --worker-class uvicorn.workers.UvicornWorker \
             --access-logfile - \
@@ -124,7 +124,7 @@ main() {
             --max-requests-jitter 100
     else
         echo_info "Starting Django development server..."
-        exec python manage.py runserver 0.0.0.0:8000
+        exec python manage.py runserver 0.0.0.0:7500
     fi
 }
 

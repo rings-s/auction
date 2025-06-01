@@ -1,5 +1,5 @@
 // src/lib/api/auction.js
-import { API_BASE_URL } from '$lib/constants';
+import { API_BASE_URL, WS_BASE_URL } from '$lib/constants';
 import { refreshToken } from './auth';
 
 const AUCTION_URL = `${API_BASE_URL}/auctions`;
@@ -411,10 +411,10 @@ export async function debugAuctionBiddingState(auctionId) {
   }
 }
 
-// WebSocket connection for real-time updates
+// WebSocket connection for real-time updates - UPDATED TO USE CONSTANTS
 export function createAuctionWebSocket(auctionId, callbacks = {}) {
   const token = localStorage.getItem('accessToken');
-  const wsUrl = `ws://localhost:8000/ws/auction/${auctionId}/`;
+  const wsUrl = `${WS_BASE_URL}/auction/${auctionId}/`;
   
   const socket = new WebSocket(wsUrl);
   

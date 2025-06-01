@@ -51,11 +51,12 @@
     // Add filters that have values
     if (searchParams.query) params.search = searchParams.query;
     if (searchParams.propertyType) params.property_type = searchParams.propertyType;
-    if (searchParams.city) params.location__city = searchParams.city;
-    if (searchParams.minPrice) params.market_value__gte = searchParams.minPrice;
-    if (searchParams.maxPrice) params.market_value__lte = searchParams.maxPrice;
-    if (searchParams.minSize) params.size_sqm__gte = searchParams.minSize;
-    if (searchParams.maxSize) params.size_sqm__lte = searchParams.maxSize;
+    if (searchParams.city) params.city = searchParams.city;
+    
+    if (searchParams.minPrice) params.min_price = searchParams.minPrice;
+    if (searchParams.maxPrice) params.max_price = searchParams.maxPrice;
+    if (searchParams.minSize) params.min_size = searchParams.minSize;
+    if (searchParams.maxSize) params.max_size = searchParams.maxSize;
     
     // Handle sort ordering
     switch(searchParams.sort) {

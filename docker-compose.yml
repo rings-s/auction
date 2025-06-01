@@ -8,7 +8,7 @@ services:
       # Add a volume for your database if it's SQLite and you want to persist it
       # - ./back/db:/app/db 
     ports:
-      - "8000:8000"
+      - "7500:7500"  # Changed from 8000:8000
     env_file:
       - ./.env  # Assuming your backend .env is in the project root
     # depends_on:
@@ -21,13 +21,12 @@ services:
       - ./front:/app
       - /app/node_modules # Keep node_modules in the container separate from local
     ports:
-      - "5173:5173" # SvelteKit new port
+      - "5173:5173" # SvelteKit port
     environment:
       # Ensure Vite HMR works correctly if needed during development
       - CHOKIDAR_USEPOLLING=true 
-      # Example: Point frontend to the backend API
-      # Adjust VITE_API_URL as per your SvelteKit app's environment variable for the backend URL
-      - VITE_API_URL=http://backend:8000/api 
+      # Updated API URL to use port 7500
+      - VITE_API_URL=http://backend:7500/api 
     depends_on:
       - backend
 

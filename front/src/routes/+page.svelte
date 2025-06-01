@@ -311,7 +311,7 @@
         <!-- Left column: Enhanced Primary F-pattern content -->
         <div class="lg:col-span-3 space-y-10">
           
-          <!-- Custom Typography Headline -->
+          <!-- Enhanced Typography Headline -->
           <div class="max-w-4xl">
             {#if visibleElements.headline}
               <h1 
@@ -325,7 +325,7 @@
             {/if}
           </div>
           
-          <!-- Custom Typography Paragraph -->
+          <!-- Enhanced Typography Paragraph -->
           <div class="{isRTL ? 'max-w-2xl' : 'max-w-3xl'}">
             {#if visibleElements.subheadline}
               <p 
@@ -614,55 +614,64 @@
    }
  }
 
- /* Custom Typography System */
+ /* Enhanced Typography System */
  
- /* Title Styles - English */
- .hero-title-en {
-   font-family: 'JosefinSans-BoldItalic', 'Josefin Sans', serif;
-   font-weight: 800;
-   font-style: italic;
+ /* Title Styles - English with Josefin Sans Black */
+ .home-hero .hero-title-en {
+   font-family: 'Josefin Sans', 'JosefinSans', sans-serif;
+   font-weight: 900; /* Black weight */
+   font-style: normal; /* Remove italic */
    letter-spacing: -0.025em;
    line-height: 1.1;
    color: #0f172a;
    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
  }
 
- /* Title Styles - Arabic */
- .hero-title-ar {
-   font-family: 'VLAX', 'Cairo', 'Amiri', 'Noto Sans Arabic', serif;
-   font-weight: 900;
+ /* Title Styles - Arabic with VLAX */
+ .home-hero .hero-title-ar {
+   font-family: 'VLAX', 'Cairo', 'Amiri', 'Noto Sans Arabic', sans-serif;
+   font-weight: 900; /* Black weight */
    letter-spacing: 0;
-   line-height: 1.1;
+   line-height: 1.3;
    color: #0f172a;
    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
  }
 
  /* Responsive Title Sizes */
- .hero-title {
-   font-size: 2.25rem; /* 4xl - xs */
+ /* Removed generic hero title size */
+
+ /* English Title Sizes */
+ .home-hero .hero-title-en {
+   font-size: 2.25rem; /* Base size for English */
  }
 
  @media (min-width: 640px) {
-   .hero-title {
-     font-size: 3rem; /* 5xl - sm */
+   .home-hero .hero-title-en {
+     font-size: 3rem;
    }
  }
 
  @media (min-width: 768px) {
-   .hero-title {
-     font-size: 3.75rem; /* 6xl - md */
+   .home-hero .hero-title-en {
+     font-size: 3.5rem;
    }
  }
 
- @media (min-width: 1024px) {
-   .hero-title {
-     font-size: 4.5rem; /* 7xl - lg */
+ /* Enhanced Arabic Title Sizes with higher specificity */
+ [lang="ar"] .home-hero .hero-title-ar {
+   font-size: 3.5rem; /* Increased base size for Arabic */
+   line-height: 1.3;
+ }
+
+ @media (min-width: 640px) {
+   [lang="ar"] .home-hero .hero-title-ar {
+     font-size: 4rem;
    }
  }
 
- @media (min-width: 1280px) {
-   .hero-title {
-     font-size: 6rem; /* 8xl - xl */
+ @media (min-width: 768px) {
+   [lang="ar"] .home-hero .hero-title-ar {
+     font-size: 4.5rem;
    }
  }
 
@@ -673,6 +682,8 @@
    max-width: 65ch;
    color: #64748b;
    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+   font-family: system-ui, -apple-system, sans-serif;
+   font-weight: 400;
  }
 
  @media (min-width: 640px) {
@@ -1110,7 +1121,7 @@
    font-family: 'VLAX', 'Cairo', 'Amiri', 'Noto Sans Arabic', 'Tajawal', system-ui, sans-serif;
    font-weight: 900;
    letter-spacing: 0;
-   line-height: 1.1;
+   line-height: 1.3;
  }
 
  /* Enhanced Arabic Typography */

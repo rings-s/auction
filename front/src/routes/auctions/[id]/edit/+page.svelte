@@ -32,11 +32,11 @@
         try {
             const fetchedAuction = await fetchAuctionById(auctionId);
             let isAuthorized = false;
-            let currentUserIsAdmin = false; // Default to false
+            let currentUserIsAdmin = false;
 
             if (currentUser) {
                 const { id: currentUserId, is_admin } = currentUser;
-                currentUserIsAdmin = is_admin === true; // Store admin status
+                currentUserIsAdmin = is_admin === true;
 
                 if (currentUserIsAdmin) {
                     isAuthorized = true;
@@ -51,7 +51,7 @@
                 authError = $t('auction.editNotAuthorized');
                 auction = null;
             } else if (!isAuthorized && !fetchedAuction.created_by) {
-                if (currentUserIsAdmin) { // Use the stored admin status
+                if (currentUserIsAdmin) {
                     isAuthorized = true; 
                     auction = fetchedAuction;
                 } else {
@@ -72,22 +72,19 @@
                     const status = err.status;
                     if (status === 403 || status === 401) {
                         authError = $t('auction.editNotAuthorized');
-                        message = ''; // Clear default message as authError is set
+                        message = '';
                     } else if (status === 404) {
                         error = $t('auction.notFound'); 
-                        message = ''; // Clear default message as error is set
+                        message = '';
                     }
                 }
                 if (message && 'message' in err && typeof err.message === 'string') {
-                    error = err.message; // Prefer specific error message if available and not auth/404
-                } else if (message) { // if no specific message from err.message but still need to show one
+                    error = err.message;
+                } else if (message) {
                     error = message;
                 }
             } else {
-                 error = message; // Fallback for non-object errors
-            }
-            if (authError || error) {
-                // Handle error here
+                error = message;
             }
         } finally {
             loading = false;

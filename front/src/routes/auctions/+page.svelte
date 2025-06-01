@@ -127,21 +127,21 @@
     if (filters.search) params.search = filters.search;
     if (filters.status) params.status = filters.status;
     if (filters.type) params.auction_type = filters.type;
-    if (filters.minPrice) params.starting_bid__gte = filters.minPrice;
-    if (filters.maxPrice) params.starting_bid__lte = filters.maxPrice;
-
+    
+    if (filters.minPrice) params.min_price = filters.minPrice;
+    if (filters.maxPrice) params.max_price = filters.maxPrice;
     switch (filters.sort) {
       case 'newest':
         params.ordering = '-created_at';
         break;
       case 'endingSoon':
-        params.ordering = 'end_date'; // Ascending for dates ending sooner
+        params.ordering = 'end_date';
         break;
       case 'priceAsc':
-        params.ordering = 'starting_bid'; // Changed from current_bid
+        params.ordering = 'starting_bid';
         break;
       case 'priceDesc':
-        params.ordering = '-starting_bid'; // Changed from -current_bid
+        params.ordering = '-starting_bid';
         break;
       case 'bidCount':
         params.ordering = '-bid_count';

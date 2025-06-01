@@ -30,8 +30,8 @@ RUN mkdir -p /app/db /app/static /app/media /app/staticfiles
 COPY entrypoint.sh /entrypoint.sh
 RUN chmod +x /entrypoint.sh
 
-# Expose port
-EXPOSE 8000
+# Expose port 7500 instead of 8000
+EXPOSE 7500
 
 # Use entrypoint
 ENTRYPOINT ["/entrypoint.sh"]

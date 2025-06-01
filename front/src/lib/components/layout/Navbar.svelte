@@ -4,6 +4,7 @@
   import { user } from '$lib/stores/user';
 	import { t, locale } from '$lib/i18n';
   import { theme } from '$lib/stores/theme';
+  import { AUTH_ENDPOINTS } from '$lib/constants'; // Import auth endpoints
   import ThemeToggle from '$lib/components/ui/ThemeToggle.svelte';
   import LanguageSelector from '../shared/LanguageSelector.svelte';
   import { onMount, afterUpdate } from 'svelte';
@@ -34,13 +35,13 @@
     }
   });
   
-  // Improved logout function
+  // Improved logout function - UPDATED TO USE CONSTANTS
   async function logout() {
     try {
       const refreshToken = localStorage.getItem('refreshToken');
       
       if (refreshToken) {
-        const response = await fetch('http://localhost:8000/api/accounts/logout/', {
+        const response = await fetch(AUTH_ENDPOINTS.LOGOUT, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
