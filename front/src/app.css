@@ -1,368 +1,152 @@
 @import 'tailwindcss';
+@plugin '@tailwindcss/forms';
+@plugin '@tailwindcss/typography';
 
-/* Font Face Declarations */
-@font-face {
-  font-family: 'Almarai-Black';
-  src: url('/arabic/Almarai-Black.ttf') format('truetype');
-  font-weight: 900;
-  font-style: normal;
-  font-display: swap;
-}
-
-@font-face {
-  font-family: 'JosefinSans-BoldItalic';
-  src: url('/english/JosefinSans-BoldItalic.otf') format('opentype');
-  font-weight: 800;
-  font-style: italic;
-  font-display: swap;
-}
-
-@font-face {
-  font-family: 'JosefinSans';
-  font-style: italic;
-  font-weight: bold;
-  src: url('/english/JosefinSans-BoldItalic.ttf') format('truetype');
-  font-display: swap;
-}
-
-/* Typography Styles */
-[lang="en"] h1 {
-  font-family: 'JosefinSans-BoldItalic', 'JosefinSans', sans-serif;
-  font-weight: 900;
-  font-size: 2.5rem;
-  line-height: 1.2;
-  letter-spacing: -0.015em;
-}
-
-[lang="en"] h2,
-[lang="en"] h3,
-[lang="en"] h4,
-[lang="en"] h5,
-[lang="en"] h6 {
-  font-weight: 900;
-}
-
-[lang="ar"] h1,
-[lang="ar"] h2,
-[lang="ar"] h3,
-[lang="ar"] h4,
-[lang="ar"] h5,
-[lang="ar"] h6 {
-  font-family: 'Almarai-Black', 'Almarai', 'Cairo', 'Amiri', 'Noto Sans Arabic', sans-serif;
-  font-weight: 900;
-  line-height: 1.6;
-}
-
-[lang="ar"] h1 {
-  font-size: 2.5rem;
-  line-height: 1.2;
-  letter-spacing: -0.025em;
-}
-
-[lang="ar"] .hero-title-ar {
-  font-size: 3.5rem;
-  line-height: 1.3;
-}
-
-[lang="en"] .title {
-  font-family: 'JosefinSans', sans-serif;
-  font-weight: bold;
-  font-style: italic;
-}
-
-/* HERO-MATCHED COLOR PALETTE - Advanced Purple-Blue-Cyan Gradient System */
-@theme {
-    /* Primary: Hero Purple Gradient (Violet to Indigo) */
-    --color-primary-50: #f3f0ff;   /* Very light purple background */
-    --color-primary-100: #e8e3ff;  /* Light purple for subtle highlights */
-    --color-primary-200: #d8cfff;  /* Purple tint for cards */
-    --color-primary-300: #c7b9ff;  /* Medium purple for borders */
-    --color-primary-400: #a78bfa;  /* Purple for interactive elements */
-    --color-primary-500: #8b5cf6;  /* Hero main purple */
-    --color-primary-600: #7c3aed;  /* Hero darker purple */
-    --color-primary-700: #6d28d9;  /* Deep purple for emphasis */
-    --color-primary-800: #5b21b6;  /* Very deep purple */
-    --color-primary-900: #4c1d95;  /* Darkest purple */
-
-    /* Secondary: Hero Blue Gradient (Indigo to Blue) */
-    --color-secondary-50: #eef2ff;  /* Very light blue background */
-    --color-secondary-100: #e0e7ff; /* Light blue for subtle highlights */
-    --color-secondary-200: #c7d2fe; /* Blue tint for cards */
-    --color-secondary-300: #a5b4fc; /* Medium blue for borders */
-    --color-secondary-400: #818cf8; /* Blue for interactive elements */
-    --color-secondary-500: #6366f1; /* Hero main indigo */
-    --color-secondary-600: #4f46e5; /* Hero darker indigo */
-    --color-secondary-700: #4338ca; /* Deep indigo for emphasis */
-    --color-secondary-800: #3730a3; /* Very deep indigo */
-    --color-secondary-900: #312e81; /* Darkest indigo */
-
-    /* Accent: Hero Cyan System (Blue to Cyan) */
-    --color-accent-50: #ecfeff;    /* Very light cyan background */
-    --color-accent-100: #cffafe;   /* Light cyan for highlights */
-    --color-accent-200: #a5f3fc;   /* Cyan tint for cards */
-    --color-accent-300: #67e8f9;   /* Medium cyan for borders */
-    --color-accent-400: #22d3ee;   /* Cyan for interactive elements */
-    --color-accent-500: #06b6d4;   /* Hero main cyan */
-    --color-accent-600: #0891b2;   /* Hero darker cyan */
-    --color-accent-700: #0e7490;   /* Deep cyan for emphasis */
-    --color-accent-800: #155e75;   /* Very deep cyan */
-    --color-accent-900: #164e63;   /* Darkest cyan */
-
-    /* Tertiary: Hero Blue System (Blue variants) */
-    --color-tertiary-50: #eff6ff;  /* Very light blue */
-    --color-tertiary-100: #dbeafe; /* Light blue */
-    --color-tertiary-200: #bfdbfe; /* Blue tint */
-    --color-tertiary-300: #93c5fd; /* Medium blue */
-    --color-tertiary-400: #60a5fa; /* Blue interactive */
-    --color-tertiary-500: #3b82f6; /* Hero main blue */
-    --color-tertiary-600: #2563eb; /* Hero darker blue */
-    --color-tertiary-700: #1d4ed8; /* Deep blue */
-    --color-tertiary-800: #1e40af; /* Very deep blue */
-    --color-tertiary-900: #1e3a8a; /* Darkest blue */
-
-    /* Success: Emerald System (Matches hero success elements) */
-    --color-success-50: #ecfdf5;   /* Very light green */
-    --color-success-100: #d1fae5;  /* Light green */
-    --color-success-200: #a7f3d0;  /* Green tint */
-    --color-success-300: #6ee7b7;  /* Medium green */
-    --color-success-400: #34d399;  /* Green interactive */
-    --color-success-500: #10b981;  /* Main success green */
-    --color-success-600: #059669;  /* Darker success */
-    --color-success-700: #047857;  /* Deep success */
-    --color-success-800: #065f46;  /* Very deep success */
-    --color-success-900: #064e3b;  /* Darkest success */
-
-    /* Warning: Amber System (Warm oranges for balance) */
-    --color-warning-50: #fefce8;   /* Very light amber */
-    --color-warning-100: #fef3c7;  /* Light amber */
-    --color-warning-200: #fde68a;  /* Amber tint */
-    --color-warning-300: #fcd34d;  /* Medium amber */
-    --color-warning-400: #fbbf24;  /* Amber interactive */
-    --color-warning-500: #f59e0b;  /* Main warning */
-    --color-warning-600: #d97706;  /* Darker warning */
-    --color-warning-700: #b45309;  /* Deep warning */
-    --color-warning-800: #92400e;  /* Very deep warning */
-    --color-warning-900: #78350f;  /* Darkest warning */
-
-    /* Danger: Rose System (Refined reds) */
-    --color-danger-50: #fdf2f8;    /* Very light rose */
-    --color-danger-100: #fce7f3;   /* Light rose */
-    --color-danger-200: #fbcfe8;   /* Rose tint */
-    --color-danger-300: #f9a8d4;   /* Medium rose */
-    --color-danger-400: #f472b6;   /* Rose interactive */
-    --color-danger-500: #ec4899;   /* Main danger */
-    --color-danger-600: #db2777;   /* Darker danger */
-    --color-danger-700: #be185d;   /* Deep danger */
-    --color-danger-800: #9d174d;   /* Very deep danger */
-    --color-danger-900: #831843;   /* Darkest danger */
-
-    /* Neutral: Hero-matched Grays (Cool-toned) */
-    --color-neutral-50: #f8fafc;   /* Hero white background */
-    --color-neutral-100: #f1f5f9;  /* Very light gray */
-    --color-neutral-200: #e2e8f0;  /* Light gray borders */
-    --color-neutral-300: #cbd5e1;  /* Medium gray borders */
-    --color-neutral-400: #94a3b8;  /* Gray interactive */
-    --color-neutral-500: #64748b;  /* Main gray text */
-    --color-neutral-600: #475569;  /* Darker gray text */
-    --color-neutral-700: #334155;  /* Deep gray */
-    --color-neutral-800: #1e293b;  /* Very deep gray */
-    --color-neutral-900: #0f172a;  /* Hero dark text */
-
-    /* Info: Sky System (Light blues for information) */
-    --color-info-50: #f0f9ff;      /* Very light sky */
-    --color-info-100: #e0f2fe;     /* Light sky */
-    --color-info-200: #bae6fd;     /* Sky tint */
-    --color-info-300: #7dd3fc;     /* Medium sky */
-    --color-info-400: #38bdf8;     /* Sky interactive */
-    --color-info-500: #0ea5e9;     /* Main info */
-    --color-info-600: #0284c7;     /* Darker info */
-    --color-info-700: #0369a1;     /* Deep info */
-    --color-info-800: #075985;     /* Very deep info */
-    --color-info-900: #0c4a6e;     /* Darkest info */
-}
-
-/* Dark Theme - Inverted hero palette for consistency */
-@theme .dark {
-    /* Primary: Hero Purple Gradient (Inverted) */
-    --color-primary-50: #4c1d95;   /* Darkest purple */
-    --color-primary-100: #5b21b6;  /* Very deep purple */
-    --color-primary-200: #6d28d9;  /* Deep purple */
-    --color-primary-300: #7c3aed;  /* Hero darker purple */
-    --color-primary-400: #8b5cf6;  /* Hero main purple */
-    --color-primary-500: #a78bfa;  /* Purple interactive */
-    --color-primary-600: #c7b9ff;  /* Medium purple */
-    --color-primary-700: #d8cfff;  /* Purple tint */
-    --color-primary-800: #e8e3ff;  /* Light purple */
-    --color-primary-900: #f3f0ff;  /* Very light purple */
-
-    /* Secondary: Hero Blue Gradient (Inverted) */
-    --color-secondary-50: #312e81;  /* Darkest indigo */
-    --color-secondary-100: #3730a3; /* Very deep indigo */
-    --color-secondary-200: #4338ca; /* Deep indigo */
-    --color-secondary-300: #4f46e5; /* Hero darker indigo */
-    --color-secondary-400: #6366f1; /* Hero main indigo */
-    --color-secondary-500: #818cf8; /* Blue interactive */
-    --color-secondary-600: #a5b4fc; /* Medium blue */
-    --color-secondary-700: #c7d2fe; /* Blue tint */
-    --color-secondary-800: #e0e7ff; /* Light blue */
-    --color-secondary-900: #eef2ff; /* Very light blue */
-
-    /* Accent: Hero Cyan System (Inverted) */
-    --color-accent-50: #164e63;    /* Darkest cyan */
-    --color-accent-100: #155e75;   /* Very deep cyan */
-    --color-accent-200: #0e7490;   /* Deep cyan */
-    --color-accent-300: #0891b2;   /* Hero darker cyan */
-    --color-accent-400: #06b6d4;   /* Hero main cyan */
-    --color-accent-500: #22d3ee;   /* Cyan interactive */
-    --color-accent-600: #67e8f9;   /* Medium cyan */
-    --color-accent-700: #a5f3fc;   /* Cyan tint */
-    --color-accent-800: #cffafe;   /* Light cyan */
-    --color-accent-900: #ecfeff;   /* Very light cyan */
-
-    /* Tertiary: Hero Blue System (Inverted) */
-    --color-tertiary-50: #1e3a8a;  /* Darkest blue */
-    --color-tertiary-100: #1e40af; /* Very deep blue */
-    --color-tertiary-200: #1d4ed8; /* Deep blue */
-    --color-tertiary-300: #2563eb; /* Hero darker blue */
-    --color-tertiary-400: #3b82f6; /* Hero main blue */
-    --color-tertiary-500: #60a5fa; /* Blue interactive */
-    --color-tertiary-600: #93c5fd; /* Medium blue */
-    --color-tertiary-700: #bfdbfe; /* Blue tint */
-    --color-tertiary-800: #dbeafe; /* Light blue */
-    --color-tertiary-900: #eff6ff; /* Very light blue */
-
-    /* Success: Emerald System (Inverted) */
-    --color-success-50: #064e3b;   /* Darkest success */
-    --color-success-100: #065f46;  /* Very deep success */
-    --color-success-200: #047857;  /* Deep success */
-    --color-success-300: #059669;  /* Darker success */
-    --color-success-400: #10b981;  /* Main success */
-    --color-success-500: #34d399;  /* Green interactive */
-    --color-success-600: #6ee7b7;  /* Medium green */
-    --color-success-700: #a7f3d0;  /* Green tint */
-    --color-success-800: #d1fae5;  /* Light green */
-    --color-success-900: #ecfdf5;  /* Very light green */
-
-    /* Warning: Amber System (Inverted) */
-    --color-warning-50: #78350f;   /* Darkest warning */
-    --color-warning-100: #92400e;  /* Very deep warning */
-    --color-warning-200: #b45309;  /* Deep warning */
-    --color-warning-300: #d97706;  /* Darker warning */
-    --color-warning-400: #f59e0b;  /* Main warning */
-    --color-warning-500: #fbbf24;  /* Amber interactive */
-    --color-warning-600: #fcd34d;  /* Medium amber */
-    --color-warning-700: #fde68a;  /* Amber tint */
-    --color-warning-800: #fef3c7;  /* Light amber */
-    --color-warning-900: #fefce8;  /* Very light amber */
-
-    /* Danger: Rose System (Inverted) */
-    --color-danger-50: #831843;    /* Darkest danger */
-    --color-danger-100: #9d174d;   /* Very deep danger */
-    --color-danger-200: #be185d;   /* Deep danger */
-    --color-danger-300: #db2777;   /* Darker danger */
-    --color-danger-400: #ec4899;   /* Main danger */
-    --color-danger-500: #f472b6;   /* Rose interactive */
-    --color-danger-600: #f9a8d4;   /* Medium rose */
-    --color-danger-700: #fbcfe8;   /* Rose tint */
-    --color-danger-800: #fce7f3;   /* Light rose */
-    --color-danger-900: #fdf2f8;   /* Very light rose */
-
-    /* Neutral: Hero-matched Grays (Inverted) */
-    --color-neutral-50: #0f172a;   /* Hero dark text */
-    --color-neutral-100: #1e293b;  /* Very deep gray */
-    --color-neutral-200: #334155;  /* Deep gray */
-    --color-neutral-300: #475569;  /* Darker gray text */
-    --color-neutral-400: #64748b;  /* Main gray text */
-    --color-neutral-500: #94a3b8;  /* Gray interactive */
-    --color-neutral-600: #cbd5e1;  /* Medium gray borders */
-    --color-neutral-700: #e2e8f0;  /* Light gray borders */
-    --color-neutral-800: #f1f5f9;  /* Very light gray */
-    --color-neutral-900: #f8fafc;  /* Hero white background */
-
-    /* Info: Sky System (Inverted) */
-    --color-info-50: #0c4a6e;      /* Darkest info */
-    --color-info-100: #075985;     /* Very deep info */
-    --color-info-200: #0369a1;     /* Deep info */
-    --color-info-300: #0284c7;     /* Darker info */
-    --color-info-400: #0ea5e9;     /* Main info */
-    --color-info-500: #38bdf8;     /* Sky interactive */
-    --color-info-600: #7dd3fc;     /* Medium sky */
-    --color-info-700: #bae6fd;     /* Sky tint */
-    --color-info-800: #e0f2fe;     /* Light sky */
-    --color-info-900: #f0f9ff;     /* Very light sky */
-}
-
-/* Hero-inspired utility classes for consistent theming */
-.hero-gradient-primary {
-    background: linear-gradient(135deg, var(--color-primary-500), var(--color-secondary-500));
-}
-
-.hero-gradient-accent {
-    background: linear-gradient(135deg, var(--color-secondary-500), var(--color-accent-500));
-}
-
-.hero-gradient-full {
-    background: linear-gradient(135deg, var(--color-primary-500), var(--color-secondary-500), var(--color-accent-500));
-}
-
-.hero-text-gradient {
-    background: linear-gradient(135deg, var(--color-primary-600), var(--color-secondary-600));
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
-}
-
-.hero-glass {
-    background: rgba(255, 255, 255, 0.8);
-    backdrop-filter: blur(12px);
-    -webkit-backdrop-filter: blur(12px);
-    border: 1px solid rgba(139, 92, 246, 0.2);
-    box-shadow: 0 4px 20px rgba(139, 92, 246, 0.1);
-}
-
-/* Dark theme for hero-glass - moved outside @theme block */
-.dark .hero-glass {
-    background: rgba(15, 23, 42, 0.8);
-    border-color: rgba(167, 139, 250, 0.3);
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
-}
-
-/* Enhanced focus states using hero colors */
-*:focus-visible {
-    outline: none;
-    box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.3);
-}
-
-/* Text selection using hero colors */
-::selection {
-    background: rgba(139, 92, 246, 0.2);
-    color: var(--color-primary-800);
-}
-
-.dark ::selection {
-    background: rgba(167, 139, 250, 0.3);
-    color: var(--color-primary-200);
-}
-
-/* Smooth scrolling */
-html {
-    scroll-behavior: smooth;
-}
-
-/* Custom scrollbar with hero colors */
-::-webkit-scrollbar {
-    width: 6px;
-}
-
-::-webkit-scrollbar-track {
-    background: var(--color-neutral-100);
-}
-
-::-webkit-scrollbar-thumb {
-    background: var(--color-primary-400);
-    border-radius: 3px;
-}
-
-::-webkit-scrollbar-thumb:hover {
-    background: var(--color-primary-500);
-}
+:root {
+    /* Primary: Digital Lavender */
+    --color-primary-50:  #f5f3ff;
+    --color-primary-100: #ede9fe;
+    --color-primary-200: #ddd6fe;
+    --color-primary-300: #c4b5fd;
+    --color-primary-400: #a78bfa;
+    --color-primary-500: #8b5cf6;
+    --color-primary-600: #7c3aed;
+    --color-primary-700: #6d28d9;
+    --color-primary-800: #5b21b6;
+    --color-primary-900: #4c1d95;
+  
+    /* Secondary: Muted Jade */
+    --color-secondary-50:  #ecfdf5;
+    --color-secondary-100: #d1fae5;
+    --color-secondary-200: #a7f3d0;
+    --color-secondary-300: #6ee7b7;
+    --color-secondary-400: #34d399;
+    --color-secondary-500: #10b981;
+    --color-secondary-600: #059669;
+    --color-secondary-700: #047857;
+    --color-secondary-800: #065f46;
+    --color-secondary-900: #064e3b;
+  
+    /* Success: Ocean Teal */
+    --color-success-50:  #e0f2f1;
+    --color-success-100: #b2dfdb;
+    --color-success-200: #80cbc4;
+    --color-success-300: #4db6ac;
+    --color-success-400: #26a69a;
+    --color-success-500: #009688;
+    --color-success-600: #00897b;
+    --color-success-700: #00796b;
+    --color-success-800: #00695c;
+    --color-success-900: #004d40;
+  
+    /* Warning: Soft Amber */
+    --color-warning-50:  #fffbea;
+    --color-warning-100: #fef3c7;
+    --color-warning-200: #fde68a;
+    --color-warning-300: #fcd34d;
+    --color-warning-400: #fbbf24;
+    --color-warning-500: #f59e0b;
+    --color-warning-600: #d97706;
+    --color-warning-700: #b45309;
+    --color-warning-800: #92400e;
+    --color-warning-900: #78350f;
+  
+    /* Danger: Coral Red */
+    --color-danger-50:  #fff1f0;
+    --color-danger-100: #ffe1e1;
+    --color-danger-200: #feb4b4;
+    --color-danger-300: #fd8989;
+    --color-danger-400: #f87171;
+    --color-danger-500: #ef4444;
+    --color-danger-600: #dc2626;
+    --color-danger-700: #b91c1c;
+    --color-danger-800: #991b1b;
+    --color-danger-900: #7f1d1d;
+  
+    /* Gray: Warm Zinc */
+    --color-gray-50:  #fafaf9;
+    --color-gray-100: #f5f5f4;
+    --color-gray-200: #e7e5e4;
+    --color-gray-300: #d6d3d1;
+    --color-gray-400: #a8a29e;
+    --color-gray-500: #78716c;
+    --color-gray-600: #57534e;
+    --color-gray-700: #44403c;
+    --color-gray-800: #292524;
+    --color-gray-900: #1c1917;
+  }
+  
+  @theme .dark {
+    /* Primary: Digital Lavender (Dark) */
+    --color-primary-50:  #4c1d95;
+    --color-primary-100: #5b21b6;
+    --color-primary-200: #6d28d9;
+    --color-primary-300: #7c3aed;
+    --color-primary-400: #8b5cf6;
+    --color-primary-500: #a78bfa;
+    --color-primary-600: #c4b5fd;
+    --color-primary-700: #ddd6fe;
+    --color-primary-800: #ede9fe;
+    --color-primary-900: #f5f3ff;
+  
+    /* Secondary: Muted Jade (Dark) */
+    --color-secondary-50:  #064e3b;
+    --color-secondary-100: #065f46;
+    --color-secondary-200: #047857;
+    --color-secondary-300: #059669;
+    --color-secondary-400: #10b981;
+    --color-secondary-500: #34d399;
+    --color-secondary-600: #6ee7b7;
+    --color-secondary-700: #a7f3d0;
+    --color-secondary-800: #d1fae5;
+    --color-secondary-900: #ecfdf5;
+  
+    /* Success: Ocean Teal (Dark) */
+    --color-success-50:  #004d40;
+    --color-success-100: #00695c;
+    --color-success-200: #00796b;
+    --color-success-300: #00897b;
+    --color-success-400: #009688;
+    --color-success-500: #26a69a;
+    --color-success-600: #4db6ac;
+    --color-success-700: #80cbc4;
+    --color-success-800: #b2dfdb;
+    --color-success-900: #e0f2f1;
+  
+    /* Warning: Soft Amber (Dark) */
+    --color-warning-50:  #78350f;
+    --color-warning-100: #92400e;
+    --color-warning-200: #b45309;
+    --color-warning-300: #d97706;
+    --color-warning-400: #f59e0b;
+    --color-warning-500: #fbbf24;
+    --color-warning-600: #fcd34d;
+    --color-warning-700: #fde68a;
+    --color-warning-800: #fef3c7;
+    --color-warning-900: #fffbea;
+  
+    /* Danger: Coral Red (Dark) */
+    --color-danger-50:  #7f1d1d;
+    --color-danger-100: #991b1b;
+    --color-danger-200: #b91c1c;
+    --color-danger-300: #dc2626;
+    --color-danger-400: #ef4444;
+    --color-danger-500: #f87171;
+    --color-danger-600: #fd8989;
+    --color-danger-700: #feb4b4;
+    --color-danger-800: #ffe1e1;
+    --color-danger-900: #fff1f0;
+  
+    /* Gray: Warm Zinc (Dark) */
+    --color-gray-50:  #1c1917;
+    --color-gray-100: #292524;
+    --color-gray-200: #44403c;
+    --color-gray-300: #57534e;
+    --color-gray-400: #78716c;
+    --color-gray-500: #a8a29e;
+    --color-gray-600: #d6d3d1;
+    --color-gray-700: #e7e5e4;
+    --color-gray-800: #1c1917; /* Corrected: Was #f5f5f4, now using a darker shade */
+    --color-gray-900: #fafaf9;
+  }
+  
