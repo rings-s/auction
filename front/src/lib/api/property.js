@@ -23,11 +23,6 @@ async function api(endpoint, options = {}) {
     ...options.headers
   };
   
-  // Log request details in development
-  if (process.env.NODE_ENV !== 'production') {
-    // console.log(`API Request: ${options.method || 'GET'} ${endpoint}`);
-  }
-  
   // Make the request
   try {
     let response = await fetch(endpoint, { ...options, headers });
@@ -39,7 +34,6 @@ async function api(endpoint, options = {}) {
         headers.Authorization = `Bearer ${newToken}`;
         response = await fetch(endpoint, { ...options, headers });
       } catch (err) {
-        // console.error('Token refresh failed:', err);
         throw new Error('Your session has expired. Please log in again.');
       }
     }
@@ -61,7 +55,6 @@ async function api(endpoint, options = {}) {
     
     return data.data || data;
   } catch (error) {
-    // console.error(`API Error (${endpoint}):`, error);
     throw error;
   }
 }
@@ -101,7 +94,6 @@ async function extractErrorResponse(response) {
     
     return errorData;
   } catch (parseError) {
-    // console.error('Failed to parse error response:', parseError);
     return { 
       status: response.status, 
       message: `Failed to parse error response. Status: ${response.status}`
@@ -111,7 +103,6 @@ async function extractErrorResponse(response) {
 
 /**
  * Parse error messages from Django REST Framework
- * @param {string | ({ error?: { message?: string }, detail?: string } & { [key: string]: string | string[] }) | null | undefined} data - The error data.
  */
 function parseErrorMessage(data) {
   // Handle string errors
@@ -139,19 +130,16 @@ function parseErrorMessage(data) {
     }
     if (errors.length > 0) return errors.join('; ');
     
-    // Fallback for empty objects or objects not matching the above structure, return generic message or stringify
-    // This handles cases where data is an empty object {} after the loop
-    if (Object.keys(data).length === 0) return 'Error: Received an empty error object.'; // Or simply return ''
-    // If it fell through, it might be an object not fitting other patterns, try to stringify non-empty objects
+    // Fallback for empty objects or objects not matching the above structure
+    if (Object.keys(data).length === 0) return 'Error: Received an empty error object.';
     return JSON.stringify(data); 
   }
   
-  return 'An unknown error occurred'; // Fallback for other types or if data is null/undefined initially
+  return 'An unknown error occurred';
 }
 
 /**
  * Format property data for API submission
- * @param {any} data - The raw property data.
  */
 function formatPropertyData(data) {
   const formatted = { ...data };
@@ -191,7 +179,7 @@ function formatPropertyData(data) {
   
   // Ensure rooms have proper data types if present
   if (formatted.rooms && Array.isArray(formatted.rooms)) {
-    formatted.rooms = formatted.rooms.map(/** @param {any} room */ room => {
+    formatted.rooms = formatted.rooms.map(room => {
       const formattedRoom = { ...room };
       
       // Convert room numeric fields
@@ -212,7 +200,6 @@ function formatPropertyData(data) {
 
 /**
  * Get properties with optional filtering
- * @param {object} [filters={}] - Optional filters to apply.
  */
 export async function getProperties(filters = {}) {
   // Build query string from filters
@@ -231,7 +218,6 @@ export async function getProperties(filters = {}) {
 
 /**
  * Get a single property by ID
- * @param {string | number} id - The ID of the property to retrieve.
  */
 export async function getProperty(id) {
   if (!id) throw new Error('Property ID is required');
@@ -240,7 +226,6 @@ export async function getProperty(id) {
 
 /**
  * Get a property by slug
- * @param {string} slug - The slug of the property to retrieve.
  */
 export async function getPropertyBySlug(slug) {
   if (!slug) throw new Error('Property slug is required');
@@ -252,14 +237,12 @@ export async function getPropertyBySlug(slug) {
     // Make the API request with the encoded slug
     return await api(`${API.PROPERTIES}${encodedSlug}/`, { method: 'GET' });
   } catch (error) {
-    // console.error('Error fetching property by slug:', error);
     throw error;
   }
 }
 
 /**
  * Create a new property
- * @param {any} propertyData - The data for the new property.
  */
 export async function createProperty(propertyData) {
   const formattedData = formatPropertyData(propertyData);
@@ -272,8 +255,6 @@ export async function createProperty(propertyData) {
 
 /**
  * Update an existing property
- * @param {string | number} id - The ID of the property to update.
- * @param {any} propertyData - The new data for the property.
  */
 export async function updateProperty(id, propertyData) {
   if (!id) throw new Error('Property ID is required');
@@ -329,24 +310,12 @@ export async function uploadPropertyMedia(propertyId, file, isPrimary = false) {
     throw new Error('Authentication required');
   }
   
-  // Log what we're uploading for debugging
-  /* console.log('Uploading media for property:', {
-    propertyId,
-    fileName: file.name,
-    fileType: file.type,
-    fileSize: file.size,
-    mediaType,
-    isPrimary
-  }); */
-  
   // Add a retry mechanism for better reliability
   let retries = 0;
   const maxRetries = 2;
   
   while (retries <= maxRetries) {
     try {
-      // console.log(`Attempt ${retries + 1} of ${maxRetries + 1} to upload media`);
-      
       const response = await fetch(API.MEDIA, {
         method: 'POST',
         headers: {
@@ -359,14 +328,12 @@ export async function uploadPropertyMedia(propertyId, file, isPrimary = false) {
       // Handle non-200 responses with better error messages
       if (!response.ok) {
         const errorData = await extractErrorResponse(response);
-        // console.error(`Media upload failed (attempt ${retries + 1}):`, errorData);
         
         // If we have retries left, try again after a delay
         if (retries < maxRetries) {
           retries++;
           // Exponential backoff: 1s, 2s, 4s, etc.
           const delay = Math.pow(2, retries) * 1000;
-          // console.log(`Retrying in ${delay}ms...`);
           await new Promise(resolve => setTimeout(resolve, delay));
           continue;
         }
@@ -376,24 +343,20 @@ export async function uploadPropertyMedia(propertyId, file, isPrimary = false) {
       
       // Success!
       const result = await response.json();
-      // console.log('Media upload successful:', result);
       return result;
     } catch (error) {
       // If this is our last retry, or it's a client-side error (not network related)
       const isTypeError = error && typeof error === 'object' && error.name === 'TypeError';
       if (retries >= maxRetries || !isTypeError) {
-        // console.error('Media upload error:', error);
         throw error;
       }
       
       retries++;
       const delay = Math.pow(2, retries) * 1000;
-      // console.log(`Network error, retrying in ${delay}ms...`);
       await new Promise(resolve => setTimeout(resolve, delay));
     }
   }
 }
-
 
 /**
  * Upload multiple media files for a property
@@ -408,21 +371,17 @@ export async function uploadPropertyMediaBatch(propertyId, files, onProgress) {
   let completed = 0;
   const total = files.length;
   
-  // console.log(`Starting batch upload of ${total} files for property ID ${propertyId}`);
-  
   // Find first image to use as primary
   const firstImage = files.find(f => f && f.type && f.type.startsWith('image/'));
   
   // Upload primary image first if available
   if (firstImage) {
     try {
-      // console.log(`Uploading primary image: ${firstImage.name}`);
       const result = await uploadPropertyMedia(propertyId, firstImage, true);
       results.push(result);
     } catch (error) {
       // Get error message safely without TypeScript instanceof
       const errorMessage = error && error.message ? error.message : 'Unknown error';
-      // console.error(`Failed to upload primary image: ${firstImage.name}`, error);
       errors.push({ file: firstImage.name, error: errorMessage });
     } finally {
       completed++;
@@ -430,7 +389,7 @@ export async function uploadPropertyMediaBatch(propertyId, files, onProgress) {
     }
   }
   
-  // Upload remaining files with a small delay between uploads to prevent race conditions
+  // Upload remaining files with a small delay between uploads
   for (const file of files) {
     if (file === firstImage) continue;
     
@@ -438,13 +397,11 @@ export async function uploadPropertyMediaBatch(propertyId, files, onProgress) {
       // Add a small delay between uploads to prevent server overload
       await new Promise(resolve => setTimeout(resolve, 300));
       
-      // console.log(`Uploading file: ${file.name}`);
       const result = await uploadPropertyMedia(propertyId, file, false);
       results.push(result);
     } catch (error) {
       // Get error message safely without TypeScript instanceof
       const errorMessage = error && error.message ? error.message : 'Unknown error';
-      // console.error(`Failed to upload file: ${file.name}`, error);
       errors.push({ file: file.name, error: errorMessage });
     } finally {
       completed++;
@@ -452,11 +409,8 @@ export async function uploadPropertyMediaBatch(propertyId, files, onProgress) {
     }
   }
   
-  // console.log(`Batch upload complete: ${results.length} succeeded, ${errors.length} failed`);
-  
   // If all uploads failed, throw an error to notify the caller
   if (results.length === 0 && errors.length > 0) {
-    // console.error('All media uploads failed:', errors);
     throw new Error(`All ${errors.length} media uploads failed. Check console for details.`);
   }
   
@@ -470,7 +424,6 @@ export async function uploadPropertyMediaBatch(propertyId, files, onProgress) {
 
 /**
  * Set a media item as primary for a property
- * @param {number} mediaId - The ID of the media item to set as primary
  */
 export async function setPropertyMediaPrimary(mediaId) {
   if (!mediaId) throw new Error('Media ID is required');
@@ -491,7 +444,6 @@ export async function deletePropertyMedia(mediaId) {
     method: 'DELETE'
   });
 }
-
 
 /**
  * Add a room to a property
@@ -515,7 +467,6 @@ export async function addPropertyRoom(propertyId, roomData) {
     body: JSON.stringify(formatted)
   });
 }
-
 
 /**
  * Update a property room
@@ -614,7 +565,6 @@ export async function uploadRoomMedia(roomId, file, isPrimary = false) {
     
     return await response.json();
   } catch (error) {
-    // console.error('Room media upload error:', error);
     throw error;
   }
 }

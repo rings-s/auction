@@ -34,7 +34,7 @@
 		try {
 		  await fetchUserProfile();
 		} catch (error) {
-		  console.error('Failed to fetch user profile:', error);
+		  // Silently handle profile fetch errors
 		}
 	  }
 	  

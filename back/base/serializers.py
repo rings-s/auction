@@ -1,3 +1,4 @@
+# back/base/serializers.py
 from rest_framework import serializers
 from django.utils.translation import gettext_lazy as _
 from django.db import transaction
@@ -10,7 +11,8 @@ from django.utils import timezone
 from datetime import timedelta
 from django.db.models import Q, Count, Sum, Avg, Max
 
-
+# Set up proper logging instead of print statements
+logger = logging.getLogger(__name__)
 
 User = get_user_model()
 
@@ -84,23 +86,23 @@ class MediaSerializer(serializers.ModelSerializer):
                     # Default to 'base' app if not specified
                     app_label, model = 'base', content_type_str.lower()
                 
-                # Log for debugging
-                print(f"Looking for content type with app_label='{app_label}', model='{model}'")
+                # Log for debugging in development only
+                logger.debug(f"Looking for content type with app_label='{app_label}', model='{model}'")
                 
                 try:
                     content_type = ContentType.objects.get(app_label=app_label, model=model)
                     data['content_type'] = content_type
-                    print(f"Found content type: {content_type.app_label}.{content_type.model} (id={content_type.id})")
+                    logger.debug(f"Found content type: {content_type.app_label}.{content_type.model} (id={content_type.id})")
                 except ContentType.DoesNotExist:
                     # List available content types to help debugging
                     available = list(ContentType.objects.filter(app_label=app_label).values_list('model', flat=True))
                     msg = f"Content type '{app_label}.{model}' not found. Available models in '{app_label}': {available}"
-                    print(msg)
+                    logger.error(msg)
                     raise serializers.ValidationError({"content_type_str": msg})
                 
             except Exception as e:
                 # Provide detailed error for debugging
-                print(f"Error resolving content_type_str '{content_type_str}': {str(e)}")
+                logger.error(f"Error resolving content_type_str '{content_type_str}': {str(e)}")
                 raise serializers.ValidationError({
                     "content_type_str": f"Invalid content type format: {content_type_str}. "
                                     f"Use format 'app_label.model' or just 'model'. Error: {str(e)}"
@@ -125,7 +127,7 @@ class MediaSerializer(serializers.ModelSerializer):
             
             # If media_type is explicitly set, use it
             if 'media_type' in data:
-                print(f"Using explicitly provided media_type: {data['media_type']}")
+                logger.debug(f"Using explicitly provided media_type: {data['media_type']}")
             # Otherwise detect from file
             else:
                 if hasattr(file, 'content_type'):
@@ -135,7 +137,7 @@ class MediaSerializer(serializers.ModelSerializer):
                         data['media_type'] = 'video'
                     elif file.content_type == 'application/pdf' or str(file.name).lower().endswith('.pdf'):
                         data['media_type'] = 'document'
-                        print(f"Setting media_type to 'document' for PDF file: {file.name}")
+                        logger.debug(f"Setting media_type to 'document' for PDF file: {file.name}")
                     else:
                         data['media_type'] = 'other'
                         
@@ -146,20 +148,20 @@ class MediaSerializer(serializers.ModelSerializer):
                         data['media_type'] = 'image'
                     elif filename.endswith('.pdf'):
                         data['media_type'] = 'document'
-                        print(f"Setting media_type to 'document' based on filename: {filename}")
+                        logger.debug(f"Setting media_type to 'document' based on filename: {filename}")
                     elif filename.endswith(('.mp4', '.avi', '.mov')):
                         data['media_type'] = 'video'
                     else:
                         data['media_type'] = 'other'
                 
-                print(f"Detected media_type: {data['media_type']} for file: {file.name}")
+                logger.debug(f"Detected media_type: {data['media_type']} for file: {file.name}")
         
         return data
 
     def create(self, validated_data):
         """Create a new media instance with proper error handling"""
         try:
-            print(f"Creating media with validated data: media_type={validated_data.get('media_type')}, file={validated_data.get('file').name if 'file' in validated_data else None}")
+            logger.debug(f"Creating media with validated data: media_type={validated_data.get('media_type')}, file={validated_data.get('file').name if 'file' in validated_data else None}")
             
             # Check that content_type and object_id point to a valid object
             content_type = validated_data.get('content_type')
@@ -171,9 +173,9 @@ class MediaSerializer(serializers.ModelSerializer):
                 if model_class:
                     try:
                         related_object = model_class.objects.get(pk=object_id)
-                        print(f"Found related object: {related_object}")
+                        logger.debug(f"Found related object: {related_object}")
                     except model_class.DoesNotExist:
-                        print(f"Related object {content_type.model} with id={object_id} not found")
+                        logger.error(f"Related object {content_type.model} with id={object_id} not found")
                         raise serializers.ValidationError({
                             "object_id": f"Object with id={object_id} of type {content_type.app_label}.{content_type.model} does not exist."
                         })
@@ -183,16 +185,15 @@ class MediaSerializer(serializers.ModelSerializer):
 
             # Proceed with creation
             instance = super().create(validated_data)
-            print(f"Media created successfully: id={instance.id}, media_type={instance.media_type}")
+            logger.info(f"Media created successfully: id={instance.id}, media_type={instance.media_type}")
             
             return instance
             
         except Exception as e:
-            import traceback
-            print(f"Error creating media: {str(e)}")
-            print(traceback.format_exc())
+            logger.error(f"Error creating media: {str(e)}", exc_info=True)
             raise
 
+# Continue with the rest of the serializers without print statements...
 class RoomSerializer(serializers.ModelSerializer):
     room_type_display = serializers.CharField(source='get_room_type_display', read_only=True)
     media = serializers.SerializerMethodField()

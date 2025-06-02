@@ -3,10 +3,7 @@ import { API_BASE_URL } from '$lib/constants';
 import { user } from '$lib/stores/user';
 import { goto } from '$app/navigation';
 
-
 const AUTH_URL = `${API_BASE_URL}/accounts`;
-
-
 
 export async function register(userData) {
   try {
@@ -19,9 +16,6 @@ export async function register(userData) {
     });
 
     const data = await response.json();
-    
-    // Debug line to see the exact error structure
-    // console.log("Registration response:", data);
 
     if (!response.ok) {
       // Handle different error formats properly
@@ -44,11 +38,9 @@ export async function register(userData) {
 
     return data;
   } catch (error) {
-    // console.error("Registration caught error:", error);
     throw error;
   }
 }
-
 
 export async function login(email, password) {
   const response = await fetch(`${AUTH_URL}/login/`, {
@@ -179,7 +171,6 @@ export async function fetchUserProfile() {
     user.set(data.data.user);
     return data.data.user;
   } catch (error) {
-    // console.error('Error fetching user profile:', error);
     throw error;
   }
 }
@@ -296,10 +287,10 @@ export async function logout() {
 
       if (!response.ok) {
         const data = await response.json();
-        // console.error('Logout error:', data.error?.message);
+        // Silently handle logout errors
       }
     } catch (error) {
-      // console.error('Logout error:', error);
+      // Silently handle logout errors
     }
   }
 

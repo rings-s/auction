@@ -9,9 +9,8 @@ export async function fetchUser(token) {
 }
 
 export async function getUserById(userId) {
-  const res = await fetch(`${API_BASE_URL}/users/${userId}/`); // Assuming this endpoint
+  const res = await fetch(`${API_BASE_URL}/users/${userId}/`);
   if (!res.ok) {
-    console.error(`Failed to fetch user ${userId}: ${res.status}`);
     // Fallback display if user not found or error occurs
     return { username: `User ${userId}` }; 
   }

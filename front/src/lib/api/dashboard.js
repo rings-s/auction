@@ -23,20 +23,16 @@ async function apiRequest(url, options = {}) {
     },
   };
 
-  // console.log(`Dashboard API Request: ${options.method || 'GET'} ${url}`);
-
   try {
     let response = await fetch(url, requestOptions);
     
     // Handle token refresh for 401 responses
     if (response.status === 401 && token) {
-      // console.log('Token expired, attempting refresh...');
       try {
         const newToken = await refreshToken();
         requestOptions.headers.Authorization = `Bearer ${newToken}`;
         response = await fetch(url, requestOptions);
       } catch (refreshError) {
-        // console.error('Token refresh failed:', refreshError);
         throw new Error('Your session has expired. Please log in again.');
       }
     }
@@ -51,8 +47,6 @@ async function apiRequest(url, options = {}) {
       data = await response.text();
     }
 
-    // console.log(`Dashboard API Response (${response.status}):`, data);
-
     // Handle error responses
     if (!response.ok) {
       const errorMessage = extractErrorMessage(data, response.status);
@@ -61,7 +55,6 @@ async function apiRequest(url, options = {}) {
 
     return data;
   } catch (error) {
-    // console.error(`Dashboard API Error (${url}):`, error);
     throw error;
   }
 }
@@ -200,7 +193,6 @@ export async function refreshDashboardData() {
       success: true
     };
   } catch (error) {
-    // console.error('Error refreshing dashboard data:', error);
     throw error;
   }
 }
@@ -221,7 +213,6 @@ export async function getDashboardSummary() {
       userPriority: stats.user_priority || 1
     };
   } catch (error) {
-    // console.error('Error fetching dashboard summary:', error);
     throw error;
   }
 }

@@ -1,4 +1,4 @@
-<!-- src/routes/auctions/create/+page.svelte -->
+<!-- front/src/routes/auctions/create/+page.svelte -->
 <script>
   import { onMount } from 'svelte';
   import { goto } from '$app/navigation';
@@ -19,9 +19,10 @@
   let error = '';
   let success = '';
   let previewData = null;
+  let validationErrors = {};
   
   // Define breadcrumb items
-  const breadcrumbItems = [
+  $: breadcrumbItems = [
     { label: $t('nav.home'), href: '/' },
     { label: $t('nav.auctions'), href: '/auctions' },
     { label: $t('auction.createAuction'), href: '/auctions/create', active: true }
@@ -34,9 +35,15 @@
       return;
     }
     
-    // Check if user has permissions (property owner, appraiser, or admin)
-    if (!($user.is_staff || $user.is_superuser || $user.role === 'owner' || $user.role === 'appraiser')) {
-      error = $t('property.unauthorizedMessage');
+    // Check if user has permissions
+    const hasPermission = $user.is_staff || 
+                         $user.is_superuser || 
+                         $user.role === 'owner' || 
+                         $user.role === 'appraiser' ||
+                         $user.role === 'admin';
+    
+    if (!hasPermission) {
+      error = $t('auction.unauthorizedMessage');
     }
     
     loading = false;
@@ -47,25 +54,41 @@
       submitting = true;
       error = '';
       success = '';
+      validationErrors = {};
       
       // Validate the form
+      if (!auctionForm) {
+        throw new Error('Form not initialized');
+      }
+      
       const validation = auctionForm.validateForm();
       if (!validation.valid) {
-        error = validation.error;
+        error = validation.error || 'Please check the form for errors';
+        validationErrors = validation.errors || {};
+        
         // Switch to the tab with the error if tab is specified
-        if (validation.tab && auctionForm) {
-          auctionForm.activeTab = validation.tab;
+        if (validation.tab && auctionForm.setActiveTab) {
+          auctionForm.setActiveTab(validation.tab);
         }
         return;
       }
       
       // Get prepared data from the form component
-      const preparedAuction = auctionForm.prepareDataForSubmission();
+      const preparedAuction = auctionForm.getFormData();
+      
+      if (!preparedAuction) {
+        throw new Error('Failed to get form data');
+      }
+      
+      // Validate required fields
+      if (!preparedAuction.title || !preparedAuction.description) {
+        throw new Error('Title and description are required');
+      }
       
       // Create auction
       const response = await createAuction(preparedAuction);
       
-      if (response) {
+      if (response && response.id) {
         success = $t('auction.createSuccess');
         
         // Show success message and redirect after a delay
@@ -80,26 +103,47 @@
         throw new Error('Invalid response from server');
       }
     } catch (err) {
-      error = err.message || $t('auction.createFailed');
+      if (err.message.includes('validation') || err.message.includes('required')) {
+        error = err.message;
+        validationErrors = err.errors || {};
+      } else {
+        error = err.message || $t('auction.createFailed');
+      }
     } finally {
       submitting = false;
     }
   }
   
   function togglePreview() {
+    if (!auctionForm) {
+      error = 'Form not initialized';
+      return;
+    }
+    
     if (!isPreview) {
-      // Get form data for preview
+      // Validate form before showing preview
       const validation = auctionForm.validateForm();
       if (!validation.valid) {
-        error = validation.error;
+        error = validation.error || 'Please fix the errors before previewing';
+        validationErrors = validation.errors || {};
         return;
       }
       
-      // Prepare data for preview
-      previewData = auctionForm.prepareDataForSubmission();
+      // Get data for preview
+      previewData = auctionForm.getFormData();
+      if (!previewData) {
+        error = 'Failed to get form data for preview';
+        return;
+      }
     }
     
+    error = ''; // Clear any previous errors
     isPreview = !isPreview;
+  }
+  
+  function backToForm() {
+    isPreview = false;
+    error = '';
   }
 </script>
 
@@ -118,19 +162,19 @@
       <div class="md:flex md:items-center md:justify-between">
         <div class="flex-1 min-w-0">
           <h1 class="text-2xl font-bold leading-7 text-gray-900 dark:text-white sm:text-3xl">
-            {$t('auction.createAuction')}
+            {isPreview ? $t('auction.preview') : $t('auction.createAuction')}
           </h1>
           <p class="mt-2 text-base text-gray-500 dark:text-gray-400 max-w-3xl">
-            {$t('auction.createAuctionDesc')}
+            {isPreview ? $t('auction.previewDesc') : $t('auction.createAuctionDesc')}
           </p>
         </div>
         
         <!-- Preview Toggle Button -->
-        {#if !loading}
+        {#if !loading && !error}
           <div class="mt-5 flex lg:mt-0 lg:ml-4">
             <Button
-              variant={isPreview ? 'primary' : 'outline'}
-              onClick={togglePreview}
+              variant={isPreview ? 'secondary' : 'outline'}
+              on:click={togglePreview}
               disabled={submitting}
               class="flex items-center"
             >
@@ -149,27 +193,33 @@
       </div>
     </div>
     
+    <!-- Error Messages -->
     {#if error}
       <Alert 
         type="error" 
         title={$t('error.title')}
         message={error}
         dismissible={true}
+        on:dismiss={() => { error = ''; }}
       />
     {/if}
     
+    <!-- Success Messages -->
     {#if success}
       <Alert 
         type="success" 
-        title={$t('auction.createSuccess')}
-        message={$t('common.loading') + '...'}
+        title={$t('success.title')}
+        message={success}
       />
     {/if}
     
+    <!-- Loading State -->
     {#if loading}
       <div class="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6">
         <LoadingSkeleton type="auctionForm" />
       </div>
+    
+    <!-- Preview Mode -->
     {:else if isPreview && previewData}
       <div class="border border-primary-200 dark:border-primary-800 rounded-lg overflow-hidden bg-white dark:bg-gray-800 shadow-lg">
         <div class="bg-primary-50 dark:bg-primary-900/20 px-6 py-4 border-b border-primary-200 dark:border-primary-800">
@@ -185,10 +235,11 @@
         <AuctionPreview auction={previewData} />
       </div>
       
+      <!-- Preview Action Buttons -->
       <div class="flex justify-end space-x-4">
         <Button
           variant="outline"
-          onClick={togglePreview}
+          on:click={backToForm}
           aria-label={$t('common.edit')}
         >
           <svg class="w-5 h-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -199,7 +250,7 @@
         
         <Button
           variant="primary"
-          onClick={handleSubmit}
+          on:click={handleSubmit}
           loading={submitting}
           disabled={submitting}
           aria-label={$t('auction.create')}
@@ -207,18 +258,24 @@
           <svg class="w-5 h-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
           </svg>
-          {$t('auction.create')}
+          {submitting ? $t('common.creating') : $t('auction.create')}
         </Button>
       </div>
+    
+    <!-- Form Mode -->
     {:else}
       <div class="space-y-8">
-        <AuctionForm bind:this={auctionForm} />
+        <AuctionForm 
+          bind:this={auctionForm} 
+          {validationErrors}
+          on:validationChange={(e) => validationErrors = e.detail}
+        />
         
         <!-- Submit Buttons -->
         <div class="flex justify-end space-x-4">
           <Button
             variant="outline"
-            onClick={() => goto('/auctions')}
+            on:click={() => goto('/auctions')}
             disabled={submitting}
             aria-label={$t('common.cancel')}
           >
@@ -230,7 +287,7 @@
           
           <Button
             variant="secondary"
-            onClick={togglePreview}
+            on:click={togglePreview}
             disabled={submitting}
             aria-label={$t('auction.preview')}
             class="min-w-[150px]"
@@ -244,7 +301,7 @@
           
           <Button
             variant="primary"
-            onClick={handleSubmit}
+            on:click={handleSubmit}
             loading={submitting}
             disabled={submitting}
             aria-label={$t('auction.create')}
@@ -253,25 +310,10 @@
             <svg class="w-5 h-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
             </svg>
-            {$t('auction.create')}
+            {submitting ? $t('common.creating') : $t('auction.create')}
           </Button>
         </div>
       </div>
     {/if}
   </div>
 </div>
-
-<style>
-  /* Enhanced animations for better UX */
-  button {
-    transition: all 0.2s ease-in-out;
-  }
-  
-  button:hover {
-    transform: translateY(-1px);
-  }
-  
-  button:active {
-    transform: translateY(1px);
-  }
-</style>
