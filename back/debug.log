@@ -24642,3 +24642,78 @@ INFO 2025-06-02 09:19:33,569 basehttp 9 137720584193728 "GET /api/accounts/profi
 INFO 2025-06-02 09:19:34,059 basehttp 9 137720584193728 "GET /api/properties/the-property-name/ HTTP/1.1" 200 3990
 INFO 2025-06-02 09:19:34,234 basehttp 9 137720609371840 "GET /api/properties/the-property-name/ HTTP/1.1" 200 3990
 INFO 2025-06-02 09:19:43,595 basehttp 9 137720609371840 "GET /api/auctions/?page=1&ordering=-created_at HTTP/1.1" 200 14614
+INFO 2025-06-06 23:26:03,792 autoreload 9 137147845471104 Watching for file changes with StatReloader
+WARNING 2025-06-06 23:31:33,669 log 9 137147778586304 Unauthorized: /api/messages/
+WARNING 2025-06-06 23:31:33,678 basehttp 9 137147778586304 "GET /api/messages/?page=1 HTTP/1.1" 401 58
+WARNING 2025-06-06 23:31:33,680 log 9 137147566782144 Unauthorized: /api/messages/stats/
+WARNING 2025-06-06 23:31:33,682 basehttp 9 137147566782144 "GET /api/messages/stats/ HTTP/1.1" 401 58
+INFO 2025-06-06 23:31:34,246 basehttp 9 137147788027584 "GET /api/properties/?page=1&ordering=-created_at HTTP/1.1" 200 17957
+INFO 2025-06-06 23:33:37,856 basehttp 9 137147788027584 "GET /api/properties/?page=1&ordering=-created_at HTTP/1.1" 200 17957
+INFO 2025-06-06 23:33:39,716 basehttp 9 137147788027584 "GET /api/auctions/?page=1&ordering=-created_at HTTP/1.1" 200 14600
+WARNING 2025-06-06 23:33:40,191 log 9 137147788027584 Unauthorized: /api/messages/
+WARNING 2025-06-06 23:33:40,195 log 9 137147566782144 Unauthorized: /api/messages/stats/
+WARNING 2025-06-06 23:33:40,196 basehttp 9 137147788027584 "GET /api/messages/?page=1 HTTP/1.1" 401 58
+WARNING 2025-06-06 23:33:40,198 basehttp 9 137147566782144 "GET /api/messages/stats/ HTTP/1.1" 401 58
+INFO 2025-06-06 23:33:41,324 basehttp 9 137147566782144 "GET /api/auctions/?page=1&ordering=-created_at HTTP/1.1" 200 14597
+INFO 2025-06-06 23:33:43,316 basehttp 9 137147566782144 "OPTIONS /api/auctions/the-auction-name/ HTTP/1.1" 200 0
+INFO 2025-06-06 23:33:43,708 basehttp 9 137147566782144 "GET /api/auctions/the-auction-name/ HTTP/1.1" 200 9440
+INFO 2025-06-06 23:33:43,741 basehttp 9 137147566782144 "OPTIONS /api/auctions/5/status/ HTTP/1.1" 200 0
+INFO 2025-06-06 23:33:43,803 basehttp 9 137147566782144 "GET /api/auctions/5/status/ HTTP/1.1" 200 243
+INFO 2025-06-06 23:33:43,980 basehttp 9 137147557340864 "GET /media/uploads/2025/05/29/dummy_imgs.png HTTP/1.1" 304 0
+INFO 2025-06-06 23:33:44,142 basehttp 9 137147566782144 "GET /api/auctions/the-auction-name/ HTTP/1.1" 200 9440
+INFO 2025-06-06 23:33:44,151 basehttp 9 137147566782144 "OPTIONS /api/bids/?auction=5&ordering=-bid_time HTTP/1.1" 200 0
+WARNING 2025-06-06 23:33:44,197 log 9 137147566782144 Unauthorized: /api/bids/
+WARNING 2025-06-06 23:33:44,198 basehttp 9 137147566782144 "GET /api/bids/?auction=5&ordering=-bid_time HTTP/1.1" 401 58
+INFO 2025-06-06 23:33:49,428 basehttp 9 137147566782144 "GET /api/auctions/the-auction-name/ HTTP/1.1" 200 9440
+WARNING 2025-06-06 23:33:49,437 log 9 137147566782144 Unauthorized: /api/bids/
+WARNING 2025-06-06 23:33:49,438 basehttp 9 137147566782144 "GET /api/bids/?auction=5&ordering=-bid_time HTTP/1.1" 401 58
+INFO 2025-06-06 23:33:54,491 basehttp 9 137147566782144 "OPTIONS /api/accounts/login/ HTTP/1.1" 200 0
+INFO 2025-06-06 23:33:55,529 middleware 9 137147566782144 Login: rings9619@gmail.com from IP: 172.19.0.1, UA: 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36...'
+INFO 2025-06-06 23:33:55,613 views 9 137147566782144 Successful login for user: rings9619@gmail.com
+INFO 2025-06-06 23:33:55,644 basehttp 9 137147566782144 "POST /api/accounts/login/ HTTP/1.1" 200 1091
+INFO 2025-06-06 23:33:56,157 basehttp 9 137147566782144 "GET /api/auctions/the-auction-name/ HTTP/1.1" 200 9440
+INFO 2025-06-06 23:33:56,175 basehttp 9 137147566782144 "GET /api/auctions/5/status/ HTTP/1.1" 200 243
+INFO 2025-06-06 23:33:56,467 basehttp 9 137147566782144 "GET /api/auctions/the-auction-name/ HTTP/1.1" 200 9440
+INFO 2025-06-06 23:33:56,500 basehttp 9 137147566782144 "GET /api/bids/?auction=5&ordering=-bid_time HTTP/1.1" 200 4804
+INFO 2025-06-06 23:34:01,786 basehttp 9 137147566782144 "GET /api/properties/?page=1&ordering=-created_at HTTP/1.1" 200 17945
+INFO 2025-06-06 23:34:20,276 basehttp 9 137147566782144 "OPTIONS /api/accounts/profile/ HTTP/1.1" 200 0
+INFO 2025-06-06 23:34:20,460 basehttp 9 137147566782144 "GET /api/accounts/profile/ HTTP/1.1" 200 595
+INFO 2025-06-06 23:38:30,329 basehttp 9 137147566782144 "GET /api/properties/?page=1&ordering=-created_at HTTP/1.1" 200 17945
+INFO 2025-06-06 23:38:31,699 basehttp 9 137147566782144 "GET /api/auctions/?page=1&ordering=-created_at HTTP/1.1" 200 14597
+INFO 2025-06-06 23:39:25,974 basehttp 9 137147566782144 "OPTIONS /api/properties/?page=1&page_size=10&is_active=true&exclude_auctioned=true HTTP/1.1" 200 0
+INFO 2025-06-06 23:39:26,134 basehttp 9 137147566782144 "GET /api/properties/?page=1&page_size=10&is_active=true&exclude_auctioned=true HTTP/1.1" 200 17945
+INFO 2025-06-06 23:40:15,789 basehttp 9 137147566782144 "OPTIONS /api/auctions/ HTTP/1.1" 200 0
+INFO 2025-06-06 23:40:15,972 basehttp 9 137147566782144 "POST /api/auctions/ HTTP/1.1" 201 4531
+INFO 2025-06-06 23:40:16,022 basehttp 9 137147566782144 "OPTIONS /api/media/ HTTP/1.1" 200 0
+INFO 2025-06-06 23:40:16,298 basehttp 9 137147566782144 "POST /api/media/ HTTP/1.1" 201 436
+INFO 2025-06-06 23:40:17,867 basehttp 9 137147566782144 "OPTIONS /api/auctions/the-auction-fixed/ HTTP/1.1" 200 0
+INFO 2025-06-06 23:40:18,045 basehttp 9 137147566782144 "GET /api/auctions/the-auction-fixed/ HTTP/1.1" 200 4968
+INFO 2025-06-06 23:40:18,065 basehttp 9 137147566782144 "OPTIONS /api/auctions/6/status/ HTTP/1.1" 200 0
+INFO 2025-06-06 23:40:18,153 basehttp 9 137147566782144 "GET /api/auctions/6/status/ HTTP/1.1" 200 258
+INFO 2025-06-06 23:40:18,352 basehttp 9 137147557340864 "GET /media/uploads/2025/05/26/d_WlgDir6.jpeg HTTP/1.1" 304 0
+INFO 2025-06-06 23:40:18,544 basehttp 9 137147566782144 "GET /api/auctions/the-auction-fixed/ HTTP/1.1" 200 4968
+INFO 2025-06-06 23:40:18,550 basehttp 9 137147566782144 "OPTIONS /api/bids/?auction=6&ordering=-bid_time HTTP/1.1" 200 0
+INFO 2025-06-06 23:40:18,590 basehttp 9 137147788027584 "GET /media/uploads/2025/06/06/d.jpeg HTTP/1.1" 200 1058
+INFO 2025-06-06 23:40:18,697 basehttp 9 137147566782144 "GET /api/bids/?auction=6&ordering=-bid_time HTTP/1.1" 200 52
+INFO 2025-06-06 23:40:30,595 basehttp 9 137147566782144 "GET /api/auctions/?page=1&ordering=-created_at HTTP/1.1" 200 19566
+INFO 2025-06-06 23:40:35,255 basehttp 9 137147566782144 "GET /api/auctions/the-auction-fixed/ HTTP/1.1" 200 4968
+INFO 2025-06-06 23:40:35,270 basehttp 9 137147566782144 "GET /api/auctions/6/status/ HTTP/1.1" 200 258
+INFO 2025-06-06 23:40:35,605 basehttp 9 137147566782144 "GET /api/auctions/the-auction-fixed/ HTTP/1.1" 200 4968
+INFO 2025-06-06 23:40:35,623 basehttp 9 137147566782144 "GET /api/bids/?auction=6&ordering=-bid_time HTTP/1.1" 200 52
+INFO 2025-06-06 23:41:05,954 basehttp 9 137147566782144 "GET /api/auctions/the-auction-fixed/ HTTP/1.1" 200 4968
+INFO 2025-06-06 23:41:06,130 basehttp 9 137147566782144 "GET /api/auctions/6/status/ HTTP/1.1" 200 258
+INFO 2025-06-06 23:41:06,159 basehttp 9 137147778586304 "GET /api/auctions/the-auction-fixed/ HTTP/1.1" 200 4968
+INFO 2025-06-06 23:41:06,188 basehttp 9 137147566782144 "GET /api/bids/?auction=6&ordering=-bid_time HTTP/1.1" 200 52
+INFO 2025-06-06 23:41:18,289 basehttp 9 137147778586304 "OPTIONS /api/properties/the-full-translated-property-title/ HTTP/1.1" 200 0
+INFO 2025-06-06 23:41:18,291 basehttp 9 137147566782144 "OPTIONS /api/properties/the-full-translated-property-title/ HTTP/1.1" 200 0
+INFO 2025-06-06 23:41:18,499 basehttp 9 137147566782144 "GET /api/properties/the-full-translated-property-title/ HTTP/1.1" 200 3821
+INFO 2025-06-06 23:41:18,661 basehttp 9 137147778586304 "GET /api/properties/the-full-translated-property-title/ HTTP/1.1" 200 3821
+INFO 2025-06-06 23:41:34,724 basehttp 9 137147778586304 "GET /api/auctions/?page=1&ordering=-created_at HTTP/1.1" 200 19566
+INFO 2025-06-06 23:41:37,172 basehttp 9 137147778586304 "GET /api/auctions/the-auction-fixed/ HTTP/1.1" 200 4968
+INFO 2025-06-06 23:41:37,189 basehttp 9 137147778586304 "GET /api/auctions/6/status/ HTTP/1.1" 200 258
+INFO 2025-06-06 23:41:37,413 basehttp 9 137147778586304 "GET /api/auctions/the-auction-fixed/ HTTP/1.1" 200 4968
+INFO 2025-06-06 23:41:37,429 basehttp 9 137147778586304 "GET /api/bids/?auction=6&ordering=-bid_time HTTP/1.1" 200 52
+INFO 2025-06-06 23:41:40,457 basehttp 9 137147778586304 "GET /api/auctions/?page=1&ordering=-created_at HTTP/1.1" 200 19565
+INFO 2025-06-06 23:41:50,853 basehttp 9 137147778586304 "OPTIONS /api/auctions/?page=1&status=scheduled&ordering=-created_at HTTP/1.1" 200 0
+INFO 2025-06-06 23:41:50,869 basehttp 9 137147778586304 "GET /api/auctions/?page=1&status=scheduled&ordering=-created_at HTTP/1.1" 200 52
+INFO 2025-06-06 23:41:53,001 basehttp 9 137147778586304 "GET /api/auctions/?page=1&ordering=-created_at HTTP/1.1" 200 19564

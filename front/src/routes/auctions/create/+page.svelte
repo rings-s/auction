@@ -21,32 +21,47 @@
   let previewData = null;
   let validationErrors = {};
   
-  // Define breadcrumb items
+  // Safe translation helper
+  function safeTranslate(key, fallback = '') {
+    try {
+      return $t ? $t(key) : fallback;
+    } catch (e) {
+      console.warn(`Translation error for key: ${key}`, e);
+      return fallback;
+    }
+  }
+  
+  // Define breadcrumb items with safe translations
   $: breadcrumbItems = [
-    { label: $t('nav.home'), href: '/' },
-    { label: $t('nav.auctions'), href: '/auctions' },
-    { label: $t('auction.createAuction'), href: '/auctions/create', active: true }
+    { label: safeTranslate('nav.home', 'Home'), href: '/' },
+    { label: safeTranslate('nav.auctions', 'Auctions'), href: '/auctions' },
+    { label: safeTranslate('auction.createAuction', 'Create Auction'), href: '/auctions/create', active: true }
   ];
   
   onMount(async () => {
-    // Check if user is logged in
-    if (!$user) {
-      goto('/login?redirect=/auctions/create');
-      return;
+    try {
+      // Check if user is logged in
+      if (!$user) {
+        goto('/login?redirect=/auctions/create');
+        return;
+      }
+      
+      // Check if user has permissions
+      const hasPermission = $user.is_staff || 
+                           $user.is_superuser || 
+                           $user.role === 'owner' || 
+                           $user.role === 'appraiser' ||
+                           $user.role === 'admin';
+      
+      if (!hasPermission) {
+        error = safeTranslate('auction.unauthorizedMessage', 'You do not have permission to create auctions.');
+      }
+    } catch (e) {
+      console.error('Error in onMount:', e);
+      error = 'An error occurred while loading the page.';
+    } finally {
+      loading = false;
     }
-    
-    // Check if user has permissions
-    const hasPermission = $user.is_staff || 
-                         $user.is_superuser || 
-                         $user.role === 'owner' || 
-                         $user.role === 'appraiser' ||
-                         $user.role === 'admin';
-    
-    if (!hasPermission) {
-      error = $t('auction.unauthorizedMessage');
-    }
-    
-    loading = false;
   });
   
   async function handleSubmit() {
@@ -65,16 +80,11 @@
       if (!validation.valid) {
         error = validation.error || 'Please check the form for errors';
         validationErrors = validation.errors || {};
-        
-        // Switch to the tab with the error if tab is specified
-        if (validation.tab && auctionForm.setActiveTab) {
-          auctionForm.setActiveTab(validation.tab);
-        }
         return;
       }
       
       // Get prepared data from the form component
-      const preparedAuction = auctionForm.getFormData();
+      const preparedAuction = auctionForm.prepareDataForSubmission();
       
       if (!preparedAuction) {
         throw new Error('Failed to get form data');
@@ -85,15 +95,22 @@
         throw new Error('Title and description are required');
       }
       
-      // Create auction
+      // Create auction first
       const response = await createAuction(preparedAuction);
       
       if (response && response.id) {
-        success = $t('auction.createSuccess');
+        // Upload any temporary media after auction creation
+        try {
+          await auctionForm.uploadTempMedia(response.id);
+        } catch (mediaError) {
+          console.warn('Media upload failed:', mediaError);
+          // Don't fail the entire process if media upload fails
+        }
+        
+        success = safeTranslate('auction.createSuccess', 'Auction created successfully!');
         
         // Show success message and redirect after a delay
         setTimeout(() => {
-          // Use slug if available, otherwise use ID
           const redirectPath = response.slug ? 
             `/auctions/${response.slug}` : 
             `/auctions/${response.id}`;
@@ -103,42 +120,44 @@
         throw new Error('Invalid response from server');
       }
     } catch (err) {
-      if (err.message.includes('validation') || err.message.includes('required')) {
-        error = err.message;
-        validationErrors = err.errors || {};
-      } else {
-        error = err.message || $t('auction.createFailed');
-      }
+      console.error('Error creating auction:', err);
+      error = err.message || safeTranslate('auction.createFailed', 'Failed to create auction. Please try again.');
     } finally {
       submitting = false;
     }
   }
+
   
   function togglePreview() {
-    if (!auctionForm) {
-      error = 'Form not initialized';
-      return;
-    }
-    
-    if (!isPreview) {
-      // Validate form before showing preview
-      const validation = auctionForm.validateForm();
-      if (!validation.valid) {
-        error = validation.error || 'Please fix the errors before previewing';
-        validationErrors = validation.errors || {};
+    try {
+      if (!auctionForm) {
+        error = 'Form not initialized';
         return;
       }
       
-      // Get data for preview
-      previewData = auctionForm.getFormData();
-      if (!previewData) {
-        error = 'Failed to get form data for preview';
-        return;
+      if (!isPreview) {
+        // Validate form before showing preview
+        const validation = auctionForm.validateForm();
+        if (!validation.valid) {
+          error = validation.error || 'Please fix the errors before previewing';
+          validationErrors = validation.errors || {};
+          return;
+        }
+        
+        // Get data for preview
+        previewData = auctionForm.prepareDataForSubmission();
+        if (!previewData) {
+          error = 'Failed to get form data for preview';
+          return;
+        }
       }
+      
+      error = '';
+      isPreview = !isPreview;
+    } catch (e) {
+      console.error('Error toggling preview:', e);
+      error = 'An error occurred while toggling preview mode.';
     }
-    
-    error = ''; // Clear any previous errors
-    isPreview = !isPreview;
   }
   
   function backToForm() {
@@ -148,45 +167,44 @@
 </script>
 
 <svelte:head>
-  <title>{$t('auction.createAuction')} | Real Estate Platform</title>
-  <meta name="description" content={$t('auction.createAuctionDesc')} />
+  <title>{safeTranslate('auction.createAuction', 'Create Auction')} | Real Estate Platform</title>
+  <meta name="description" content={safeTranslate('auction.createAuctionDesc', 'Create a new auction for your property')} />
 </svelte:head>
 
-<div class="min-h-screen bg-gray-50 dark:bg-gray-900 py-8 px-4 sm:px-6 lg:px-8">
-  <div class="max-w-7xl mx-auto space-y-8">
+<div class="min-h-screen bg-gray-50 dark:bg-gray-900 py-6 px-4 sm:px-6 lg:px-8">
+  <div class="max-w-6xl mx-auto space-y-6">
     <!-- Breadcrumb Navigation -->
     <Breadcrumb items={breadcrumbItems} />
     
     <!-- Page Header -->
-    <div class="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6">
+    <div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-6">
       <div class="md:flex md:items-center md:justify-between">
         <div class="flex-1 min-w-0">
-          <h1 class="text-2xl font-bold leading-7 text-gray-900 dark:text-white sm:text-3xl">
-            {isPreview ? $t('auction.preview') : $t('auction.createAuction')}
+          <h1 class="text-2xl font-bold text-gray-900 dark:text-white">
+            {isPreview ? safeTranslate('auction.preview', 'Preview') : safeTranslate('auction.createAuction', 'Create Auction')}
           </h1>
-          <p class="mt-2 text-base text-gray-500 dark:text-gray-400 max-w-3xl">
-            {isPreview ? $t('auction.previewDesc') : $t('auction.createAuctionDesc')}
+          <p class="mt-2 text-sm text-gray-600 dark:text-gray-400">
+            {isPreview ? 
+              safeTranslate('auction.previewDesc', 'Review your auction before publishing') : 
+              safeTranslate('auction.createAuctionDesc', 'Create a new auction for your property')
+            }
           </p>
         </div>
         
         <!-- Preview Toggle Button -->
         {#if !loading && !error}
-          <div class="mt-5 flex lg:mt-0 lg:ml-4">
+          <div class="mt-4 lg:mt-0 lg:ml-4">
             <Button
               variant={isPreview ? 'secondary' : 'outline'}
+              size="sm"
               on:click={togglePreview}
               disabled={submitting}
-              class="flex items-center"
+              iconLeft={isPreview ? 
+                '<svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" /></svg>' :
+                '<svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" /></svg>'
+              }
             >
-              <svg class="w-5 h-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                {#if isPreview}
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                {:else}
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-                {/if}
-              </svg>
-              {isPreview ? $t('common.edit') : $t('auction.preview')}
+              {isPreview ? safeTranslate('common.edit', 'Edit') : safeTranslate('auction.preview', 'Preview')}
             </Button>
           </div>
         {/if}
@@ -197,7 +215,7 @@
     {#if error}
       <Alert 
         type="error" 
-        title={$t('error.title')}
+        title={safeTranslate('error.title', 'Error')}
         message={error}
         dismissible={true}
         on:dismiss={() => { error = ''; }}
@@ -208,27 +226,27 @@
     {#if success}
       <Alert 
         type="success" 
-        title={$t('success.title')}
+        title={safeTranslate('success.title', 'Success')}
         message={success}
       />
     {/if}
     
     <!-- Loading State -->
     {#if loading}
-      <div class="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6">
+      <div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-6">
         <LoadingSkeleton type="auctionForm" />
       </div>
     
     <!-- Preview Mode -->
     {:else if isPreview && previewData}
-      <div class="border border-primary-200 dark:border-primary-800 rounded-lg overflow-hidden bg-white dark:bg-gray-800 shadow-lg">
-        <div class="bg-primary-50 dark:bg-primary-900/20 px-6 py-4 border-b border-primary-200 dark:border-primary-800">
-          <div class="flex items-center text-primary-700 dark:text-primary-300">
-            <svg class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+      <div class="border border-blue-200 dark:border-blue-800 rounded-lg overflow-hidden bg-white dark:bg-gray-800 shadow-sm">
+        <div class="bg-blue-50 dark:bg-blue-900/20 px-6 py-3 border-b border-blue-200 dark:border-blue-800">
+          <div class="flex items-center text-blue-700 dark:text-blue-300">
+            <svg class="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
             </svg>
-            <span class="font-medium">{$t('common.preview')}</span>
+            <span class="font-medium text-sm">{safeTranslate('common.preview', 'Preview')}</span>
           </div>
         </div>
         
@@ -236,35 +254,31 @@
       </div>
       
       <!-- Preview Action Buttons -->
-      <div class="flex justify-end space-x-4">
+      <div class="flex justify-end space-x-3">
         <Button
           variant="outline"
+          size="sm"
           on:click={backToForm}
-          aria-label={$t('common.edit')}
+          iconLeft='<svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 17l-5-5m0 0l5-5m-5 5h12" /></svg>'
         >
-          <svg class="w-5 h-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 17l-5-5m0 0l5-5m-5 5h12" />
-          </svg>
-          {$t('common.edit')}
+          {safeTranslate('common.edit', 'Edit')}
         </Button>
         
         <Button
           variant="primary"
+          size="sm"
           on:click={handleSubmit}
           loading={submitting}
           disabled={submitting}
-          aria-label={$t('auction.create')}
+          iconLeft='<svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" /></svg>'
         >
-          <svg class="w-5 h-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
-          </svg>
-          {submitting ? $t('common.creating') : $t('auction.create')}
+          {submitting ? safeTranslate('common.creating', 'Creating...') : safeTranslate('auction.create', 'Create')}
         </Button>
       </div>
     
     <!-- Form Mode -->
     {:else}
-      <div class="space-y-8">
+      <div class="space-y-6">
         <AuctionForm 
           bind:this={auctionForm} 
           {validationErrors}
@@ -272,45 +286,36 @@
         />
         
         <!-- Submit Buttons -->
-        <div class="flex justify-end space-x-4">
+        <div class="flex justify-end space-x-3">
           <Button
             variant="outline"
+            size="sm"
             on:click={() => goto('/auctions')}
             disabled={submitting}
-            aria-label={$t('common.cancel')}
+            iconLeft='<svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg>'
           >
-            <svg class="w-5 h-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-            </svg>
-            {$t('common.cancel')}
+            {safeTranslate('common.cancel', 'Cancel')}
           </Button>
           
           <Button
             variant="secondary"
+            size="sm"
             on:click={togglePreview}
             disabled={submitting}
-            aria-label={$t('auction.preview')}
-            class="min-w-[150px]"
+            iconLeft='<svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" /></svg>'
           >
-            <svg class="w-5 h-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-            </svg>
-            {$t('auction.preview')}
+            {safeTranslate('auction.preview', 'Preview')}
           </Button>
           
           <Button
             variant="primary"
+            size="sm"
             on:click={handleSubmit}
             loading={submitting}
             disabled={submitting}
-            aria-label={$t('auction.create')}
-            class="min-w-[180px]"
+            iconLeft='<svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" /></svg>'
           >
-            <svg class="w-5 h-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
-            </svg>
-            {submitting ? $t('common.creating') : $t('auction.create')}
+            {submitting ? safeTranslate('common.creating', 'Creating...') : safeTranslate('auction.create', 'Create')}
           </Button>
         </div>
       </div>

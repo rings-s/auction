@@ -66,7 +66,7 @@
 	<title>Real Estate Auction Platform</title>
   </svelte:head>
   
-  <div class="min-h-screen flex flex-col bg-gray-50 dark:bg-gray-800 transition-colors duration-200">
+  <div class="min-h-screen flex flex-col  dark:bg-gray-800 transition-colors duration-200">
 	{#if !loading}
 	  <Navbar />
 	  

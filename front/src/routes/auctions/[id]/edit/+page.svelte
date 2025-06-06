@@ -11,7 +11,6 @@
     import Alert from '$lib/components/ui/Alert.svelte';
     import Modal from '$lib/components/ui/Modal.svelte';
     import LoadingSkeleton from '$lib/components/ui/LoadingSkeleton.svelte';
-    
     import AuctionForm from '$lib/components/auction/AuctionForm.svelte';
 
     let auction = null;
@@ -22,8 +21,33 @@
     let auctionForm = null;
     let showDeleteModal = false;
     let deleteLoading = false;
-
     let breadcrumbs = [];
+
+    // Safe translation helper
+    function safeTranslate(key, fallback = '', params = {}) {
+        try {
+            return $t ? $t(key, params) : fallback;
+        } catch (e) {
+            console.warn(`Translation error for key: ${key}`, e);
+            return fallback;
+        }
+    }
+
+    // Check user authorization
+    function checkUserAuthorization(currentUser, auctionData) {
+        if (!currentUser) return false;
+        
+        const { id: currentUserId, is_admin, is_staff, is_superuser } = currentUser;
+        const isAdmin = is_admin || is_staff || is_superuser;
+        
+        if (isAdmin) return true;
+        
+        if (auctionData.created_by && auctionData.created_by.id) {
+            return String(currentUserId) === String(auctionData.created_by.id);
+        }
+        
+        return false;
+    }
 
     onMount(async () => {
         const auctionId = $page.params.id;
@@ -31,60 +55,23 @@
 
         try {
             const fetchedAuction = await fetchAuctionById(auctionId);
-            let isAuthorized = false;
-            let currentUserIsAdmin = false;
-
-            if (currentUser) {
-                const { id: currentUserId, is_admin } = currentUser;
-                currentUserIsAdmin = is_admin === true;
-
-                if (currentUserIsAdmin) {
-                    isAuthorized = true;
-                } else if (fetchedAuction.created_by && fetchedAuction.created_by.id && currentUserId) {
-                    if (String(currentUserId) === String(fetchedAuction.created_by.id)) {
-                        isAuthorized = true;
-                    }
-                }
-            }
             
-            if (!isAuthorized && fetchedAuction.created_by) { 
-                authError = $t('auction.editNotAuthorized');
+            if (!checkUserAuthorization(currentUser, fetchedAuction)) {
+                authError = safeTranslate('auction.editNotAuthorized', 'You are not authorized to edit this auction.');
                 auction = null;
-            } else if (!isAuthorized && !fetchedAuction.created_by) {
-                if (currentUserIsAdmin) {
-                    isAuthorized = true; 
-                    auction = fetchedAuction;
-                } else {
-                    authError = $t('auction.editNotAuthorized');
-                    auction = null;
-                }
-            } else if (isAuthorized) {
-                auction = fetchedAuction;
             } else {
-                authError = $t('auction.editNotAuthorized');
-                auction = null;
+                auction = fetchedAuction;
             }
 
         } catch (err) {
-            let message = $t('error.fetchFailed');
-            if (err && typeof err === 'object') {
-                if ('status' in err) {
-                    const status = err.status;
-                    if (status === 403 || status === 401) {
-                        authError = $t('auction.editNotAuthorized');
-                        message = '';
-                    } else if (status === 404) {
-                        error = $t('auction.notFound'); 
-                        message = '';
-                    }
-                }
-                if (message && 'message' in err && typeof err.message === 'string') {
-                    error = err.message;
-                } else if (message) {
-                    error = message;
-                }
+            console.error('Error fetching auction:', err);
+            
+            if (err?.status === 403 || err?.status === 401) {
+                authError = safeTranslate('auction.editNotAuthorized', 'You are not authorized to edit this auction.');
+            } else if (err?.status === 404) {
+                error = safeTranslate('auction.notFound', 'Auction not found.');
             } else {
-                error = message;
+                error = err?.message || safeTranslate('error.fetchFailed', 'Failed to load auction.');
             }
         } finally {
             loading = false;
@@ -92,34 +79,51 @@
     });
 
     async function handleSubmit() {
-        if (!auctionForm || !auction || !auction.id) return;
-        const currentData = auctionForm.getFormData(); 
-        if (!currentData) return;
-
+        if (!auctionForm || !auction?.id) return;
+        
         saving = true;
-        error = null; 
+        error = null;
         authError = null;
 
         try {
-            const updatedAuctionData = await updateAuction(auction.id.toString(), currentData);
+            // Validate the form first
+            const validation = auctionForm.validateForm();
+            if (!validation.valid) {
+                error = validation.error || 'Please check the form for errors';
+                return;
+            }
+
+            const formData = auctionForm.prepareDataForSubmission();
+            if (!formData) {
+                throw new Error('Failed to get form data');
+            }
+
+            const updatedAuctionData = await updateAuction(auction.id.toString(), formData);
             auction = updatedAuctionData;
-            alert($t('auction.updateSuccess'));
+            
+            // Show success message
+            const successMsg = safeTranslate('auction.updateSuccess', 'Auction updated successfully!');
+            alert(successMsg);
+            
         } catch (err) {
-            let errMessage = $t('auction.updateFailed');
-            if (err && typeof err === 'object' && 'response' in err && err.response && typeof err.response === 'object' && 'data' in err.response && err.response.data) {
+            console.error('Error updating auction:', err);
+            
+            let errMessage = safeTranslate('auction.updateFailed', 'Failed to update auction.');
+            
+            if (err?.response?.data) {
                 const data = err.response.data;
-                if (typeof data === 'object' && data !== null && 'detail' in data && typeof data.detail === 'string') {
+                if (data.detail) {
                     errMessage = data.detail;
-                } else if (typeof data === 'object' && data !== null){
-                    try {
-                        errMessage = Object.values(data).map(e => Array.isArray(e) ? e.join(', ') : String(e)).join('; ');
-                    } catch (_) {
-                        // Keep default errMessage
-                    }
+                } else if (typeof data === 'object') {
+                    const errors = Object.values(data)
+                        .map(e => Array.isArray(e) ? e.join(', ') : String(e))
+                        .join('; ');
+                    if (errors) errMessage = errors;
                 }
-            } else if (err && typeof err === 'object' && 'message' in err && typeof err.message === 'string') {
+            } else if (err?.message) {
                 errMessage = err.message;
             }
+            
             error = errMessage;
         } finally {
             saving = false;
@@ -127,132 +131,164 @@
     }
 
     async function handleDelete() {
-        if (!auction || !auction.id) return;
+        if (!auction?.id) return;
+        
         deleteLoading = true;
         error = null;
         authError = null;
+        
         try {
             await deleteAuction(auction.id.toString());
-            alert($t('auction.deleteSuccess'));
-            goto('/dashboard/my-auctions'); 
+            const successMsg = safeTranslate('auction.deleteSuccess', 'Auction deleted successfully!');
+            alert(successMsg);
+            goto('/auctions');
         } catch (err) {
-            if (err && typeof err === 'object' && 'message' in err && typeof err.message === 'string'){
-                error = err.message;
-            } else {
-                error = $t('auction.deleteFailed');
-            }
+            console.error('Error deleting auction:', err);
+            error = err?.message || safeTranslate('auction.deleteFailed', 'Failed to delete auction.');
         } finally {
             deleteLoading = false;
             showDeleteModal = false;
         }
     }
     
-    let canDelete = false; 
-    $: {
-        const currentUser = $user;
-        if (currentUser && auction && auction.created_by) {
-            const { id: currentUserId, is_admin: currentUserIsAdmin } = currentUser;
-            if (currentUserId && auction.created_by.id) { 
-                 canDelete = (String(currentUserId) === String(auction.created_by.id)) || (currentUserIsAdmin === true);
-            } else {
-                canDelete = currentUserIsAdmin === true; 
-            }
-        } else if (currentUser && auction && !auction.created_by) {
-            const { is_admin: currentUserIsAdmin } = currentUser;
-            canDelete = currentUserIsAdmin === true;
-        } else {
-            canDelete = false;
-        }
-    }
+    // Check if user can delete
+    $: canDelete = $user && auction ? checkUserAuthorization($user, auction) : false;
 
+    // Generate breadcrumbs
     $: if (auction) {
         breadcrumbs = [
-            { label: $t('nav.home'), href: '/' },
-            { label: $t('nav.auctions'), href: '/auctions' },
-            { label: auction.title, href: `/auctions/${auction.slug}` },
-            { label: $t('auction.edit'), href: `/auctions/${auction.id}/edit`, current: true }
+            { label: safeTranslate('nav.home', 'Home'), href: '/' },
+            { label: safeTranslate('nav.auctions', 'Auctions'), href: '/auctions' },
+            { label: auction.title, href: `/auctions/${auction.slug || auction.id}` },
+            { label: safeTranslate('auction.edit', 'Edit'), href: `/auctions/${auction.id}/edit`, active: true }
         ];
     } else {
         breadcrumbs = [
-            { label: $t('nav.home'), href: '/' },
-            { label: $t('nav.auctions'), href: '/auctions' },
-            { label: $t('auction.edit'), current: true } 
+            { label: safeTranslate('nav.home', 'Home'), href: '/' },
+            { label: safeTranslate('nav.auctions', 'Auctions'), href: '/auctions' },
+            { label: safeTranslate('auction.edit', 'Edit'), active: true }
         ];
     }
-
 </script>
 
 <svelte:head>
-    <title>{$t('auction.edit')} - {auction ? auction.title : $t('common.loading')}</title>
-    <meta name="description" content={$t('auction.editMetaDescription', { auctionTitle: auction ? auction.title : '' })} />
+    <title>{safeTranslate('auction.edit', 'Edit')} - {auction ? auction.title : safeTranslate('common.loading', 'Loading...')}</title>
+    <meta name="description" content={safeTranslate('auction.editMetaDescription', 'Edit auction details', { auctionTitle: auction?.title || '' })} />
 </svelte:head>
 
-<div class="container mx-auto px-4 py-8">
-    <Breadcrumb items={breadcrumbs} />
+<div class="min-h-screen bg-gray-50 dark:bg-gray-900 py-6 px-4 sm:px-6 lg:px-8">
+    <div class="max-w-6xl mx-auto space-y-6">
+        <Breadcrumb items={breadcrumbs} />
 
-    {#if loading}
-        <LoadingSkeleton class="mt-6" />
-    {:else if authError}
-        <Alert type="error" message={authError} class="mt-6" />
-        <div class="mt-6 text-center">
-            <Button href="/auctions" variant="primary">{$t('auction.backToList')}</Button>
-        </div>
-    {:else if error && !auction} 
-        <Alert type="error" message={error} class="mt-6" />
-        <div class="mt-6 text-center">
-            <Button href="/auctions" variant="primary">{$t('auction.backToList')}</Button>
-        </div>
-    {:else if auction} 
-        <h1 class="text-3xl font-bold my-6">{$t('auction.editTitle', { title: auction.title })}</h1>
-
-        {#if error && auction} 
-            <Alert type="error" message={error} class="mb-6" />
-        {/if}
-
-        <AuctionForm bind:this={auctionForm} initialAuction={auction} isEditing={true} on:submit={handleSubmit} />
-
-        <div class="mt-8 flex flex-col sm:flex-row justify-between items-center space-y-4 sm:space-y-0 sm:space-x-4">
-            <Button 
-                variant="primary" 
-                on:click={() => auctionForm?.submitForm()} 
-                disabled={saving || deleteLoading}
-                loading={saving}
-            >
-                {saving ? $t('common.saving') : $t('common.saveChanges')}
-            </Button>
-
-            {#if canDelete}
-                <Button 
-                    variant="danger-outline" 
-                    on:click={() => showDeleteModal = true} 
-                    disabled={saving || deleteLoading}                    
-                >
-                    {$t('auction.delete')}
+        {#if loading}
+            <div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-6">
+                <LoadingSkeleton type="auctionForm" />
+            </div>
+        {:else if authError}
+            <Alert type="error" message={authError} />
+            <div class="text-center">
+                <Button href="/auctions" variant="primary" size="sm">
+                    {safeTranslate('auction.backToList', 'Back to Auctions')}
                 </Button>
-            {/if}
+            </div>
+        {:else if error && !auction}
+            <Alert type="error" message={error} />
+            <div class="text-center">
+                <Button href="/auctions" variant="primary" size="sm">
+                    {safeTranslate('auction.backToList', 'Back to Auctions')}
+                </Button>
+            </div>
+        {:else if auction}
+            <div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-6">
+                <h1 class="text-2xl font-bold text-gray-900 dark:text-white mb-6">
+                    {safeTranslate('auction.editTitle', 'Edit: {title}', { title: auction.title })}
+                </h1>
 
-            <Button 
-                variant="neutral-outline" 
-                href={auction.slug ? `/auctions/${auction.slug}` : '/auctions'}
-                disabled={saving || deleteLoading}
-            >
-                {$t('common.cancel')}
-            </Button>
-        </div>
-    {:else}
-        <Alert type="error" message={$t('error.generic')} class="mt-6" />
-    {/if}
+                {#if error}
+                    <Alert type="error" message={error} class="mb-6" />
+                {/if}
+
+                <AuctionForm 
+                    bind:this={auctionForm} 
+                    initialAuction={auction} 
+                    isEditing={true}
+                />
+
+                <div class="mt-8 flex flex-wrap justify-between items-center gap-4">
+                    <div class="flex space-x-3">
+                        <Button 
+                            variant="primary" 
+                            size="sm"
+                            on:click={handleSubmit} 
+                            disabled={saving || deleteLoading}
+                            loading={saving}
+                            iconLeft='<svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" /></svg>'
+                        >
+                            {saving ? safeTranslate('common.saving', 'Saving...') : safeTranslate('common.saveChanges', 'Save Changes')}
+                        </Button>
+
+                        <Button 
+                            variant="outline" 
+                            size="sm"
+                            href={auction.slug ? `/auctions/${auction.slug}` : '/auctions'}
+                            disabled={saving || deleteLoading}
+                            iconLeft='<svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg>'
+                        >
+                            {safeTranslate('common.cancel', 'Cancel')}
+                        </Button>
+                    </div>
+
+                    {#if canDelete}
+                        <Button 
+                            variant="danger" 
+                            size="sm"
+                            on:click={() => showDeleteModal = true} 
+                            disabled={saving || deleteLoading}
+                            iconLeft='<svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>'
+                        >
+                            {safeTranslate('auction.delete', 'Delete')}
+                        </Button>
+                    {/if}
+                </div>
+            </div>
+        {:else}
+            <Alert type="error" message={safeTranslate('error.generic', 'An unexpected error occurred.')} />
+        {/if}
+    </div>
 </div>
 
 {#if showDeleteModal}
     <Modal 
-        title={$t('auction.deleteConfirmTitle')}
-        on:confirm={handleDelete}
-        on:cancel={() => showDeleteModal = false}
-        confirmButtonVariant="danger"
-        closeButton={true} 
-        disabled={deleteLoading} 
+        title={safeTranslate('auction.deleteConfirmTitle', 'Delete Auction')}
+        show={showDeleteModal}
+        on:close={() => showDeleteModal = false}
+        maxWidth="md"
     >
-        <p>{$t('auction.deleteConfirmMessage', { title: auction?.title ?? ''})}</p>
+        <div class="p-6">
+            <p class="text-gray-600 dark:text-gray-400 mb-6">
+                {safeTranslate('auction.deleteConfirmMessage', 'Are you sure you want to delete "{title}"? This action cannot be undone.', { title: auction?.title || '' })}
+            </p>
+            
+            <div class="flex justify-end space-x-3">
+                <Button 
+                    variant="outline" 
+                    size="sm"
+                    on:click={() => showDeleteModal = false}
+                    disabled={deleteLoading}
+                >
+                    {safeTranslate('common.cancel', 'Cancel')}
+                </Button>
+                
+                <Button 
+                    variant="danger" 
+                    size="sm"
+                    on:click={handleDelete}
+                    loading={deleteLoading}
+                    disabled={deleteLoading}
+                >
+                    {deleteLoading ? safeTranslate('common.deleting', 'Deleting...') : safeTranslate('auction.delete', 'Delete')}
+                </Button>
+            </div>
+        </div>
     </Modal>
 {/if}

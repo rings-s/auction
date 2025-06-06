@@ -15,11 +15,10 @@
     headline: false,
     subheadline: false,
     cta: false,
-    metrics: false,
-    marketCard: false
+    buildings: false
   };
   
-  // Enhanced translations with Marketing Growth Card
+  // Enhanced translations
   const translations = {
     en: {
       badge: {
@@ -31,25 +30,6 @@
       cta: {
         primary: 'Start Bidding',
         secondary: 'View Properties'
-      },
-      metrics: [
-        { value: '$2.5M+', label: 'Sold' },
-        { value: '98%', label: 'Success' },
-        { value: '15K+', label: 'Users' },
-        { value: '4.9★', label: 'Rating' }
-      ],
-      marketGrowth: {
-        title: 'Market Growth',
-        period: '12 months',
-        stats: {
-          growthRate: { value: '+24.5%', label: 'Growth Rate' },
-          volume: { value: '$3.2M', label: 'Volume' }
-        },
-        metrics: [
-          { label: 'Properties Sold', value: '+18.2%' },
-          { label: 'Average Price', value: '+12.8%' },
-          { label: 'Market Activity', value: '+31.5%' }
-        ]
       }
     },
     ar: {
@@ -57,30 +37,11 @@
         live: 'مباشر الآن',
         count: '24 نشط'
       },
-      headline: 'مزادات',
+      headline: 'اكــــشن',
       subheadline: 'اكتشف العقارات الحصرية من خلال المزادات الشفافة. انضم لآلاف المشترين والبائعين الناجحين.',
       cta: {
         primary: 'ابدأ المزايدة',
         secondary: 'عرض العقارات'
-      },
-      metrics: [
-        { value: '+2.5م$', label: 'مباع' },
-        { value: '98%', label: 'نجاح' },
-        { value: '+15ألف', label: 'مستخدم' },
-        { value: '★4.9', label: 'تقييم' }
-      ],
-      marketGrowth: {
-        title: 'نمو السوق',
-        period: '12 شهر',
-        stats: {
-          growthRate: { value: '+24.5%', label: 'معدل النمو' },
-          volume: { value: '3.2م$', label: 'الحجم' }
-        },
-        metrics: [
-          { label: 'العقارات المباعة', value: '+18.2%' },
-          { label: 'متوسط السعر', value: '+12.8%' },
-          { label: 'نشاط السوق', value: '+31.5%' }
-        ]
       }
     }
   };
@@ -119,8 +80,7 @@
       { element: 'headline', delay: 200 },
       { element: 'subheadline', delay: 300 },
       { element: 'cta', delay: 400 },
-      { element: 'metrics', delay: 500 },
-      { element: 'marketCard', delay: 600 }
+      { element: 'buildings', delay: 500 }
     ];
 
     animationSequence.forEach(({ element, delay }) => {
@@ -134,288 +94,605 @@
 <svelte:head>
   <title>Premier Real Estate Auctions | Find Your Perfect Property</title>
   <meta name="description" content="Discover exclusive properties through transparent auctions. Join thousands of satisfied buyers in finding their dream properties.">
-  
-  <!-- Fancy Font Imports -->
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,500;0,600;0,700;0,800;0,900;1,400;1,500;1,600;1,700;1,800;1,900&family=Cairo:wght@200;300;400;500;600;700;800;900&display=swap" rel="stylesheet">
-  
-  <style>
-    .font-playfair { font-family: 'Playfair Display', serif; }
-    .font-cairo { font-family: 'Cairo', sans-serif; }
-  </style>
 </svelte:head>
 
-<!-- Hero Section with Pure Tailwind -->
-<section class="relative min-h-screen flex items-center overflow-hidden bg-gradient-to-br from-white via-purple-50 to-purple-100" aria-label="Hero section">
+<!-- Hero Section - Bold RTL/LTR Design -->
+<section class="relative min-h-screen overflow-hidden" aria-label="Hero section" dir="{isRTL ? 'rtl' : 'ltr'}">
   
-  <!-- Animated Background Elements -->
-  <div class="absolute inset-0 z-0" aria-hidden="true">
-    <!-- Floating circles -->
-    <div class="absolute top-20 left-10 w-32 h-32 bg-gradient-to-r from-purple-200 to-indigo-200 rounded-full opacity-20 animate-pulse"></div>
-    <div class="absolute top-40 right-20 w-24 h-24 bg-gradient-to-r from-blue-200 to-cyan-200 rounded-full opacity-30 animate-bounce" style="animation-delay: 1s;"></div>
-    <div class="absolute bottom-40 left-20 w-40 h-40 bg-gradient-to-r from-indigo-200 to-purple-200 rounded-full opacity-25 animate-pulse" style="animation-delay: 2s;"></div>
-    <div class="absolute top-60 right-40 w-16 h-16 bg-gradient-to-r from-cyan-200 to-blue-200 rounded-full opacity-40 animate-bounce" style="animation-delay: 0.5s;"></div>
-    <div class="absolute bottom-60 right-10 w-28 h-28 bg-gradient-to-r from-purple-200 to-pink-200 rounded-full opacity-30 animate-pulse" style="animation-delay: 1.5s;"></div>
+  <!-- Enhanced Professional Gradient Background -->
+  <div class="absolute inset-0">
+    <div class="absolute inset-0 bg-gradient-to-br from-slate-50/90 via-white to-purple-50/70"></div>
+    <div class="absolute inset-0 bg-gradient-to-tr from-transparent via-indigo-50/30 to-blue-50/40"></div>
+    <div class="absolute inset-0 bg-gradient-to-bl from-emerald-50/20 via-transparent to-cyan-50/30"></div>
+  </div>
+  
+  <!-- Sophisticated Geometric Accent Elements -->
+  <div class="absolute inset-0 overflow-hidden pointer-events-none" aria-hidden="true">
+    <!-- Primary Accent - Positioned based on language direction -->
+    <div class="absolute {isRTL ? 'top-0 left-0' : 'top-0 right-0'} w-2/5 h-3/5 bg-gradient-to-{isRTL ? 'br' : 'bl'} from-purple-100/40 via-indigo-50/25 to-transparent opacity-70"></div>
+    
+    <!-- Secondary Accent - Opposite positioning -->
+    <div class="absolute {isRTL ? 'bottom-10 right-0' : 'bottom-10 left-0'} w-1/3 h-2/5 bg-gradient-to-{isRTL ? 'tl' : 'tr'} from-blue-100/35 via-cyan-50/20 to-transparent rounded-full filter blur-3xl opacity-80"></div>
+    
+    <!-- Tertiary Accent for depth -->
+    <div class="absolute top-1/4 {isRTL ? 'right-1/3' : 'left-1/3'} w-48 h-48 bg-gradient-to-br from-emerald-100/50 via-teal-50/30 to-transparent rounded-full filter blur-2xl opacity-60"></div>
+    
+    <!-- Professional overlay mesh -->
+    <div class="absolute inset-0 bg-gradient-to-tr from-transparent via-white/15 to-purple-50/25 opacity-40"></div>
   </div>
 
-  <!-- Architectural SVG Background -->
-  <div class="absolute top-1/2 w-3/5 h-4/5 z-5 overflow-visible opacity-10 {isRTL ? 'left-0' : 'right-0'} -translate-y-1/2" aria-hidden="true">
-    <svg class="w-full h-full {isRTL ? 'scale-x-[-1]' : ''}" viewBox="0 0 1200 800" fill="none" xmlns="http://www.w3.org/2000/svg">
-      <!-- Building Silhouettes -->
-      <g class="animate-pulse">
-        <!-- Building 1 -->
-        <path d="M500 700 L500 150 L580 130 L580 700 Z" stroke="url(#buildingGrad1)" stroke-width="2" fill="url(#buildingFill1)" class="animate-pulse" style="animation-delay: 0s;"/>
-        <path d="M500 150 L540 120 L580 130 Z" stroke="url(#buildingGrad1)" stroke-width="1.5" fill="url(#accent1)"/>
-        
-        <!-- Building 2 -->
-        <path d="M620 700 L620 100 L720 80 L720 700 Z" stroke="url(#buildingGrad2)" stroke-width="2" fill="url(#buildingFill2)" class="animate-pulse" style="animation-delay: 1s;"/>
-        
-        <!-- Building 3 -->
-        <path d="M750 700 L750 200 L880 180 L880 700 Z" stroke="url(#buildingGrad3)" stroke-width="2" fill="url(#buildingFill3)" class="animate-pulse" style="animation-delay: 2s;"/>
-        
-        <!-- Building 4 -->
-        <path d="M900 700 L900 250 L1020 230 L1020 700 Z" stroke="url(#buildingGrad1)" stroke-width="2" fill="url(#buildingFill1)" class="animate-pulse" style="animation-delay: 1.5s;"/>
-        
-        <!-- Growth Curves -->
-        <path d="M375 600 Q575 450 775 380 Q975 310 1175 250" stroke="url(#growthGrad)" stroke-width="3" fill="none" class="animate-pulse"/>
-        <path d="M425 650 Q625 500 825 430 Q1025 360 1225 300" stroke="url(#growthGrad2)" stroke-width="2" fill="none" class="animate-pulse" style="animation-delay: 0.5s;"/>
-      </g>
-      
-      <!-- Gradient Definitions -->
-      <defs>
-        <linearGradient id="buildingGrad1" x1="0%" y1="0%" x2="100%" y2="100%">
-          <stop offset="0%" stop-color="#8b5cf6" stop-opacity="0.4"/>
-          <stop offset="100%" stop-color="#6366f1" stop-opacity="0.3"/>
-        </linearGradient>
-        <linearGradient id="buildingGrad2" x1="0%" y1="0%" x2="100%" y2="100%">
-          <stop offset="0%" stop-color="#3b82f6" stop-opacity="0.4"/>
-          <stop offset="100%" stop-color="#8b5cf6" stop-opacity="0.3"/>
-        </linearGradient>
-        <linearGradient id="buildingGrad3" x1="0%" y1="0%" x2="100%" y2="100%">
-          <stop offset="0%" stop-color="#06b6d4" stop-opacity="0.4"/>
-          <stop offset="100%" stop-color="#3b82f6" stop-opacity="0.3"/>
-        </linearGradient>
-        <linearGradient id="growthGrad" x1="0%" y1="0%" x2="100%" y2="0%">
-          <stop offset="0%" stop-color="#8b5cf6" stop-opacity="0.6"/>
-          <stop offset="50%" stop-color="#3b82f6" stop-opacity="0.4"/>
-          <stop offset="100%" stop-color="#06b6d4" stop-opacity="0.3"/>
-        </linearGradient>
-        <linearGradient id="growthGrad2" x1="0%" y1="0%" x2="100%" y2="0%">
-          <stop offset="0%" stop-color="#6366f1" stop-opacity="0.5"/>
-          <stop offset="100%" stop-color="#8b5cf6" stop-opacity="0.3"/>
-        </linearGradient>
-        <radialGradient id="buildingFill1" cx="50%" cy="50%" r="70%">
-          <stop offset="0%" stop-color="#f8fafc" stop-opacity="0.8"/>
-          <stop offset="100%" stop-color="#e2e8f0" stop-opacity="0.6"/>
-        </radialGradient>
-        <radialGradient id="buildingFill2" cx="50%" cy="50%" r="70%">
-          <stop offset="0%" stop-color="#f1f5f9" stop-opacity="0.8"/>
-          <stop offset="100%" stop-color="#e2e8f0" stop-opacity="0.6"/>
-        </radialGradient>
-        <radialGradient id="buildingFill3" cx="50%" cy="50%" r="70%">
-          <stop offset="0%" stop-color="#f8fafc" stop-opacity="0.8"/>
-          <stop offset="100%" stop-color="#cbd5e1" stop-opacity="0.6"/>
-        </radialGradient>
-        <radialGradient id="accent1" cx="50%" cy="50%" r="60%">
-          <stop offset="0%" stop-color="#8b5cf6" stop-opacity="0.6"/>
-          <stop offset="100%" stop-color="#6366f1" stop-opacity="0.4"/>
-        </radialGradient>
-      </defs>
-    </svg>
-  </div>
-
-  <!-- Main Content Container -->
-  <div class="relative z-10 w-full max-w-7xl mx-auto px-4 sm:px-6 md:px-8 lg:px-12 xl:px-16">
-    {#if mounted}
-      <!-- Status Badge -->
-      <div class="flex justify-start mb-12">
-        {#if visibleElements.badge}
-          <div 
-            in:fade={{ duration: 600, delay: 0, easing: cubicOut }}
-            class="inline-flex items-center gap-3 px-6 py-4 rounded-2xl text-sm font-semibold transition-all duration-500 hover:-translate-y-1 hover:shadow-lg group bg-white/90 backdrop-blur-md border border-purple-200/50 shadow-lg"
-            role="status"
-            aria-live="polite"
-          >
-            <span class="w-3 h-3 bg-emerald-400 rounded-full animate-pulse shadow-lg shadow-emerald-400/50" aria-hidden="true"></span>
-            <span class="text-purple-600 font-bold tracking-wide">{getText('badge.live')}</span>
-            <span class="w-px h-4 bg-gradient-to-b from-transparent via-slate-300 to-transparent"></span>
-            <span class="text-slate-600 text-xs font-medium">{getText('badge.count')}</span>
-          </div>
-        {/if}
+  <!-- Bold SVG Buildings - Outside Content Area -->
+  {#if mounted && visibleElements.buildings}
+    <div 
+      class="absolute inset-0 w-full h-full pointer-events-none opacity-25 lg:opacity-35" 
+      aria-hidden="true"
+      in:fade={{ duration: 2500, delay: 0, easing: cubicOut }}
+    >
+      <!-- Mobile/Tablet: Column Layout - Large Bottom SVG -->
+      <div class="lg:hidden absolute bottom-0 left-0 right-0 w-full h-2/3 flex items-end justify-center">
+        <div class="w-full h-full max-w-5xl">
+          <svg class="w-full h-full {isRTL ? 'scale-x-[-1]' : ''}" viewBox="0 0 1400 700" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <defs>
+              <linearGradient id="windowGlowMobile" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" stop-color="#8b5cf6" stop-opacity="0.9"/>
+                <stop offset="25%" stop-color="#7c3aed" stop-opacity="0.75"/>
+                <stop offset="50%" stop-color="#6366f1" stop-opacity="0.6"/>
+                <stop offset="75%" stop-color="#3b82f6" stop-opacity="0.45"/>
+                <stop offset="100%" stop-color="#06b6d4" stop-opacity="0.3"/>
+              </linearGradient>
+              <linearGradient id="buildingStrokeMobile" x1="0%" y1="0%" x2="0%" y2="100%">
+                <stop offset="0%" stop-color="#e2e8f0" stop-opacity="1"/>
+                <stop offset="50%" stop-color="#cbd5e1" stop-opacity="0.8"/>
+                <stop offset="100%" stop-color="#94a3b8" stop-opacity="0.6"/>
+              </linearGradient>
+              <linearGradient id="roofGradMobile" x1="0%" y1="0%" x2="0%" y2="100%">
+                <stop offset="0%" stop-color="#8b5cf6" stop-opacity="0.5"/>
+                <stop offset="100%" stop-color="#6366f1" stop-opacity="0.2"/>
+              </linearGradient>
+            </defs>
+            
+            <!-- Building Complex 1 -->
+            <g class="animate-pulse" style="animation-duration: 5s; animation-delay: 0.5s;">
+              <rect x="80" y="280" width="140" height="420" rx="12" fill="none" stroke="url(#buildingStrokeMobile)" stroke-width="3"/>
+              <polygon points="75,280 150,245 225,280" fill="url(#roofGradMobile)"/>
+              <g opacity="0.85">
+                {#each Array(6) as _, floor}
+                  {#each Array(3) as _, window}
+                    <rect 
+                      x="{105 + window * 30}" 
+                      y="{320 + floor * 55}" 
+                      width="16" 
+                      height="22" 
+                      rx="4" 
+                      fill="url(#windowGlowMobile)"
+                      class="animate-pulse"
+                      style="animation-delay: {(floor * 3 + window) * 0.4}s; animation-duration: 4s;"
+                    />
+                  {/each}
+                {/each}
+              </g>
+            </g>
+            
+            <!-- Building Complex 2 -->
+            <g class="animate-pulse" style="animation-duration: 6s; animation-delay: 1s;">
+              <rect x="260" y="200" width="160" height="500" rx="15" fill="none" stroke="url(#buildingStrokeMobile)" stroke-width="3"/>
+              <rect x="260" y="175" width="160" height="30" rx="15" fill="url(#roofGradMobile)"/>
+              <g opacity="0.8">
+                {#each Array(7) as _, floor}
+                  {#each Array(4) as _, window}
+                    <rect 
+                      x="{285 + window * 28}" 
+                      y="{235 + floor * 60}" 
+                      width="18" 
+                      height="26" 
+                      rx="4" 
+                      fill="url(#windowGlowMobile)"
+                      class="animate-pulse"
+                      style="animation-delay: {(floor * 4 + window) * 0.3}s; animation-duration: 5s;"
+                    />
+                  {/each}
+                {/each}
+              </g>
+            </g>
+            
+            <!-- Building Complex 3 - Tallest -->
+            <g class="animate-pulse" style="animation-duration: 7s; animation-delay: 1.5s;">
+              <rect x="460" y="120" width="180" height="580" rx="18" fill="none" stroke="url(#buildingStrokeMobile)" stroke-width="3"/>
+              <rect x="460" y="95" width="180" height="30" rx="15" fill="url(#roofGradMobile)"/>
+              <g opacity="0.75">
+                {#each Array(8) as _, floor}
+                  {#each Array(5) as _, window}
+                    <rect 
+                      x="{485 + window * 26}" 
+                      y="{155 + floor * 65}" 
+                      width="20" 
+                      height="28" 
+                      rx="4" 
+                      fill="url(#windowGlowMobile)"
+                      class="animate-pulse"
+                      style="animation-delay: {(floor * 5 + window) * 0.25}s; animation-duration: 6s;"
+                    />
+                  {/each}
+                {/each}
+              </g>
+            </g>
+            
+            <!-- Building Complex 4 -->
+            <g class="animate-pulse" style="animation-duration: 5.5s; animation-delay: 2s;">
+              <rect x="680" y="240" width="140" height="460" rx="12" fill="none" stroke="url(#buildingStrokeMobile)" stroke-width="3"/>
+              <polygon points="675,240 750,205 825,240" fill="url(#roofGradMobile)"/>
+              <g opacity="0.85">
+                {#each Array(6) as _, floor}
+                  {#each Array(3) as _, window}
+                    <rect 
+                      x="{705 + window * 30}" 
+                      y="{275 + floor * 70}" 
+                      width="17" 
+                      height="24" 
+                      rx="4" 
+                      fill="url(#windowGlowMobile)"
+                      class="animate-pulse"
+                      style="animation-delay: {(floor * 3 + window) * 0.4}s; animation-duration: 4.5s;"
+                    />
+                  {/each}
+                {/each}
+              </g>
+            </g>
+            
+            <!-- Building Complex 5 -->
+            <g class="animate-pulse" style="animation-duration: 4.5s; animation-delay: 2.5s;">
+              <rect x="860" y="300" width="120" height="400" rx="10" fill="none" stroke="url(#buildingStrokeMobile)" stroke-width="3"/>
+              <rect x="860" y="275" width="120" height="30" rx="15" fill="url(#roofGradMobile)"/>
+              <g opacity="0.9">
+                {#each Array(5) as _, floor}
+                  {#each Array(3) as _, window}
+                    <rect 
+                      x="{880 + window * 25}" 
+                      y="{335 + floor * 70}" 
+                      width="15" 
+                      height="20" 
+                      rx="4" 
+                      fill="url(#windowGlowMobile)"
+                      class="animate-pulse"
+                      style="animation-delay: {(floor * 3 + window) * 0.5}s; animation-duration: 3.5s;"
+                    />
+                  {/each}
+                {/each}
+              </g>
+            </g>
+            
+            <!-- Building Complex 6 -->
+            <g class="animate-pulse" style="animation-duration: 4s; animation-delay: 3s;">
+              <rect x="1020" y="360" width="100" height="340" rx="8" fill="none" stroke="url(#buildingStrokeMobile)" stroke-width="3"/>
+              <polygon points="1015,360 1070,330 1125,360" fill="url(#roofGradMobile)"/>
+              <g opacity="0.85">
+                {#each Array(4) as _, floor}
+                  {#each Array(2) as _, window}
+                    <rect 
+                      x="{1040 + window * 30}" 
+                      y="{395 + floor * 75}" 
+                      width="14" 
+                      height="18" 
+                      rx="4" 
+                      fill="url(#windowGlowMobile)"
+                      class="animate-pulse"
+                      style="animation-delay: {(floor * 2 + window) * 0.7}s; animation-duration: 3s;"
+                    />
+                  {/each}
+                {/each}
+              </g>
+            </g>
+            
+            <!-- Building Complex 7 -->
+            <g class="animate-pulse" style="animation-duration: 6s; animation-delay: 3.5s;">
+              <rect x="1160" y="400" width="80" height="300" rx="8" fill="none" stroke="url(#buildingStrokeMobile)" stroke-width="3"/>
+              <rect x="1160" y="375" width="80" height="30" rx="15" fill="url(#roofGradMobile)"/>
+              <g opacity="0.8">
+                {#each Array(3) as _, floor}
+                  {#each Array(2) as _, window}
+                    <rect 
+                      x="{1175 + window * 25}" 
+                      y="{430 + floor * 80}" 
+                      width="12" 
+                      height="16" 
+                      rx="3" 
+                      fill="url(#windowGlowMobile)"
+                      class="animate-pulse"
+                      style="animation-delay: {(floor * 2 + window) * 0.8}s; animation-duration: 3s;"
+                    />
+                  {/each}
+                {/each}
+              </g>
+            </g>
+          </svg>
+        </div>
       </div>
 
-      <!-- F-Layout: Main content grid -->
-      <div class="grid grid-cols-1 lg:grid-cols-5 gap-16 lg:gap-24 items-start">
-        
-        <!-- Left column: Primary content -->
-        <div class="lg:col-span-3 space-y-10">
+      <!-- Desktop: Row Layout - Massive Side-positioned SVG -->
+      <div class="hidden lg:block absolute inset-0 w-full h-full">
+        <div class="w-full h-full flex items-center {isRTL ? 'justify-start' : 'justify-end'}">
+          <div class="w-4/5 h-5/6 max-w-6xl {isRTL ? 'mr-0 ml-auto' : 'ml-0 mr-auto'} flex items-center {isRTL ? 'justify-start' : 'justify-end'}">
+            <svg class="w-full h-full {isRTL ? 'scale-x-[-1]' : ''}" viewBox="0 0 1400 800" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <defs>
+                <linearGradient id="windowGlowDesktop" x1="0%" y1="0%" x2="100%" y2="100%">
+                  <stop offset="0%" stop-color="#8b5cf6" stop-opacity="0.95"/>
+                  <stop offset="20%" stop-color="#7c3aed" stop-opacity="0.8"/>
+                  <stop offset="40%" stop-color="#6366f1" stop-opacity="0.65"/>
+                  <stop offset="60%" stop-color="#3b82f6" stop-opacity="0.5"/>
+                  <stop offset="80%" stop-color="#06b6d4" stop-opacity="0.35"/>
+                  <stop offset="100%" stop-color="#10b981" stop-opacity="0.2"/>
+                </linearGradient>
+                
+                <linearGradient id="buildingStrokeDesktop" x1="0%" y1="0%" x2="0%" y2="100%">
+                  <stop offset="0%" stop-color="#f1f5f9" stop-opacity="1"/>
+                  <stop offset="30%" stop-color="#e2e8f0" stop-opacity="0.9"/>
+                  <stop offset="70%" stop-color="#cbd5e1" stop-opacity="0.7"/>
+                  <stop offset="100%" stop-color="#94a3b8" stop-opacity="0.5"/>
+                </linearGradient>
+                
+                <linearGradient id="roofGradDesktop" x1="0%" y1="0%" x2="0%" y2="100%">
+                  <stop offset="0%" stop-color="#8b5cf6" stop-opacity="0.6"/>
+                  <stop offset="50%" stop-color="#7c3aed" stop-opacity="0.4"/>
+                  <stop offset="100%" stop-color="#6366f1" stop-opacity="0.15"/>
+                </linearGradient>
+                
+                <radialGradient id="spotGlowDesktop" cx="50%" cy="50%" r="50%">
+                  <stop offset="0%" stop-color="#8b5cf6" stop-opacity="0.4"/>
+                  <stop offset="70%" stop-color="#6366f1" stop-opacity="0.2"/>
+                  <stop offset="100%" stop-color="#6366f1" stop-opacity="0"/>
+                </radialGradient>
+              </defs>
+              
+              <!-- Massive Building Complex 1 -->
+              <g class="animate-pulse" style="animation-duration: 5s; animation-delay: 0.5s;">
+                <rect x="80" y="350" width="160" height="450" rx="15" fill="none" stroke="url(#buildingStrokeDesktop)" stroke-width="3.5"/>
+                <polygon points="75,350 160,310 245,350" fill="url(#roofGradDesktop)"/>
+                <g opacity="0.85">
+                  {#each Array(7) as _, floor}
+                    {#each Array(4) as _, window}
+                      <rect 
+                        x="{105 + window * 28}" 
+                        y="{390 + floor * 55}" 
+                        width="18" 
+                        height="24" 
+                        rx="4" 
+                        fill="url(#windowGlowDesktop)"
+                        class="animate-pulse"
+                        style="animation-delay: {(floor * 4 + window) * 0.3}s; animation-duration: 4s;"
+                      />
+                    {/each}
+                  {/each}
+                </g>
+              </g>
+              
+              <!-- Massive Building Complex 2 -->
+              <g class="animate-pulse" style="animation-duration: 6s; animation-delay: 1s;">
+                <rect x="280" y="250" width="180" height="550" rx="18" fill="none" stroke="url(#buildingStrokeDesktop)" stroke-width="3.5"/>
+                <rect x="280" y="220" width="180" height="35" rx="17" fill="url(#roofGradDesktop)"/>
+                <g opacity="0.8">
+                  {#each Array(8) as _, floor}
+                    {#each Array(4) as _, window}
+                      <rect 
+                        x="{305 + window * 32}" 
+                        y="{285 + floor * 60}" 
+                        width="20" 
+                        height="28" 
+                        rx="4" 
+                        fill="url(#windowGlowDesktop)"
+                        class="animate-pulse"
+                        style="animation-delay: {(floor * 4 + window) * 0.25}s; animation-duration: 5s;"
+                      />
+                    {/each}
+                  {/each}
+                </g>
+              </g>
+              
+              <!-- Massive Building Complex 3 - Tallest -->
+              <g class="animate-pulse" style="animation-duration: 7s; animation-delay: 1.5s;">
+                <rect x="500" y="150" width="200" height="650" rx="20" fill="none" stroke="url(#buildingStrokeDesktop)" stroke-width="3.5"/>
+                <rect x="500" y="120" width="200" height="35" rx="17" fill="url(#roofGradDesktop)"/>
+                <g opacity="0.75">
+                  {#each Array(9) as _, floor}
+                    {#each Array(5) as _, window}
+                      <rect 
+                        x="{525 + window * 30}" 
+                        y="{185 + floor * 65}" 
+                        width="22" 
+                        height="30" 
+                        rx="4" 
+                        fill="url(#windowGlowDesktop)"
+                        class="animate-pulse"
+                        style="animation-delay: {(floor * 5 + window) * 0.2}s; animation-duration: 6s;"
+                      />
+                    {/each}
+                  {/each}
+                </g>
+              </g>
+              
+              <!-- Massive Building Complex 4 -->
+              <g class="animate-pulse" style="animation-duration: 5.5s; animation-delay: 2s;">
+                <rect x="740" y="300" width="160" height="500" rx="15" fill="none" stroke="url(#buildingStrokeDesktop)" stroke-width="3.5"/>
+                <polygon points="735,300 820,260 905,300" fill="url(#roofGradDesktop)"/>
+                <g opacity="0.85">
+                  {#each Array(7) as _, floor}
+                    {#each Array(4) as _, window}
+                      <rect 
+                        x="{765 + window * 28}" 
+                        y="{340 + floor * 65}" 
+                        width="19" 
+                        height="26" 
+                        rx="4" 
+                        fill="url(#windowGlowDesktop)"
+                        class="animate-pulse"
+                        style="animation-delay: {(floor * 4 + window) * 0.3}s; animation-duration: 4.5s;"
+                      />
+                    {/each}
+                  {/each}
+                </g>
+              </g>
+              
+              <!-- Massive Building Complex 5 -->
+              <g class="animate-pulse" style="animation-duration: 4.5s; animation-delay: 2.5s;">
+                <rect x="940" y="380" width="130" height="420" rx="12" fill="none" stroke="url(#buildingStrokeDesktop)" stroke-width="3.5"/>
+                <rect x="940" y="350" width="130" height="35" rx="17" fill="url(#roofGradDesktop)"/>
+                <g opacity="0.9">
+                  {#each Array(6) as _, floor}
+                    {#each Array(3) as _, window}
+                      <rect 
+                        x="{965 + window * 30}" 
+                        y="{415 + floor * 60}" 
+                        width="16" 
+                        height="22" 
+                        rx="4" 
+                        fill="url(#windowGlowDesktop)"
+                        class="animate-pulse"
+                        style="animation-delay: {(floor * 3 + window) * 0.4}s; animation-duration: 3.5s;"
+                      />
+                    {/each}
+                  {/each}
+                </g>
+              </g>
+              
+              <!-- Massive Building Complex 6 -->
+              <g class="animate-pulse" style="animation-duration: 4s; animation-delay: 3s;">
+                <rect x="1110" y="420" width="110" height="380" rx="10" fill="none" stroke="url(#buildingStrokeDesktop)" stroke-width="3.5"/>
+                <polygon points="1105,420 1165,385 1225,420" fill="url(#roofGradDesktop)"/>
+                <g opacity="0.85">
+                  {#each Array(5) as _, floor}
+                    {#each Array(2) as _, window}
+                      <rect 
+                        x="{1135 + window * 35}" 
+                        y="{460 + floor * 70}" 
+                        width="15" 
+                        height="20" 
+                        rx="4" 
+                        fill="url(#windowGlowDesktop)"
+                        class="animate-pulse"
+                        style="animation-delay: {(floor * 2 + window) * 0.6}s; animation-duration: 3s;"
+                      />
+                    {/each}
+                  {/each}
+                </g>
+              </g>
+
+              <!-- Enhanced Floating Elements -->
+              <g class="animate-bounce" style="animation-duration: 6s; animation-delay: 3.5s;">
+                <circle cx="300" cy="180" r="22" fill="url(#spotGlowDesktop)"/>
+                <circle cx="300" cy="180" r="16" fill="none" stroke="#8b5cf6" stroke-width="2.5" opacity="0.8"/>
+                <path d="M288 168 L300 156 L312 168 L312 192 L288 192 Z" fill="none" stroke="#8b5cf6" stroke-width="2" opacity="0.9"/>
+              </g>
+              
+              <g class="animate-bounce" style="animation-duration: 7s; animation-delay: 4s;">
+                <circle cx="800" cy="160" r="20" fill="url(#spotGlowDesktop)"/>
+                <circle cx="800" cy="160" r="14" fill="none" stroke="#6366f1" stroke-width="2.5" opacity="0.8"/>
+                <path d="M788 148 L800 136 L812 148 L812 172 L788 172 Z" fill="none" stroke="#6366f1" stroke-width="2" opacity="0.9"/>
+              </g>
+
+              <!-- Growth Indicators -->
+              <g class="animate-ping" style="animation-duration: 3s; animation-delay: 4.5s;">
+                <circle cx="450" cy="100" r="18" fill="#10b981" opacity="0.4"/>
+                <circle cx="450" cy="100" r="12" fill="#10b981" opacity="0.7"/>
+                <circle cx="450" cy="100" r="6" fill="#10b981" opacity="1"/>
+              </g>
+              
+              <g class="animate-ping" style="animation-duration: 4s; animation-delay: 5s;">
+                <circle cx="950" cy="120" r="16" fill="#06b6d4" opacity="0.4"/>
+                <circle cx="950" cy="120" r="10" fill="#06b6d4" opacity="0.7"/>
+                <circle cx="950" cy="120" r="5" fill="#06b6d4" opacity="1"/>
+              </g>
+            </svg>
+          </div>
+        </div>
+      </div>
+    </div>
+  {/if}
+
+  <!-- Content Container - RTL Responsive -->
+  <div class="relative z-20 w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 min-h-screen">
+    {#if mounted}
+      
+      <!-- Column Layout: xs, sm, md screens -->
+      <div class="flex flex-col min-h-screen justify-center items-center text-center lg:hidden py-16">
+        <div class="w-full max-w-lg space-y-8">
           
-          <!-- HUGE Typography Headline with Fancy Fonts -->
-          <div class="max-w-4xl">
+          <!-- Status Badge -->
+          <div class="flex justify-center">
+            {#if visibleElements.badge}
+              <div 
+                in:fade={{ duration: 800, delay: 0, easing: cubicOut }}
+                class="inline-flex items-center gap-3 px-6 py-4 rounded-2xl text-sm font-bold transition-all duration-500 hover:scale-105 hover:shadow-2xl group bg-white/95 backdrop-blur-xl border border-gray-200/70 shadow-xl relative overflow-hidden"
+                role="status"
+                aria-live="polite"
+              >
+                <span class="w-3 h-3 bg-emerald-400 rounded-full animate-pulse shadow-lg shadow-emerald-400/60" aria-hidden="true"></span>
+                <span class="text-purple-600 font-bold tracking-wide">{getText('badge.live')}</span>
+                <span class="w-px h-4 bg-gradient-to-b from-transparent via-slate-300 to-transparent"></span>
+                <span class="text-slate-600 text-sm font-medium">{getText('badge.count')}</span>
+                <div class="absolute inset-0 bg-gradient-to-r from-purple-500/8 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
+              </div>
+            {/if}
+          </div>
+          
+          <!-- Hero Headline -->
+          <div>
             {#if visibleElements.headline}
               <h1 
-                in:fly={{ y: prefersReducedMotion ? 0 : 40, duration: 800, delay: 0, easing: cubicOut }}
-                class="text-8xl sm:text-9xl md:text-9xl lg:text-9xl xl:text-9xl 
-                       {isRTL ? 'font-cairo text-right' : 'font-playfair text-left'} 
-                       font-black leading-none tracking-tight text-slate-900 
-                       drop-shadow-lg hover:text-purple-900 transition-colors duration-300"
+                in:fly={{ y: prefersReducedMotion ? 0 : 50, duration: 1000, delay: 0, easing: cubicOut }}
+                class="text-5xl sm:text-6xl md:text-7xl 
+                       font-black leading-[0.9] tracking-tight text-slate-900 text-center"
+                style="{isRTL ? 'font-family: system-ui, -apple-system, sans-serif; line-height: 1.15 !important;' : ''}"
               >
-                {getText('headline')}
+                <span class="hover:text-transparent hover:bg-clip-text hover:bg-gradient-to-r hover:from-purple-600 hover:via-indigo-600 hover:to-blue-600 transition-all duration-700">
+                  {getText('headline')}
+                </span>
               </h1>
             {/if}
           </div>
           
-          <!-- Enhanced Typography Paragraph -->
-          <div class="{isRTL ? 'max-w-2xl ml-auto' : 'max-w-3xl'}">
+          <!-- Subheadline -->
+          <div>
             {#if visibleElements.subheadline}
               <p 
-                in:fly={{ y: prefersReducedMotion ? 0 : 30, duration: 700, delay: 0, easing: cubicOut }}
-                class="text-lg sm:text-xl leading-relaxed text-slate-600 max-w-[65ch] 
-                       {isRTL ? 'text-right font-cairo' : 'text-left'} 
-                       drop-shadow-sm"
+                in:fly={{ y: prefersReducedMotion ? 0 : 30, duration: 800, delay: 200, easing: cubicOut }}
+                class="text-lg sm:text-xl md:text-2xl leading-relaxed text-slate-600 font-medium text-center max-w-[55ch] mx-auto"
               >
                 {getText('subheadline')}
               </p>
             {/if}
           </div>
           
-          <!-- CTA buttons with Tailwind styling -->
+          <!-- CTA Section -->
           {#if visibleElements.cta}
             <div 
-              in:fly={{ y: prefersReducedMotion ? 0 : 30, duration: 700, delay: 0, easing: cubicOut }}
-              class="flex flex-col sm:flex-row gap-4 pt-6 {isRTL ? 'sm:flex-row-reverse justify-end' : ''}"
+              in:fly={{ y: prefersReducedMotion ? 0 : 30, duration: 800, delay: 400, easing: cubicOut }}
+              class="flex flex-col gap-4 pt-8 {isRTL ? 'items-center' : 'items-center'}"
             >
               <Button 
                 variant="primary" 
-                size="small" 
+                size="default" 
                 href="/auctions"
-                class="group relative overflow-hidden bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white border-0 shadow-lg hover:shadow-xl transform hover:-translate-y-1 transition-all duration-300"
+                class="w-full max-w-xs group relative overflow-hidden bg-gradient-to-r from-purple-600 via-indigo-600 to-blue-600 hover:from-purple-700 hover:via-indigo-700 hover:to-blue-700 text-white border-0 shadow-2xl hover:shadow-purple-500/40 transform hover:scale-105 hover:-translate-y-1 transition-all duration-300 rounded-2xl font-bold px-8 py-5 text-lg"
               >
-                <span class="relative z-10 font-semibold">{getText('cta.primary')}</span>
+                <span class="relative z-10">{getText('cta.primary')}</span>
                 <svg 
-                  class="w-4 h-4 transition-all duration-300 group-hover:translate-x-1 relative z-10 {isRTL ? 'rotate-180' : ''}" 
+                  class="w-5 h-5 transition-all duration-300 group-hover:translate-x-1 relative z-10 {isRTL ? 'rotate-180' : ''}" 
                   fill="none" 
                   stroke="currentColor" 
                   viewBox="0 0 24 24"
                   aria-hidden="true"
                   slot="iconRight"
                 >
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M13 7l5 5m0 0l-5 5m5-5H6" />
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6" />
                 </svg>
+                <div class="absolute inset-0 bg-gradient-to-r from-white/25 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 rounded-2xl"></div>
               </Button>
 
               <Button 
                 variant="outline" 
-                size="small" 
+                size="default" 
                 href="/properties"
-                class="bg-white/90 backdrop-blur-sm text-slate-700 border-slate-300 hover:bg-slate-50 hover:border-slate-400 shadow-md hover:shadow-lg transform hover:-translate-y-0.5 transition-all duration-300 font-semibold"
+                class="w-full max-w-xs group relative overflow-hidden bg-white/95 backdrop-blur-xl text-slate-700 border-slate-300/70 hover:bg-slate-50 hover:border-purple-300/80 shadow-xl hover:shadow-2xl transform hover:scale-105 hover:-translate-y-1 transition-all duration-300 font-bold rounded-2xl px-8 py-5 text-lg"
               >
-                <span>{getText('cta.secondary')}</span>
+                <span class="relative z-10">{getText('cta.secondary')}</span>
+                <div class="absolute inset-0 bg-gradient-to-r from-purple-50/60 to-indigo-50/40 opacity-0 group-hover:opacity-100 transition-opacity duration-300 rounded-2xl"></div>
               </Button>
             </div>
           {/if}
-
-          <!-- Trust metrics with Tailwind styling -->
-          {#if visibleElements.metrics}
-            <div 
-              in:fade={{ duration: 700, delay: 0, easing: cubicOut }}
-              class="grid grid-cols-2 sm:grid-cols-4 gap-6 pt-10"
-              role="region"
-              aria-label="Platform statistics"
-            >
-              {#each getText('metrics') as metric, index}
-                <div 
-                  class="text-center p-6 rounded-2xl transition-all duration-500 hover:-translate-y-3 hover:shadow-xl group bg-white/80 backdrop-blur-sm border border-purple-100/50 shadow-md relative overflow-hidden" 
-                  in:scale={{ duration: 500, delay: index * 100, easing: cubicOut }}
-                >
-                  <span class="block text-2xl sm:text-3xl font-black leading-none mb-2 text-slate-800 {isRTL ? 'font-cairo' : 'font-playfair'}">
-                    {metric.value}
-                  </span>
-                  <span class="block text-sm font-medium text-slate-600 uppercase tracking-wide">
-                    {metric.label}
-                  </span>
-                  <div class="absolute inset-0 rounded-2xl bg-gradient-to-br from-purple-500/5 to-indigo-500/5 opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
-                </div>
-              {/each}
-            </div>
-          {/if}
         </div>
+      </div>
 
-        <!-- Right column: Market Growth Card -->
-        <div class="lg:col-span-2 space-y-8 lg:mt-16">
-          {#if visibleElements.marketCard}
-            <div 
-              class="rounded-3xl p-8 transition-all duration-700 hover:-translate-y-4 hover:shadow-2xl group bg-white/95 backdrop-blur-md border border-purple-200/50 shadow-xl relative overflow-hidden"
-              in:fly={{ y: prefersReducedMotion ? 0 : 50, duration: 900, delay: 0, easing: cubicOut }}
-            >
-              <!-- Header -->
-              <div class="flex justify-between items-center mb-8">
-                <h3 class="text-xl font-bold text-slate-800 {isRTL ? 'text-right font-cairo' : 'text-left font-playfair'}">{getText('marketGrowth.title')}</h3>
-                <div class="flex items-center gap-3 px-3 py-1.5 rounded-full bg-white/80 backdrop-blur-sm border border-purple-100">
-                  <span class="w-2 h-2 bg-emerald-400 rounded-full animate-pulse"></span>
-                  <span class="text-sm font-medium text-slate-600">{getText('marketGrowth.period')}</span>
+      <!-- Row Layout: lg+ screens -->
+      <div class="hidden lg:flex min-h-screen {isRTL ? 'flex-row-reverse' : 'flex-row'}">
+        <div class="flex-1 flex items-center {isRTL ? 'justify-end' : 'justify-start'} py-12">
+          <div class="w-full max-w-3xl space-y-10 {isRTL ? 'text-right' : 'text-left'}">
+            
+            <!-- Desktop Status Badge -->
+            <div class="flex {isRTL ? 'justify-end' : 'justify-start'}">
+              {#if visibleElements.badge}
+                <div 
+                  in:fade={{ duration: 800, delay: 0, easing: cubicOut }}
+                  class="inline-flex items-center gap-4 px-8 py-4 rounded-2xl text-sm font-bold transition-all duration-500 hover:scale-105 hover:shadow-2xl group bg-white/95 backdrop-blur-xl border border-gray-200/70 shadow-xl relative overflow-hidden"
+                  role="status"
+                  aria-live="polite"
+                >
+                  <span class="w-3 h-3 bg-emerald-400 rounded-full animate-pulse shadow-lg shadow-emerald-400/60" aria-hidden="true"></span>
+                  <span class="text-purple-600 font-bold tracking-wide text-base">{getText('badge.live')}</span>
+                  <span class="w-px h-5 bg-gradient-to-b from-transparent via-slate-300 to-transparent"></span>
+                  <span class="text-slate-600 text-sm font-medium">{getText('badge.count')}</span>
+                  <div class="absolute inset-0 bg-gradient-to-r from-purple-500/8 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
                 </div>
-              </div>
-              
-              <!-- Chart Container -->
-              <div class="mb-8 p-4 rounded-2xl bg-slate-50/80 backdrop-blur-sm border border-slate-200/50">
-                <svg class="w-full h-32" viewBox="0 0 300 120" fill="none">
-                  <defs>
-                    <pattern id="grid" width="30" height="12" patternUnits="userSpaceOnUse">
-                      <path d="m 30 0 l 0 12 m -30 0 l 30 0" stroke="#e2e8f0" stroke-width="0.5" opacity="0.5"/>
-                    </pattern>
-                    <linearGradient id="chartGrad" x1="0%" y1="0%" x2="100%" y2="0%">
-                      <stop offset="0%" stop-color="#8b5cf6" stop-opacity="0.8"/>
-                      <stop offset="50%" stop-color="#3b82f6" stop-opacity="0.6"/>
-                      <stop offset="100%" stop-color="#06b6d4" stop-opacity="0.4"/>
-                    </linearGradient>
-                    <linearGradient id="areaGrad" x1="0%" y1="0%" x2="0%" y2="100%">
-                      <stop offset="0%" stop-color="#8b5cf6" stop-opacity="0.3"/>
-                      <stop offset="100%" stop-color="#8b5cf6" stop-opacity="0.05"/>
-                    </linearGradient>
-                  </defs>
-                  
-                  <rect width="100%" height="100%" fill="url(#grid)"/>
-                  <path d="M15 100 Q50 80 100 60 Q150 45 200 35 Q250 25 285 20 L285 100 Z" fill="url(#areaGrad)" class="animate-pulse"/>
-                  <path d="M15 100 Q50 80 100 60 Q150 45 200 35 Q250 25 285 20" stroke="url(#chartGrad)" stroke-width="3" fill="none" class="animate-pulse"/>
-                  <circle cx="50" cy="80" r="4" fill="#8b5cf6" class="animate-pulse"/>
-                  <circle cx="100" cy="60" r="4" fill="#3b82f6" class="animate-pulse" style="animation-delay: 0.5s;"/>
-                  <circle cx="150" cy="45" r="4" fill="#06b6d4" class="animate-pulse" style="animation-delay: 1s;"/>
-                  <circle cx="200" cy="35" r="5" fill="#8b5cf6" class="animate-pulse" style="animation-delay: 1.5s;"/>
-                  <circle cx="250" cy="25" r="5" fill="#3b82f6" class="animate-pulse" style="animation-delay: 2s;"/>
-                  <path d="M270 30 L280 20 L275 20 L275 15 M280 20 L275 25" stroke="#06b6d4" stroke-width="2" fill="none"/>
-                </svg>
-              </div>
-              
-              <!-- Stats Grid -->
-              <div class="grid grid-cols-2 gap-4 mb-6">
-                <div class="text-center p-4 rounded-xl transition-all duration-300 hover:scale-105 bg-emerald-50/80 backdrop-blur-sm border border-emerald-200/50">
-                  <span class="block text-2xl font-black text-emerald-600 {isRTL ? 'font-cairo' : 'font-playfair'}">{getText('marketGrowth.stats.growthRate.value')}</span>
-                  <span class="block text-xs font-medium text-slate-600 uppercase tracking-wide">{getText('marketGrowth.stats.growthRate.label')}</span>
-                </div>
-                <div class="text-center p-4 rounded-xl transition-all duration-300 hover:scale-105 bg-blue-50/80 backdrop-blur-sm border border-blue-200/50">
-                  <span class="block text-2xl font-black text-blue-600 {isRTL ? 'font-cairo' : 'font-playfair'}">{getText('marketGrowth.stats.volume.value')}</span>
-                  <span class="block text-xs font-medium text-slate-600 uppercase tracking-wide">{getText('marketGrowth.stats.volume.label')}</span>
-               </div>
-             </div>
-             
-             <!-- Additional metrics -->
-             <div class="space-y-4">
-               {#each getText('marketGrowth.metrics') as metric, index}
-                 <div class="flex justify-between items-center p-2 rounded-lg transition-all duration-300 hover:bg-slate-50/80 backdrop-blur-sm {isRTL ? 'flex-row-reverse' : ''}">
-                   <span class="text-sm font-medium text-slate-700 {isRTL ? 'text-right' : 'text-left'}">{metric.label}</span>
-                   <span class="text-sm font-bold {index === 0 ? 'text-emerald-600' : index === 1 ? 'text-blue-600' : 'text-purple-600'}">{metric.value}</span>
-                 </div>
-               {/each}
-             </div>
+              {/if}
+            </div>
+            
+            <!-- Desktop Headline -->
+            <div>
+              {#if visibleElements.headline}
+                <h1 
+                  in:fly={{ y: prefersReducedMotion ? 0 : 50, duration: 1000, delay: 0, easing: cubicOut }}
+                  class="text-7xl lg:text-8xl xl:text-9xl 
+                         font-black leading-[0.85] tracking-tight text-slate-900
+                         {isRTL ? 'text-right' : 'text-left'}"
+                  style="{isRTL ? 'font-family: system-ui, -apple-system, sans-serif; line-height: 1.15 !important;' : ''}"
+                >
+                  <span class="hover:text-transparent hover:bg-clip-text hover:bg-gradient-to-r hover:from-purple-600 hover:via-indigo-600 hover:to-blue-600 transition-all duration-700">
+                    {getText('headline')}
+                  </span>
+                </h1>
+              {/if}
+            </div>
+            
+            <!-- Desktop Subheadline -->
+            <div class="max-w-2xl {isRTL ? 'ml-auto' : 'mr-auto lg:mr-0'}">
+              {#if visibleElements.subheadline}
+                <p 
+                  in:fly={{ y: prefersReducedMotion ? 0 : 30, duration: 800, delay: 200, easing: cubicOut }}
+                  class="text-2xl lg:text-2xl leading-relaxed text-slate-600 font-medium {isRTL ? 'text-right' : 'text-left'} max-w-[55ch]"
+                >
+                  {getText('subheadline')}
+                </p>
+              {/if}
+            </div>
+            
+            <!-- Desktop CTA -->
+            {#if visibleElements.cta}
+              <div 
+                in:fly={{ y: prefersReducedMotion ? 0 : 30, duration: 800, delay: 400, easing: cubicOut }}
+                class="flex flex-col sm:flex-row gap-6 pt-8 {isRTL ? 'sm:flex-row-reverse justify-end' : 'justify-start'}"
+              >
+                <Button 
+                  variant="primary" 
+                  size="default" 
+                  href="/auctions"
+                  class="group relative overflow-hidden bg-gradient-to-r from-purple-600 via-indigo-600 to-blue-600 hover:from-purple-700 hover:via-indigo-700 hover:to-blue-700 text-white border-0 shadow-2xl hover:shadow-purple-500/40 transform hover:scale-105 hover:-translate-y-1 transition-all duration-300 rounded-2xl font-bold px-10 py-5 text-lg"
+                >
+                  <span class="relative z-10">{getText('cta.primary')}</span>
+                  <svg 
+                    class="w-5 h-5 transition-all duration-300 group-hover:translate-x-1 relative z-10 {isRTL ? 'rotate-180' : ''}" 
+                    fill="none" 
+                    stroke="currentColor" 
+                    viewBox="0 0 24 24"
+                    aria-hidden="true"
+                    slot="iconRight"
+                  >
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6" />
+                  </svg>
+                  <div class="absolute inset-0 bg-gradient-to-r from-white/25 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 rounded-2xl"></div>
+                </Button>
 
-             <!-- Gradient overlay effect -->
-             <div class="absolute inset-0 rounded-3xl bg-gradient-to-br from-white/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-700 pointer-events-none"></div>
-           </div>
-         {/if}
-       </div>
-     </div>
-   {/if}
- </div>
+                <Button 
+                  variant="outline" 
+                  size="default" 
+                  href="/properties"
+                  class="group relative overflow-hidden bg-white/95 backdrop-blur-xl text-slate-700 border-slate-300/70 hover:bg-slate-50 hover:border-purple-300/80 shadow-xl hover:shadow-2xl transform hover:scale-105 hover:-translate-y-1 transition-all duration-300 font-bold rounded-2xl px-10 py-5 text-lg"
+                >
+                  <span class="relative z-10">{getText('cta.secondary')}</span>
+                  <div class="absolute inset-0 bg-gradient-to-r from-purple-50/60 to-indigo-50/40 opacity-0 group-hover:opacity-100 transition-opacity duration-300 rounded-2xl"></div>
+                </Button>
+              </div>
+            {/if}
+          </div>
+        </div>
+      </div>
+    {/if}
+  </div>
 </section>
