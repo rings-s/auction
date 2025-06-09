@@ -1,35 +1,34 @@
 services:
   backend:
-    build: ./back
+    build: 
+      context: ./back
+      no_cache: true
     container_name: auction_backend
     command: /entrypoint.sh
     volumes:
       - ./back:/app
-      # Add a volume for your database if it's SQLite and you want to persist it
-      # - ./back/db:/app/db 
     ports:
-      - "7500:7500"  # Changed from 8000:8000
+      - "7500:7500"
     env_file:
-      - ./.env  # Assuming your backend .env is in the project root
-    # depends_on:
-      # - db # Uncomment if you add a database service
+      - ./.env
 
   frontend:
-    build: ./front
+    build: 
+      context: ./front
+      no_cache: true
     container_name: auction_frontend
     volumes:
       - ./front:/app
-      - /app/node_modules # Keep node_modules in the container separate from local
+      - /app/node_modules
+      - /app/.vite  # Exclude Vite cache from host
     ports:
-      - "5173:5173" # SvelteKit port
+      - "5173:5173"
     environment:
-      # Ensure Vite HMR works correctly if needed during development
       - CHOKIDAR_USEPOLLING=true 
-      # Updated API URL to use port 7500
-      - VITE_API_URL=http://backend:7500/api 
+      - VITE_API_URL=http://backend:7500/api
     depends_on:
       - backend
-
+      
 # volumes: # Uncomment and define if you add a database service
 #   postgres_data:
 

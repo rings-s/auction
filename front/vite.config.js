@@ -9,8 +9,20 @@ export default defineConfig({
 		host: '0.0.0.0',
 		port: 5173,
 		watch: {
-			usePolling: true,  // Essential for Docker file watching
+			usePolling: true,
 			interval: 1000
+		}
+	},
+	optimizeDeps: {
+		exclude: ['clsx'],
+		include: ['chart.js', 'date-fns', 'leaflet'],
+		force: true
+	},
+	build: {
+		rollupOptions: {
+			output: {
+				manualChunks: undefined
+			}
 		}
 	}
 });

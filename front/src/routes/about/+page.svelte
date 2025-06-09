@@ -1,7 +1,7 @@
 <!-- src/routes/about/+page.svelte -->
 <script>
   import { onMount } from 'svelte';
-  import { fade, fly } from 'svelte/transition';
+  import { fade, fly, scale } from 'svelte/transition';
   import { locale } from '$lib/i18n';
   import Button from '$lib/components/ui/Button.svelte';
   
@@ -33,14 +33,17 @@
         title: "What drives us",
         items: [
           {
+            icon: "transparency",
             title: "Transparency First",
             description: "Every bid, every transaction, every detail - open and verifiable."
           },
           {
+            icon: "innovation",
             title: "Innovation Always", 
             description: "Pushing boundaries with technology to simplify complex processes."
           },
           {
+            icon: "trust",
             title: "Trust Through Action",
             description: "Building lasting relationships by delivering on our promises."
           }
@@ -50,9 +53,9 @@
         title: "Leadership",
         subtitle: "Guided by experience, driven by purpose",
         members: [
-          { name: "Sarah Chen", role: "CEO & Co-founder", bio: "20+ years in proptech" },
-          { name: "Marcus Johnson", role: "CTO & Co-founder", bio: "Former Google engineer" },
-          { name: "Elena Rodriguez", role: "Head of Operations", bio: "Real estate veteran" }
+          { name: "Sarah Chen", role: "CEO & Co-founder", bio: "20+ years in proptech", image: "sarah" },
+          { name: "Marcus Johnson", role: "CTO & Co-founder", bio: "Former Google engineer", image: "marcus" },
+          { name: "Elena Rodriguez", role: "Head of Operations", bio: "Real estate veteran", image: "elena" }
         ]
       },
       cta: {
@@ -67,8 +70,9 @@
         title: "نبني مستقبل العقارات",
         description: "منصتنا تحول كيفية شراء وبيع والاستثمار في العقارات من خلال المزادات الشفافة والتكنولوجيا المتطورة.",
         stats: [
-          { number: "50+", label: "ألف عقار" },
+          { number: "+50ألف", label: "عقار مدرج" },
           { number: "98%", label: "معدل النجاح" },
+          { number: "15", label: "دولة" }
         ]
       },
       story: {
@@ -80,14 +84,17 @@
         title: "ما يحركنا",
         items: [
           {
+            icon: "transparency",
             title: "الشفافية أولاً",
             description: "كل عرض، كل معاملة، كل تفصيل - مفتوح وقابل للتحقق."
           },
           {
+            icon: "innovation",
             title: "الابتكار دائماً",
             description: "دفع الحدود بالتكنولوجيا لتبسيط العمليات المعقدة."
           },
           {
+            icon: "trust",
             title: "الثقة من خلال العمل",
             description: "بناء علاقات دائمة من خلال الوفاء بوعودنا."
           }
@@ -97,9 +104,9 @@
         title: "القيادة",
         subtitle: "موجهون بالخبرة، مدفوعون بالهدف",
         members: [
-          { name: "سارة تشين", role: "الرئيس التنفيذي والمؤسس المشارك", bio: "20+ سنة في تقنية العقارات" },
-          { name: "ماركوس جونسون", role: "المدير التقني والمؤسس المشارك", bio: "مهندس سابق في جوجل" },
-          { name: "إيلينا رودريغيز", role: "رئيس العمليات", bio: "خبيرة عقارات" }
+          { name: "سارة تشين", role: "الرئيس التنفيذي والمؤسس المشارك", bio: "20+ سنة في تقنية العقارات", image: "sarah" },
+          { name: "ماركوس جونسون", role: "المدير التقني والمؤسس المشارك", bio: "مهندس سابق في جوجل", image: "marcus" },
+          { name: "إيلينا رودريغيز", role: "رئيس العمليات", bio: "خبيرة عقارات", image: "elena" }
         ]
       },
       cta: {
@@ -144,429 +151,305 @@
 
 <svelte:window bind:scrollY />
 
-<div class="relative overflow-hidden" dir={isRTL ? 'rtl' : 'ltr'}>
+<div class="relative overflow-hidden bg-gradient-to-b from-white via-purple-50/20 to-white dark:from-gray-900 dark:via-purple-950/20 dark:to-gray-900" dir={isRTL ? 'rtl' : 'ltr'}>
   
   {#if mounted}
-    <!-- Hero Section with Real Estate Theme -->
+    <!-- Hero Section with Modern Design -->
     <section class="relative min-h-screen flex items-center py-20 sm:py-24 lg:py-32">
+      <!-- Background Decoration -->
+      <div class="absolute inset-0 pointer-events-none overflow-hidden">
+        <div class="absolute top-20 left-0 w-96 h-96 bg-purple-200/30 dark:bg-purple-800/20 rounded-full blur-3xl"></div>
+        <div class="absolute bottom-20 right-0 w-96 h-96 bg-blue-200/30 dark:bg-blue-800/20 rounded-full blur-3xl"></div>
+      </div>
+      
       <div class="relative z-10 w-full max-w-7xl mx-auto px-6 sm:px-8 lg:px-12">
-        <!-- Asymmetric Grid: 5/7 split -->
         <div class="grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-16 items-center">
           
-          <!-- Left Content - 5 columns -->
+          <!-- Left Content -->
           <div class="lg:col-span-5 space-y-8">
             <h1
               in:fly={{ y: prefersReducedMotion ? 0 : 30, duration: 800, delay: 200 }}
-              class="text-5xl sm:text-6xl lg:text-7xl font-bold leading-[0.95] tracking-tight text-slate-900 dark:text-white"
+              class="text-5xl sm:text-6xl lg:text-7xl font-black leading-[0.95] tracking-tight bg-gradient-to-r from-purple-600 to-blue-600 bg-clip-text text-transparent"
             >
               {getText('hero.title')}
             </h1>
             
             <p
               in:fly={{ y: prefersReducedMotion ? 0 : 20, duration: 800, delay: 300 }}
-              class="text-lg leading-relaxed text-slate-600 dark:text-slate-300 max-w-md"
+              class="text-lg leading-relaxed text-gray-600 dark:text-gray-300 max-w-md"
             >
               {getText('hero.description')}
             </p>
             
-            <!-- Stats with animated underlines -->
+            <!-- Stats with Modern Cards -->
             <div
               in:fly={{ y: prefersReducedMotion ? 0 : 20, duration: 800, delay: 400 }}
-              class="flex flex-wrap gap-8 pt-4"
+              class="grid grid-cols-3 gap-4"
             >
               {#each getText('hero.stats') as stat, i}
-                <div class="text-center relative">
-                  <div class="text-3xl font-bold text-slate-900 dark:text-white">
+                <div class="text-center p-4 rounded-2xl bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm border border-purple-200/50 dark:border-purple-700/50 shadow-lg hover:shadow-xl transition-all duration-300 hover:-translate-y-1">
+                  <div class="text-2xl lg:text-3xl font-black bg-gradient-to-r from-purple-600 to-blue-600 bg-clip-text text-transparent">
                     {stat.number}
                   </div>
-                  <div class="text-sm text-slate-500 dark:text-slate-400 mt-1">
+                  <div class="text-xs lg:text-sm text-gray-600 dark:text-gray-400 mt-1">
                     {stat.label}
                   </div>
-                  <!-- Animated underline -->
-                  <div class="expand-line-stat w-full h-0.5 bg-gradient-to-r from-amber-500 to-orange-500 mt-2 motion-reduce:w-full" style="animation-delay: {(i + 1) * 200 + 600}ms;"></div>
                 </div>
               {/each}
             </div>
           </div>
           
-          <!-- Right Visual - 7 columns with Real Estate SVG -->
+          <!-- Right Visual - Modern Property Illustration -->
           <div class="lg:col-span-7 relative">
             <div
-              in:fly={{ x: prefersReducedMotion ? 0 : 50, duration: 1000, delay: 500 }}
-              class="relative"
+              in:scale={{ duration: 1000, delay: 500, easing: 'cubicOut' }}
+              class="relative w-full aspect-square max-w-lg mx-auto"
             >
-              <!-- Real Estate Auction Illustration -->
-              <div class="relative w-full aspect-square max-w-lg mx-auto">
-                <svg viewBox="0 0 400 400" class="w-full h-full">
-                  <defs>
-                    <linearGradient id="buildingGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-                      <stop offset="0%" class="text-amber-500/80" stop-color="currentColor" />
-                      <stop offset="100%" class="text-orange-500/60" stop-color="currentColor" />
-                    </linearGradient>
-                    <linearGradient id="accentGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-                      <stop offset="0%" class="text-amber-600" stop-color="currentColor" />
-                      <stop offset="100%" class="text-orange-600" stop-color="currentColor" />
-                    </linearGradient>
-                  </defs>
+              <svg viewBox="0 0 400 400" class="w-full h-full">
+                <defs>
+                  <linearGradient id="purpleGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                    <stop offset="0%" class="text-purple-400" stop-color="currentColor" stop-opacity="0.8" />
+                    <stop offset="100%" class="text-blue-500" stop-color="currentColor" stop-opacity="0.6" />
+                  </linearGradient>
+                  <linearGradient id="accentGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                    <stop offset="0%" class="text-purple-600" stop-color="currentColor" />
+                    <stop offset="100%" class="text-blue-600" stop-color="currentColor" />
+                  </linearGradient>
+                  <filter id="glow">
+                    <feGaussianBlur stdDeviation="4" result="coloredBlur"/>
+                    <feMerge>
+                      <feMergeNode in="coloredBlur"/>
+                      <feMergeNode in="SourceGraphic"/>
+                    </feMerge>
+                  </filter>
+                </defs>
+                
+                <!-- Modern Building Complex -->
+                <g stroke="url(#purpleGrad)" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round" filter="url(#glow)">
+                  <!-- Main Building -->
+                  <path d="M150 350 L150 150 Q200 120 250 150 L250 350" class="animate-draw" />
                   
-                  <g stroke="url(#buildingGrad)" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round">
-                    <!-- Main Building -->
-                    <rect 
-                      x="120" y="180" width="160" height="180" 
-                      class="draw-line-hero motion-reduce:opacity-100"
-                      style="animation-delay: 1s;"
-                    />
-                    
-                    <!-- Building Roof -->
-                    <polygon 
-                      points="110,180 200,130 290,180" 
-                      class="draw-line-hero motion-reduce:opacity-100"
-                      style="animation-delay: 1.5s;"
-                    />
-                    
-                    <!-- Windows Grid -->
-                    <rect 
-                      x="140" y="200" width="25" height="25" 
-                      class="draw-line-hero motion-reduce:opacity-100"
-                      style="animation-delay: 2s;"
-                    />
-                    <rect 
-                      x="175" y="200" width="25" height="25" 
-                      class="draw-line-hero motion-reduce:opacity-100"
-                      style="animation-delay: 2.2s;"
-                    />
-                    <rect 
-                      x="210" y="200" width="25" height="25" 
-                      class="draw-line-hero motion-reduce:opacity-100"
-                      style="animation-delay: 2.4s;"
-                    />
-                    <rect 
-                      x="245" y="200" width="25" height="25" 
-                      class="draw-line-hero motion-reduce:opacity-100"
-                      style="animation-delay: 2.6s;"
-                    />
-                    
-                    <!-- Second row of windows -->
-                    <rect 
-                      x="140" y="240" width="25" height="25" 
-                      class="draw-line-hero motion-reduce:opacity-100"
-                      style="animation-delay: 2.8s;"
-                    />
-                    <rect 
-                      x="175" y="240" width="25" height="25" 
-                      class="draw-line-hero motion-reduce:opacity-100"
-                      style="animation-delay: 3s;"
-                    />
-                    <rect 
-                      x="210" y="240" width="25" height="25" 
-                      class="draw-line-hero motion-reduce:opacity-100"
-                      style="animation-delay: 3.2s;"
-                    />
-                    <rect 
-                      x="245" y="240" width="25" height="25" 
-                      class="draw-line-hero motion-reduce:opacity-100"
-                      style="animation-delay: 3.4s;"
-                    />
-                    
-                    <!-- Door -->
-                    <rect 
-                      x="185" y="300" width="30" height="60" 
-                      class="draw-line-hero motion-reduce:opacity-100"
-                      style="animation-delay: 3.6s;"
-                    />
-                    
-                    <!-- Auction Gavel -->
-                    <g stroke="url(#accentGrad)" stroke-width="3">
-                      <!-- Gavel Handle -->
-                      <line 
-                        x1="320" y1="120" x2="360" y2="80" 
-                        class="draw-line-hero motion-reduce:opacity-100"
-                        style="animation-delay: 4s;"
-                      />
-                      <!-- Gavel Head -->
-                      <rect 
-                        x="310" y="115" width="20" height="10" 
-                        class="draw-line-hero motion-reduce:opacity-100"
-                        style="animation-delay: 4.2s;"
-                      />
-                    </g>
-                    
-                    <!-- Dollar Signs (Auction Bids) -->
-                    <g stroke="url(#accentGrad)" stroke-width="2" fill="url(#accentGrad)" fill-opacity="0.2">
-                      <text 
-                        x="80" y="100" 
-                        font-family="serif" 
-                        font-size="24" 
-                        font-weight="bold"
-                        class="draw-text motion-reduce:opacity-100"
-                        style="animation-delay: 4.5s;"
-                      >$</text>
-                      <text 
-                        x="340" y="200" 
-                        font-family="serif" 
-                        font-size="20" 
-                        font-weight="bold"
-                        class="draw-text motion-reduce:opacity-100"
-                        style="animation-delay: 4.7s;"
-                      >$</text>
-                      <text 
-                        x="60" y="280" 
-                        font-family="serif" 
-                        font-size="18" 
-                        font-weight="bold"
-                        class="draw-text motion-reduce:opacity-100"
-                        style="animation-delay: 4.9s;"
-                      >$</text>
-                    </g>
-                    
-                    <!-- Property Lines/Boundaries -->
-                    <g stroke="url(#buildingGrad)" stroke-width="1" stroke-dasharray="5,5">
-                      <rect 
-                        x="80" y="140" width="240" height="240" 
-                        class="draw-line-hero motion-reduce:opacity-100"
-                        style="animation-delay: 5s;"
-                      />
-                    </g>
-                    
-                    <!-- Location Pin -->
-                    <g stroke="url(#accentGrad)" stroke-width="2" fill="url(#accentGrad)" fill-opacity="0.3">
-                      <circle 
-                        cx="200" cy="80" r="15" 
-                        class="draw-line-hero motion-reduce:opacity-100"
-                        style="animation-delay: 5.2s;"
-                      />
-                      <polygon 
-                        points="200,95 190,110 210,110" 
-                        class="draw-line-hero motion-reduce:opacity-100"
-                        style="animation-delay: 5.4s;"
-                      />
-                    </g>
+                  <!-- Windows -->
+                  {#each Array(4) as _, i}
+                    <rect x={170 + (i % 2) * 40} y={180 + Math.floor(i / 2) * 50} width="20" height="30" class="animate-draw" style="animation-delay: {0.5 + i * 0.1}s" />
+                  {/each}
+                  
+                  <!-- Side Building -->
+                  <path d="M100 350 L100 200 L150 180 L150 350" class="animate-draw" style="animation-delay: 0.8s" />
+                  
+                  <!-- Auction Gavel -->
+                  <g stroke="url(#accentGrad)" stroke-width="3">
+                    <line x1="280" y1="120" x2="320" y2="80" class="animate-draw" style="animation-delay: 1.2s" />
+                    <rect x="270" y="115" width="20" height="10" rx="2" class="animate-draw" style="animation-delay: 1.3s" />
                   </g>
-                </svg>
-              </div>
+                  
+                  <!-- Floating Elements -->
+                  <circle cx="320" cy="200" r="30" stroke="url(#accentGrad)" fill="url(#accentGrad)" fill-opacity="0.1" class="animate-pulse" />
+                  <circle cx="80" cy="150" r="20" stroke="url(#accentGrad)" fill="url(#accentGrad)" fill-opacity="0.1" class="animate-pulse" style="animation-delay: 0.5s" />
+                </g>
+              </svg>
             </div>
           </div>
         </div>
       </div>
     </section>
     
-    <!-- Enhanced Story Section with Timeline -->
+    <!-- Story Section with Timeline -->
     <section class="relative py-24 lg:py-32 overflow-hidden">
-      <!-- Background decorative elements -->
-      <div class="absolute inset-0 pointer-events-none overflow-hidden">
-        <div class="absolute top-20 left-0 w-64 h-64 bg-amber-100 dark:bg-amber-900/20 rounded-full blur-3xl opacity-30 transform -translate-x-1/2"></div>
-        <div class="absolute bottom-20 right-0 w-80 h-80 bg-orange-100 dark:bg-orange-900/20 rounded-full blur-3xl opacity-30 transform translate-x-1/2"></div>
-        <svg class="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-full h-full max-w-7xl" viewBox="0 0 1200 800" fill="none" xmlns="http://www.w3.org/2000/svg" style="opacity: 0.05">
-          <path d="M600 100C600 100 300 300 300 400C300 500 600 700 600 700" stroke="currentColor" stroke-width="2" stroke-dasharray="8 8"/>
-          <path d="M600 100C600 100 900 300 900 400C900 500 600 700 600 700" stroke="currentColor" stroke-width="2" stroke-dasharray="8 8"/>
-        </svg>
-      </div>
+      <div class="absolute inset-0 bg-gradient-to-b from-purple-50/30 via-transparent to-blue-50/30 dark:from-purple-950/20 dark:via-transparent dark:to-blue-950/20"></div>
       
       <div class="relative max-w-7xl mx-auto px-6 sm:px-8 lg:px-12">
         <!-- Section Header -->
         <div class="text-center mb-16">
           <h2 
             in:fly={{ y: prefersReducedMotion ? 0 : -20, duration: 800, delay: 100 }}
-            class="text-4xl md:text-5xl font-bold text-slate-900 dark:text-white mb-4 tracking-tight"
+            class="text-4xl md:text-5xl font-black text-gray-900 dark:text-white mb-4"
           >
             {getText('story.title')}
           </h2>
-          <div class="expand-line-title w-32 h-1 bg-gradient-to-r from-amber-500 to-orange-500 mx-auto rounded-full motion-reduce:w-32 mb-6"></div>
+          <div class="w-24 h-1 bg-gradient-to-r from-purple-500 to-blue-500 mx-auto rounded-full"></div>
         </div>
         
-        <!-- Story Content with Timeline -->
-        <div class="grid grid-cols-1 lg:grid-cols-12 gap-x-12 gap-y-16 items-start">
-          <!-- Left - Visual Timeline -->
+        <!-- Story Content -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
+          <!-- Timeline -->
           <div 
             in:fly={{ x: prefersReducedMotion ? 0 : -30, duration: 800, delay: 200 }}
-            class="lg:col-span-5 relative"
+            class="space-y-8"
           >
-            <div class="sticky top-32 space-y-12">
-              <!-- Timeline visual -->
-              <div class="relative pl-8 border-l-2 border-amber-500 dark:border-amber-400 py-4">
-                <div class="absolute left-0 top-0 w-4 h-4 rounded-full bg-amber-500 dark:bg-amber-400 transform -translate-x-1/2"></div>
-                <div class="absolute left-0 bottom-0 w-4 h-4 rounded-full bg-orange-500 dark:bg-orange-400 transform -translate-x-1/2"></div>
-                
-                <!-- Timeline content -->
-                <div class="space-y-8">
-                  <div class="relative">
-                    <div class="absolute left-0 top-3 w-3 h-3 rounded-full bg-amber-400 dark:bg-amber-300 transform -translate-x-[calc(0.5rem+1px)]"></div>
-                    <h3 class="text-xl font-bold text-amber-600 dark:text-amber-300 mb-2">2019</h3>
-                    <p class="text-slate-600 dark:text-slate-300">Founded with a vision to transform real estate transactions</p>
-                  </div>
-                  
-                  <div class="relative">
-                    <div class="absolute left-0 top-3 w-3 h-3 rounded-full bg-amber-400 dark:bg-amber-300 transform -translate-x-[calc(0.5rem+1px)]"></div>
-                    <h3 class="text-xl font-bold text-amber-600 dark:text-amber-300 mb-2">2021</h3>
-                    <p class="text-slate-600 dark:text-slate-300">Expanded to international markets with our innovative platform</p>
-                  </div>
-                  
-                  <div class="relative">
-                    <div class="absolute left-0 top-3 w-3 h-3 rounded-full bg-amber-400 dark:bg-amber-300 transform -translate-x-[calc(0.5rem+1px)]"></div>
-                    <h3 class="text-xl font-bold text-amber-600 dark:text-amber-300 mb-2">Today</h3>
-                    <p class="text-slate-600 dark:text-slate-300">Leading the industry with thousands of successful transactions</p>
-                  </div>
+            <!-- Timeline Items -->
+            <div class="relative pl-8 border-l-2 border-purple-300 dark:border-purple-700">
+              {#each [
+                { year: "2019", text: "Founded with a vision" },
+                { year: "2021", text: "Global expansion" },
+                { year: "Today", text: "Industry leader" }
+              ] as item, i}
+                <div class="relative mb-8 last:mb-0">
+                  <div class="absolute -left-[9px] top-0 w-4 h-4 bg-purple-500 rounded-full"></div>
+                  <h3 class="text-xl font-bold text-purple-600 dark:text-purple-400 mb-2">{item.year}</h3>
+                  <p class="text-gray-600 dark:text-gray-300">{item.text}</p>
                 </div>
-              </div>
-              
-              <!-- Stats cards -->
-              <div class="grid grid-cols-2 gap-4">
-                <div class="bg-white dark:bg-slate-800 rounded-xl shadow-lg p-6 transform transition-all duration-300 hover:-translate-y-1 hover:shadow-xl border border-slate-100 dark:border-slate-700">
-                  <div class="text-3xl font-bold text-amber-500 dark:text-amber-400 mb-1">50K+</div>
-                  <div class="text-sm text-slate-600 dark:text-slate-300">{getText('hero.stats')[0].label}</div>
-                </div>
-                
-                <div class="bg-white dark:bg-slate-800 rounded-xl shadow-lg p-6 transform transition-all duration-300 hover:-translate-y-1 hover:shadow-xl border border-slate-100 dark:border-slate-700">
-                  <div class="text-3xl font-bold text-orange-500 dark:text-orange-400 mb-1">98%</div>
-                  <div class="text-sm text-slate-600 dark:text-slate-300">{getText('hero.stats')[1].label}</div>
-                </div>
-              </div>
+              {/each}
             </div>
           </div>
           
-          <!-- Right - Story Content -->
+          <!-- Content Card -->
           <div 
             in:fly={{ x: prefersReducedMotion ? 0 : 30, duration: 800, delay: 300 }}
-            class="lg:col-span-7 space-y-8"
+            class="bg-white dark:bg-gray-800 rounded-3xl shadow-2xl p-8 lg:p-10 backdrop-blur-sm border border-purple-200/50 dark:border-purple-700/50"
           >
-            <!-- Main story content -->
-            <div class="bg-white dark:bg-slate-800/90 rounded-2xl shadow-xl p-8 lg:p-10 border border-slate-100 dark:border-slate-700">
-              <p class="text-lg leading-relaxed text-slate-700 dark:text-slate-300 mb-8">
-                {getText('story.content')}
-              </p>
-              
-              <!-- Highlight quote -->
-              <div class="relative">
-                <svg class="absolute -top-6 -left-6 h-12 w-12 text-amber-200 dark:text-amber-700 opacity-50" fill="currentColor" viewBox="0 0 24 24">
-                  <path d="M14.017 21v-7.391c0-5.704 3.731-9.57 8.983-10.609l.995 2.151c-2.432.917-3.995 3.638-3.995 5.849h4v10h-9.983zm-14.017 0v-7.391c0-5.704 3.748-9.57 9-10.609l.996 2.151c-2.433.917-3.996 3.638-3.996 5.849h3.983v10h-9.983z" />
-                </svg>
-                <blockquote class="bg-gradient-to-r from-amber-50 to-orange-50 dark:from-amber-900/20 dark:to-orange-900/20 rounded-xl p-6 border-l-4 border-amber-500 dark:border-amber-400">
-                  <p class="text-xl italic text-slate-800 dark:text-slate-200 leading-relaxed">
-                    {getText('story.highlight')}
-                  </p>
-                </blockquote>
-              </div>
-            </div>
+            <p class="text-lg leading-relaxed text-gray-700 dark:text-gray-300 mb-6">
+              {getText('story.content')}
+            </p>
             
-            <!-- Mission & Vision cards -->
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <!-- Mission card -->
-              <div class="bg-white dark:bg-slate-800/90 rounded-xl shadow-lg p-6 border border-slate-100 dark:border-slate-700 transform transition-all duration-300 hover:-translate-y-1 hover:shadow-xl">
-                <div class="flex items-center mb-4">
-                  <div class="p-2 bg-amber-100 dark:bg-amber-900/30 rounded-lg mr-4">
-                    <svg class="w-6 h-6 text-amber-600 dark:text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
-                    </svg>
-                  </div>
-                  <h3 class="text-xl font-bold text-slate-900 dark:text-white">Our Mission</h3>
-                </div>
-                <p class="text-slate-600 dark:text-slate-300">
-                  To democratize real estate by creating the most transparent and accessible property marketplace in the world.
-                </p>
-              </div>
-              
-              <!-- Vision card -->
-              <div class="bg-white dark:bg-slate-800/90 rounded-xl shadow-lg p-6 border border-slate-100 dark:border-slate-700 transform transition-all duration-300 hover:-translate-y-1 hover:shadow-xl">
-                <div class="flex items-center mb-4">
-                  <div class="p-2 bg-orange-100 dark:bg-orange-900/30 rounded-lg mr-4">
-                    <svg class="w-6 h-6 text-orange-600 dark:text-orange-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-                    </svg>
-                  </div>
-                  <h3 class="text-xl font-bold text-slate-900 dark:text-white">Our Vision</h3>
-                </div>
-                <p class="text-slate-600 dark:text-slate-300">
-                  A world where everyone can participate in real estate opportunities with complete confidence and clarity.
-                </p>
-              </div>
-            </div>
+            <blockquote class="bg-gradient-to-r from-purple-50 to-blue-50 dark:from-purple-900/20 dark:to-blue-900/20 rounded-2xl p-6 border-l-4 border-purple-500">
+              <p class="text-lg italic text-gray-800 dark:text-gray-200">
+                {getText('story.highlight')}
+              </p>
+            </blockquote>
           </div>
         </div>
       </div>
     </section>
     
-
-    
-   
-    
-    <!-- Enhanced CTA Section -->
-    <section class="relative py-24 lg:py-32 overflow-hidden">
-      <!-- Background elements -->
-      <div class="absolute inset-0 pointer-events-none">
-        <div class="absolute top-0 left-1/4 w-96 h-96 bg-amber-100 dark:bg-amber-900/20 rounded-full blur-3xl opacity-30"></div>
-        <div class="absolute bottom-0 right-1/4 w-96 h-96 bg-orange-100 dark:bg-orange-900/20 rounded-full blur-3xl opacity-30"></div>
+    <!-- Values Section -->
+    <section class="relative py-24 lg:py-32">
+      <div class="max-w-7xl mx-auto px-6 sm:px-8 lg:px-12">
+        <div class="text-center mb-16">
+          <h2 
+            in:fly={{ y: prefersReducedMotion ? 0 : -20, duration: 800, delay: 100 }}
+            class="text-4xl md:text-5xl font-black text-gray-900 dark:text-white mb-4"
+          >
+            {getText('values.title')}
+          </h2>
+          <div class="w-24 h-1 bg-gradient-to-r from-purple-500 to-blue-500 mx-auto rounded-full"></div>
+        </div>
         
-        <!-- Decorative shapes -->
-        <div class="hidden lg:block absolute top-20 left-20 w-16 h-16 border-4 border-amber-200 dark:border-amber-800/40 rounded-lg transform rotate-12 opacity-40"></div>
-        <div class="hidden lg:block absolute bottom-20 right-20 w-12 h-12 border-4 border-orange-200 dark:border-orange-800/40 rounded-full opacity-40"></div>
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+          {#each getText('values.items') as value, i}
+            <div 
+              in:scale={{ duration: 600, delay: 200 + i * 100, easing: 'cubicOut' }}
+              class="group relative p-8 rounded-3xl bg-white dark:bg-gray-800 shadow-xl hover:shadow-2xl transition-all duration-300 hover:-translate-y-2 border border-purple-200/50 dark:border-purple-700/50"
+            >
+              <!-- Icon -->
+              <div class="w-16 h-16 mb-6 rounded-2xl bg-gradient-to-br from-purple-500 to-blue-500 flex items-center justify-center text-white">
+                {#if value.icon === 'transparency'}
+                  <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                  </svg>
+                {:else if value.icon === 'innovation'}
+                  <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
+                  </svg>
+                {:else}
+                  <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+                  </svg>
+                {/if}
+              </div>
+              
+              <h3 class="text-xl font-bold text-gray-900 dark:text-white mb-3">
+                {value.title}
+              </h3>
+              
+              <p class="text-gray-600 dark:text-gray-300">
+                {value.description}
+              </p>
+              
+              <!-- Decorative gradient line -->
+              <div class="absolute bottom-0 left-0 right-0 h-1 bg-gradient-to-r from-purple-500 to-blue-500 rounded-b-3xl opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+            </div>
+          {/each}
+        </div>
       </div>
-      
-      <!-- Content container -->
-      <div class="relative max-w-5xl mx-auto px-6 sm:px-8 lg:px-12">
-        <!-- Card with gradient border -->
+    </section>
+    
+    <!-- Team Section -->
+    <section class="relative py-24 lg:py-32 bg-gradient-to-b from-purple-50/30 to-transparent dark:from-purple-950/20 dark:to-transparent">
+      <div class="max-w-7xl mx-auto px-6 sm:px-8 lg:px-12">
+        <div class="text-center mb-16">
+          <h2 
+            in:fly={{ y: prefersReducedMotion ? 0 : -20, duration: 800, delay: 100 }}
+            class="text-4xl md:text-5xl font-black text-gray-900 dark:text-white mb-2"
+          >
+            {getText('team.title')}
+          </h2>
+          <p class="text-lg text-gray-600 dark:text-gray-400">
+            {getText('team.subtitle')}
+          </p>
+        </div>
+        
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+          {#each getText('team.members') as member, i}
+            <div 
+              in:scale={{ duration: 600, delay: 200 + i * 100, easing: 'cubicOut' }}
+              class="text-center"
+            >
+              <div class="relative mb-6 mx-auto w-40 h-40">
+                <div class="w-full h-full rounded-full bg-gradient-to-br from-purple-400 to-blue-500 flex items-center justify-center text-white text-4xl font-bold">
+                  {member.name.split(' ').map(n => n[0]).join('')}
+                </div>
+              </div>
+              
+              <h3 class="text-xl font-bold text-gray-900 dark:text-white mb-1">
+                {member.name}
+              </h3>
+              <p class="text-purple-600 dark:text-purple-400 font-medium mb-2">
+                {member.role}
+              </p>
+              <p class="text-gray-600 dark:text-gray-400">
+                {member.bio}
+              </p>
+            </div>
+          {/each}
+        </div>
+      </div>
+    </section>
+    
+    <!-- CTA Section -->
+    <section class="relative py-24 lg:py-32">
+      <div class="max-w-4xl mx-auto px-6 sm:px-8 lg:px-12">
         <div 
-          in:fade={{ duration: 800, delay: 100 }}
-          class="bg-white/90 dark:bg-slate-800/90 rounded-2xl shadow-xl p-8 md:p-12 lg:p-16 border border-slate-100 dark:border-slate-700 relative overflow-hidden"
+          in:scale={{ duration: 800, delay: 100, easing: 'cubicOut' }}
+          class="relative bg-gradient-to-br from-purple-600 to-blue-600 rounded-3xl p-12 lg:p-16 text-center overflow-hidden"
         >
-          <!-- Gradient border effect -->
-          <div class="absolute inset-0 rounded-2xl overflow-hidden pointer-events-none">
-            <div class="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-amber-500 to-orange-500"></div>
-            <div class="absolute inset-y-0 right-0 w-1 bg-gradient-to-b from-orange-500 to-amber-500"></div>
-            <div class="absolute inset-x-0 bottom-0 h-1 bg-gradient-to-r from-orange-500 to-amber-500"></div>
-            <div class="absolute inset-y-0 left-0 w-1 bg-gradient-to-b from-amber-500 to-orange-500"></div>
+          <!-- Background Pattern -->
+          <div class="absolute inset-0 opacity-10">
+            <svg class="w-full h-full" viewBox="0 0 400 400">
+              <pattern id="dots" x="0" y="0" width="40" height="40" patternUnits="userSpaceOnUse">
+                <circle cx="20" cy="20" r="2" fill="currentColor" />
+              </pattern>
+              <rect width="100%" height="100%" fill="url(#dots)" />
+            </svg>
           </div>
           
-          <div class="text-center">
-            <!-- Title with enhanced typography -->
-            <h2 
-              in:fade={{ duration: 800, delay: 200 }}
-              class="text-4xl sm:text-5xl font-bold text-slate-900 dark:text-white mb-6 tracking-tight"
-            >
+          <div class="relative z-10">
+            <h2 class="text-3xl sm:text-4xl lg:text-5xl font-black text-white mb-6">
               {getText('cta.title')}
             </h2>
             
-            <!-- Description with improved spacing -->
-            <p 
-              in:fade={{ duration: 800, delay: 300 }}
-              class="text-lg md:text-xl text-slate-600 dark:text-slate-300 mb-10 max-w-2xl mx-auto leading-relaxed"
-            >
+            <p class="text-lg lg:text-xl text-white/90 mb-10 max-w-2xl mx-auto">
               {getText('cta.description')}
             </p>
             
-            <!-- Button group with enhanced styling -->
-            <div 
-              in:fly={{ y: prefersReducedMotion ? 0 : 20, duration: 800, delay: 400 }}
-              class="flex flex-col sm:flex-row gap-6 justify-center"
-            >
-              <!-- Primary button with enhanced hover effect -->
+            <div class="flex flex-col sm:flex-row gap-4 justify-center">
               <Button 
                 variant="primary" 
                 size="large" 
                 href="/register" 
-                class="bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white border-0 px-8 py-4 rounded-xl shadow-lg hover:shadow-amber-500/20 dark:hover:shadow-amber-800/30 transition-all duration-300 transform hover:-translate-y-1"
+                class="bg-white text-purple-600 hover:bg-gray-100 font-bold px-8 py-4 rounded-xl shadow-xl hover:shadow-2xl transition-all duration-300"
               >
-                <span class="flex items-center justify-center">
-                  <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
-                  </svg>
-                  {getText('cta.primaryBtn')}
-                </span>
+                {getText('cta.primaryBtn')}
               </Button>
               
-              <!-- Secondary button with enhanced hover effect -->
               <Button 
                 variant="outline" 
                 size="large" 
                 href="/contact" 
-                class="border-2 border-amber-500 text-amber-600 hover:bg-amber-50 dark:border-amber-400 dark:text-amber-400 dark:hover:bg-amber-900/20 px-8 py-4 rounded-xl shadow-md hover:shadow-lg transition-all duration-300 transform hover:-translate-y-1"
+                class="border-2 border-white text-white hover:bg-white hover:text-purple-600 font-bold px-8 py-4 rounded-xl transition-all duration-300"
               >
-                <span class="flex items-center justify-center">
-                  <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
-                  </svg>
-                  {getText('cta.secondaryBtn')}
-                </span>
+                {getText('cta.secondaryBtn')}
               </Button>
             </div>
           </div>
@@ -577,8 +460,7 @@
 </div>
 
 <style>
-  /* Custom Keyframes for Line Animations */
-  @keyframes drawLine {
+  @keyframes draw {
     from {
       stroke-dasharray: 1000;
       stroke-dashoffset: 1000;
@@ -591,153 +473,39 @@
     }
   }
   
-  @keyframes expandWidth {
-    from {
-      width: 0;
-    }
-    to {
-      width: 100%;
-    }
-  }
-  
-  @keyframes fadeInText {
-    from {
-      opacity: 0;
-      transform: scale(0.8);
-    }
-    to {
-      opacity: 1;
-      transform: scale(1);
-    }
-  }
-  
-  /* Line drawing classes */
-  .draw-line-hero {
+  .animate-draw {
+    animation: draw 2s ease-out forwards;
     stroke-dasharray: 1000;
     stroke-dashoffset: 1000;
     opacity: 0;
-    animation: drawLine 2s ease-out forwards;
   }
   
-  .draw-text {
-    opacity: 0;
-    animation: fadeInText 1s ease-out forwards;
+  .animate-pulse {
+    animation: pulse 3s ease-in-out infinite;
   }
   
-  /* Width expansion classes */
-  .expand-line-stat {
-    width: 0;
-    animation: expandWidth 0.8s ease-out forwards;
-  }
-  
-  .expand-line-story {
-    width: 0;
-    animation: expandWidth 1s ease-out 0.2s forwards;
-  }
-  
-  .expand-line-story-2 {
-    width: 0;
-    animation: expandWidth 0.8s ease-out 0.5s forwards;
-  }
-  
-  .expand-line-story-3 {
-    width: 0;
-    animation: expandWidth 0.6s ease-out 0.8s forwards;
-  }
-  
-  .expand-line-title {
-    width: 0;
-    animation: expandWidth 1s ease-out 0.3s forwards;
-  }
-  
-  .expand-line-value {
-    width: 0;
-    animation: expandWidth 0.6s ease-out forwards;
-  }
-  
-  .expand-line-team {
-    width: 0;
-    animation: expandWidth 0.8s ease-out 0.3s forwards;
-  }
-  
-  .expand-line-member {
-    width: 0;
-    animation: expandWidth 0.5s ease-out forwards;
-  }
-  
-  .expand-line-cta {
-    width: 0;
-    animation: expandWidth 0.8s ease-out 0.3s forwards;
-  }
-  
-  /* Ensure animations respect reduced motion */
-  @media (prefers-reduced-motion: reduce) {
-    * {
-      animation-duration: 0.01ms !important;
-      animation-iteration-count: 1 !important;
-      transition-duration: 0.01ms !important;
+  @keyframes pulse {
+    0%, 100% {
+      opacity: 0.1;
+      transform: scale(1);
     }
-    
-    .draw-line-hero {
+    50% {
+      opacity: 0.3;
+      transform: scale(1.05);
+    }
+  }
+  
+  /* Respect reduced motion */
+  @media (prefers-reduced-motion: reduce) {
+    .animate-draw {
+      animation: none;
       stroke-dasharray: none;
       stroke-dashoffset: 0;
       opacity: 1;
     }
     
-    .draw-text {
-     opacity: 1;
-     transform: scale(1);
-   }
-   
-   .expand-line-stat,
-   .expand-line-story,
-   .expand-line-story-2,
-   .expand-line-story-3,
-   .expand-line-title,
-   .expand-line-value,
-   .expand-line-team,
-   .expand-line-member,
-   .expand-line-cta {
-     width: 100% !important;
-   }
- }
- 
- /* RTL support */
- [dir="rtl"] .expand-line-stat,
- [dir="rtl"] .expand-line-story,
- [dir="rtl"] .expand-line-story-2,
- [dir="rtl"] .expand-line-story-3,
- [dir="rtl"] .expand-line-title,
- [dir="rtl"] .expand-line-value,
- [dir="rtl"] .expand-line-team,
- [dir="rtl"] .expand-line-member,
- [dir="rtl"] .expand-line-cta {
-   transform-origin: right;
- }
- 
- /* Enhanced focus states */
- :global(:focus-visible) {
-   outline: 2px solid #f59e0b;
-   outline-offset: 2px;
-   border-radius: 0.25rem;
- }
- 
- :global(.dark :focus-visible) {
-   outline-color: #fbbf24;
- }
- 
- /* Subtle hover effects for interactive elements */
- .group:hover .draw-line-hero {
-   stroke-width: 2.5;
-   transition: stroke-width 0.3s ease;
- }
- 
- /* Clean card styling */
- .bg-white {
-   background-color: rgba(255, 255, 255, 0.95);
- }
- 
- .dark .bg-white {
-   background-color: rgba(30, 41, 59, 0.95);
- }
+    .animate-pulse {
+      animation: none;
+    }
+  }
 </style>

@@ -23,14 +23,14 @@ RUN pip install --no-cache-dir -r requirements.txt
 # Copy project
 COPY . .
 
-# Create directories
-RUN mkdir -p /app/db /app/static /app/media /app/staticfiles
+# Create directories with correct paths
+RUN mkdir -p /app/db /app/media /app/staticfiles back/static
 
 # Create entrypoint script
 COPY entrypoint.sh /entrypoint.sh
 RUN chmod +x /entrypoint.sh
 
-# Expose port 7500 instead of 8000
+# Expose port 7500
 EXPOSE 7500
 
 # Use entrypoint
