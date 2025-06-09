@@ -8,6 +8,7 @@ ENV DJANGO_SETTINGS_MODULE=back.settings
 
 # Set work directory
 WORKDIR /app
+RUN mkdir -p /app/static
 
 # Install system dependencies
 RUN apt-get update \

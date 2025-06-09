@@ -24946,3 +24946,5 @@ WARNING 2025-06-09 20:47:30,594 basehttp 9 140336928118464 "GET /api/messages/?p
 WARNING 2025-06-09 20:47:30,596 basehttp 9 140336939656896 "GET /api/messages/stats/ HTTP/1.1" 401 58
 INFO 2025-06-09 20:47:32,565 basehttp 9 140336939656896 "GET /api/auctions/?page=1&ordering=-created_at HTTP/1.1" 200 19566
 INFO 2025-06-09 20:47:37,999 basehttp 9 140336939656896 "GET /api/properties/?page=1&ordering=-created_at HTTP/1.1" 200 17945
+INFO 2025-06-09 21:17:46,564 autoreload 9 140336996739968 /app/back/settings.py changed, reloading.
+INFO 2025-06-09 21:18:03,799 autoreload 15 128213455334272 Watching for file changes with StatReloader

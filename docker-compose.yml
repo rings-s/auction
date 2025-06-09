@@ -28,7 +28,10 @@ services:
       - VITE_API_URL=http://backend:7500/api
     depends_on:
       - backend
-      
+
+
+
+# we can introduce our postgres data her but it would be more safer with .env and it's   settings file
 # volumes: # Uncomment and define if you add a database service
 #   postgres_data:
 
