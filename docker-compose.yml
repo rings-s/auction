@@ -8,7 +8,7 @@ services:
     volumes:
       - ./back:/app
     ports:
-      - "7500:7500"
+      - "8451:7500"
     env_file:
       - ./.env
 
@@ -22,7 +22,7 @@ services:
       - /app/node_modules
       - /app/.vite  # Exclude Vite cache from host
     ports:
-      - "5173:5173"
+      - "7500:5173"
     environment:
       - CHOKIDAR_USEPOLLING=true 
       - VITE_API_URL=http://backend:7500/api

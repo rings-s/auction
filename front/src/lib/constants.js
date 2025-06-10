@@ -1,8 +1,8 @@
 // API endpoints and other constants
-export const API_BASE_URL = 'http://localhost:7500/api';
+export const API_BASE_URL = 'http://localhost:8451/api';
 
 // WebSocket base URL (derived from API_BASE_URL)
-export const WS_BASE_URL = 'ws://localhost:7500/ws';
+export const WS_BASE_URL = 'ws://localhost:8451/ws';
 
 // API endpoints
 export const AUTH_ENDPOINTS = {

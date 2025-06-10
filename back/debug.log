@@ -24948,3 +24948,4 @@ INFO 2025-06-09 20:47:32,565 basehttp 9 140336939656896 "GET /api/auctions/?page
 INFO 2025-06-09 20:47:37,999 basehttp 9 140336939656896 "GET /api/properties/?page=1&ordering=-created_at HTTP/1.1" 200 17945
 INFO 2025-06-09 21:17:46,564 autoreload 9 140336996739968 /app/back/settings.py changed, reloading.
 INFO 2025-06-09 21:18:03,799 autoreload 15 128213455334272 Watching for file changes with StatReloader
+INFO 2025-06-10 00:43:55,838 autoreload 69868 136117129852736 Watching for file changes with StatReloader
