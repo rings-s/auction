@@ -1,10 +1,9 @@
 import tailwindcss from '@tailwindcss/vite';
 import { sveltekit } from '@sveltejs/kit/vite';
 import { defineConfig } from 'vite';
-import path from 'path';
 
 export default defineConfig({
-	plugins: [tailwindcss({ config: path.resolve(__dirname, 'tailwind.config.js') }), sveltekit()],
+	plugins: [tailwindcss(), sveltekit()], // Removed config reference for Tailwind v4
 	server: {
 		host: '0.0.0.0',
 		port: 5173,
@@ -12,8 +11,7 @@ export default defineConfig({
 			'localhost',
 			'127.0.0.1',
 			'auction.pinealdevelopers.com',
-			'.pinealdevelopers.com',  // Allow all subdomains
-			// 'all'  // Allow all hosts for development
+			'.pinealdevelopers.com'
 		],
 		watch: {
 			usePolling: true,

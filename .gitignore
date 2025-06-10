@@ -67,4 +67,10 @@ errors.md
 .env.test.local
 .env.production.local
 
+# Django static files
+staticfiles/
+
+# PostgreSQL data directory
+postgres_data/
+
 *errors.md
