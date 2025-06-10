@@ -1006,7 +1006,8 @@ export const arTranslations = {
       phoneRequired: 'رقم الهاتف مطلوب',
       phoneInvalid: 'رقم الهاتف غير صالح',
       codeInvalid: 'رمز التحقق غير صالح',
-      codeRequired: 'رمز التحقق مطلوب'
+      codeRequired: 'رمز التحقق مطلوب',
+      
     },
     
     // Additional Auth Messages

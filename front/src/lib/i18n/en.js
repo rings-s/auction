@@ -116,7 +116,14 @@ export const enTranslations = {
     messageRequired: "Message is required",
     messageTooShort: "Message must be at least 10 characters long",
     messageTooLong: "Message cannot exceed 2000 characters",
-    roomNameRequired: 'Room name is required'
+    roomNameRequired: 'Room name is required',
+    emailRequired: 'Email is required',
+    emailInvalid: 'Email is invalid',
+    passwordRequired: 'Password is required',
+    passwordInvalid: 'Password is invalid',
+    passwordMinLength: 'Password must be at least 8 characters long'
+
+    
   },
 
   fileUpload: {

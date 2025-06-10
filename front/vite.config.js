@@ -8,6 +8,13 @@ export default defineConfig({
 	server: {
 		host: '0.0.0.0',
 		port: 5173,
+		allowedHosts: [
+			'localhost',
+			'127.0.0.1',
+			'auction.pinealdevelopers.com',
+			'.pinealdevelopers.com',  // Allow all subdomains
+			// 'all'  // Allow all hosts for development
+		],
 		watch: {
 			usePolling: true,
 			interval: 1000
