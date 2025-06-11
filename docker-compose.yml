@@ -3,16 +3,16 @@ services:
     image: postgres:15-alpine
     container_name: auction_db
     environment:
-      - POSTGRES_DB=${DB_NAME}
-      - POSTGRES_USER=${DB_USER}
-      - POSTGRES_PASSWORD=${DB_PASSWORD}
+      - POSTGRES_DB=${DB_NAME:-auction}
+      - POSTGRES_USER=${DB_USER:-postgres}
+      - POSTGRES_PASSWORD=${DB_PASSWORD:-postgres}
     volumes:
       - ./postgres_data:/var/lib/postgresql/data/
     ports:
       - "5433:5432"
     restart: unless-stopped
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${DB_USER} -d ${DB_NAME}"]
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER:-postgres} -d ${DB_NAME:-auction}"]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -35,26 +35,6 @@ services:
       timeout: 5s
       retries: 5
 
-  frontend:
-    build: 
-      context: ./front
-      dockerfile: Dockerfile
-    container_name: auction_frontend
-    volumes:
-      - ./front:/app
-      - /app/node_modules
-      - /app/.vite
-    ports:
-      - "7500:5173"
-    environment:
-      - CHOKIDAR_USEPOLLING=true
-      - NODE_ENV=production
-    restart: unless-stopped
-    networks:
-      - auction_network
-    depends_on:
-      - backend
-
   backend:
     build: 
       context: ./back
@@ -70,6 +50,8 @@ services:
     env_file:
       - ./.env
     environment:
+      - DEBUG=true
+      - ENVIRONMENT=development
       - REDIS_URL=redis://redis:6379/0
     depends_on:
       - db
@@ -77,6 +59,28 @@ services:
     restart: unless-stopped
     networks:
       - auction_network
+
+  frontend:
+    build: 
+      context: ./front
+      dockerfile: Dockerfile
+    container_name: auction_frontend
+    volumes:
+      - ./front:/app
+      - /app/node_modules
+      - /app/.vite
+    ports:
+      - "7500:5173"
+    environment:
+      - CHOKIDAR_USEPOLLING=true
+      - NODE_ENV=development
+      - VITE_API_BASE_URL=http://localhost:8451/api
+      - VITE_WS_BASE_URL=ws://localhost:8451/ws
+    restart: unless-stopped
+    networks:
+      - auction_network
+    depends_on:
+      - backend
 
 networks:
   auction_network:

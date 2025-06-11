@@ -25,16 +25,20 @@ RUN pip install --no-cache-dir -r requirements.txt gunicorn uvicorn[standard]
 # Copy project
 COPY . .
 
-# Create necessary directories
-RUN mkdir -p /app/media /app/staticfiles /app/logs
+# Create non-root user FIRST
+RUN adduser --disabled-password --gecos '' --uid 1000 appuser
 
-# Create entrypoint script
+# Create necessary directories and set permissions
+RUN mkdir -p /app/media /app/staticfiles /app/logs \
+    && chown -R appuser:appuser /app \
+    && chmod -R 755 /app/logs \
+    && chmod -R 755 /app/media \
+    && chmod -R 755 /app/staticfiles
+
+# Copy entrypoint script and set permissions
 COPY entrypoint.sh /entrypoint.sh
-RUN chmod +x /entrypoint.sh
-
-# Create non-root user for security
-RUN adduser --disabled-password --gecos '' --uid 1000 appuser \
-    && chown -R appuser:appuser /app
+RUN chmod +x /entrypoint.sh \
+    && chown appuser:appuser /entrypoint.sh
 
 # Switch to non-root user
 USER appuser
