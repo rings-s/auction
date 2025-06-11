@@ -28,21 +28,26 @@ python manage.py migrate
 echo "📦 Collecting static files..."
 python manage.py collectstatic --noinput
 
-# Create superuser if it doesn't exist
+# Create superuser if it doesn't exist using environment variables
 echo "👑 Creating superuser..."
 python manage.py shell << EOF
 from django.contrib.auth import get_user_model
+import os
+
 User = get_user_model()
-if not User.objects.filter(email='admin@auction.com').exists():
+admin_email = os.getenv('ADMIN_EMAIL', 'admin@auction.com')
+admin_password = os.getenv('ADMIN_PASSWORD', 'admin123')
+
+if not User.objects.filter(email=admin_email).exists():
     User.objects.create_superuser(
-        email='admin@auction.com',
-        password='admin123',
+        email=admin_email,
+        password=admin_password,
         first_name='Admin',
         last_name='User'
     )
-    print('✅ Superuser created: admin@auction.com / admin123')
+    print(f'✅ Superuser created: {admin_email}')
 else:
-    print('✅ Superuser already exists')
+    print(f'✅ Superuser already exists: {admin_email}')
 EOF
 
 # Start the application

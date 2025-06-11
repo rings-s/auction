@@ -27,10 +27,15 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/5.2/howto/deployment/checklist/
 
+# Use environment variable for SECRET_KEY
 SECRET_KEY = os.getenv('SECRET_KEY')
 if not SECRET_KEY:
-    raise ImproperlyConfigured("SECRET_KEY environment variable is missing")
-
+    if DEBUG:
+        # Generate a random key for development
+        SECRET_KEY = 'django-insecure-' + ''.join([chr(random.randint(65, 90)) for _ in range(50)])
+    else:
+        raise ImproperlyConfigured("SECRET_KEY environment variable is missing")
+        
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = os.getenv('DEBUG', 'False').lower() == 'true'
 
@@ -69,6 +74,8 @@ if DEBUG or ENVIRONMENT == 'development':
         "http://127.0.0.1:7500",
         "http://localhost:3000",
         "http://127.0.0.1:3000",
+        "http://localhost:5173",
+        "http://127.0.0.1:5173",
     ]
     
     print("🔥 DEVELOPMENT MODE - ALL HTTPS REDIRECTS DISABLED")
@@ -169,6 +176,9 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    # Custom middleware
+    'accounts.middleware.RequestLogMiddleware',
+    'accounts.middleware.LoginTrackingMiddleware',
 ]
 
 ROOT_URLCONF = 'back.urls'
@@ -320,10 +330,15 @@ SIMPLE_JWT = {
 
 # Channel layers configuration
 if DEBUG or ENVIRONMENT == 'development':
-    # Development - Use in-memory channel layer
+    # Development - Use Redis (since Redis is available)
     CHANNEL_LAYERS = {
         'default': {
-            'BACKEND': 'channels.layers.InMemoryChannelLayer',
+            'BACKEND': 'channels_redis.core.RedisChannelLayer',
+            'CONFIG': {
+                "hosts": [REDIS_URL],
+                "capacity": 1500,
+                "expiry": 10,
+            },
         }
     }
 else:
@@ -339,19 +354,23 @@ else:
         }
     }
 
-# Cache configuration
+# ===== FIXED CACHE CONFIGURATION =====
+# Use Redis for both development and production since Redis is available
 if DEBUG or ENVIRONMENT == 'development':
-    # Development - Use dummy cache
-    CACHES = {
-        'default': {
-            'BACKEND': 'django.core.cache.backends.dummy.DummyCache',
-        }
-    }
-else:
-    # Production - Use Redis cache
+    # Development - Simple Redis cache
     CACHES = {
         'default': {
             'BACKEND': 'django.core.cache.backends.redis.RedisCache',
+            'LOCATION': REDIS_URL,
+            'KEY_PREFIX': f'auction_{ENVIRONMENT}',
+            'TIMEOUT': 300,
+        }
+    }
+else:
+    # Production - Use django_redis for better performance
+    CACHES = {
+        'default': {
+            'BACKEND': 'django_redis.cache.RedisCache',
             'LOCATION': REDIS_URL,
             'OPTIONS': {
                 'CLIENT_CLASS': 'django_redis.client.DefaultClient',
@@ -365,20 +384,41 @@ else:
                 'PICKLE_VERSION': -1,
             },
             'KEY_PREFIX': 'auction',
-            'TIMEOUT': 300,  # 5 minutes default timeout
+            'TIMEOUT': 300,
         }
     }
 
-# Session configuration
+# Add production-specific cache options
+if not (DEBUG or ENVIRONMENT == 'development'):
+    CACHES['default']['OPTIONS'].update({
+        'PARSER_CLASS': 'redis.connection.HiredisParser',
+        'CONNECTION_POOL_CLASS': 'redis.BlockingConnectionPool',
+        'CONNECTION_POOL_CLASS_KWARGS': {
+            'max_connections': 50,
+            'timeout': 20,
+        },
+        'MAX_CONNECTIONS': 1000,
+        'PICKLE_VERSION': -1,
+    })
+
+# ===== FIXED SESSION CONFIGURATION =====
 SESSION_ENGINE = 'django.contrib.sessions.backends.cache'
 SESSION_CACHE_ALIAS = 'default'
 SESSION_COOKIE_AGE = 86400 * 7  # 7 days
 SESSION_COOKIE_NAME = 'auction_sessionid'
 SESSION_COOKIE_HTTPONLY = True
 SESSION_COOKIE_SAMESITE = 'Lax'
+SESSION_SAVE_EVERY_REQUEST = True  # Ensure sessions are saved properly
+SESSION_EXPIRE_AT_BROWSER_CLOSE = False
 
 # Email configuration
-EMAIL_BACKEND = os.getenv('EMAIL_BACKEND', 'django.core.mail.backends.smtp.EmailBackend')
+if DEBUG or ENVIRONMENT == 'development':
+    # Development - Use console backend for debugging
+    EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
+else:
+    # Production - Use SMTP
+    EMAIL_BACKEND = os.getenv('EMAIL_BACKEND', 'django.core.mail.backends.smtp.EmailBackend')
+
 EMAIL_HOST = os.getenv('EMAIL_HOST', 'smtp.gmail.com')
 EMAIL_PORT = int(os.getenv('EMAIL_PORT', 587))
 EMAIL_USE_TLS = os.getenv('EMAIL_USE_TLS', 'True').lower() == 'true'
@@ -389,7 +429,7 @@ DEFAULT_FROM_EMAIL = os.getenv('DEFAULT_FROM_EMAIL', EMAIL_HOST_USER)
 SERVER_EMAIL = DEFAULT_FROM_EMAIL
 
 # Frontend URL for email links
-FRONTEND_URL = os.getenv('FRONTEND_URL', 'https://auction.pinealdevelopers.com')
+FRONTEND_URL = os.getenv('FRONTEND_URL', 'http://localhost:7500' if DEBUG else 'https://auction.pinealdevelopers.com')
 
 # Site configuration
 SITE_NAME = COMPANY_NAME
@@ -399,6 +439,30 @@ VERIFICATION_TOKEN_EXPIRATION_HOURS = int(os.getenv('VERIFICATION_TOKEN_EXPIRATI
 FILE_UPLOAD_MAX_MEMORY_SIZE = 5242880  # 5MB
 DATA_UPLOAD_MAX_MEMORY_SIZE = 5242880  # 5MB
 FILE_UPLOAD_PERMISSIONS = 0o644
+
+# Security settings for development
+if DEBUG or ENVIRONMENT == 'development':
+    # Disable some security features for easier development
+    SECURE_REFERRER_POLICY = None
+    SECURE_CROSS_ORIGIN_OPENER_POLICY = None
+else:
+    # Production security settings
+    SECURE_REFERRER_POLICY = 'strict-origin-when-cross-origin'
+    SECURE_CROSS_ORIGIN_OPENER_POLICY = 'same-origin'
+
+# Rate limiting and middleware settings
+LOGGING_EXCLUDED_PATHS = [
+    r'^/admin/',
+    r'^/static/',
+    r'^/media/',
+    r'^/favicon\.ico$',
+    r'^/test/',
+    r'^/debug/',
+]
+
+LOGIN_PATH_REGEX = r'/api/accounts/login/?$'
+SLOW_REQUEST_THRESHOLD_MS = 1000
+LOGIN_SECURITY_ALERTS = not DEBUG  # Only in production
 
 # Logging configuration
 LOGGING = {
@@ -413,16 +477,23 @@ LOGGING = {
             'format': '{levelname} {message}',
             'style': '{',
         },
+        'console': {
+            'format': '🔥 {levelname} {asctime} {module} - {message}',
+            'style': '{',
+        },
     },
     'filters': {
         'require_debug_false': {
             '()': 'django.utils.log.RequireDebugFalse',
         },
+        'require_debug_true': {
+            '()': 'django.utils.log.RequireDebugTrue',
+        },
     },
     'handlers': {
         'console': {
             'class': 'logging.StreamHandler',
-            'formatter': 'verbose'
+            'formatter': 'console' if DEBUG else 'simple',
         },
         'file': {
             'class': 'logging.FileHandler',
@@ -434,7 +505,7 @@ LOGGING = {
             'class': 'logging.FileHandler',
             'filename': os.path.join(BASE_DIR, 'logs', 'error.log'),
             'formatter': 'verbose',
-            'filters': ['require_debug_false'],
+            'level': 'ERROR',
         },
     },
     'root': {
@@ -443,22 +514,27 @@ LOGGING = {
     },
     'loggers': {
         'django': {
-            'handlers': ['console', 'file'],
+            'handlers': ['console'] if DEBUG else ['console', 'file'],
             'level': os.getenv('DJANGO_LOG_LEVEL', 'INFO'),
             'propagate': False,
         },
         'django.request': {
-            'handlers': ['error_file'],
+            'handlers': ['console', 'error_file'],
             'level': 'ERROR',
             'propagate': False,
         },
+        'django.security': {
+            'handlers': ['console', 'error_file'],
+            'level': 'WARNING',
+            'propagate': False,
+        },
         'accounts': {
-            'handlers': ['console', 'file'],
+            'handlers': ['console'] if DEBUG else ['console', 'file'],
             'level': 'DEBUG' if DEBUG else 'INFO',
             'propagate': False,
         },
         'base': {
-            'handlers': ['console', 'file'],
+            'handlers': ['console'] if DEBUG else ['console', 'file'],
             'level': 'DEBUG' if DEBUG else 'INFO',
             'propagate': False,
         },
@@ -474,3 +550,5 @@ print(f"🔥 SETTINGS LOADED - DEBUG: {DEBUG}")
 print(f"🔥 SETTINGS LOADED - ENVIRONMENT: {ENVIRONMENT}")
 print(f"🔥 SETTINGS LOADED - ALLOWED_HOSTS: {ALLOWED_HOSTS}")
 print(f"🔥 SETTINGS LOADED - REDIS_URL: {REDIS_URL}")
+print(f"🔥 SETTINGS LOADED - CACHE_BACKEND: {CACHES['default']['BACKEND']}")
+print(f"🔥 SETTINGS LOADED - SESSION_ENGINE: {SESSION_ENGINE}")

@@ -121,7 +121,8 @@ export const enTranslations = {
     emailInvalid: 'Email is invalid',
     passwordRequired: 'Password is required',
     passwordInvalid: 'Password is invalid',
-    passwordMinLength: 'Password must be at least 8 characters long'
+    passwordMinLength: 'Password must be at least 8 characters long',
+    codeRequired: '',
 
     
   },
