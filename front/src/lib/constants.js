@@ -1,8 +1,6 @@
-// The frontend will call its own domain, which Cloudflare routes to your local backend
-const API_BASE_URL = 'https://auction.pinealdevelopers.com/api';
-const WS_BASE_URL = 'wss://auction.pinealdevelopers.com/ws';
-
-export { API_BASE_URL, WS_BASE_URL };
+// Production URLs only
+export const API_BASE_URL = 'https://auction.pinealdevelopers.com/api';
+export const WS_BASE_URL = 'wss://auction.pinealdevelopers.com/ws';
 
 export const AUTH_ENDPOINTS = {
   LOGIN: `${API_BASE_URL}/accounts/login/`,

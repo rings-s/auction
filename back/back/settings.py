@@ -32,7 +32,7 @@ if not SECRET_KEY:
     raise ImproperlyConfigured("SECRET_KEY environment variable is missing")
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = os.getenv('DEBUG', 'True').lower() == 'true'
+DEBUG = os.getenv('DEBUG', 'False').lower() == 'true'
 
 # Company details - used in templates and emails
 COMPANY_NAME = os.getenv('COMPANY_NAME', 'Real Estate Auctions')
@@ -41,12 +41,15 @@ print(f"🔥 DEBUG MODE: {DEBUG}")
 print(f"🔥 COMPANY: {COMPANY_NAME}")
 
 # Environment-specific settings
-ENVIRONMENT = os.getenv('ENVIRONMENT', 'development')
+ENVIRONMENT = os.getenv('ENVIRONMENT', 'production')
+
+# Redis URL configuration
+REDIS_URL = os.getenv('REDIS_URL', 'redis://redis:6379/0')
 
 if DEBUG or ENVIRONMENT == 'development':
-    # 🔥 DEVELOPMENT SETTINGS - FORCE HTTP MODE
+    # 🔥 DEVELOPMENT SETTINGS
     SECURE_SSL_REDIRECT = False
-    SECURE_PROXY_SSL_HEADER = None  # ✅ KEY: Remove proxy header that forces HTTPS
+    SECURE_PROXY_SSL_HEADER = None
     SESSION_COOKIE_SECURE = False
     CSRF_COOKIE_SECURE = False
     SECURE_HSTS_SECONDS = 0
@@ -62,15 +65,17 @@ if DEBUG or ENVIRONMENT == 'development':
     # CORS settings for development
     CORS_ALLOW_ALL_ORIGINS = True
     CORS_ALLOWED_ORIGINS = [
-        "http://localhost:7500",  # Local frontend
+        "http://localhost:7500",
         "http://127.0.0.1:7500",
+        "http://localhost:3000",
+        "http://127.0.0.1:3000",
     ]
     
     print("🔥 DEVELOPMENT MODE - ALL HTTPS REDIRECTS DISABLED")
     
 else:
-    # 🔥 PRODUCTION SETTINGS - CLOUDFLARE HANDLES SSL
-    SECURE_SSL_REDIRECT = False  # Let Cloudflare handle SSL termination
+    # 🔥 PRODUCTION SETTINGS
+    SECURE_SSL_REDIRECT = False  # Cloudflare handles SSL
     SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
     SESSION_COOKIE_SECURE = True
     CSRF_COOKIE_SECURE = True
@@ -79,6 +84,7 @@ else:
     SECURE_HSTS_SECONDS = 31536000  # 1 year
     SECURE_HSTS_INCLUDE_SUBDOMAINS = True
     SECURE_HSTS_PRELOAD = True
+    X_FRAME_OPTIONS = 'DENY'
     
     # Trust Cloudflare proxy headers
     USE_X_FORWARDED_HOST = True
@@ -87,7 +93,14 @@ else:
     # CORS settings for production
     CORS_ALLOW_ALL_ORIGINS = False
     CORS_ALLOWED_ORIGINS = [
-        "https://auction.pinealdevelopers.com",  # Your Cloudflare frontend
+        "https://auction.pinealdevelopers.com",
+        "http://auction.pinealdevelopers.com",  # Just in case
+    ]
+    
+    # CSRF trusted origins for production
+    CSRF_TRUSTED_ORIGINS = [
+        "https://auction.pinealdevelopers.com",
+        "http://auction.pinealdevelopers.com",
     ]
     
     print("🔥 PRODUCTION MODE - CLOUDFLARE HANDLES SSL")
@@ -105,36 +118,51 @@ CORS_ALLOW_HEADERS = [
     'x-csrftoken',
     'x-requested-with',
 ]
+CORS_ALLOW_METHODS = [
+    'DELETE',
+    'GET',
+    'OPTIONS',
+    'PATCH',
+    'POST',
+    'PUT',
+]
 
-ALLOWED_HOSTS = [
+ALLOWED_HOSTS = os.getenv('ALLOWED_HOSTS', '').split(',') + [
     'localhost',
     '127.0.0.1',
     '0.0.0.0',
     'auction_backend',  # Docker container name
-    'auction.pinealdevelopers.com',
-    '*',  # For development only
+    'backend',  # Docker service name
+    '.pinealdevelopers.com',  # Wildcard for subdomains
 ]
 
 # Application definition
 INSTALLED_APPS = [
+    # Django apps
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    
+    # Third-party apps
     'rest_framework',
     'rest_framework_simplejwt',
+    'rest_framework_simplejwt.token_blacklist',
     'corsheaders',
     'channels', 
     'django_filters',
+    
+    # Local apps
     'accounts',
     'base',
 ]
 
 MIDDLEWARE = [
+    'django.middleware.security.SecurityMiddleware',
     'corsheaders.middleware.CorsMiddleware',
-    # 'django.middleware.security.SecurityMiddleware',  # ✅ DISABLED to prevent HTTPS redirects
+    'whitenoise.middleware.WhiteNoiseMiddleware',  # For serving static files
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
@@ -162,18 +190,23 @@ TEMPLATES = [
     },
 ]
 
+# WSGI/ASGI Configuration
 WSGI_APPLICATION = 'back.wsgi.application'
+ASGI_APPLICATION = 'back.asgi.application'
 
 # Database
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
-        'NAME': os.getenv('DB_NAME'),
-        'USER': os.getenv('DB_USER'),
-        'PASSWORD': os.getenv('DB_PASSWORD'),
-        'HOST': os.getenv('DB_HOST'),
-        'PORT': os.getenv('DB_PORT'),
+        'NAME': os.getenv('DB_NAME', 'auction'),
+        'USER': os.getenv('DB_USER', 'postgres'),
+        'PASSWORD': os.getenv('DB_PASSWORD', 'postgres'),
+        'HOST': os.getenv('DB_HOST', 'db'),
+        'PORT': os.getenv('DB_PORT', '5432'),
         'CONN_MAX_AGE': 60,
+        'OPTIONS': {
+            'connect_timeout': 10,
+        }
     }
 }
 
@@ -184,6 +217,9 @@ AUTH_PASSWORD_VALIDATORS = [
     },
     {
         'NAME': 'django.contrib.auth.password_validation.MinimumLengthValidator',
+        'OPTIONS': {
+            'min_length': 8,
+        }
     },
     {
         'NAME': 'django.contrib.auth.password_validation.CommonPasswordValidator',
@@ -199,15 +235,24 @@ TIME_ZONE = 'UTC'
 USE_I18N = True
 USE_TZ = True
 
+# Languages
+LANGUAGES = [
+    ('en', _('English')),
+    ('ar', _('Arabic')),
+]
+
 # Custom user model
 AUTH_USER_MODEL = 'accounts.CustomUser'
 
-# Static files
+# Static files (CSS, JavaScript, Images)
 STATIC_URL = '/static/'
 STATICFILES_DIRS = [
     BASE_DIR / 'static',
 ]
 STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
+
+# Whitenoise settings for static files
+STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 
 # Media files
 MEDIA_URL = '/media/'
@@ -223,19 +268,33 @@ REST_FRAMEWORK = {
         'rest_framework.authentication.SessionAuthentication',
     ),
     'DEFAULT_PERMISSION_CLASSES': (
-        'rest_framework.permissions.IsAuthenticated',
+        'rest_framework.permissions.IsAuthenticatedOrReadOnly',
     ),
     'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',
     'PAGE_SIZE': 10,
-    'DEFAULT_FILTER_BACKENDS': ['django_filters.rest_framework.DjangoFilterBackend'],
+    'DEFAULT_FILTER_BACKENDS': [
+        'django_filters.rest_framework.DjangoFilterBackend',
+        'rest_framework.filters.SearchFilter',
+        'rest_framework.filters.OrderingFilter',
+    ],
     'DEFAULT_THROTTLE_CLASSES': [
         'rest_framework.throttling.AnonRateThrottle',
         'rest_framework.throttling.UserRateThrottle'
     ],
     'DEFAULT_THROTTLE_RATES': {
-        'anon': '100/day',
-        'user': '1000/day'
-    }
+        'anon': '100/hour',
+        'user': '1000/hour'
+    },
+    'DEFAULT_RENDERER_CLASSES': [
+        'rest_framework.renderers.JSONRenderer',
+    ],
+    'DEFAULT_PARSER_CLASSES': [
+        'rest_framework.parsers.JSONParser',
+        'rest_framework.parsers.MultiPartParser',
+        'rest_framework.parsers.FormParser',
+    ],
+    'DATETIME_FORMAT': '%Y-%m-%dT%H:%M:%S.%fZ',
+    'DATETIME_INPUT_FORMATS': ['%Y-%m-%dT%H:%M:%S.%fZ', 'iso-8601'],
 }
 
 # JWT settings
@@ -247,13 +306,20 @@ SIMPLE_JWT = {
     'UPDATE_LAST_LOGIN': True,
     'ALGORITHM': 'HS256',
     'SIGNING_KEY': SECRET_KEY,
+    'VERIFYING_KEY': None,
+    'AUDIENCE': None,
+    'ISSUER': None,
     'AUTH_HEADER_TYPES': ('Bearer',),
+    'AUTH_HEADER_NAME': 'HTTP_AUTHORIZATION',
     'USER_ID_FIELD': 'id',
     'USER_ID_CLAIM': 'user_id',
+    'USER_AUTHENTICATION_RULE': 'rest_framework_simplejwt.authentication.default_user_authentication_rule',
+    'AUTH_TOKEN_CLASSES': ('rest_framework_simplejwt.tokens.AccessToken',),
+    'TOKEN_TYPE_CLAIM': 'token_type',
 }
 
 # Channel layers configuration
-if DEBUG:
+if DEBUG or ENVIRONMENT == 'development':
     # Development - Use in-memory channel layer
     CHANNEL_LAYERS = {
         'default': {
@@ -266,18 +332,19 @@ else:
         'default': {
             'BACKEND': 'channels_redis.core.RedisChannelLayer',
             'CONFIG': {
-                "hosts": [os.getenv('REDIS_URL', 'redis://localhost:6379')],
+                "hosts": [REDIS_URL],
+                "capacity": 1500,
+                "expiry": 10,
             },
         }
     }
 
 # Cache configuration
-if DEBUG:
+if DEBUG or ENVIRONMENT == 'development':
     # Development - Use dummy cache
     CACHES = {
         'default': {
             'BACKEND': 'django.core.cache.backends.dummy.DummyCache',
-            'LOCATION': 'unique-snowflake',
         }
     }
 else:
@@ -285,12 +352,33 @@ else:
     CACHES = {
         'default': {
             'BACKEND': 'django.core.cache.backends.redis.RedisCache',
-            'LOCATION': os.getenv('REDIS_URL', 'redis://127.0.0.1:6379/1'),
+            'LOCATION': REDIS_URL,
+            'OPTIONS': {
+                'CLIENT_CLASS': 'django_redis.client.DefaultClient',
+                'PARSER_CLASS': 'redis.connection.HiredisParser',
+                'CONNECTION_POOL_CLASS': 'redis.BlockingConnectionPool',
+                'CONNECTION_POOL_CLASS_KWARGS': {
+                    'max_connections': 50,
+                    'timeout': 20,
+                },
+                'MAX_CONNECTIONS': 1000,
+                'PICKLE_VERSION': -1,
+            },
+            'KEY_PREFIX': 'auction',
+            'TIMEOUT': 300,  # 5 minutes default timeout
         }
     }
 
+# Session configuration
+SESSION_ENGINE = 'django.contrib.sessions.backends.cache'
+SESSION_CACHE_ALIAS = 'default'
+SESSION_COOKIE_AGE = 86400 * 7  # 7 days
+SESSION_COOKIE_NAME = 'auction_sessionid'
+SESSION_COOKIE_HTTPONLY = True
+SESSION_COOKIE_SAMESITE = 'Lax'
+
 # Email configuration
-EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+EMAIL_BACKEND = os.getenv('EMAIL_BACKEND', 'django.core.mail.backends.smtp.EmailBackend')
 EMAIL_HOST = os.getenv('EMAIL_HOST', 'smtp.gmail.com')
 EMAIL_PORT = int(os.getenv('EMAIL_PORT', 587))
 EMAIL_USE_TLS = os.getenv('EMAIL_USE_TLS', 'True').lower() == 'true'
@@ -298,24 +386,19 @@ EMAIL_USE_SSL = os.getenv('EMAIL_USE_SSL', 'False').lower() == 'true'
 EMAIL_HOST_USER = os.getenv('EMAIL_HOST_USER')
 EMAIL_HOST_PASSWORD = os.getenv('EMAIL_HOST_PASSWORD')
 DEFAULT_FROM_EMAIL = os.getenv('DEFAULT_FROM_EMAIL', EMAIL_HOST_USER)
+SERVER_EMAIL = DEFAULT_FROM_EMAIL
 
 # Frontend URL for email links
-FRONTEND_URL = os.getenv('FRONTEND_URL', 'http://localhost:7500')
+FRONTEND_URL = os.getenv('FRONTEND_URL', 'https://auction.pinealdevelopers.com')
 
 # Site configuration
+SITE_NAME = COMPANY_NAME
 VERIFICATION_TOKEN_EXPIRATION_HOURS = int(os.getenv('VERIFICATION_TOKEN_EXPIRATION_HOURS', 24))
 
-# Additional production security settings
-if not DEBUG:
-    # Rate limiting for security
-    RATELIMIT_ENABLE = True
-    RATELIMIT_USE_CACHE = 'default'
-    
-    # Improve cookie security
-    SESSION_COOKIE_HTTPONLY = True
-    CSRF_COOKIE_HTTPONLY = True
-    CSRF_COOKIE_SAMESITE = 'Lax'
-    SESSION_COOKIE_SAMESITE = 'Lax'
+# File upload settings
+FILE_UPLOAD_MAX_MEMORY_SIZE = 5242880  # 5MB
+DATA_UPLOAD_MAX_MEMORY_SIZE = 5242880  # 5MB
+FILE_UPLOAD_PERMISSIONS = 0o644
 
 # Logging configuration
 LOGGING = {
@@ -331,6 +414,11 @@ LOGGING = {
             'style': '{',
         },
     },
+    'filters': {
+        'require_debug_false': {
+            '()': 'django.utils.log.RequireDebugFalse',
+        },
+    },
     'handlers': {
         'console': {
             'class': 'logging.StreamHandler',
@@ -338,22 +426,51 @@ LOGGING = {
         },
         'file': {
             'class': 'logging.FileHandler',
-            'filename': 'debug.log',
-            'formatter': 'verbose'
+            'filename': os.path.join(BASE_DIR, 'logs', 'django.log'),
+            'formatter': 'verbose',
+            'filters': ['require_debug_false'],
         },
+        'error_file': {
+            'class': 'logging.FileHandler',
+            'filename': os.path.join(BASE_DIR, 'logs', 'error.log'),
+            'formatter': 'verbose',
+            'filters': ['require_debug_false'],
+        },
+    },
+    'root': {
+        'handlers': ['console'],
+        'level': 'INFO',
     },
     'loggers': {
         'django': {
             'handlers': ['console', 'file'],
-            'level': 'INFO',
+            'level': os.getenv('DJANGO_LOG_LEVEL', 'INFO'),
+            'propagate': False,
+        },
+        'django.request': {
+            'handlers': ['error_file'],
+            'level': 'ERROR',
+            'propagate': False,
         },
         'accounts': {
             'handlers': ['console', 'file'],
-            'level': 'DEBUG',
+            'level': 'DEBUG' if DEBUG else 'INFO',
+            'propagate': False,
+        },
+        'base': {
+            'handlers': ['console', 'file'],
+            'level': 'DEBUG' if DEBUG else 'INFO',
             'propagate': False,
         },
     },
 }
 
-print(f"🔥 SETTINGS LOADED - SECURE_SSL_REDIRECT: {SECURE_SSL_REDIRECT}")
-print(f"🔥 SETTINGS LOADED - SECURE_PROXY_SSL_HEADER: {SECURE_PROXY_SSL_HEADER}")
+# Create logs directory if it doesn't exist
+LOGS_DIR = os.path.join(BASE_DIR, 'logs')
+if not os.path.exists(LOGS_DIR):
+    os.makedirs(LOGS_DIR, exist_ok=True)
+
+print(f"🔥 SETTINGS LOADED - DEBUG: {DEBUG}")
+print(f"🔥 SETTINGS LOADED - ENVIRONMENT: {ENVIRONMENT}")
+print(f"🔥 SETTINGS LOADED - ALLOWED_HOSTS: {ALLOWED_HOSTS}")
+print(f"🔥 SETTINGS LOADED - REDIS_URL: {REDIS_URL}")

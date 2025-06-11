@@ -7,19 +7,38 @@ services:
       - POSTGRES_USER=${DB_USER}
       - POSTGRES_PASSWORD=${DB_PASSWORD}
     volumes:
-      - ./postgres_data:/var/lib/postgresql/data/  # Local directory instead
+      - ./postgres_data:/var/lib/postgresql/data/
     ports:
-      - "5433:5432"  # Changed from 5432:5432 to 5433:5432
+      - "5433:5432"
     restart: unless-stopped
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U ${DB_USER} -d ${DB_NAME}"]
       interval: 10s
       timeout: 5s
       retries: 5
+    networks:
+      - auction_network
+
+  redis:
+    image: redis:7-alpine
+    container_name: auction_redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    restart: unless-stopped
+    networks:
+      - auction_network
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
   frontend:
     build: 
       context: ./front
-      no_cache: true
+      dockerfile: Dockerfile
     container_name: auction_frontend
     volumes:
       - ./front:/app
@@ -28,25 +47,43 @@ services:
     ports:
       - "7500:5173"
     environment:
-      - CHOKIDAR_USEPOLLING=true 
-      # Change these for local development:
-      - VITE_API_URL=http://localhost:8451/api
-      - VITE_WS_URL=ws://localhost:8451/ws
+      - CHOKIDAR_USEPOLLING=true
+      - NODE_ENV=production
     restart: unless-stopped
+    networks:
+      - auction_network
+    depends_on:
+      - backend
 
   backend:
     build: 
       context: ./back
-      no_cache: true
+      dockerfile: Dockerfile
     container_name: auction_backend
     command: /entrypoint.sh
     volumes:
       - ./back:/app
+      - static_volume:/app/staticfiles
+      - media_volume:/app/media
     ports:
       - "8451:7500"
     env_file:
       - ./.env
+    environment:
+      - REDIS_URL=redis://redis:6379/0
     depends_on:
       - db
+      - redis
     restart: unless-stopped
+    networks:
+      - auction_network
 
+networks:
+  auction_network:
+    driver: bridge
+
+volumes:
+  postgres_data:
+  redis_data:
+  static_volume:
+  media_volume:
