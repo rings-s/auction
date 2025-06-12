@@ -1,7 +1,6 @@
-// tailwind.config.js
 /** @type {import('tailwindcss').Config} */
-module.exports = {
-  content: ['./src/**/*.{html,js,svelte}'], // Removed 'ts'
+export default {
+  content: ['./src/**/*.{html,js,svelte,ts}'],
   darkMode: 'class',
   theme: {
     extend: {
@@ -27,6 +26,5 @@ module.exports = {
   plugins: [
     require('@tailwindcss/forms'),
     require('@tailwindcss/typography'),
-    require('@tailwindcss/line-clamp'),
   ],
 };

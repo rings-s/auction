@@ -6,172 +6,13 @@
 	import { user } from '$lib/stores/user';
 	import { fetchUserProfile } from '$lib/api/auth';
 	import { browser } from '$app/environment';
-	import { pwaInfo } from 'virtual:pwa-info';
 
 	import Navbar from '$lib/components/layout/Navbar.svelte';
 	import Footer from '$lib/components/layout/Footer.svelte';
 	import ToastContainer from '$lib/components/ToastContainer.svelte';
-	import ReloadPrompt from '$lib/components/ReloadPrompt.svelte';
+	import PWAInstallButton from '$lib/components/PWAInstallButton.svelte'; // Add this import
 
-	let hydrated = false;
-	let mounted = false;
-	let error = null;
-	let componentsLoaded = {
-		navbar: true,
-		footer: true,
-		toast: true
-	};
-
-	let currentTheme = 'light';
-	let currentLocale = 'en';
-
-	let unsubscribeTheme = () => {};
-	let unsubscribeLocale = () => {};
-
-	// PWA manifest link
-	$: webManifestLink = pwaInfo ? pwaInfo.webManifest.linkTag : '';
-
-	onMount(async () => {
-		try {
-			mounted = true;
-
-			try {
-				unsubscribeTheme = theme.subscribe((value) => {
-					if (value && typeof value === 'string') {
-						currentTheme = value;
-						if (hydrated && typeof document !== 'undefined') {
-							applyDocumentClasses(currentTheme, currentLocale);
-						}
-					}
-				});
-			} catch (themeError) {
-				console.warn('Theme subscription failed:', themeError);
-				currentTheme = 'light';
-			}
-
-			try {
-				unsubscribeLocale = locale.subscribe((value) => {
-					if (value && typeof value === 'string') {
-						currentLocale = value;
-						if (hydrated && typeof document !== 'undefined') {
-							applyDocumentClasses(currentTheme, currentLocale);
-						}
-					}
-				});
-			} catch (localeError) {
-				console.warn('Locale subscription failed:', localeError);
-				currentLocale = 'en';
-			}
-
-			if (browser && typeof localStorage !== 'undefined') {
-				try {
-					const savedTheme = localStorage.getItem('theme');
-					if (savedTheme && (savedTheme === 'light' || savedTheme === 'dark')) {
-						theme.set(savedTheme);
-						currentTheme = savedTheme;
-					} else if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
-						theme.set('dark');
-						currentTheme = 'dark';
-					} else {
-						theme.set('light');
-						currentTheme = 'light';
-					}
-
-					const savedLocale = localStorage.getItem('locale') || localStorage.getItem('app-locale');
-					if (savedLocale && (savedLocale === 'en' || savedLocale === 'ar')) {
-						locale.set(savedLocale);
-						currentLocale = savedLocale;
-					} else {
-						locale.set('en');
-						currentLocale = 'en';
-					}
-				} catch (storageError) {
-					console.warn('LocalStorage access failed:', storageError);
-					try {
-						theme.set('light');
-						locale.set('en');
-					} catch (setError) {
-						console.warn('Store set failed:', setError);
-					}
-					currentTheme = 'light';
-					currentLocale = 'en';
-				}
-
-				try {
-					if (localStorage.getItem('accessToken')) {
-						await fetchUserProfile();
-					}
-				} catch (profileError) {
-					console.warn('Profile fetch failed:', profileError);
-				}
-			}
-
-			if (typeof document !== 'undefined') {
-				applyDocumentClasses(currentTheme, currentLocale);
-			}
-
-			hydrated = true;
-			console.log('Layout hydrated successfully with theme:', currentTheme, 'locale:', currentLocale);
-
-		} catch (mountError) {
-			console.error('Mount error:', mountError);
-			error = mountError.message;
-			hydrated = true;
-		}
-	});
-
-	onDestroy(() => {
-		try {
-			unsubscribeTheme();
-			unsubscribeLocale();
-		} catch (cleanupError) {
-			console.warn('Cleanup error:', cleanupError);
-		}
-	});
-
-	function applyDocumentClasses(themeValue, localeValue) {
-		if (typeof document === 'undefined' || !browser) return;
-
-		try {
-			const classList = document.documentElement.classList;
-			const validTheme = themeValue || 'light';
-			const validLocale = localeValue || 'en';
-
-			classList.remove('light', 'dark', 'rtl', 'ltr');
-
-			if (validLocale === 'ar') {
-				classList.add('rtl');
-			} else {
-				classList.add('ltr');
-			}
-
-			classList.add(validTheme);
-
-			document.documentElement.style.colorScheme = validTheme;
-			document.documentElement.lang = validLocale;
-			document.documentElement.dir = validLocale === 'ar' ? 'rtl' : 'ltr';
-
-			console.log('Applied document classes:', validTheme, validLocale === 'ar' ? 'rtl' : 'ltr');
-
-		} catch (classError) {
-			console.warn('Failed to apply document classes:', classError);
-		}
-	}
-
-	function handleNavbarError(err) {
-		console.error('Navbar error:', err);
-		componentsLoaded.navbar = false;
-	}
-
-	function handleFooterError(err) {
-		console.error('Footer error:', err);
-		componentsLoaded.footer = false;
-	}
-
-	function handleToastError(err) {
-		console.error('Toast error:', err);
-		componentsLoaded.toast = false;
-	}
+	// ... rest of your existing script code ...
 </script>
 
 <svelte:head>
@@ -179,7 +20,7 @@
 	<title>Real Estate Auction Platform</title>
 	
 	<!-- PWA Manifest -->
-	{@html webManifestLink}
+	<link rel="manifest" href="/manifest.json">
 	
 	<!-- PWA Meta Tags -->
 	<meta name="theme-color" content="#a78bfa">
@@ -226,6 +67,11 @@
 			</div>
 		</div>
 	{:else}
+		<!-- PWA Install Button - Add this -->
+		<div class="fixed top-4 right-4 z-50">
+			<PWAInstallButton />
+		</div>
+		
 		<!-- Navigation with fallback -->
 		{#if componentsLoaded.navbar}
 			<Navbar on:error={handleNavbarError} />
@@ -253,13 +99,8 @@
 		{#if componentsLoaded.toast}
 			<ToastContainer on:error={handleToastError} />
 		{/if}
-		
-		<!-- PWA Reload Prompt -->
-		<ReloadPrompt />
 	{/if}
 </div>
-
-
 
 
 <style>
