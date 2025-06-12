@@ -28,18 +28,14 @@
     const startDate = new Date(auction.start_date);
     const now = new Date();
     
-    // For scheduled auctions, show time until start
     const targetDate = isScheduled ? startDate : endDate;
     const diff = targetDate - now;
     
     if (diff <= 0) {
       timeRemaining = { days: 0, hours: 0, minutes: 0, seconds: 0 };
-      
-      // If this was a scheduled auction that just started, refresh status
       if (isScheduled && now >= startDate) {
         refreshAuctionStatus();
       }
-      
       clearInterval(interval);
       return;
     }
@@ -52,7 +48,6 @@
     timeRemaining = { days, hours, minutes, seconds };
   }
   
-  // Enhanced status refresh function
   async function refreshAuctionStatus() {
     if (!auction?.id || loading) return;
     
@@ -60,7 +55,6 @@
       loading = true;
       const newStatusInfo = await getAuctionStatus(auction.id);
       
-      // Update auction object with fresh data
       auction = {
         ...auction,
         status: newStatusInfo.status,
@@ -71,8 +65,6 @@
       };
       
       statusInfo = newStatusInfo;
-      
-      // Update time remaining after status change
       updateTimeRemaining();
       
     } catch (error) {
@@ -84,13 +76,10 @@
   
   onMount(() => {
     updateTimeRemaining();
-    
-    // Set up intervals
     interval = setInterval(() => {
       updateTimeRemaining();
     }, 1000);
     
-    // Refresh status every 30 seconds for active auctions
     let statusInterval;
     if (isActive) {
       statusInterval = setInterval(refreshAuctionStatus, 30000);
@@ -106,29 +95,21 @@
     if (interval) clearInterval(interval);
   });
   
-  // Helper function to get the best available image URL from property
   function getPropertyImageUrl(property) {
     if (!property) return '/images/auction-placeholder.jpg';
     
-    // Check main_image property
     if (property.main_image) {
-      // Could be direct URL or nested object
       if (typeof property.main_image === 'string') {
         return property.main_image;
       }
-      
-      // Check for url property first
       if (property.main_image.url) {
         return property.main_image.url;
       }
-      
-      // Then check for file property
       if (property.main_image.file) {
         return property.main_image.file;
       }
     }
     
-    // Try media array (first item that's an image)
     if (property.media && property.media.length > 0) {
       const firstImage = property.media.find(m => 
         m.media_type === 'image' || 
@@ -140,13 +121,10 @@
       }
     }
     
-    // Default placeholder
     return '/images/auction-placeholder.jpg';
   }
   
-  // Get the best auction image (either from the auction itself or from related property)
   function getAuctionImage() {
-    // First try auction's own media
     if (auction.media && auction.media.length > 0) {
       const auctionImage = auction.media.find(m => 
         m.media_type === 'image' || 
@@ -158,7 +136,6 @@
       }
     }
     
-    // Then try related property
     if (auction.related_property) {
       return getPropertyImageUrl(auction.related_property);
     }
@@ -166,23 +143,22 @@
     return '/images/auction-placeholder.jpg';
   }
   
-  // Enhanced status badge styling
   function getStatusBadgeClass(status) {
-    const baseClasses = 'inline-flex items-center px-2.5 py-0.5 rounded-md text-sm font-medium';
+    const baseClasses = 'inline-flex items-center px-2 py-0.5 rounded-md text-xs font-medium';
     
     switch (status) {
       case 'live':
-        return `${baseClasses} bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200 animate-pulse`;
+        return `${baseClasses} bg-success-100 text-success-800 dark:bg-success-900 dark:text-success-200`;
       case 'scheduled':
-        return `${baseClasses} bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200`;
+        return `${baseClasses} bg-primary-100 text-primary-800 dark:bg-primary-900 dark:text-primary-200`;
       case 'ended':
-        return `${baseClasses} bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200`;
+        return `${baseClasses} bg-danger-100 text-danger-800 dark:bg-danger-900 dark:text-danger-200`;
       case 'completed':
-        return `${baseClasses} bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200`;
+        return `${baseClasses} bg-secondary-100 text-secondary-800 dark:bg-secondary-900 dark:text-secondary-200`;
       case 'cancelled':
-        return `${baseClasses} bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-200`;
+        return `${baseClasses} bg-neutral-100 text-neutral-800 dark:bg-neutral-700 dark:text-neutral-200`;
       default:
-        return `${baseClasses} bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-200`;
+        return `${baseClasses} bg-neutral-100 text-neutral-800 dark:bg-neutral-700 dark:text-neutral-200`;
     }
   }
   
@@ -203,19 +179,6 @@
     }
   }
   
-  function getAuctionTypeText(type) {
-    switch (type) {
-      case 'sealed':
-        return $t('auction.typeSealed');
-      case 'private':
-        return $t('auction.typeReserve');
-      case 'public':
-        return $t('auction.typeNoReserve');
-      default:
-        return type;
-    }
-  }
-  
   function formatCurrency(amount) {
     if (!amount) return '$0';
     return new Intl.NumberFormat('en-US', {
@@ -231,10 +194,10 @@
   href={`/auctions/${auction.slug}`} 
   class="block h-full group transform transition-all duration-300 hover:scale-[1.02] hover:shadow-xl"
 >
-  <div class="bg-white dark:bg-gray-800 rounded-xl shadow-lg overflow-hidden transition-all duration-300 hover:shadow-2xl h-full flex flex-col border border-gray-100 dark:border-gray-700">
+  <div class="bg-white dark:bg-gray-800 rounded-xl shadow-lg overflow-hidden transition-all duration-300 hover:shadow-2xl h-full flex flex-col border border-neutral-200 dark:border-neutral-700">
     
     <!-- Image Section -->
-    <div class="relative h-56 overflow-hidden">
+    <div class="relative h-48 overflow-hidden">
       <img 
         src={getAuctionImage()} 
         alt={auction.title}
@@ -246,11 +209,11 @@
       <div class="absolute top-3 right-3">
         <span class={getStatusBadgeClass(auction.status)}>
           {#if isLive}
-            <span class="w-2 h-2 bg-green-500 rounded-full mr-1.5 animate-pulse"></span>
+            <span class="w-2 h-2 bg-success-500 rounded-full mr-1.5 animate-pulse"></span>
           {:else if isScheduled}
-            <span class="w-2 h-2 bg-blue-500 rounded-full mr-1.5"></span>
+            <span class="w-2 h-2 bg-primary-500 rounded-full mr-1.5"></span>
           {:else if isEnded}
-            <span class="w-2 h-2 bg-red-500 rounded-full mr-1.5"></span>
+            <span class="w-2 h-2 bg-danger-500 rounded-full mr-1.5"></span>
           {/if}
           {getStatusText(auction.status)}
         </span>
@@ -259,7 +222,7 @@
       <!-- Featured Badge -->
       {#if auction.is_featured}
         <div class="absolute top-3 left-3">
-          <span class="inline-flex items-center px-2.5 py-0.5 rounded-md text-sm font-medium bg-amber-100 text-amber-800 dark:bg-amber-900 dark:text-amber-200">
+          <span class="inline-flex items-center px-2 py-0.5 rounded-md text-xs font-medium bg-warning-100 text-warning-800 dark:bg-warning-900 dark:text-warning-200">
             ⭐ {$t('auction.featured')}
           </span>
         </div>
@@ -268,7 +231,7 @@
       <!-- Live Indicator for Enhanced Mode -->
       {#if enhanced && isLive && !auction.is_featured}
         <div class="absolute top-3 left-3">
-          <div class="flex items-center space-x-1 bg-red-500 text-white px-2 py-1 rounded-full text-xs font-bold">
+          <div class="flex items-center space-x-1 bg-danger-500 text-white px-2 py-1 rounded-full text-xs font-bold">
             <span class="w-2 h-2 bg-white rounded-full animate-pulse"></span>
             <span>LIVE</span>
           </div>
@@ -276,12 +239,12 @@
       {/if}
       
       <!-- Image Overlay with Title -->
-      <div class="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent">
+      <div class="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent">
         <div class="absolute bottom-0 left-0 right-0 p-4">
-          <h3 class="text-lg font-bold text-white truncate group-hover:text-primary-300 transition-colors">
+          <h3 class="text-lg font-bold text-white line-clamp-2 group-hover:text-primary-300 transition-colors">
             {auction.title}
           </h3>
-          <p class="text-sm text-gray-200 truncate">
+          <p class="text-sm text-gray-200 truncate mt-1">
             {auction.related_property?.location?.city || ''}{auction.related_property?.location?.state ? `, ${auction.related_property.location.state}` : ''}
           </p>
         </div>
@@ -292,20 +255,22 @@
     <div class="p-4 flex-grow flex flex-col">
       
       <!-- Auction Type Badge -->
-      <div class="mb-3">
-        <span class="inline-block bg-gray-100 dark:bg-gray-700 rounded-full px-3 py-1 text-sm font-semibold text-gray-700 dark:text-gray-300">
-          {getAuctionTypeText(auction.auction_type)}
+      <div class="mb-4">
+        <span class="inline-block bg-neutral-100 dark:bg-neutral-700 rounded-full px-3 py-1 text-sm font-medium text-neutral-700 dark:text-neutral-300">
+          {auction.auction_type === 'sealed' ? $t('auction.typeSealed') :
+           auction.auction_type === 'private' ? $t('auction.typeReserve') :
+           $t('auction.typeNoReserve')}
         </span>
       </div>
       
       <!-- Current Bid Section -->
-      <div class="mb-4">
-        <div class="flex items-baseline justify-between mb-1">
-          <p class="text-sm text-gray-500 dark:text-gray-400">
+      <div class="mb-4 flex-grow">
+        <div class="flex items-baseline justify-between mb-2">
+          <p class="text-sm text-neutral-500 dark:text-neutral-400">
             {auction.current_bid ? $t('auction.currentBid') : $t('auction.startingBid')}
           </p>
           {#if isLive}
-            <span class="text-xs text-green-600 dark:text-green-400 font-medium animate-pulse">
+            <span class="text-xs text-success-600 dark:text-success-400 font-medium animate-pulse">
               • {$t('auction.live')}
             </span>
           {/if}
@@ -315,20 +280,15 @@
         </p>
         
         {#if auction.bid_count > 0}
-          <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">
+          <p class="text-sm text-neutral-500 dark:text-neutral-400 mt-1">
             {auction.bid_count} {auction.bid_count === 1 ? 'bid' : 'bids'}
           </p>
         {/if}
       </div>
       
-      <!-- Description -->
-      <p class="text-gray-600 dark:text-gray-300 text-sm mb-4 line-clamp-2 flex-grow">
-        {auction.description || $t('auction.noDescription')}
-      </p>
-      
       <!-- Time Remaining Section -->
       {#if isActive}
-        <div class="bg-gradient-to-r from-primary-50 to-blue-50 dark:from-primary-900/20 dark:to-blue-900/20 rounded-lg p-3 mb-4 border border-primary-100 dark:border-primary-800">
+        <div class="bg-gradient-to-r from-primary-50 to-secondary-50 dark:from-primary-900/20 dark:to-secondary-900/20 rounded-lg p-3 border border-primary-200 dark:border-primary-800">
           <p class="text-xs text-center text-primary-700 dark:text-primary-300 mb-2 font-medium">
             {isLive ? $t('auction.timeRemaining') : $t('auction.startsIn')}
           </p>
@@ -371,8 +331,8 @@
           {#if isLive && enhanced}
             <div class="mt-2 pt-2 border-t border-primary-200 dark:border-primary-700">
               <div class="flex items-center justify-center space-x-1 text-xs">
-                <div class="w-2 h-2 bg-red-500 rounded-full animate-pulse"></div>
-                <span class="text-red-600 dark:text-red-400 font-bold">
+                <div class="w-2 h-2 bg-danger-500 rounded-full animate-pulse"></div>
+                <span class="text-danger-600 dark:text-danger-400 font-bold">
                   {$t('auction.biddingActive')}
                 </span>
               </div>
@@ -381,16 +341,16 @@
         </div>
       {:else if isEnded}
         <!-- Ended Auction Info -->
-        <div class="bg-gray-50 dark:bg-gray-700 rounded-lg p-3 mb-4">
-          <p class="text-sm text-center text-gray-600 dark:text-gray-400 mb-1">
+        <div class="bg-neutral-50 dark:bg-neutral-700 rounded-lg p-3">
+          <p class="text-sm text-center text-neutral-600 dark:text-neutral-400 mb-1">
             {$t('auction.auctionEnded')}
           </p>
           {#if auction.status === 'completed' && auction.bid_count > 0}
-            <p class="text-xs text-center text-green-600 dark:text-green-400 font-medium">
+            <p class="text-xs text-center text-success-600 dark:text-success-400 font-medium">
               🎉 {$t('auction.soldSuccessfully')}
             </p>
           {:else if auction.bid_count === 0}
-            <p class="text-xs text-center text-gray-500 dark:text-gray-400">
+            <p class="text-xs text-center text-neutral-500 dark:text-neutral-400">
               {$t('auction.noBidsReceived')}
             </p>
           {/if}
@@ -399,10 +359,10 @@
     </div>
     
     <!-- Footer Section -->
-    <div class="border-t border-gray-200 dark:border-gray-700 p-4 bg-gray-50 dark:bg-gray-900/50">
+    <div class="border-t border-neutral-200 dark:border-neutral-700 p-4 bg-neutral-50 dark:bg-neutral-900/50">
       <div class="flex items-center justify-between">
         <!-- Auction Stats -->
-        <div class="flex items-center space-x-4 text-sm text-gray-500 dark:text-gray-400">
+        <div class="flex items-center space-x-4 text-sm text-neutral-500 dark:text-neutral-400">
           <div class="flex items-center">
             <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8h2a2 2 0 012 2v6a2 2 0 01-2 2h-2v4l-4-4H9a1.994 1.994 0 01-1.414-.586m0 0L11 14h4a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2v4l.586-.586z" />
@@ -444,9 +404,9 @@
       
       <!-- Enhanced Enhanced Mode Footer -->
       {#if enhanced}
-        <div class="mt-3 pt-3 border-t border-gray-200 dark:border-gray-600">
+        <div class="mt-3 pt-3 border-t border-neutral-200 dark:border-neutral-600">
           <div class="flex items-center justify-between text-xs">
-            <span class="text-gray-500 dark:text-gray-400">
+            <span class="text-neutral-500 dark:text-neutral-400">
               ID: #{auction.id}
             </span>
             {#if loading}
@@ -455,7 +415,7 @@
                 <span>Updating...</span>
               </div>
             {:else if statusInfo}
-              <span class="text-green-600 dark:text-green-400">
+              <span class="text-success-600 dark:text-success-400">
                 ✓ Live Data
               </span>
             {/if}
@@ -472,18 +432,5 @@
     -webkit-line-clamp: 2;
     -webkit-box-orient: vertical;
     overflow: hidden;
-  }
-  
-  @keyframes pulse {
-    0%, 100% {
-      opacity: 1;
-    }
-    50% {
-      opacity: .5;
-    }
-  }
-  
-  .animate-pulse {
-    animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
   }
 </style>

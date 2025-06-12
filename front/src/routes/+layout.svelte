@@ -7,12 +7,11 @@
 	import { user } from '$lib/stores/user';
 	import { fetchUserProfile } from '$lib/api/auth';
 	import { browser } from '$app/environment';
-	
+
 	import Navbar from '$lib/components/layout/Navbar.svelte';
 	import Footer from '$lib/components/layout/Footer.svelte';
 	import ToastContainer from '$lib/components/ToastContainer.svelte';
-	
-	// Track hydration and initialization state
+
 	let hydrated = false;
 	let mounted = false;
 	let error = null;
@@ -21,21 +20,17 @@
 		footer: true,
 		toast: true
 	};
-	
-	// Initialize stores with safe defaults
+
 	let currentTheme = 'light';
 	let currentLocale = 'en';
-	
-	// Store unsubscribe functions
+
 	let unsubscribeTheme = () => {};
 	let unsubscribeLocale = () => {};
-	
+
 	onMount(async () => {
 		try {
-			console.log('Layout mounting...');
 			mounted = true;
-			
-			// Subscribe to stores safely AFTER mount
+
 			try {
 				unsubscribeTheme = theme.subscribe((value) => {
 					if (value && typeof value === 'string') {
@@ -45,11 +40,38 @@
 						}
 					}
 				});
+
+				// ✅ Enhanced PWA registration with update handling
+				if ('serviceWorker' in navigator) {
+					navigator.serviceWorker.register('/service-worker.js').then((reg) => {
+						console.log('Service Worker registered:', reg);
+
+						if (reg.waiting) {
+							reg.waiting.postMessage({ type: 'SKIP_WAITING' });
+							window.location.reload();
+						}
+
+						reg.addEventListener('updatefound', () => {
+							const newWorker = reg.installing;
+							if (newWorker) {
+								newWorker.addEventListener('statechange', () => {
+									if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+										console.log('New service worker activated. Reloading...');
+										window.location.reload();
+									}
+								});
+							}
+						});
+					}).catch((err) => {
+						console.error('Service Worker registration failed:', err);
+					});
+				}
+
 			} catch (themeError) {
 				console.warn('Theme subscription failed:', themeError);
 				currentTheme = 'light';
 			}
-			
+
 			try {
 				unsubscribeLocale = locale.subscribe((value) => {
 					if (value && typeof value === 'string') {
@@ -63,11 +85,9 @@
 				console.warn('Locale subscription failed:', localeError);
 				currentLocale = 'en';
 			}
-			
-			// Safely handle localStorage operations
+
 			if (browser && typeof localStorage !== 'undefined') {
 				try {
-					// Apply saved theme with validation
 					const savedTheme = localStorage.getItem('theme');
 					if (savedTheme && (savedTheme === 'light' || savedTheme === 'dark')) {
 						theme.set(savedTheme);
@@ -79,8 +99,7 @@
 						theme.set('light');
 						currentTheme = 'light';
 					}
-					
-					// Apply saved locale with validation
+
 					const savedLocale = localStorage.getItem('locale') || localStorage.getItem('app-locale');
 					if (savedLocale && (savedLocale === 'en' || savedLocale === 'ar')) {
 						locale.set(savedLocale);
@@ -91,7 +110,6 @@
 					}
 				} catch (storageError) {
 					console.warn('LocalStorage access failed:', storageError);
-					// Set defaults if localStorage fails
 					try {
 						theme.set('light');
 						locale.set('en');
@@ -101,35 +119,30 @@
 					currentTheme = 'light';
 					currentLocale = 'en';
 				}
-				
-				// Try to fetch user profile if tokens exist
+
 				try {
 					if (localStorage.getItem('accessToken')) {
 						await fetchUserProfile();
 					}
 				} catch (profileError) {
 					console.warn('Profile fetch failed:', profileError);
-					// Don't let profile errors break the layout
 				}
 			}
-			
-			// Apply initial document classes safely
+
 			if (typeof document !== 'undefined') {
 				applyDocumentClasses(currentTheme, currentLocale);
 			}
-			
+
 			hydrated = true;
 			console.log('Layout hydrated successfully with theme:', currentTheme, 'locale:', currentLocale);
-			
+
 		} catch (mountError) {
 			console.error('Mount error:', mountError);
 			error = mountError.message;
-			// Still mark as hydrated to show something
 			hydrated = true;
 		}
 	});
-	
-	// Cleanup subscriptions
+
 	onDestroy(() => {
 		try {
 			unsubscribeTheme();
@@ -138,57 +151,52 @@
 			console.warn('Cleanup error:', cleanupError);
 		}
 	});
-	
-	// Safe function to apply document classes
+
 	function applyDocumentClasses(themeValue, localeValue) {
 		if (typeof document === 'undefined' || !browser) return;
-		
+
 		try {
 			const classList = document.documentElement.classList;
 			const validTheme = themeValue || 'light';
 			const validLocale = localeValue || 'en';
-			
-			// Remove existing classes
+
 			classList.remove('light', 'dark', 'rtl', 'ltr');
-			
-			// Add direction class
+
 			if (validLocale === 'ar') {
 				classList.add('rtl');
 			} else {
 				classList.add('ltr');
 			}
-			
-			// Add theme class
+
 			classList.add(validTheme);
-			
-			// Set additional attributes
+
 			document.documentElement.style.colorScheme = validTheme;
 			document.documentElement.lang = validLocale;
 			document.documentElement.dir = validLocale === 'ar' ? 'rtl' : 'ltr';
-			
+
 			console.log('Applied document classes:', validTheme, validLocale === 'ar' ? 'rtl' : 'ltr');
-			
+
 		} catch (classError) {
 			console.warn('Failed to apply document classes:', classError);
 		}
 	}
-	
-	// Component error handlers
+
 	function handleNavbarError(err) {
 		console.error('Navbar error:', err);
 		componentsLoaded.navbar = false;
 	}
-	
+
 	function handleFooterError(err) {
 		console.error('Footer error:', err);
 		componentsLoaded.footer = false;
 	}
-	
+
 	function handleToastError(err) {
 		console.error('Toast error:', err);
 		componentsLoaded.toast = false;
 	}
 </script>
+
 
 <svelte:head>
 	<meta name="viewport" content="width=device-width, initial-scale=1.0">
