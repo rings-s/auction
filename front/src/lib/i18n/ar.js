@@ -44,6 +44,7 @@ export const arTranslations = {
     email: 'مشاركة عبر البريد الإلكتروني',
     copyLink: 'نسخ الرابط',
     contactUs: 'اتصل بنا',
+    complete: ''
   },
 
   contact: {
@@ -1007,6 +1008,8 @@ export const arTranslations = {
       phoneInvalid: 'رقم الهاتف غير صالح',
       codeInvalid: 'رمز التحقق غير صالح',
       codeRequired: 'رمز التحقق مطلوب',
+      emailVerified: '',
+      passwordMinLength: ''
       
     },
     

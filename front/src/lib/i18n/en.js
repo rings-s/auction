@@ -34,7 +34,8 @@ export const enTranslations = {
     whatsapp: 'Share on WhatsApp',
     email: 'Share via Email',
     copyLink: 'Copy Link',
-    linkCopied: 'Link copied!'
+    linkCopied: 'Link copied!',
+    complete: ''
   },
 
   nav: {

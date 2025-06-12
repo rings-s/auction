@@ -12,6 +12,7 @@ https://docs.djangoproject.com/en/5.2/ref/settings/
 from pathlib import Path
 import os
 import sys
+import random
 from datetime import timedelta
 
 from django.core.exceptions import ImproperlyConfigured
@@ -411,14 +412,18 @@ SESSION_COOKIE_SAMESITE = 'Lax'
 SESSION_SAVE_EVERY_REQUEST = True  # Ensure sessions are saved properly
 SESSION_EXPIRE_AT_BROWSER_CLOSE = False
 
-# Email configuration
-if DEBUG or ENVIRONMENT == 'development':
-    # Development - Use console backend for debugging
-    EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
-else:
-    # Production - Use SMTP
-    EMAIL_BACKEND = os.getenv('EMAIL_BACKEND', 'django.core.mail.backends.smtp.EmailBackend')
+# ===== FIXED EMAIL CONFIGURATION =====
+# Always use SMTP backend to actually send emails
+EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
 
+# Only use console backend if explicitly requested via environment variable
+if os.getenv('USE_CONSOLE_EMAIL', 'False').lower() == 'true':
+    EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
+    print("🔥 EMAIL: Using CONSOLE backend - emails will print to console only")
+else:
+    print("🔥 EMAIL: Using SMTP backend - emails will be sent via SMTP")
+
+# SMTP Configuration
 EMAIL_HOST = os.getenv('EMAIL_HOST', 'smtp.gmail.com')
 EMAIL_PORT = int(os.getenv('EMAIL_PORT', 587))
 EMAIL_USE_TLS = os.getenv('EMAIL_USE_TLS', 'True').lower() == 'true'
@@ -427,6 +432,14 @@ EMAIL_HOST_USER = os.getenv('EMAIL_HOST_USER')
 EMAIL_HOST_PASSWORD = os.getenv('EMAIL_HOST_PASSWORD')
 DEFAULT_FROM_EMAIL = os.getenv('DEFAULT_FROM_EMAIL', EMAIL_HOST_USER)
 SERVER_EMAIL = DEFAULT_FROM_EMAIL
+
+# Email validation
+if not EMAIL_HOST_USER:
+    print("⚠️  WARNING: EMAIL_HOST_USER not set in environment variables")
+if not EMAIL_HOST_PASSWORD:
+    print("⚠️  WARNING: EMAIL_HOST_PASSWORD not set in environment variables")
+
+print(f"🔥 EMAIL CONFIG: Host={EMAIL_HOST}, Port={EMAIL_PORT}, User={EMAIL_HOST_USER}, TLS={EMAIL_USE_TLS}")
 
 # Frontend URL for email links
 FRONTEND_URL = os.getenv('FRONTEND_URL', 'http://localhost:7500' if DEBUG else 'https://auction.pinealdevelopers.com')
