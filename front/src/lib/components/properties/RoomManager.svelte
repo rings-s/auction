@@ -1,7 +1,6 @@
-<!-- src/lib/components/RoomManager.svelte -->
 <script>
   import { createEventDispatcher, onMount } from 'svelte';
-  import { t, locale } from '$lib/i18n'; // Fixed import path
+  import { t, locale } from '$lib/i18n';
   import { fly, fade, slide, scale } from 'svelte/transition';
   import { quintOut, elasticOut } from 'svelte/easing';
   import TagSelector from '$lib/components/ui/TagSelector.svelte';
@@ -9,11 +8,10 @@
   
   export let rooms = [];
   export let availableFeatures = [];
-  export let propertyType = ''; // Can affect room type suggestions
+  export const propertyType = ''; // External reference only - can affect room type suggestions
   
   const dispatch = createEventDispatcher();
   
-  // Default new room
   let newRoom = createEmptyRoom();
   let isAddingRoom = false;
   let selectedRoomIndex = null;
@@ -21,13 +19,11 @@
   let successMessage = '';
   let animationDuration = 300;
   
-  // Validation state
   let touched = {
     name: false,
     room_type: false
   };
   
-  // Room types with appropriate translations
   $: roomTypes = [
     { value: 'bedroom', label: 'property.roomTypes.bedroom' },
     { value: 'bathroom', label: 'property.roomTypes.bathroom' },
@@ -39,10 +35,9 @@
     { value: 'other', label: 'property.roomTypes.other' }
   ];
   
-  // Create an empty room with default values
   function createEmptyRoom() {
     return {
-      id: `temp-${Date.now()}`, // Temporary ID for client-side tracking
+      id: `temp-${Date.now()}`,
       name: '',
       room_type: 'bedroom',
       floor: 1,
@@ -54,7 +49,6 @@
     };
   }
   
-  // Validate room input
   function validateRoom(room) {
     let errors = {};
     
@@ -76,25 +70,21 @@
     };
   }
   
-  // Add new room to the list
   function addRoom() {
-    // Mark all fields as touched for validation
     touched = {
       name: true,
       room_type: true
     };
     
-    // Validate required fields
     const { valid, errors } = validateRoom(newRoom);
     if (!valid) {
-      errorMessage = Object.values(errors)[0]; // Take first error
+      errorMessage = Object.values(errors)[0];
       setTimeout(() => {
         errorMessage = '';
       }, 5000);
       return;
     }
     
-    // Format numeric fields
     if (newRoom.area_sqm) {
       newRoom.area_sqm = parseFloat(newRoom.area_sqm);
     }
@@ -103,56 +93,46 @@
       newRoom.floor = parseInt(newRoom.floor);
     }
     
-    // Add room to list
     rooms = [...rooms, { ...newRoom }];
     
-    // Show success message
     successMessage = $t('property.roomAdded');
     setTimeout(() => {
       successMessage = '';
     }, 3000);
     
-    // Reset form for next room
     newRoom = createEmptyRoom();
     touched = { name: false, room_type: false };
     isAddingRoom = false;
     
-    // Notify parent component
     dispatch('change', rooms);
   }
   
-  // Remove room from list
   function removeRoom(index) {
     selectedRoomIndex = index;
     setTimeout(() => {
       rooms = rooms.filter((_, i) => i !== index);
       dispatch('change', rooms);
       selectedRoomIndex = null;
-    }, 300); // Sync with animation duration
+    }, 300);
   }
   
-  // Handle room features change
   function handleRoomFeaturesChange(event) {
     newRoom.features = event.detail;
   }
   
-  // Reset the form
   function cancelAddRoom() {
     newRoom = createEmptyRoom();
     touched = { name: false, room_type: false };
     isAddingRoom = false;
   }
   
-  // Expand the form to add a new room
   function showAddRoomForm() {
     isAddingRoom = true;
-    // Focus on the first input when the form appears
     setTimeout(() => {
       document.getElementById('room_name')?.focus();
     }, 100);
   }
 
-  // Handle keyboard events
   function handleKeydown(event) {
     if (event.key === 'Escape') {
       cancelAddRoom();
@@ -238,11 +218,11 @@
           type="button" 
           on:click={cancelAddRoom}
           class="text-gray-400 hover:text-gray-500 dark:text-gray-500 dark:hover:text-gray-400 transition-colors duration-200"
+          aria-label={$t('common.cancel')}
         >
           <svg class="h-5 w-5" fill="currentColor" viewBox="0 0 20 20">
             <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd" />
           </svg>
-          <span class="sr-only">{$t('common.cancel')}</span>
         </button>
       </div>
 
@@ -436,17 +416,14 @@
             <div class="flex flex-col sm:flex-row sm:items-start justify-between">
               <div class="flex-grow">
                 <div class="flex items-center">
-                  <!-- Room Type Badge -->
                   <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-primary-100 text-primary-800 dark:bg-primary-900 dark:text-primary-200">
                     {$t(roomTypes.find(type => type.value === room.room_type)?.label || 'property.roomTypes.other')}
                   </span>
                   
-                  <!-- Floor Badge -->
                   <span class="ml-2 inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300">
                     {$t('property.floor')} {room.floor}
                   </span>
                   
-                  <!-- Has Window Badge -->
                   {#if room.has_window}
                     <span class="ml-2 inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200">
                       <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3 mr-1" viewBox="0 0 20 20" fill="currentColor">
@@ -456,13 +433,10 @@
                     </span>
                   {/if}
                   
-                  <!-- Has Bathroom Badge -->
                   {#if room.has_bathroom}
                     <span class="ml-2 inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200">
                       <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3 mr-1" viewBox="0 0 20 20" fill="currentColor">
                         <path fill-rule="evenodd" d="M5 2a2 2 0 00-2 2v14l3.5-2 3.5 2 3.5-2 3.5 2V4a2 2 0 00-2-2H5zm4.707 3.707a1 1 0 00-1.414-1.414l-3 3a1 1 0 00-.03 1.383l2.26 2.626a1 1 0 001.538-.125l4-5a1 1 0 00-1.538-1.255L8.59 7.6z" clip-rule="evenodd" />
-                      </svg>
-                      {$t('property.hasBathroom')}
                     </span>
                   {/if}
                 </div>
@@ -504,7 +478,7 @@
                   type="button"
                   on:click={() => removeRoom(index)}
                   class="inline-flex items-center p-2 border border-transparent rounded-full shadow-sm text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 transition-all duration-300 hover:scale-110"
-                  aria-label={$t('property.remove')}
+                  aria-label="{$t('property.remove')} {room.name}"
                 >
                   <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
@@ -541,26 +515,6 @@
 </div>
 
 <style>
-  /* Custom Animations */
-  @keyframes pulse {
-    0%, 100% {
-      opacity: 1;
-    }
-    50% {
-      opacity: 0.8;
-    }
-  }
-  
-  @keyframes shimmer {
-    0% {
-      background-position: -1000px 0;
-    }
-    100% {
-      background-position: 1000px 0;
-    }
-  }
-  
-  /* Base Component Styling */
   .room-manager {
     --primary-gradient: linear-gradient(135deg, var(--color-primary-500), var(--color-primary-600));
     --secondary-gradient: linear-gradient(135deg, var(--color-secondary-500), var(--color-secondary-600));
@@ -571,15 +525,13 @@
     --secondary-gradient: linear-gradient(135deg, var(--color-secondary-600), var(--color-secondary-700));
   }
   
-  /* Adding custom focus styles */
   :global(.room-manager input:focus),
   :global(.room-manager select:focus),
   :global(.room-manager textarea:focus) {
-    box-shadow: 0 0 0 2px rgba(var(--color-primary-500-rgb), 0.2);
+    box-shadow: 0 0 0 2px rgba(167, 139, 250, 0.2);
     border-color: var(--color-primary-500);
   }
   
-  /* Custom animation for room cards */
   :global(.room-manager .room-card:hover) {
     transform: translateY(-2px);
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);

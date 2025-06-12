@@ -184,6 +184,14 @@
     auction.related_property_id = e.detail.id;
     auction.related_property = e.detail;
   }
+
+  // Handle auction type selection with keyboard support
+  function handleAuctionTypeSelect(type, event) {
+    if (event.type === 'click' || (event.type === 'keydown' && (event.key === 'Enter' || event.key === ' '))) {
+      event.preventDefault();
+      auction.auction_type = type;
+    }
+  }
   
   // Handle media uploads - FIXED: Actually upload to server
   async function handleMediaUpload(e) {
@@ -446,8 +454,6 @@
   }
 </script>
 
-<!-- Rest of the component template remains the same, but the media tab section should show both uploaded and temporary media -->
-
 <div class="bg-white dark:bg-gray-800 rounded-lg shadow-lg overflow-hidden">
   <!-- Progress Indicator -->
   <div class="bg-gray-50 dark:bg-gray-900 px-6 py-4">
@@ -481,7 +487,7 @@
   <!-- Tab Content -->
   <div class="p-6">
     {#if activeTab === 'basic'}
-      <!-- Basic Info Tab Content - Same as before -->
+      <!-- Basic Info Tab Content -->
       <div class="space-y-6">
         <div class="grid grid-cols-1 gap-y-6 gap-x-4 sm:grid-cols-6">
           <!-- Auction Title -->
@@ -504,14 +510,17 @@
                 {safeTranslate('auction.auctionType', 'Auction Type')}
               </legend>
               
-              <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mt-2">
+              <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mt-2" role="radiogroup" aria-labelledby="auction-type-legend">
                 {#each [
                   { value: 'sealed', label: safeTranslate('auction.typeSealed', 'Sealed Bid'), desc: safeTranslate('auction.typeSealedDesc', 'Sealed bid auction') },
                   { value: 'reserve', label: safeTranslate('auction.typeReserve', 'Reserve'), desc: safeTranslate('auction.typeReserveDesc', 'Auction with reserve price') },
                   { value: 'no_reserve', label: safeTranslate('auction.typeNoReserve', 'No Reserve'), desc: safeTranslate('auction.typeNoReserveDesc', 'Auction without reserve') }
                 ] as type}
-                  <div 
-                    class="relative border rounded-lg p-4 cursor-pointer transition-all duration-200"
+                  <button
+                    type="button"
+                    role="radio"
+                    aria-checked={auction.auction_type === type.value}
+                    class="relative border rounded-lg p-4 text-left transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2"
                     class:border-primary-500={auction.auction_type === type.value}
                     class:bg-primary-50={auction.auction_type === type.value}
                     class:dark:border-primary-400={auction.auction_type === type.value}
@@ -521,7 +530,8 @@
                     class:dark:border-gray-600={auction.auction_type !== type.value}
                     class:hover:border-gray-400={auction.auction_type !== type.value}
                     class:dark:hover:border-gray-500={auction.auction_type !== type.value}
-                    on:click={() => auction.auction_type = type.value}
+                    on:click={(e) => handleAuctionTypeSelect(type.value, e)}
+                    on:keydown={(e) => handleAuctionTypeSelect(type.value, e)}
                   >
                     {#if auction.auction_type === type.value}
                       <div class="absolute top-2 right-2 text-primary-500 dark:text-primary-400">
@@ -532,7 +542,7 @@
                     {/if}
                     <h3 class="text-sm font-medium text-gray-900 dark:text-white mb-1">{type.label}</h3>
                     <p class="text-xs text-gray-500 dark:text-gray-400">{type.desc}</p>
-                  </div>
+                  </button>
                 {/each}
               </div>
             </fieldset>
@@ -579,7 +589,7 @@
       </div>
       
     {:else if activeTab === 'scheduling'}
-      <!-- Scheduling Tab Content - Same as before -->
+      <!-- Scheduling Tab Content -->
       <div class="space-y-6">
         <div class="grid grid-cols-1 gap-y-6 gap-x-4 sm:grid-cols-2">
           <!-- Start Date -->
@@ -635,7 +645,7 @@
       </div>
       
     {:else if activeTab === 'financial'}
-      <!-- Financial Tab Content - Same as before -->
+      <!-- Financial Tab Content -->
       <div class="space-y-6">
         <div class="grid grid-cols-1 gap-y-6 gap-x-4 sm:grid-cols-2">
           <!-- Starting Bid -->
@@ -680,7 +690,7 @@
       </div>
       
     {:else if activeTab === 'property'}
-      <!-- Property Selection Tab Content - Same as before -->
+      <!-- Property Selection Tab Content -->
       <div class="space-y-6">
         <PropertySelector
           selectedPropertyId={auction.related_property_id}
@@ -690,7 +700,7 @@
       </div>
       
     {:else if activeTab === 'media'}
-      <!-- Media Tab Content - UPDATED -->
+      <!-- Media Tab Content -->
       <div class="space-y-6">
         {#if mediaError}
           <Alert type="error" message={mediaError} />
@@ -746,7 +756,7 @@
                         {media.name}
                       </p>
                       {#if media.isTemp}
-                        <p class="text-xs text-yellow-500">
+                        <p class="text-xs text-warning-500">
                           {safeTranslate('media.pendingUpload', 'Pending upload')}
                         </p>
                       {/if}
@@ -759,13 +769,15 @@
                           type="button"
                           class="px-3 py-1 bg-white text-gray-700 rounded text-xs font-medium hover:bg-gray-50 transition-colors"
                           on:click={() => setPrimaryMedia(media.id)}
+                          aria-label={safeTranslate('auction.setPrimaryMedia', 'Set as primary media for {name}', { name: media.name })}
                         >
                           {safeTranslate('auction.setPrimary', 'Set Primary')}
                         </button>
                         <button
                           type="button"
-                          class="px-3 py-1 bg-red-500 text-white rounded text-xs font-medium hover:bg-red-600 transition-colors"
+                          class="px-3 py-1 bg-danger-500 text-white rounded text-xs font-medium hover:bg-danger-600 transition-colors"
                           on:click={() => removeMedia(media.id)}
+                          aria-label={safeTranslate('auction.removeMedia', 'Remove media {name}', { name: media.name })}
                         >
                           {safeTranslate('auction.remove', 'Remove')}
                         </button>
@@ -774,7 +786,7 @@
                     
                     {#if media.is_primary}
                       <div class="absolute top-0 left-0 m-2">
-                        <span class="inline-flex items-center px-1.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200">
+                        <span class="inline-flex items-center px-1.5 py-0.5 rounded-full text-xs font-medium bg-success-100 text-success-800 dark:bg-success-900 dark:text-success-200">
                           {safeTranslate('auction.primary', 'Primary')}
                         </span>
                       </div>
@@ -788,7 +800,7 @@
       </div>
       
     {:else if activeTab === 'terms'}
-      <!-- Terms Tab Content - Same as before -->
+      <!-- Terms Tab Content -->
       <div class="space-y-6">
         <div class="border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden">
           <div class="bg-gray-50 dark:bg-gray-900 px-6 py-4 border-b border-gray-200 dark:border-gray-700">
@@ -816,7 +828,7 @@
   <div class="bg-gray-50 dark:bg-gray-900 px-6 py-4 flex justify-between items-center border-t border-gray-200 dark:border-gray-700">
     <button
       type="button"
-      class="inline-flex items-center px-3 py-2 border border-gray-300 dark:border-gray-700 rounded-md shadow-sm text-sm font-medium text-gray-700 dark:text-gray-200 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+      class="inline-flex items-center px-3 py-2 border border-gray-300 dark:border-gray-700 rounded-md shadow-sm text-sm font-medium text-gray-700 dark:text-gray-200 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
       on:click={goToPreviousTab}
       disabled={currentStep === 1}
     >

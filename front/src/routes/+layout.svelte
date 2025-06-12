@@ -1,4 +1,3 @@
-<!-- src/routes/+layout.svelte -->
 <script>
 	import '../app.css';
 	import { onMount, onDestroy } from 'svelte';
@@ -7,10 +6,12 @@
 	import { user } from '$lib/stores/user';
 	import { fetchUserProfile } from '$lib/api/auth';
 	import { browser } from '$app/environment';
+	import { pwaInfo } from 'virtual:pwa-info';
 
 	import Navbar from '$lib/components/layout/Navbar.svelte';
 	import Footer from '$lib/components/layout/Footer.svelte';
 	import ToastContainer from '$lib/components/ToastContainer.svelte';
+	import ReloadPrompt from '$lib/components/ReloadPrompt.svelte';
 
 	let hydrated = false;
 	let mounted = false;
@@ -27,6 +28,9 @@
 	let unsubscribeTheme = () => {};
 	let unsubscribeLocale = () => {};
 
+	// PWA manifest link
+	$: webManifestLink = pwaInfo ? pwaInfo.webManifest.linkTag : '';
+
 	onMount(async () => {
 		try {
 			mounted = true;
@@ -40,33 +44,6 @@
 						}
 					}
 				});
-
-				// ✅ Enhanced PWA registration with update handling
-				if ('serviceWorker' in navigator) {
-					navigator.serviceWorker.register('/service-worker.js').then((reg) => {
-						console.log('Service Worker registered:', reg);
-
-						if (reg.waiting) {
-							reg.waiting.postMessage({ type: 'SKIP_WAITING' });
-							window.location.reload();
-						}
-
-						reg.addEventListener('updatefound', () => {
-							const newWorker = reg.installing;
-							if (newWorker) {
-								newWorker.addEventListener('statechange', () => {
-									if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
-										console.log('New service worker activated. Reloading...');
-										window.location.reload();
-									}
-								});
-							}
-						});
-					}).catch((err) => {
-						console.error('Service Worker registration failed:', err);
-					});
-				}
-
 			} catch (themeError) {
 				console.warn('Theme subscription failed:', themeError);
 				currentTheme = 'light';
@@ -197,10 +174,26 @@
 	}
 </script>
 
-
 <svelte:head>
 	<meta name="viewport" content="width=device-width, initial-scale=1.0">
 	<title>Real Estate Auction Platform</title>
+	
+	<!-- PWA Manifest -->
+	{@html webManifestLink}
+	
+	<!-- PWA Meta Tags -->
+	<meta name="theme-color" content="#a78bfa">
+	<meta name="apple-mobile-web-app-capable" content="yes">
+	<meta name="apple-mobile-web-app-status-bar-style" content="default">
+	<meta name="apple-mobile-web-app-title" content="Auction">
+	<meta name="mobile-web-app-capable" content="yes">
+	<meta name="msapplication-TileColor" content="#a78bfa">
+	<meta name="msapplication-tap-highlight" content="no">
+	
+	<!-- Apple Touch Icons -->
+	<link rel="apple-touch-icon" sizes="152x152" href="/icons/icon-152x152.png">
+	<link rel="apple-touch-icon" sizes="180x180" href="/icons/icon-192x192.png">
+	
 	<!-- Load fonts with display=swap for better performance -->
 	<link 
 		href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Cairo:wght@400;600;700;800;900&display=swap" 
@@ -260,8 +253,14 @@
 		{#if componentsLoaded.toast}
 			<ToastContainer on:error={handleToastError} />
 		{/if}
+		
+		<!-- PWA Reload Prompt -->
+		<ReloadPrompt />
 	{/if}
 </div>
+
+
+
 
 <style>
 	/* Global font classes with fallbacks */

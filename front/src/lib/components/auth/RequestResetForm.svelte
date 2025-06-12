@@ -5,8 +5,8 @@
   
   export let loading = false;
   export let email = '';
-  export let success = '';
-  export let error = '';
+  export const success = ''; // External reference only
+  export const error = ''; // External reference only
   
   const dispatch = createEventDispatcher();
   

@@ -3,16 +3,15 @@
   import { goto } from '$app/navigation';
   import { fade, slide, scale } from 'svelte/transition';
   import { t, locale } from '$lib/i18n';
-  import { user } from '$lib/stores/user'; // $user (if needed, for auto-subscription)
+  import { user } from '$lib/stores/user';
   import { sendMessage, replyToMessage, getMessage } from '$lib/api/messages';
   import { toast } from '$lib/stores/toastStore';
   import Button from '$lib/components/ui/Button.svelte';
 
-
   let data;
 
   // State management
-  let replyToId = data?.replyId || null; // Initialized from prop
+  let replyToId = data?.replyId || null;
   let originalMessage = $state(null);
   let loading = $state(false);
   let sending = $state(false);
@@ -35,11 +34,11 @@
   });
 
   // Derived values
-  let isRTL = $derived($locale === 'ar'); // $locale is a Svelte store, $ prefix enables auto-subscription
+  let isRTL = $derived($locale === 'ar');
   let isReply = $derived(!!replyToId);
   
   // Form validation
-  let validation = $derived((() => { // Using an IIFE to keep the logic clean
+  let validation = $derived((() => {
     const errors = {};
     
     if (!isReply && touched.recipient_email && !formData.recipient_email) {
@@ -66,67 +65,56 @@
   let isValid = $derived(
     Object.keys(validation).length === 0 && 
     (isReply || formData.recipient_email) && 
-    formData.subject.trim() && // Added trim() for robustness
-    formData.body.trim()   // Added trim() for robustness
+    formData.subject.trim() && 
+    formData.body.trim()
   );
 
-  // Priority options with modern design (remains the same)
+  // Priority options with app CSS colors
   const priorityOptions = [
     { 
       value: 'low', 
       label: 'messages.priority.low',
-      color: 'bg-slate-50 border-slate-200 text-slate-700 dark:bg-slate-900/20 dark:border-slate-700 dark:text-slate-300',
+      color: 'bg-neutral-50 border-neutral-200 text-neutral-700 dark:bg-neutral-900/20 dark:border-neutral-700 dark:text-neutral-300',
       icon: '○',
-      iconColor: 'text-slate-600 dark:text-slate-400'
+      iconColor: 'text-neutral-600 dark:text-neutral-400'
     },
     { 
       value: 'normal', 
       label: 'messages.priority.normal',
-      color: 'bg-emerald-50 border-emerald-200 text-emerald-700 dark:bg-emerald-900/20 dark:border-emerald-700 dark:text-emerald-300',
+      color: 'bg-success-50 border-success-200 text-success-700 dark:bg-success-900/20 dark:border-success-700 dark:text-success-300',
       icon: '◐',
-      iconColor: 'text-emerald-600 dark:text-emerald-400'
+      iconColor: 'text-success-600 dark:text-success-400'
     },
     { 
       value: 'high', 
       label: 'messages.priority.high',
-      color: 'bg-amber-50 border-amber-200 text-amber-700 dark:bg-amber-900/20 dark:border-amber-700 dark:text-amber-300',
+      color: 'bg-warning-50 border-warning-200 text-warning-700 dark:bg-warning-900/20 dark:border-warning-700 dark:text-warning-300',
       icon: '◑',
-      iconColor: 'text-amber-600 dark:text-amber-400'
+      iconColor: 'text-warning-600 dark:text-warning-400'
     },
     { 
       value: 'urgent', 
       label: 'messages.priority.urgent',
-      color: 'bg-rose-50 border-rose-200 text-rose-700 dark:bg-rose-900/20 dark:border-rose-700 dark:text-rose-300',
+      color: 'bg-danger-50 border-danger-200 text-danger-700 dark:bg-danger-900/20 dark:border-danger-700 dark:text-danger-300',
       icon: '●',
-      iconColor: 'text-rose-600 dark:text-rose-400'
+      iconColor: 'text-danger-600 dark:text-danger-400'
     }
   ];
   
-  // Toggle priority filters panel
   function togglePriorityFilters() {
     showPriorityFilters = !showPriorityFilters;
   }
 
-  // Load original message if replying
   let initialLoadDone = false;
   $effect(() => {
-    if (replyToId && !initialLoadDone) { // Ensure it only loads once for a given replyToId initially or if replyToId changes
+    if (replyToId && !initialLoadDone) {
       loadOriginalMessage();
-      initialLoadDone = true; // Mark that initial load for this replyToId has been attempted
+      initialLoadDone = true;
     } else if (!replyToId) {
-      originalMessage = null; // Clear message if not a reply
-      initialLoadDone = false; // Reset for potential future replyToId
+      originalMessage = null;
+      initialLoadDone = false;
     }
   });
-
-  // Alternatively, if replyToId is set once on component initialization:
-  /*
-  onMount(() => {
-    if (replyToId) {
-      loadOriginalMessage();
-    }
-  });
-  */
   
   async function loadOriginalMessage() {
     loading = true;
@@ -138,14 +126,10 @@
       
       if (originalMessage) {
         formData.subject = `Re: ${originalMessage.subject}`;
-        // Ensure reactive update for formData if needed by re-assigning the object
-        // or ensure components using formData.body are reactive to its direct change.
-        // Direct property assignment is usually fine if formData is declared with `let`.
         formData.body = `\n\n---\n${$t('messages.originalMessage')}:\n${originalMessage.body}`;
       }
       
     } catch (err) {
-      // console.error('Error loading original message:', err);
       error = err.message || $t('error.fetchFailed');
       toast.error($t('messages.couldNotLoadReplyMessage'));
     } finally {
@@ -158,15 +142,12 @@
   }
 
   async function handleSubmit() {
-    // Mark all fields as touched to show all errors
     touched = {
       recipient_email: true,
       subject: true,
       body: true
     };
 
-    // Re-check isValid as `touched` has changed, which affects `validation`
-    // Svelte's reactivity should handle this, but explicit check can be added if needed.
     if (!isValid || sending) return;
 
     sending = true;
@@ -182,11 +163,10 @@
       let response;
       if (isReply && originalMessage) {
         response = await replyToMessage(originalMessage.id, {
-          body: messagePayload.body, // Use trimmed body from payload
-          parent_message: originalMessage.id // It's good practice to ensure this is the correct field name expected by API
+          body: messagePayload.body,
+          parent_message: originalMessage.id
         });
       } else {
-        // Enable direct messaging
         messagePayload.recipient_email = formData.recipient_email;
         response = await sendMessage(messagePayload);
       }
@@ -195,9 +175,8 @@
       goto('/messages');
       
     } catch (err) {
-      // console.error('Error sending message:', err);
       error = err.message || $t('messages.sendError');
-      toast.error(error); // Display the specific error
+      toast.error(error);
     } finally {
       sending = false;
     }
@@ -209,8 +188,7 @@
 
   function autoResize(event) {
     const textarea = event.target;
-    textarea.style.height = 'auto'; // Reset height
-    // Ensure scrollHeight is not excessively large, cap at 400px
+    textarea.style.height = 'auto';
     textarea.style.height = `${Math.min(textarea.scrollHeight, 400)}px`;
   }
 </script>
@@ -219,7 +197,7 @@
   <title>{isReply ? $t('messages.reply') : $t('messages.compose')} | {$t('app.name')}</title>
 </svelte:head>
 
-<div class="min-h-screen ">
+<div class="min-h-screen">
   <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8">
     <div class="mb-6">
       <Button
@@ -239,16 +217,18 @@
     </div>
 
     <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700">
-      {#if loading && isReply} <div class="p-8 text-center">
+      {#if loading && isReply}
+        <div class="p-8 text-center">
           <div class="inline-flex items-center justify-center w-12 h-12 rounded-full bg-gray-100 dark:bg-gray-700 mb-4">
             <div class="w-6 h-6 border-2 border-gray-300 dark:border-gray-500 border-t-primary-500 rounded-full animate-spin"></div>
           </div>
           <p class="text-sm text-gray-500 dark:text-gray-400">{$t('common.loading')}</p>
         </div>
         
-      {:else if error && isReply && !originalMessage} <div class="p-8 text-center">
-          <div class="inline-flex items-center justify-center w-12 h-12 rounded-full bg-red-100 dark:bg-red-900/20 mb-4">
-            <svg class="w-6 h-6 text-red-600 dark:text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+      {:else if error && isReply && !originalMessage}
+        <div class="p-8 text-center">
+          <div class="inline-flex items-center justify-center w-12 h-12 rounded-full bg-danger-100 dark:bg-danger-900/20 mb-4">
+            <svg class="w-6 h-6 text-danger-600 dark:text-danger-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
             </svg>
           </div>
@@ -291,9 +271,9 @@
 
           {#if !isReply}
             <div>
-              <label for="recipient" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">
+              <label for="recipient_email" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">
                 {$t('messages.to')}
-                <span class="text-red-500">*</span>
+                <span class="text-danger-500">*</span>
               </label>
               <input
                 id="recipient_email"
@@ -303,7 +283,7 @@
                 placeholder={$t('messages.recipientEmailPlaceholder')}
                 class="w-full px-3.5 py-2.5 text-sm border rounded-lg transition-colors
                   {(validation.recipient_email && touched.recipient_email)
-                    ? 'border-red-300 focus:border-red-500 focus:ring-red-200'
+                    ? 'border-danger-300 focus:border-danger-500 focus:ring-danger-200'
                     : 'border-gray-300 focus:border-primary-500 focus:ring-primary-200'
                   }
                   dark:bg-gray-900 dark:border-gray-600 dark:text-white 
@@ -313,7 +293,7 @@
                 disabled={isReply || sending}
               />
               {#if validation.recipient_email && touched.recipient_email}
-                <p id="recipient-error" class="mt-1 text-xs text-red-600 dark:text-red-400" transition:slide>
+                <p id="recipient-error" class="mt-1 text-xs text-danger-600 dark:text-danger-400" transition:slide>
                   {validation.recipient_email}
                 </p>
               {/if}
@@ -323,7 +303,7 @@
           <div>
             <label for="subject" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">
               {$t('messages.subject')}
-              <span class="text-red-500">*</span>
+              <span class="text-danger-500">*</span>
             </label>
             <input
               type="text"
@@ -333,7 +313,7 @@
               placeholder={$t('messages.subjectPlaceholder')}
               class="w-full px-3.5 py-2.5 text-sm border rounded-lg transition-colors
                 {(validation.subject && touched.subject)
-                  ? 'border-red-300 focus:border-red-500 focus:ring-red-200'
+                  ? 'border-danger-300 focus:border-danger-500 focus:ring-danger-200'
                   : 'border-gray-300 focus:border-primary-500 focus:ring-primary-200'
                 }
                 dark:bg-gray-900 dark:border-gray-600 dark:text-white 
@@ -342,25 +322,27 @@
               aria-describedby={validation.subject && touched.subject ? "subject-error" : undefined}
             />
             {#if validation.subject && touched.subject}
-              <p id="subject-error" class="mt-1 text-xs text-red-600 dark:text-red-400" transition:slide>
+              <p id="subject-error" class="mt-1 text-xs text-danger-600 dark:text-danger-400" transition:slide>
                 {validation.subject}
               </p>
             {/if}
           </div>
           
           <div>
-            <label id="priority-label" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">
+            <label for="priority-selector" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">
               {$t('messages.form.priority')}
-              <span class="text-red-500">*</span>
+              <span class="text-danger-500">*</span>
             </label>
             
             <!-- Mobile Priority Toggle (xs, sm, md screens) -->
             <div class="md:hidden">
               <button 
                 type="button" 
+                id="priority-selector"
                 class="priority-toggle w-full flex items-center justify-between px-3.5 py-2.5 text-sm rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 transition-colors"
                 aria-expanded={showPriorityFilters}
                 aria-controls="priority-filters-panel"
+                aria-label={$t('messages.form.priority')}
                 onclick={togglePriorityFilters}
               >
                 <div class="flex items-center gap-2">
@@ -382,7 +364,7 @@
                   id="priority-filters-panel"
                   class="priority-panel mt-2 bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 overflow-hidden"
                   role="radiogroup" 
-                  aria-labelledby="priority-label"
+                  aria-labelledby="priority-selector"
                   transition:slide={{ duration: 300, easing: (t) => 1 - Math.pow(1 - t, 3) }}
                 >
                   <div class="p-2 grid grid-cols-1 sm:grid-cols-2 gap-2">
@@ -391,9 +373,9 @@
                         type="button"
                         role="radio"
                         aria-checked={formData.priority === option.value}
+                        aria-label={$t(option.label)}
                         onclick={() => {
                           formData.priority = option.value;
-                          // Close panel after selection on small screens
                           if (window.innerWidth < 640) {
                             showPriorityFilters = false;
                           }
@@ -419,12 +401,14 @@
             </div>
             
             <!-- Desktop Priority Options (lg+ screens) -->
-            <div class="hidden md:flex flex-wrap gap-2.5">
+            <fieldset class="hidden md:flex flex-wrap gap-2.5" role="radiogroup" aria-labelledby="priority-selector">
+              <legend class="sr-only">{$t('messages.form.priority')}</legend>
               {#each priorityOptions as option}
                 <button
                   type="button"
                   role="radio"
                   aria-checked={formData.priority === option.value}
+                  aria-label={$t(option.label)}
                   onclick={() => formData.priority = option.value}
                   class="flex items-center gap-1.5 px-3 py-1.5 text-sm rounded-md border transition-colors
                     {formData.priority === option.value ? option.color : 'bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300'}
@@ -436,13 +420,13 @@
                   </span>
                 </button>
               {/each}
-            </div>
+            </fieldset>
           </div>
 
           <div>
             <label for="body" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">
               {$t('messages.message')}
-              <span class="text-red-500">*</span>
+              <span class="text-danger-500">*</span>
             </label>
             <textarea
               id="body"
@@ -453,7 +437,7 @@
               rows="6"
               class="w-full px-3.5 py-2.5 text-sm border rounded-lg transition-colors resize-none
                 {(validation.body && touched.body)
-                  ? 'border-red-300 focus:border-red-500 focus:ring-red-200'
+                  ? 'border-danger-300 focus:border-danger-500 focus:ring-danger-200'
                   : 'border-gray-300 focus:border-primary-500 focus:ring-primary-200'
                 }
                 dark:bg-gray-900 dark:border-gray-600 dark:text-white 
@@ -463,18 +447,18 @@
             ></textarea>
             <div class="mt-1 flex items-center justify-between">
               {#if validation.body && touched.body}
-                <p id="body-error" class="text-xs text-red-600 dark:text-red-400" transition:slide>
+                <p id="body-error" class="text-xs text-danger-600 dark:text-danger-400" transition:slide>
                   {validation.body}
                 </p>
               {:else}
-                <span></span> {/if}
+                <span></span>
+              {/if}
               <span class="text-xs text-gray-500 dark:text-gray-400">
                 {formData.body.length} / 2000
               </span>
             </div>
           </div>
 
-          <!-- Added pt-3 for a bit more space -->
           <div class="flex flex-wrap justify-end gap-3 pt-3">
             <Button 
               variant="outline" 
@@ -518,21 +502,21 @@
   .line-clamp-3 {
     display: -webkit-box;
     -webkit-line-clamp: 3;
-    line-clamp: 3; /* Standard property for modern browsers */
+    line-clamp: 3;
     -webkit-box-orient: vertical;
     overflow: hidden;
   }
-  /* Add focus-visible styling for better accessibility with keyboard navigation */
+  
   button[role="radio"]:focus-visible {
-    outline: 2px solid var(--primary-color, #3b82f6); /* Use your primary color variable or a default */
+    outline: 2px solid var(--color-primary-500);
     outline-offset: 2px;
   }
+  
   input:focus-visible, textarea:focus-visible {
-     outline: 2px solid var(--primary-color, #3b82f6);
+     outline: 2px solid var(--color-primary-500);
      outline-offset: 1px;
   }
   
-  /* Priority filter animations and styling */
   .priority-toggle {
     position: relative;
     transition: all 0.2s ease;
