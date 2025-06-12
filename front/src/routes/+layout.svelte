@@ -72,7 +72,7 @@
 	<title>Real Estate Auction Platform</title>
   </svelte:head>
   
-  <div class="min-h-screen flex flex-col bg-gray-50 dark:bg-gray-800 transition-colors duration-200">
+  <div class="min-h-screen flex flex-col  dark:bg-gray-800 transition-colors duration-200">
 	{#if error}
 	  <div class="flex items-center justify-center min-h-screen bg-red-50 dark:bg-red-900/20">
 		<div class="text-center p-8">
