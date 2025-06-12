@@ -1,6 +1,6 @@
 <script>
 	import '../app.css';
-	import { onMount, onDestroy } from 'svelte';
+	import { onMount } from 'svelte';
 	import { theme } from '$lib/stores/theme';
 	import { locale } from '$lib/i18n/config.js';
 	import { user } from '$lib/stores/user';
@@ -10,46 +10,71 @@
 	import Navbar from '$lib/components/layout/Navbar.svelte';
 	import Footer from '$lib/components/layout/Footer.svelte';
 	import ToastContainer from '$lib/components/ToastContainer.svelte';
-	import PWAInstallButton from '$lib/components/PWAInstallButton.svelte'; // Add this import
+	import PWAInstallButton from '$lib/components/PWAInstallButton.svelte';
 
-	// ... rest of your existing script code ...
+	// Reactive variables
+	$: currentLocale = $locale;
+	$: isArabic = currentLocale === 'ar';
+	
+	let loading = true;
+	let error = null;
+
+	onMount(async () => {
+		try {
+			// Apply saved theme
+			const savedTheme = localStorage.getItem('theme');
+			if (savedTheme) {
+				theme.set(savedTheme);
+			} else if (window.matchMedia('(prefers-color-scheme: dark)').matches) {
+				theme.set('dark');
+			}
+			
+			// Apply saved locale
+			const savedLocale = localStorage.getItem('locale');
+			if (savedLocale) {
+				locale.set(savedLocale);
+			}
+			
+			// Try to fetch user profile if tokens exist
+			if (localStorage.getItem('accessToken')) {
+				try {
+					await fetchUserProfile();
+				} catch (error) {
+					console.error('Failed to fetch user profile:', error);
+					localStorage.removeItem('accessToken');
+				}
+			}
+			
+			loading = false;
+		} catch (err) {
+			console.error('Layout initialization error:', err);
+			error = 'Failed to initialize application';
+			loading = false;
+		}
+	});
+
+	// Apply theme and direction classes to document
+	$: if (browser) {
+		document.documentElement.classList.remove('light', 'dark', 'rtl', 'ltr');
+		document.documentElement.classList.add($locale === 'ar' ? 'rtl' : 'ltr');
+		document.documentElement.classList.add($theme);
+		document.documentElement.style.colorScheme = $theme;
+		document.documentElement.lang = $locale;
+		document.documentElement.dir = $locale === 'ar' ? 'rtl' : 'ltr';
+		document.body.className = isArabic ? 'font-cairo' : 'font-inter';
+	}
+
+	function reloadPage() {
+		if (browser) window.location.reload();
+	}
 </script>
 
 <svelte:head>
-	<meta name="viewport" content="width=device-width, initial-scale=1.0">
 	<title>Real Estate Auction Platform</title>
-	
-	<!-- PWA Manifest -->
-	<link rel="manifest" href="/manifest.json">
-	
-	<!-- PWA Meta Tags -->
-	<meta name="theme-color" content="#a78bfa">
-	<meta name="apple-mobile-web-app-capable" content="yes">
-	<meta name="apple-mobile-web-app-status-bar-style" content="default">
-	<meta name="apple-mobile-web-app-title" content="Auction">
-	<meta name="mobile-web-app-capable" content="yes">
-	<meta name="msapplication-TileColor" content="#a78bfa">
-	<meta name="msapplication-tap-highlight" content="no">
-	
-	<!-- Apple Touch Icons -->
-	<link rel="apple-touch-icon" sizes="152x152" href="/icons/icon-152x152.png">
-	<link rel="apple-touch-icon" sizes="180x180" href="/icons/icon-192x192.png">
-	
-	<!-- Load fonts with display=swap for better performance -->
-	<link 
-		href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Cairo:wght@400;600;700;800;900&display=swap" 
-		rel="stylesheet"
-	>
 </svelte:head>
 
-<!-- Always render consistent structure to prevent hydration mismatch -->
-<div 
-	class="min-h-screen flex flex-col bg-white dark:bg-gray-800 transition-colors duration-200"
-	class:font-cairo={currentLocale === 'ar'}
-	class:font-inter={currentLocale !== 'ar'}
->
+<div class="min-h-screen flex flex-col bg-gray-50 dark:bg-gray-800 transition-colors duration-200">
 	{#if error}
-		<!-- Error state -->
 		<div class="flex items-center justify-center min-h-screen bg-red-50 dark:bg-red-900/20">
 			<div class="text-center p-8">
 				<h1 class="text-2xl font-bold text-red-600 dark:text-red-400 mb-4">
@@ -59,92 +84,30 @@
 					{error}
 				</p>
 				<button 
-					onclick={() => window.location.reload()} 
+					on:click={reloadPage}
 					class="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700 transition-colors"
 				>
 					Reload Page
 				</button>
 			</div>
 		</div>
+	{:else if loading}
+		<div class="flex items-center justify-center min-h-screen">
+			<div class="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary-500"></div>
+		</div>
 	{:else}
-		<!-- PWA Install Button - Add this -->
-		<div class="fixed top-4 right-4 z-50">
+		<div class="fixed top-4 {isArabic ? 'left-4' : 'right-4'} z-50">
 			<PWAInstallButton />
 		</div>
 		
-		<!-- Navigation with fallback -->
-		{#if componentsLoaded.navbar}
-			<Navbar on:error={handleNavbarError} />
-		{:else}
-			<div class="h-16 bg-gray-100 dark:bg-gray-800 flex items-center justify-center border-b border-gray-200 dark:border-gray-700">
-				<span class="text-gray-500 dark:text-gray-400">Navigation loading...</span>
-			</div>
-		{/if}
+		<Navbar />
 		
-		<!-- Main content area -->
 		<main class="flex-grow">
 			<slot />
 		</main>
 		
-		<!-- Footer with fallback -->
-		{#if componentsLoaded.footer}
-			<Footer on:error={handleFooterError} />
-		{:else}
-			<div class="h-24 bg-gray-100 dark:bg-gray-800 flex items-center justify-center border-t border-gray-200 dark:border-gray-700">
-				<span class="text-gray-500 dark:text-gray-400">Footer loading...</span>
-			</div>
-		{/if}
+		<Footer />
 		
-		<!-- Toast notifications -->
-		{#if componentsLoaded.toast}
-			<ToastContainer on:error={handleToastError} />
-		{/if}
+		<ToastContainer />
 	{/if}
 </div>
-
-
-<style>
-	/* Global font classes with fallbacks */
-	:global(.font-cairo) {
-		font-family: 'Cairo', 'Inter', system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
-	}
-	
-	:global(.font-inter) {
-		font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
-	}
-	
-	/* Apply fonts globally based on direction with fallbacks */
-	:global([dir="rtl"]) {
-		font-family: 'Cairo', 'Inter', system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
-	}
-	
-	:global([dir="ltr"]) {
-		font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
-	}
-	
-	/* Ensure smooth transitions */
-	:global(html) {
-		transition: color-scheme 0.2s ease;
-	}
-	
-	:global(body) {
-		transition: background-color 0.2s ease, color 0.2s ease;
-	}
-	
-	/* Prevent layout shift during font loading */
-	:global(*) {
-		font-display: swap;
-	}
-	
-	/* Loading states */
-	:global(.component-loading) {
-		opacity: 0.7;
-		transition: opacity 0.2s ease;
-	}
-	
-	:global(.component-error) {
-		border: 2px dashed #ef4444;
-		background-color: #fef2f2;
-		color: #dc2626;
-	}
-</style>
