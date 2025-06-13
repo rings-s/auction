@@ -64,8 +64,12 @@ class MediaSerializer(serializers.ModelSerializer):
         return None
 
     def get_file_size(self, obj):
-        """Get file size in bytes"""
-        return obj.file_size if hasattr(obj, 'file_size') else 0
+        """Get file size in bytes with safe error handling"""
+        try:
+            return obj.file_size if hasattr(obj, 'file_size') else 0
+        except (FileNotFoundError, OSError, AttributeError):
+            logger.warning(f"Could not get file size for media {obj.id}")
+            return 0
 
     def get_dimensions(self, obj):
         """Get image dimensions if media is an image"""
