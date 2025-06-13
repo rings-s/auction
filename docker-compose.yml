@@ -52,10 +52,12 @@ services:
     environment:
       - DEBUG=true
       - ENVIRONMENT=development
-      - REDIS_URL=redis://redis:6379/0  # This stays the same (internal container communication)
+      - REDIS_URL=redis://redis:6379/0
     depends_on:
-      - db
-      - redis
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
     restart: unless-stopped
     networks:
       - auction_network
@@ -68,6 +70,7 @@ services:
     volumes:
       - ./front:/app
       - /app/node_modules
+      - /app/.svelte-kit
       - /app/.vite
     ports:
       - "7500:5173"
