@@ -66,9 +66,20 @@ class MediaSerializer(serializers.ModelSerializer):
     def get_file_size(self, obj):
         """Get file size in bytes with safe error handling"""
         try:
-            return obj.file_size if hasattr(obj, 'file_size') else 0
-        except (FileNotFoundError, OSError, AttributeError):
-            logger.warning(f"Could not get file size for media {obj.id}")
+            if hasattr(obj, 'file') and obj.file:
+                # First check if file exists
+                if hasattr(obj.file, 'path'):
+                    import os
+                    if os.path.exists(obj.file.path):
+                        return obj.file_size if hasattr(obj, 'file_size') else 0
+                    else:
+                        logger.warning(f"File not found for media {obj.id}: {obj.file.path}")
+                        return 0
+                # Fallback for non-filesystem storage
+                return obj.file_size if hasattr(obj, 'file_size') else 0
+            return 0
+        except Exception as e:
+            logger.warning(f"Could not get file size for media {obj.id}: {str(e)}")
             return 0
 
     def get_dimensions(self, obj):
