@@ -378,7 +378,7 @@ export async function debugAuctionBiddingState(auctionId) {
 // WebSocket connection for real-time updates
 export function createAuctionWebSocket(auctionId, callbacks = {}) {
   const token = localStorage.getItem('accessToken');
-  const wsUrl = `${WS_BASE_URL}/auction/${auctionId}/`;
+  const wsUrl = `${WS_BASE_URL}/auctions/${auctionId}/`;
   
   const socket = new WebSocket(wsUrl);
   
@@ -416,7 +416,6 @@ export function createAuctionWebSocket(auctionId, callbacks = {}) {
   
   return socket;
 }
-
 // Send bid through WebSocket
 export function sendBidThroughWebSocket(socket, auctionId, bidAmount, maxBidAmount = null) {
   const bidData = {
