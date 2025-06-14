@@ -274,7 +274,6 @@ export const SUCCESS_MESSAGES = {
 };
 
 // Export legacy constants for backward compatibility
-export { VITE_API_URL, VITE_WS_URL };
 
 // Debug logging in development
 if (ENV_CONFIG.IS_DEVELOPMENT) {

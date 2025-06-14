@@ -86,20 +86,20 @@ print(f"🔥 ALLOWED_HOSTS: {ALLOWED_HOSTS}")
 # ======================
 def get_database_config():
     """Get database configuration based on environment"""
-    return {
+    
+    # Default values for local development
+    default_config = {
         'ENGINE': 'django.db.backends.postgresql',
         'NAME': os.getenv('DB_NAME', 'auction'),
         'USER': os.getenv('DB_USER', 'postgres'),
         'PASSWORD': os.getenv('DB_PASSWORD', 'postgres'),
-        'HOST': os.getenv('DB_HOST', 'localhost'),  # ✅ now dynamic
+        'HOST': 'localhost',  # Default to localhost for local dev
         'PORT': os.getenv('DB_PORT', '5432'),
         'CONN_MAX_AGE': 60,
         'OPTIONS': {
             'connect_timeout': 10,
         }
     }
-
-
     
     # Determine the database host
     db_host = os.getenv('DB_HOST')
