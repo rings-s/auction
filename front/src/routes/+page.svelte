@@ -1,6 +1,7 @@
 <script>
   import { onMount } from 'svelte';
   import { fade, fly, scale } from 'svelte/transition';
+  import { cubicOut } from 'svelte/easing';
   import { locale } from '$lib/i18n/config.js';
   
   let mounted = false;
@@ -192,7 +193,7 @@
           <!-- Right SVG Animation - Larger and Enhanced -->
           <div class="lg:col-span-7 relative">
             <div
-              in:scale={{ duration: 1000, delay: 300, easing: 'cubicOut' }}
+              in:scale={{ duration: 1000, delay: 300, easing: cubicOut }}
               class="relative w-full"
             >
               <svg viewBox="0 0 800 700" class="w-full h-full max-w-[800px] mx-auto">

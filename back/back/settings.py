@@ -21,11 +21,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # ===================
 def is_running_in_docker():
     """Check if we're running inside a Docker container"""
-    try:
-        with open('/proc/1/cgroup', 'r') as f:
-            return 'docker' in f.read()
-    except:
-        return False
+    return os.path.exists('/.dockerenv')
 
 # Detect environment
 RUNNING_IN_DOCKER = is_running_in_docker()
@@ -93,7 +89,6 @@ def get_database_config():
         'NAME': os.getenv('DB_NAME', 'auction'),
         'USER': os.getenv('DB_USER', 'postgres'),
         'PASSWORD': os.getenv('DB_PASSWORD', 'postgres'),
-        'HOST': 'localhost',  # Default to localhost for local dev
         'PORT': os.getenv('DB_PORT', '5432'),
         'CONN_MAX_AGE': 60,
         'OPTIONS': {
@@ -102,14 +97,8 @@ def get_database_config():
     }
     
     # Determine the database host
-    db_host = os.getenv('DB_HOST')
-    
-    if db_host:
-        # Explicitly set DB_HOST - use it as is
-        default_config['HOST'] = db_host
-        print(f"🔥 DATABASE: Using explicit DB_HOST={db_host}")
-    elif RUNNING_IN_DOCKER:
-        # Running in Docker, use service name
+    if RUNNING_IN_DOCKER:
+        # Always use Docker service name when in container
         default_config['HOST'] = 'db'
         print(f"🔥 DATABASE: Using Docker service name 'db'")
     else:

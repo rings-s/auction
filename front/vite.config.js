@@ -8,16 +8,18 @@ export default defineConfig({
 		sveltekit()
 	],
 	server: {
-		host: '0.0.0.0',
-		port: 5173,
-		// Disable WebSocket HMR temporarily to focus on route issues
-		hmr: false,
-		watch: {
-			usePolling: true,
-			interval: 1000
-		},
-		cors: true
-	},
+    host: '0.0.0.0',
+    port: 5173,
+    hmr: {
+      host: 'localhost',
+      port: 7500
+    },
+    watch: {
+      usePolling: true,
+      interval: 1000
+    },
+    cors: true
+  },
 	optimizeDeps: {
 		exclude: ['clsx'],
 		include: ['chart.js', 'date-fns', 'leaflet']
