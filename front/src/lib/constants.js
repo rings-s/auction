@@ -13,6 +13,92 @@ export const IS_DEVELOPMENT = import.meta.env.DEV;
 export const IS_PRODUCTION = import.meta.env.PROD;
 
 // =============================================================================
+// ENDPOINT DEFINITIONS (for frontend components)
+// =============================================================================
+
+// Authentication endpoints
+export const AUTH_ENDPOINTS = {
+  BASE: `${API_BASE_URL}/accounts`,
+  LOGIN: `${API_BASE_URL}/accounts/login/`,
+  LOGOUT: `${API_BASE_URL}/accounts/logout/`,
+  REGISTER: `${API_BASE_URL}/accounts/register/`,
+  REFRESH_TOKEN: `${API_BASE_URL}/accounts/token/refresh/`,
+  VERIFY_EMAIL: `${API_BASE_URL}/accounts/verify-email/`,
+  PROFILE: `${API_BASE_URL}/accounts/profile/`,
+  CHANGE_PASSWORD: `${API_BASE_URL}/accounts/password/change/`,
+  REQUEST_PASSWORD_RESET: `${API_BASE_URL}/accounts/password/reset/request/`,
+  CONFIRM_PASSWORD_RESET: `${API_BASE_URL}/accounts/password/reset/confirm/`,
+};
+
+// Property endpoints
+export const PROPERTY_ENDPOINTS = {
+  BASE: `${API_BASE_URL}/properties/`,
+  LIST: `${API_BASE_URL}/properties/`,
+  DETAIL: function(id) { return `${API_BASE_URL}/properties/${id}/`; },
+  BY_SLUG: function(slug) { return `${API_BASE_URL}/properties/${encodeURIComponent(slug)}/`; },
+  CONTACT_OWNER: function(id) { return `${API_BASE_URL}/properties/${id}/contact/`; },
+  STATS: `${API_BASE_URL}/property-stats/`,
+};
+
+// Auction endpoints
+export const AUCTION_ENDPOINTS = {
+  BASE: `${API_BASE_URL}/auctions/`,
+  LIST: `${API_BASE_URL}/auctions/`,
+  DETAIL: function(id) { return `${API_BASE_URL}/auctions/${id}/`; },
+  BY_SLUG: function(slug) { return `${API_BASE_URL}/auctions/${encodeURIComponent(slug)}/`; },
+  STATUS: function(id) { return `${API_BASE_URL}/auctions/${id}/status/`; },
+  REGISTER: function(id) { return `${API_BASE_URL}/auctions/${id}/register/`; },
+  WATCH: function(id) { return `${API_BASE_URL}/auctions/${id}/watch/`; },
+  UNWATCH: function(id) { return `${API_BASE_URL}/auctions/${id}/watch/`; },
+};
+
+// Bid endpoints
+export const BID_ENDPOINTS = {
+  BASE: `${API_BASE_URL}/bids/`,
+  LIST: `${API_BASE_URL}/bids/`,
+  DETAIL: function(id) { return `${API_BASE_URL}/bids/${id}/`; },
+  USER_BIDS: `${API_BASE_URL}/bids/?bidder=current`,
+  BY_AUCTION: function(auctionId) { return `${API_BASE_URL}/bids/?auction=${auctionId}&ordering=-bid_time`; },
+};
+
+// Media endpoints
+export const MEDIA_ENDPOINTS = {
+  BASE: `${API_BASE_URL}/media/`,
+  LIST: `${API_BASE_URL}/media/`,
+  DETAIL: function(id) { return `${API_BASE_URL}/media/${id}/`; },
+  DELETE: function(id) { return `${API_BASE_URL}/media/${id}/`; },
+  UPDATE: function(id) { return `${API_BASE_URL}/media/${id}/`; },
+};
+
+// Dashboard endpoints
+export const DASHBOARD_ENDPOINTS = {
+  BASE: `${API_BASE_URL}/dashboard/`,
+  USER_STATS: `${API_BASE_URL}/dashboard/`,
+  SYSTEM_STATS: `${API_BASE_URL}/dashboard/system/`,
+  ACTIVITY: `${API_BASE_URL}/dashboard/activity/`,
+  PROPERTIES: `${API_BASE_URL}/dashboard/properties/`,
+  AUCTIONS: `${API_BASE_URL}/dashboard/auctions/`,
+  BIDS: `${API_BASE_URL}/dashboard/bids/`,
+};
+
+// Message endpoints
+export const MESSAGE_ENDPOINTS = {
+  BASE: `${API_BASE_URL}/messages/`,
+  LIST: `${API_BASE_URL}/messages/`,
+  DETAIL: function(id) { return `${API_BASE_URL}/messages/${id}/`; },
+  REPLY: function(id) { return `${API_BASE_URL}/messages/${id}/reply/`; },
+  THREAD: function(threadId) { return `${API_BASE_URL}/messages/thread/${threadId}/`; },
+  STATS: `${API_BASE_URL}/messages/stats/`,
+};
+
+// WebSocket endpoints
+export const WS_ENDPOINTS = {
+  AUCTION: function(auctionId) { return `${WS_BASE_URL}/auctions/${auctionId}/`; },
+  NOTIFICATIONS: `${WS_BASE_URL}/notifications/`,
+  MESSAGES: `${WS_BASE_URL}/messages/`,
+};
+
+// =============================================================================
 // CONTENT TYPES FOR MEDIA UPLOADS
 // =============================================================================
 
