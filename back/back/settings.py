@@ -140,19 +140,25 @@ else:
 # CORS CONFIGURATION
 # ==================
 # We prioritize the environment variable from docker-compose, with a fallback for local dev.
-CORS_ALLOW_ALL_ORIGINS = False
+CORS_ALLOW_ALL_ORIGINS = True
 CORS_ALLOWED_ORIGINS = [origin for origin in os.getenv('CORS_ALLOWED_ORIGINS', '').split(',') if origin]
 
-if not CORS_ALLOWED_ORIGINS:
-    if DEBUG or ENVIRONMENT == 'development':
-        print("🔥 CORS: Using default development origins")
-        CORS_ALLOWED_ORIGINS = [
-            "http://localhost:7500", "http://127.0.0.1:7500",
-            "http://localhost:5173", "http://127.0.0.1:5173",
-        ]
-    else:
-        print("⚠️  WARNING: CORS_ALLOWED_ORIGINS is not set in production!")
-        CORS_ALLOWED_ORIGINS = []
+# if not CORS_ALLOWED_ORIGINS:
+if DEBUG or ENVIRONMENT == 'development':
+    print("🔥 CORS: Using default development origins")
+    CORS_ALLOWED_ORIGINS = [
+        "http://localhost:7500", "http://127.0.0.1:7500",
+        "http://localhost:5173", "http://127.0.0.1:5173",
+        "https://auction.pinealdevelopers.com",
+        "http://auction.pinealdevelopers.com",
+    ]
+else:
+    # For production, trust the specific frontend domain.
+    # This can be overridden by the CORS_ALLOWED_ORIGINS env var.
+    CORS_ALLOWED_ORIGINS = [
+        "https://auction.pinealdevelopers.com",
+        "http://auction.pinealdevelopers.com"
+    ]
 
 print(f"🔥 CORS_ALLOWED_ORIGINS: {CORS_ALLOWED_ORIGINS}")
 CSRF_TRUSTED_ORIGINS = [

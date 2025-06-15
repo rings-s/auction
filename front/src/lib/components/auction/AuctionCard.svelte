@@ -5,7 +5,6 @@
   import { getAuctionStatus } from '$lib/api/auction';
   
   export let auction;
-  export let enhanced = false;
   
   let timeRemaining = { days: 0, hours: 0, minutes: 0, seconds: 0 };
   let interval;
@@ -94,20 +93,32 @@
   }
   
   onMount(() => {
-    updateTimeRemaining();
-    interval = setInterval(() => {
       updateTimeRemaining();
-    }, 1000);
-    
-    let statusInterval;
-    if (isActive) {
-      statusInterval = setInterval(refreshAuctionStatus, 15000); // More frequent updates for active auctions
-    }
-    
-    return () => {
-      clearInterval(interval);
-      if (statusInterval) clearInterval(statusInterval);
-    };
+      interval = setInterval(() => {
+        updateTimeRemaining();
+        
+        // Check if we need to refresh status (e.g., scheduled -> live)
+        const now = new Date();
+        const startDate = new Date(auction.start_date);
+        const endDate = new Date(auction.end_date);
+        
+        if (isScheduled && now >= startDate) {
+          refreshAuctionStatus();
+        } else if (isLive && now >= endDate) {
+          refreshAuctionStatus();
+        }
+      }, 1000);
+      
+      // Status check interval
+      let statusInterval;
+      if (isActive) {
+        statusInterval = setInterval(refreshAuctionStatus, 15000); // Check every 15 seconds
+      }
+      
+      return () => {
+        clearInterval(interval);
+        if (statusInterval) clearInterval(statusInterval);
+      };
   });
   
   onDestroy(() => {
@@ -356,36 +367,75 @@
       </div>
       
       <!-- Time Display - Compact and Clear -->
+      <!-- Update the timer section in AuctionCard.svelte to be more visible -->
+
       {#if isActive}
-        <div class="bg-gray-50 dark:bg-gray-700 rounded-lg p-3 mb-4">
-          <div class="flex items-center justify-between">
-            <span class="text-xs font-medium text-neutral-600 dark:text-neutral-400">
-              {isLive ? '⏱️ ' + $t('auction.endsIn') : '🕐 ' + $t('auction.startsIn')}
+      <div class="bg-gradient-to-r from-primary-50 to-secondary-50 dark:from-primary-900/20 dark:to-secondary-900/20 rounded-lg p-3 mb-4 border border-primary-200 dark:border-primary-800">
+        <div class="text-center mb-2">
+          <span class="text-xs font-medium text-primary-700 dark:text-primary-300">
+            {isLive ? '🔴 ' + $t('auction.timeRemaining') : '📅 ' + $t('auction.startsIn')}
+          </span>
+        </div>
+        
+        <!-- Large Timer Display -->
+        <div class="grid grid-cols-4 gap-1 text-center">
+          <div class="bg-white dark:bg-gray-800 rounded p-1">
+            <span class="block text-lg font-bold text-primary-800 dark:text-primary-200">
+              {timeRemaining.days}
             </span>
-            <span class="text-sm font-bold text-primary-800 dark:text-primary-200">
-              {getTimeRemainingDisplay()}
+            <span class="text-xs text-primary-600 dark:text-primary-400">
+              {$t('auction.days')}
             </span>
           </div>
-          
-          {#if isLive && timeRemaining.hours === 0 && timeRemaining.days === 0}
-            <div class="mt-2 text-center">
-              <span class="text-xs text-danger-600 dark:text-danger-400 font-medium animate-pulse">
-                ⚡ {$t('auction.endingSoon')}
-              </span>
-            </div>
-          {/if}
+          <div class="bg-white dark:bg-gray-800 rounded p-1">
+            <span class="block text-lg font-bold text-primary-800 dark:text-primary-200">
+              {String(timeRemaining.hours).padStart(2, '0')}
+            </span>
+            <span class="text-xs text-primary-600 dark:text-primary-400">
+              {$t('auction.hours')}
+            </span>
+          </div>
+          <div class="bg-white dark:bg-gray-800 rounded p-1">
+            <span class="block text-lg font-bold text-primary-800 dark:text-primary-200">
+              {String(timeRemaining.minutes).padStart(2, '0')}
+            </span>
+            <span class="text-xs text-primary-600 dark:text-primary-400">
+              {$t('auction.minutes')}
+            </span>
+          </div>
+          <div class="bg-white dark:bg-gray-800 rounded p-1">
+            <span class="block text-lg font-bold text-primary-800 dark:text-primary-200">
+              {String(timeRemaining.seconds).padStart(2, '0')}
+            </span>
+            <span class="text-xs text-primary-600 dark:text-primary-400">
+              {$t('auction.seconds')}
+            </span>
+          </div>
         </div>
+        
+        {#if isLive && timeRemaining.hours === 0 && timeRemaining.days === 0}
+          <div class="mt-2 text-center">
+            <span class="text-xs text-danger-600 dark:text-danger-400 font-bold animate-pulse">
+              ⚡ {$t('auction.endingSoon')} ⚡
+            </span>
+          </div>
+        {/if}
+      </div>
       {:else if isEnded}
-        <div class="bg-neutral-50 dark:bg-neutral-700 rounded-lg p-3 mb-4">
-          <p class="text-sm text-center text-neutral-600 dark:text-neutral-400">
-            {$t('auction.auctionEnded')}
+      <div class="bg-neutral-50 dark:bg-neutral-700 rounded-lg p-3 mb-4">
+        <p class="text-sm text-center text-neutral-600 dark:text-neutral-400 font-medium">
+          🏁 {$t('auction.auctionEnded')}
+        </p>
+        {#if auction.status === 'completed' && auction.bid_count > 0}
+          <p class="text-xs text-center text-success-600 dark:text-success-400 font-medium mt-1">
+            🎉 {$t('auction.soldSuccessfully')}
           </p>
-          {#if auction.status === 'completed' && auction.bid_count > 0}
-            <p class="text-xs text-center text-success-600 dark:text-success-400 font-medium mt-1">
-              🎉 {$t('auction.soldSuccessfully')}
-            </p>
-          {/if}
-        </div>
+        {:else if auction.bid_count === 0}
+          <p class="text-xs text-center text-neutral-500 dark:text-neutral-400 mt-1">
+            {$t('auction.noBidsReceived')}
+          </p>
+        {/if}
+      </div>
       {/if}
       
       <!-- Quick Property Info -->

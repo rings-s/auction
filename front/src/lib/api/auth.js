@@ -1,7 +1,7 @@
 // src/lib/api/auth.js
 import { API_BASE_URL } from '$lib/constants';
 import { user } from '$lib/stores/user';
-import { goto } from '$app/navigation';
+
 
 const AUTH_URL = `${API_BASE_URL}/accounts`;
 
@@ -156,11 +156,10 @@ export async function fetchUserProfile() {
           user.set(retryData.data.user);
           return retryData.data.user;
         } catch (refreshError) {
-          // If refresh fails, clear auth and redirect to login
+          // If refresh fails, clear auth. The UI will handle the redirect.
           localStorage.removeItem('accessToken');
           localStorage.removeItem('refreshToken');
           user.set(null);
-          goto('/login');
           throw refreshError;
         }
       }

@@ -402,6 +402,121 @@
     </div>
   </div>
 
+  <!-- Rooms Tab -->
+  <div 
+    id="tab-rooms"
+    class="p-8"
+    style="display: {activeTab === 'rooms' ? 'block' : 'none'}"
+    transition:fade={{ duration: 200 }}
+  >
+    <h2 class="text-xl font-bold text-gray-900 dark:text-white mb-6 flex items-center">
+      <svg class="w-6 h-6 mr-2 text-primary-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 5a1 1 0 011-1h14a1 1 0 011 1v2a1 1 0 01-1 1H5a1 1 0 01-1-1V5zM4 13a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H5a1 1 0 01-1-1v-6zM16 13a1 1 0 011-1h2a1 1 0 011 1v6a1 1 0 01-1 1h-2a1 1 0 01-1-1v-6z" />
+      </svg>
+      {$t('property.rooms')} ({property.rooms?.length || 0})
+    </h2>
+
+    {#if property.rooms && property.rooms.length > 0}
+      <div class="grid gap-6">
+        {#each property.rooms as room, index}
+          <div class="bg-white dark:bg-gray-750 border border-gray-200 dark:border-gray-600 rounded-xl p-6 shadow-sm hover:shadow-md transition-shadow">
+            <div class="flex flex-col md:flex-row md:items-start justify-between mb-4">
+              <div class="flex-grow">
+                <div class="flex items-center mb-2">
+                  <h3 class="text-lg font-semibold text-gray-900 dark:text-white mr-3">
+                    {room.name}
+                  </h3>
+                  <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-primary-100 text-primary-800 dark:bg-primary-900 dark:text-primary-200">
+                    {translateRoomType(room.room_type)}
+                  </span>
+                </div>
+                
+                {#if room.description}
+                  <p class="text-gray-600 dark:text-gray-300 mb-3">
+                    {room.description}
+                  </p>
+                {/if}
+              </div>
+            </div>
+
+            <!-- Room Details Grid -->
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
+              {#if room.area_sqm}
+                <div class="text-center p-3 bg-gray-50 dark:bg-gray-700 rounded-lg">
+                  <div class="text-lg font-bold text-gray-900 dark:text-white">
+                    {room.area_sqm}
+                  </div>
+                  <div class="text-xs text-gray-500 dark:text-gray-400">
+                    {$t('property.sqm')}
+                  </div>
+                </div>
+              {/if}
+
+              <div class="text-center p-3 bg-gray-50 dark:bg-gray-700 rounded-lg">
+                <div class="text-lg font-bold text-gray-900 dark:text-white">
+                  {room.floor || 1}
+                </div>
+                <div class="text-xs text-gray-500 dark:text-gray-400">
+                  {$t('property.floor')}
+                </div>
+              </div>
+
+              {#if room.has_window}
+                <div class="text-center p-3 bg-blue-50 dark:bg-blue-900/30 rounded-lg">
+                  <svg class="w-6 h-6 text-blue-500 mx-auto mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4h16v16H4V4zm0 0l16 16M4 20l16-16" />
+                  </svg>
+                  <div class="text-xs text-blue-600 dark:text-blue-400">
+                    {$t('property.hasWindow')}
+                  </div>
+                </div>
+              {/if}
+
+              {#if room.has_bathroom}
+                <div class="text-center p-3 bg-green-50 dark:bg-green-900/30 rounded-lg">
+                  <svg class="w-6 h-6 text-green-500 mx-auto mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z" />
+                  </svg>
+                  <div class="text-xs text-green-600 dark:text-green-400">
+                    {$t('property.hasBathroom')}
+                  </div>
+                </div>
+              {/if}
+            </div>
+
+            <!-- Room Features -->
+            {#if room.features && room.features.length > 0}
+              <div class="border-t border-gray-200 dark:border-gray-600 pt-4">
+                <h4 class="text-sm font-medium text-gray-900 dark:text-white mb-2">
+                  {$t('property.features')}
+                </h4>
+                <div class="flex flex-wrap gap-2">
+                  {#each room.features as feature}
+                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-secondary-100 text-secondary-800 dark:bg-secondary-900 dark:text-secondary-200">
+                      {translateFeatureOrAmenity(feature, 'roomFeature')}
+                    </span>
+                  {/each}
+                </div>
+              </div>
+            {/if}
+          </div>
+        {/each}
+      </div>
+    {:else}
+      <!-- No Rooms State -->
+      <div class="text-center py-12 bg-gray-50 dark:bg-gray-750 rounded-xl">
+        <svg class="mx-auto h-12 w-12 text-gray-400 dark:text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 5a1 1 0 011-1h14a1 1 0 011 1v2a1 1 0 01-1 1H5a1 1 0 01-1-1V5zM4 13a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H5a1 1 0 01-1-1v-6zM16 13a1 1 0 011-1h2a1 1 0 011 1v6a1 1 0 01-1 1h-2a1 1 0 01-1-1v-6z" />
+        </svg>
+        <h3 class="mt-2 text-base font-medium text-gray-900 dark:text-white">
+          {$t('property.noRooms')}
+        </h3>
+        <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">
+          {$t('property.noRoomsInfo')}
+        </p>
+      </div>
+    {/if}
+  </div>
 
   <!-- Location Tab -->
   <div 

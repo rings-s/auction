@@ -86,6 +86,10 @@
       if (!preparedAuction) {
         throw new Error('Failed to get form data');
       }
+
+      // Ensure the auction is published and has proper status
+      preparedAuction.is_published = true;
+      preparedAuction.status = 'scheduled'; // Will auto-change to 'live' when start time is reached
       
       if (!preparedAuction.title || !preparedAuction.description) {
         throw new Error('Title and description are required');

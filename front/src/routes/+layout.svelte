@@ -4,7 +4,8 @@
 	import { theme } from '$lib/stores/theme';
 	import { locale } from '$lib/i18n';
 	import { user } from '$lib/stores/user';
-	import { fetchUserProfile } from '$lib/api/auth';
+		import { fetchUserProfile } from '$lib/api/auth';
+	import { goto } from '$app/navigation';
 	import { browser } from '$app/environment';
   
 	import Navbar from '$lib/components/layout/Navbar.svelte';
@@ -39,8 +40,10 @@
 		  try {
 			await fetchUserProfile();
 		  } catch (error) {
-			console.error('Failed to fetch user profile:', error);
-			localStorage.removeItem('accessToken');
+			console.error('Session refresh failed, redirecting to login:', error);
+			// This error is thrown from auth.js when token refresh fails.
+			// The user's state is already cleared, so we just need to navigate.
+			goto('/login');
 		  }
 		}
 		
@@ -72,7 +75,7 @@
 	<title>Real Estate Auction Platform</title>
   </svelte:head>
   
-  <div class="min-h-screen flex flex-col  dark:bg-gray-800 transition-colors duration-200">
+  <div class="min-h-screen flex flex-col dark:bg-gray-800 transition-colors duration-200">
 	{#if error}
 	  <div class="flex items-center justify-center min-h-screen bg-red-50 dark:bg-red-900/20">
 		<div class="text-center p-8">

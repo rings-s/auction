@@ -544,6 +544,7 @@ export const arTranslations = {
     timeline: 'الجدول الزمني',
     uploadMedia: 'رفع الوسائط',
     termsConditionsDesc: 'الشروط والأحكام الخاصة بالمزاد',
+    register: 'التسجيل للمزاد',
 
 
     liveBidding: 'المزايدة المباشرة',

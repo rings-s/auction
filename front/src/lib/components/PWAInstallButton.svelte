@@ -3,74 +3,49 @@
 	import { browser } from '$app/environment';
 
 	let deferredPrompt = null;
-	let showInstallButton = false;
-	let isStandalone = false;
-	let debugInfo = '';
 
 	onMount(() => {
 		if (browser) {
-			console.log('PWAInstallButton mounted');
-			
-			// Check if app is already installed
-			isStandalone = window.matchMedia('(display-mode: standalone)').matches || 
-						   window.navigator.standalone === true;
-
-			debugInfo = `Standalone: ${isStandalone}`;
-			console.log('PWA Debug:', debugInfo);
-
-			if (!isStandalone) {
-				// Listen for install prompt
-				window.addEventListener('beforeinstallprompt', (e) => {
-					console.log('beforeinstallprompt fired');
-					e.preventDefault();
-					deferredPrompt = e;
-					showInstallButton = true;
-				});
-
-				// Listen for app installed
-				window.addEventListener('appinstalled', () => {
-					console.log('PWA was installed');
-					showInstallButton = false;
-					deferredPrompt = null;
-					isStandalone = true;
-				});
-
-				// Force show button for testing (remove in production)
-				setTimeout(() => {
-					if (!isStandalone) {
-						showInstallButton = true;
-						console.log('Forcing install button visibility for testing');
-					}
-				}, 1000);
+			// Check if the app is already installed. Do not show the button if it is.
+			const isStandalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone;
+			if (isStandalone) {
+				return;
 			}
+
+			window.addEventListener('beforeinstallprompt', (e) => {
+				// Prevent the default browser prompt
+				e.preventDefault();
+				// Stash the event so it can be triggered later
+				deferredPrompt = e;
+			});
+
+			window.addEventListener('appinstalled', () => {
+				// Clear the prompt when the app is installed
+				deferredPrompt = null;
+			});
 		}
 	});
 
 	async function handleInstall() {
-		console.log('Install button clicked');
-		
 		if (!deferredPrompt) {
-			// Manual install instructions
-			alert('To install this app:\n\n1. Click the menu button (⋮) in your browser\n2. Select "Install app" or "Add to Home Screen"\n\nOr use Chrome\'s address bar install icon if available.');
+			// Fallback for browsers that don't support the prompt
+			alert('To install, please use the "Add to Home Screen" option in your browser menu.');
 			return;
 		}
-
 		try {
+			// Show the browser's install prompt
 			deferredPrompt.prompt();
-			const { outcome } = await deferredPrompt.userChoice;
-			
-			console.log('Install prompt outcome:', outcome);
-			
+			// Wait for the user to respond to the prompt
+			await deferredPrompt.userChoice;
+			// Clear the prompt once used
 			deferredPrompt = null;
-			showInstallButton = false;
 		} catch (error) {
-			console.error('Install error:', error);
+			// The user chose not to install the app
 		}
 	}
 </script>
 
-<!-- Always show for testing - remove the conditional in production -->
-{#if showInstallButton || !isStandalone}
+{#if deferredPrompt}
 	<div class="fixed top-4 right-4 z-50">
 		<button
 			type="button"
@@ -83,12 +58,5 @@
 			</svg>
 			📱 Install App
 		</button>
-	</div>
-{/if}
-
-<!-- Debug info for testing -->
-{#if browser && !isStandalone}
-	<div class="fixed bottom-4 right-4 z-50 bg-black text-white text-xs p-2 rounded opacity-75">
-		Debug: {debugInfo}
 	</div>
 {/if}

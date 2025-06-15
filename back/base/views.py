@@ -185,14 +185,21 @@ class RoomDetailView(BaseDetailView):
         return [drf_permissions.AllowAny()] if self.request.method in SAFE_METHODS else [drf_permissions.IsAuthenticated(), IsPropertyOwnerOrAppraiserOrDataEntry()]
 
 # Auction Views
+
 class AuctionListCreateView(BaseListCreateView):
     serializer_class = AuctionSerializer
     filterset_class = AuctionFilterSet
     search_fields = ['title', 'description']
 
     def get_queryset(self):
-        return Auction.objects.select_related('related_property', 'related_property__location').prefetch_related('media', 'bids').order_by('-created_at')
-
+        # Remove the is_published filter to show all auctions
+        queryset = Auction.objects.select_related('related_property', 'related_property__location').prefetch_related('media', 'bids')
+        
+        # Auto-update status for all auctions
+        for auction in queryset:
+            auction.update_status_based_on_time()
+        
+        return queryset.order_by('-created_at')
     def get_permissions(self):
         return [drf_permissions.IsAuthenticated(), IsPropertyOwnerOrAppraiser()] if self.request.method == 'POST' else [drf_permissions.AllowAny()]
 

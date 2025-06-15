@@ -12,16 +12,15 @@
   import MediaUploader from '$lib/components/shared/MediaUploader.svelte';
   import Alert from '$lib/components/ui/Alert.svelte';
   
-  // Take initial auction data as a prop
   export let initialAuction = null;
   export let isEditing = false;
+  // export let validationErrors = {};
   
-  // The auction object that will be bound to form controls
   let auction = {
     title: '',
     slug: '',
-    auction_type: 'reserve',
-    status: 'draft',
+    auction_type: 'public',
+    status: 'scheduled',
     description: '',
     start_date: '',
     end_date: '',
@@ -30,10 +29,10 @@
     related_property_id: null,
     starting_bid: '',
     minimum_increment: 100,
-    auto_extend_minutes: 0,
+    auto_extend_minutes: 5,  // Changed from 0 to 5 for auto-extension
     minimum_participants: 1,
     require_bid_verification: false,
-    is_published: false,
+    is_published: true,      // Changed from false to true
     is_featured: false,
     terms_conditions: '',
     media: []

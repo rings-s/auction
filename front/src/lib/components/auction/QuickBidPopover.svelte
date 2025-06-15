@@ -62,13 +62,19 @@
     <div 
       class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black bg-opacity-50"
       on:click={handleBackdropClick}
+      on:keydown={(e) => e.key === 'Escape' && close()}
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="quick-bid-title"
+      tabindex="-1"
     >
       <div class="bg-white dark:bg-gray-800 rounded-xl shadow-xl max-w-md w-full p-6 transform transition-all">
         <div class="flex items-center justify-between mb-4">
-          <h3 class="text-lg font-bold text-gray-900 dark:text-white">
+          <h3 id="quick-bid-title" class="text-lg font-bold text-gray-900 dark:text-white">
             Quick Bid - {auction.title}
           </h3>
           <button
+            aria-label="Close"
             on:click={close}
             class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
           >
