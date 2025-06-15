@@ -59,18 +59,8 @@ ALLOWED_HOSTS = []
 if os.getenv('ALLOWED_HOSTS'):
     ALLOWED_HOSTS = os.getenv('ALLOWED_HOSTS').split(',')
 
-# Default hosts for different environments
-if DEBUG or ENVIRONMENT == 'development':
-    ALLOWED_HOSTS.extend([
-        'localhost', '127.0.0.1', '0.0.0.0',
-        'localhost:8000', '127.0.0.1:8000',  # Django dev server
-        'localhost:7500', '127.0.0.1:7500',  # Custom port
-    ])
-else:
-    ALLOWED_HOSTS.extend([
-        '.pinealdevelopers.com',
-        'auction.pinealdevelopers.com',
-    ])
+# The ALLOWED_HOSTS is primarily configured via the environment variable in docker-compose.
+# The block that extended this list with hardcoded values has been removed to avoid conflicts.
 
 # Add Docker container names if running in Docker
 if RUNNING_IN_DOCKER:
@@ -135,49 +125,40 @@ REDIS_URL = get_redis_url()
 if DEBUG or ENVIRONMENT == 'development':
     print("🔥 DEVELOPMENT MODE - Security features relaxed")
     SECURE_SSL_REDIRECT = False
-    SECURE_PROXY_SSL_HEADER = None
     SESSION_COOKIE_SECURE = False
     CSRF_COOKIE_SECURE = False
-    SECURE_HSTS_SECONDS = 0
-    SECURE_HSTS_INCLUDE_SUBDOMAINS = False
-    SECURE_HSTS_PRELOAD = False
-    SECURE_CONTENT_TYPE_NOSNIFF = False
-    SECURE_BROWSER_XSS_FILTER = False
-    USE_X_FORWARDED_HOST = False
-    USE_X_FORWARDED_PORT = False
-    
-    # CORS settings for development
-    CORS_ALLOW_ALL_ORIGINS = True
-    CORS_ALLOWED_ORIGINS = [
-        "http://localhost:7500", "http://127.0.0.1:7500",
-        "http://localhost:3000", "http://127.0.0.1:3000",
-        "http://localhost:5173", "http://127.0.0.1:5173",
-    ]
 else:
     print("🔥 PRODUCTION MODE - Security features enabled")
-    SECURE_SSL_REDIRECT = False  # Cloudflare handles SSL
+    SECURE_SSL_REDIRECT = os.getenv('SECURE_SSL_REDIRECT', 'True').lower() == 'true'
     SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
     SESSION_COOKIE_SECURE = True
     CSRF_COOKIE_SECURE = True
-    SECURE_BROWSER_XSS_FILTER = True
-    SECURE_CONTENT_TYPE_NOSNIFF = True
-    SECURE_HSTS_SECONDS = 31536000  # 1 year
+    SECURE_HSTS_SECONDS = 31536000
     SECURE_HSTS_INCLUDE_SUBDOMAINS = True
     SECURE_HSTS_PRELOAD = True
-    X_FRAME_OPTIONS = 'DENY'
-    USE_X_FORWARDED_HOST = True
-    USE_X_FORWARDED_PORT = True
-    
-    # CORS settings for production
-    CORS_ALLOW_ALL_ORIGINS = False
-    CORS_ALLOWED_ORIGINS = [
-        "https://auction.pinealdevelopers.com",
-        "http://auction.pinealdevelopers.com",
-    ]
-    CSRF_TRUSTED_ORIGINS = [
-        "https://auction.pinealdevelopers.com",
-        "http://auction.pinealdevelopers.com",
-    ]
+
+# CORS CONFIGURATION
+# ==================
+# We prioritize the environment variable from docker-compose, with a fallback for local dev.
+CORS_ALLOW_ALL_ORIGINS = False
+CORS_ALLOWED_ORIGINS = [origin for origin in os.getenv('CORS_ALLOWED_ORIGINS', '').split(',') if origin]
+
+if not CORS_ALLOWED_ORIGINS:
+    if DEBUG or ENVIRONMENT == 'development':
+        print("🔥 CORS: Using default development origins")
+        CORS_ALLOWED_ORIGINS = [
+            "http://localhost:7500", "http://127.0.0.1:7500",
+            "http://localhost:5173", "http://127.0.0.1:5173",
+        ]
+    else:
+        print("⚠️  WARNING: CORS_ALLOWED_ORIGINS is not set in production!")
+        CORS_ALLOWED_ORIGINS = []
+
+print(f"🔥 CORS_ALLOWED_ORIGINS: {CORS_ALLOWED_ORIGINS}")
+CSRF_TRUSTED_ORIGINS = [
+    "https://auction.pinealdevelopers.com",
+    "http://auction.pinealdevelopers.com",
+]
 
 # Common CORS settings
 CORS_ALLOW_CREDENTIALS = True

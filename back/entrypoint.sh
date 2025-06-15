@@ -54,8 +54,8 @@ EOF
 echo "🌟 Starting Django development server..."
 if [ "$DEBUG" = "true" ]; then
     echo "🔥 Running in DEBUG mode"
-    python manage.py runserver 0.0.0.0:7500
+    python manage.py runserver 0.0.0.0:8000
 else
     echo "🚀 Running in PRODUCTION mode with Gunicorn"
-    gunicorn back.wsgi:application --bind 0.0.0.0:7500 --workers 3
+    gunicorn back.wsgi:application --bind 0.0.0.0:8000 --workers 3
 fi
