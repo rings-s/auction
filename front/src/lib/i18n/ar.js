@@ -99,6 +99,8 @@ export const arTranslations = {
     allPropertyTypes: 'جميع أنواع العقارات',
     advancedFilters: 'خيارات البحث المتقدمة',
     sort: 'ترتيب حسب',
+    clearAll: 'مسح الكل',
+
     sortOptions: {
       newest: 'الأحدث أولاً',
       priceAsc: 'السعر: من الأقل إلى الأعلى',
@@ -562,74 +564,67 @@ export const arTranslations = {
     bidPlaced: 'تم وضع مزايدتك بنجاح!',
 
 
-     // Custom Bidding
-  customBid: 'مزايدة مخصصة',
-  enterCustomBid: 'أدخل مبلغ مزايدة مخصص',
-  submitCustomBid: 'إرسال مزايدة مخصصة',
-  advancedBidding: 'مزايدة متقدمة',
-  openAdvancedBidding: 'فتح خيارات المزايدة المتقدمة',
-  quickBidSuggestions: 'اقتراحات المزايدة السريعة',
-  advancedOptions: 'خيارات متقدمة',
-  minimumRequired: 'الحد الأدنى المطلوب',
-  bidNotesPlaceholder: 'أضف أي ملاحظات مع مزايدتك...',
-  bidNotes: 'ملاحظات المزايدة',
-  bidNotesHelp: 'أضف أي ملاحظات إضافية مع مزايدتك',
-  autoBidUpTo: 'المزايدة التلقائية حتى هذا المبلغ',
-  toWin: 'للفوز',
-  bidSummary: 'ملخص المزايدة',
-  youWillBid: 'ستقوم بالمزايدة بمبلغ',
-  withAutoUpTo: 'مع المزايدة التلقائية حتى',
-  placeAutoBid: 'وضع مزايدة تلقائية',
+    customBid: 'مزايدة مخصصة',
+    enterCustomBid: 'أدخل مبلغ مزايدة مخصص',
+    submitCustomBid: 'إرسال مزايدة مخصصة',
+    advancedBidding: 'مزايدة متقدمة',
+    openAdvancedBidding: 'فتح خيارات المزايدة المتقدمة',
+    quickBidSuggestions: 'اقتراحات المزايدة السريعة',
+    advancedOptions: 'خيارات متقدمة',
+    minimumRequired: 'الحد الأدنى المطلوب',
+    bidNotesPlaceholder: 'أضف أي ملاحظات مع مزايدتك...',
+    bidNotes: 'ملاحظات المزايدة',
+    bidNotesHelp: 'أضف أي ملاحظات إضافية مع مزايدتك',
+    autoBidUpTo: 'المزايدة التلقائية حتى هذا المبلغ',
+    toWin: 'للفوز',
+    bidSummary: 'ملخص المزايدة',
+    youWillBid: 'ستقوم بالمزايدة بمبلغ',
+    withAutoUpTo: 'مع المزايدة التلقائية حتى',
+    placeAutoBid: 'وضع مزايدة تلقائية',
+    autoBidding: 'المزايدة التلقائية',
+    enableAutoBidding: 'تفعيل المزايدة التلقائية',
+    maxBidAmount: 'أقصى مبلغ للمزايدة',
+    autoBidHelp: 'ضع مزايدات تلقائياً عند تجاوز مزايدتك، حتى المبلغ الأقصى',
+    bidStatus: 'حالة المزايدة',
+    bidAmount: 'مبلغ المزايدة',
+    bidTime: 'وقت المزايدة',
+    bidder: 'المزايد',
+    you: 'أنت',
+    anonymous: 'مجهول',
+    winning: 'فائز حالياً',
+    outbid: 'تم تجاوز مزايدتك',
+    bidTooLow: 'يجب أن تكون المزايدة على الأقل {amount}',
+    bidFailed: 'فشل في وضع المزايدة',
+    bidAmountRequired: 'مبلغ المزايدة مطلوب',
+    invalidBidAmount: 'مبلغ مزايدة غير صالح',
   
-  // Auto Bidding
-  autoBidding: 'المزايدة التلقائية',
-  enableAutoBidding: 'تفعيل المزايدة التلقائية',
-  maxBidAmount: 'أقصى مبلغ للمزايدة',
-  autoBidHelp: 'ضع مزايدات تلقائياً عند تجاوز مزايدتك، حتى المبلغ الأقصى',
+    // Registration
+    registerForAuction: 'سجل للمزاد',
+    registrationRequired: 'التسجيل مطلوب',
+    registered: 'مسجل',
   
-  // Bid Status
-  bidAmount: 'مبلغ المزايدة',
-  bidStatus: 'حالة المزايدة',
-  bidTime: 'وقت المزايدة',
-  bidder: 'المزايد',
-  you: 'أنت',
-  anonymous: 'مجهول',
-  winning: 'فائز حالياً',
-  outbid: 'تم تجاوز مزايدتك',
+    // Login Required
+    loginRequired: 'تسجيل الدخول مطلوب',
+    loginToPlaceBid: 'سجل دخول لوضع مزايدة',
+    loginRequiredMessage: 'يجب أن تكون مسجلاً لوضع مزايدة في هذا المزاد',
   
-  // Errors and Validation
-  bidTooLow: 'يجب أن تكون المزايدة على الأقل {amount}',
-  bidFailed: 'فشل في وضع المزايدة',
-  bidAmountRequired: 'مبلغ المزايدة مطلوب',
-  invalidBidAmount: 'مبلغ مزايدة غير صالح',
+    // Bid Agreement
+    bidAgreement: 'اتفاقية المزايدة',
+    bidDisclaimer: 'بوضع مزايدة، فإنك توافق على الشروط والأحكام لهذا المزاد.',
   
-  // Registration
-  registerForAuction: 'سجل للمزاد',
-  registrationRequired: 'التسجيل مطلوب',
-  registered: 'مسجل',
+    // Currency Related
+    minimumBid: 'أقل مزايدة',
+    totalBids: 'إجمالي المزايدات',
+    
+    // Additional Status Messages
+    placingBid: 'جاري وضع المزايدة...',
+    bidSubmitted: 'تم إرسال المزايدة: {amount}',
+    bidUpdated: 'تم تحديث المزايدة إلى {amount}',
   
-  // Login Required
-  loginRequired: 'تسجيل الدخول مطلوب',
-  loginToPlaceBid: 'سجل دخول لوضع مزايدة',
-  loginRequiredMessage: 'يجب أن تكون مسجلاً لوضع مزايدة في هذا المزاد',
-  
-  // Bid Agreement
-  bidAgreement: 'اتفاقية المزايدة',
-  bidDisclaimer: 'بوضع مزايدة، فإنك توافق على الشروط والأحكام لهذا المزاد.',
-  
-  // Currency Related
-  minimumBid: 'أقل مزايدة',
-  totalBids: 'إجمالي المزايدات',
-  
-  // Additional Status Messages
-  placingBid: 'جاري وضع المزايدة...',
-  bidSubmitted: 'تم إرسال المزايدة: {amount}',
-  bidUpdated: 'تم تحديث المزايدة إلى {amount}',
-  
-  // Quick Bid Labels
-  minBidLabel: 'أقل مزايدة',
-  incrementLabel: '+{increment}',
-  powerLabel: 'قوية',
+    // Quick Bid Labels
+    minBidLabel: 'أقل مزايدة',
+    incrementLabel: '+{increment}',
+    powerLabel: 'قوية',
 
     timeRemaining: 'الوقت المتبقي',
     days: 'أيام',
@@ -684,7 +679,7 @@ export const arTranslations = {
     scheduled: "مجدول",
     noImages: "لا توجد صور متاحة",
     noImagesDescription: "لم يتم تحميل أي صور لهذا المزاد بعد.",
-
+    mostActive: 'الأكثر نشاطاً',
     auctionProperty: 'عقار المزاد',
     createAuction: 'إنشاء مزاد جديد',
     createAuctionDesc: 'إعداد مزاد جديد لأحد عقاراتك',
@@ -855,6 +850,16 @@ export const arTranslations = {
     endAuction: 'إنهاء المزاد واختيار الفائز',
     selectWinnerEndAuction: 'اختيار الفائز وإنهاء المزاد',
     extend: 'تمديد',
+
+    standardTerms: 'الشروط المعمول بها',
+    standardTermsHelp: 'أضف أي شروط أو شروط للمزايد الفائز',
+    
+    term1: "جميع العروض المقدمة في المزاد نهائية ولا يمكن التراجع عنها تحت أي ظرف.",
+    term2: "يلتزم الفائز بالمزاد بإتمام عملية الدفع خلال مدة أقصاها 48 ساعة من وقت إغلاق المزاد.",
+    term3: "تُباع جميع العقارات بالحالة الراهنة (كما هي) دون أي ضمانات صريحة أو ضمنية.",
+    term4: "يتحمل المشتري مسؤولية إنهاء إجراءات نقل الملكية حسب الأنظمة والقوانين المعمول بها."
+    
+    
   },
 
   messages: {

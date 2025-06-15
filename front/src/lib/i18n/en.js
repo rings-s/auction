@@ -75,6 +75,7 @@ export const enTranslations = {
     allPropertyTypes: 'All Property Types',
     advancedFilters: 'Advanced Filters',
     sort: 'Sort by',
+    clearAll: 'Clear All',
     sortOptions: {
       newest: 'Newest first',
       priceAsc: 'Price: Low to High',
@@ -238,8 +239,6 @@ export const enTranslations = {
     addressInfo: 'Address Information',
     keyFeatures: 'Key Features',
     featuresAndAmenities: 'Features & Amenities',
-    nearbyServices: 'Nearby Services',
-    nearbyServicesInfo: 'Nearby services information not currently available',
     mediaUpload: 'Media Upload',
     mediaUploadDesc: 'Upload photos, floor plans, and documents for your property. Supported formats: JPEG, PNG, GIF, PDF.',
     deedNumber: 'Deed Number',
@@ -292,6 +291,7 @@ export const enTranslations = {
     noActiveAuctions: 'No active auctions for this property',
     startAuctionDesc: 'Start an auction for this property',
     create: 'Create',
+    keyDetails: 'Key Details',
     
     tab: {
       overview: 'Overview',
@@ -684,11 +684,10 @@ export const enTranslations = {
     placeFirstBid: 'Place First Bid',
     signInToPlaceFirstBid: 'Sign In to Place First Bid',
     standardTerms: 'Standard Auction Terms',
-    term1: 'All bids are final and binding',
-    term2: 'Payment must be completed within 48 hours',
-    term3: 'Items are sold as-is without warranty',
-    term4: 'Buyer is responsible for pickup or shipping costs',
-    noAuctionData: 'Auction data not available',
+    term1: 'All bids placed in the auction are final and cannot be withdrawn under any circumstances.',
+    term2: 'The winning bidder must complete payment within 48 hours of the auction closing.',
+    term3: 'All properties are sold in their current condition ("as-is") without any express or implied warranties.',
+    term4: 'The buyer is responsible for completing the property title transfer in accordance with applicable laws and regulations.'
     
   },
 
@@ -872,7 +871,6 @@ export const enTranslations = {
     view: 'View',
     activeOnly: 'Active Only',
     winningOnly: 'Winning Only',
-    maxBid: 'Max Bid',
     viewAuction: 'View Auction'
   },
 
