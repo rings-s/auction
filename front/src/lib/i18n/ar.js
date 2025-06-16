@@ -525,7 +525,14 @@ export const arTranslations = {
     loginToContact: "يرجى تسجيل الدخول إلى حسابك لإرسال رسالة إلى مالك العقار.",
     message: "رسالتك",
     messagePlaceholder: "مرحباً! أنا مهتم بهذا العقار. هل يمكنك تقديم المزيد من التفاصيل حول...",
-    sendMessage: "إرسال رسالة"
+    sendMessage: "إرسال رسالة",
+    totalProperties: 'إجمالي العقارات',
+    averagePrice: 'متوسط السعر',
+    moreAvailable: 'المزيد من العقارات متاح',
+    showingFirst: 'عرض أول',
+    of: 'من',
+    viewAllProperties: 'عرض جميع العقارات',
+    wantToListProperty: 'تريد إدراج عقارك؟'
   },
 
   auction: {
@@ -906,6 +913,7 @@ export const arTranslations = {
     send: "إرسال الرسالة",
     unknownUser: 'مستخدم غير معروف',
     errorFetchingUser: 'خطأ في جلب بيانات المستخدم',
+    allPriorities: 'جميع الأولويات',
     filters: {
       all: "جميع الرسائل",
       inbox: "صندوق الوارد", 
@@ -917,6 +925,7 @@ export const arTranslations = {
       priority: "أولوية الرسالة"
     },
     priority: {
+      title: "أولوية",
       low: "أولوية منخفضة",
       normal: "عادية",
       high: "أولوية عالية",

@@ -11,6 +11,7 @@ export default defineConfig({
 
 		cors: true,
 		allowedHosts: ['auction.pinealdevelopers.com']
+		
 	},
 	optimizeDeps: {
 		exclude: ['clsx'],

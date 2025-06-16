@@ -35,7 +35,14 @@ export const enTranslations = {
     email: 'Share via Email',
     copyLink: 'Copy Link',
     linkCopied: 'Link copied!',
-    complete: ''
+    complete: 'Complete',
+    view: 'View',
+    daysAgo: 'days ago',
+    all: 'All',
+    search: 'Search',
+    clear: 'Clear',
+    clearAll: 'Clear All',
+    
   },
 
   nav: {
@@ -455,7 +462,14 @@ export const enTranslations = {
     loginToContact: "Please login to your account to send a message to the property owner.",
     message: "Your Message",
     messagePlaceholder: "Hi! I'm interested in this property. Could you please provide more details about...",
-    sendMessage: "Send Message"
+    sendMessage: "Send Message",
+    totalProperties: 'Total Properties',
+    averagePrice: 'Average Price',
+    moreAvailable: 'More Properties Available',
+    showingFirst: 'Showing first',
+    of: 'of',
+    viewAllProperties: 'View All Properties',
+    wantToListProperty: 'Want to list your property?'
   },
 
   auction: {
@@ -734,6 +748,7 @@ export const enTranslations = {
     send: 'Send Message',
     unknownUser: 'Unknown User',
     errorFetchingUser: 'Error fetching user data',
+    allPriorities: 'All Priorities',
     filters: {
       all: 'All Messages',
       inbox: 'Inbox',
@@ -745,11 +760,13 @@ export const enTranslations = {
       priority: 'Message Priority'
     },
     priority: {
+      title: 'Priority',
       low: 'Low Priority',
       normal: 'Normal',
       high: 'High Priority',
       urgent: 'Urgent'
-    }
+    },
+    
   },
 
   dashboard: {

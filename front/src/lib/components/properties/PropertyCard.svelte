@@ -115,9 +115,9 @@
 
 <a 
   href={`/properties/${property.slug || property.id}`} 
-  class="block h-full group"
+  class="block h-full group transform transition-all duration-300 hover:scale-[1.02] hover:shadow-xl"
 >
-  <div class="bg-white dark:bg-gray-800 rounded-lg shadow-md overflow-hidden transition-all duration-300 hover:shadow-xl hover:-translate-y-1 h-full flex flex-col" dir={isRTL ? 'rtl' : 'ltr'}>
+  <div class="bg-white dark:bg-gray-800 rounded-xl shadow-lg overflow-hidden transition-all duration-300 hover:shadow-2xl h-full flex flex-col border border-neutral-200 dark:border-neutral-700" dir={isRTL ? 'rtl' : 'ltr'}>
     <!-- Image Section -->
     <div class="relative h-56">
       <img 

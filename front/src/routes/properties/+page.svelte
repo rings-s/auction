@@ -2,7 +2,7 @@
 <script>
   import { onMount, onDestroy } from 'svelte';
   import { fade, slide, fly } from 'svelte/transition';
-  import { t, locale } from '$lib/i18n'; // Fixed import path
+  import { t, locale } from '$lib/i18n';
   import { user } from '$lib/stores/user';
   import { getProperties } from '$lib/api/property';
   import { properties as propertiesStore } from '$lib/stores/properties';
@@ -20,6 +20,7 @@
   let error = null;
   let currentPage = 1;
   let totalPages = 1;
+  let totalCount = 0;
   let loadingMore = false;
   let debounceTimer;
   let showMobileFilters = false;
@@ -41,6 +42,25 @@
   
   // Check permissions for creating properties
   $: canCreateProperty = $user && ($user.role === 'owner' || $user.role === 'appraiser' || $user.is_staff || $user.is_superuser);
+
+  // Display only first 3 properties
+  $: displayedProperties = properties.slice(0, 3);
+  
+  // Calculate statistics
+  $: featuredCount = properties.filter(p => p.is_featured).length;
+  $: averagePrice = properties.length > 0 
+    ? properties.reduce((sum, p) => sum + (p.market_value || 0), 0) / properties.length 
+    : 0;
+
+  // Format currency
+  function formatCurrency(value) {
+    if (!value) return '$0';
+    return new Intl.NumberFormat($locale === 'ar' ? 'ar-SA' : 'en-US', {
+      style: 'currency',
+      currency: $locale === 'ar' ? 'SAR' : 'USD',
+      maximumFractionDigits: 0
+    }).format(value);
+  }
 
   // Convert search params to API params
   function getApiParams() {
@@ -82,7 +102,7 @@
     return params;
   }
 
-  // Handle search submission
+  // Handle search submission (using PropertySearch component approach)
   async function handleSearch(event) {
     if (event) {
       searchParams = event.detail;
@@ -111,6 +131,7 @@
         } else {
           properties = [...properties, ...response.results];
         }
+        totalCount = response.count || 0;
         totalPages = Math.ceil(response.count / (response.page_size || 10));
       } else if (Array.isArray(response)) {
         if (reset) {
@@ -118,6 +139,7 @@
         } else {
           properties = [...properties, ...response];
         }
+        totalCount = response.length;
         totalPages = 1;
       } else {
         const results = response.data?.results || [];
@@ -126,6 +148,7 @@
         } else {
           properties = [...properties, ...results];
         }
+        totalCount = response.data?.count || results.length;
         totalPages = Math.ceil((response.data?.count || results.length) / (response.data?.page_size || 10));
       }
       
@@ -171,26 +194,51 @@
   <meta name="description" content={$t('properties.subtitle')} />
 </svelte:head>
 
-<div class="min-h-screen" dir={isRTL ? 'rtl' : 'ltr'}>
-  <div class="relative ">
-    <div class="absolute inset-0"></div>
+<div class="min-h-screen bg-gray-50 dark:bg-gray-900">
+  <!-- Enhanced Hero Section with Stats -->
+  <div class="relative bg-gradient-to-br from-primary-600 via-primary-700 to-secondary-700 text-white">
+    <div class="absolute inset-0 bg-black/20"></div>
     <div class="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 md:py-12">
       <div class="md:flex md:items-center md:justify-between">
         <div>
-          <h1 class="text-2xl md:text-3xl font-bold text-gray-900 dark:text-white">
+          <h1 class="text-3xl md:text-4xl font-bold flex items-center">
             {$t('properties.title')}
+            {#if featuredCount > 0}
+              <span class="ml-3 inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-yellow-500 text-white">
+                <span class="w-2 h-2 bg-white rounded-full mr-2"></span>
+                {featuredCount} Featured
+              </span>
+            {/if}
           </h1>
-          <p class="mt-2 text-sm md:text-base text-gray-600 dark:text-gray-300 max-w-2xl">
+          <p class="mt-2 text-base md:text-lg text-white/90 max-w-2xl">
             {$t('properties.subtitle')}
           </p>
+          
+          <!-- Live Stats Bar -->
+          {#if totalCount > 0}
+            <div class="mt-4 flex flex-wrap gap-4">
+              <div class="bg-white/10 backdrop-blur-sm rounded-lg px-4 py-2">
+                <p class="text-xs text-white/70">{$t('properties.totalProperties')}</p>
+                <p class="text-xl font-bold">{totalCount}</p>
+              </div>
+              <div class="bg-white/10 backdrop-blur-sm rounded-lg px-4 py-2">
+                <p class="text-xs text-white/70">{$t('properties.averagePrice')}</p>
+                <p class="text-xl font-bold">{formatCurrency(averagePrice)}</p>
+              </div>
+              <div class="bg-white/10 backdrop-blur-sm rounded-lg px-4 py-2">
+                <p class="text-xs text-white/70">{$t('property.featured')}</p>
+                <p class="text-xl font-bold">{featuredCount}</p>
+              </div>
+            </div>
+          {/if}
         </div>
         
-        <!-- Create Property Link -->
+        <!-- Create Property Button -->
         {#if canCreateProperty}
-          <div class="mt-4 md:mt-0">
+          <div class="mt-6 md:mt-0">
             <a 
               href="/properties/create" 
-              class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-full shadow-md text-white bg-primary-600 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 transition-all duration-300 hover:shadow-lg transform hover:-translate-y-0.5"
+              class="inline-flex items-center px-6 py-3 border border-transparent text-base font-medium rounded-full shadow-lg text-primary-600 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-white transition-all duration-300 hover:shadow-xl transform hover:-translate-y-0.5"
             >
               <svg class="w-5 h-5 {isRTL ? 'ml-2' : 'mr-2'}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
@@ -206,7 +254,7 @@
         <button
           type="button"
           on:click={toggleMobileFilters}
-          class="flex items-center justify-center px-4 py-2 rounded-full bg-white dark:bg-gray-700 shadow-sm border border-gray-200 dark:border-gray-600 text-sm font-medium text-gray-700 dark:text-gray-100 hover:bg-gray-50 dark:hover:bg-gray-600 transition-colors"
+          class="flex items-center justify-center px-4 py-2 rounded-full bg-white/20 backdrop-blur-sm shadow-sm border border-white/30 text-sm font-medium text-white hover:bg-white/30 transition-colors"
         >
           <svg class="w-4 h-4 {isRTL ? 'ml-2' : 'mr-2'}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4h13M3 8h9m-9 4h6m4 0l4-4m0 0l4 4m-4-4v12" />
@@ -219,7 +267,7 @@
   
   <!-- Main Content Area -->
   <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-    <!-- Search Filters - Desktop -->
+    <!-- Search Filters - Desktop (Using PropertySearch component) -->
     <div class="hidden md:block mb-8">
       <PropertySearch
         {searchParams}
@@ -229,10 +277,10 @@
     
     <!-- Content Area -->
     {#if loading && !properties.length}
-      <!-- Loading Skeleton -->
+      <!-- Loading Skeleton - Only 3 cards -->
       <div in:fade={{ duration: 200 }} out:fade={{ duration: 150 }}>
-        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-          {#each Array(6) as _, i}
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-3 gap-8">
+          {#each Array(3) as _, i}
             <LoadingSkeleton type="propertyCard" />
           {/each}
         </div>
@@ -296,7 +344,7 @@
         </div>
       </div>
 
-    {:else if !properties.length}
+    {:else if !displayedProperties.length}
       <!-- Empty State -->
       <div in:fade={{ duration: 300 }} out:fade={{ duration: 200 }}>
         <EmptyState 
@@ -309,17 +357,17 @@
       </div>
 
     {:else}
-      <!-- Properties Grid -->
-      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-        {#each properties as property, index (property.id)}
-          <div in:fly={{ y: 20, duration: 300, delay: 50 * (index % 6) }} out:fade={{ duration: 200 }}>
+      <!-- Properties Grid - Only 3 Bigger Cards with Updated Responsive Layout -->
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-3 gap-8">
+        {#each displayedProperties as property, index (property.id)}
+          <div in:fly={{ y: 20, duration: 300, delay: 50 * (index % 3) }} out:fade={{ duration: 200 }}>
             <PropertyCard {property} />
           </div>
         {/each}
       </div>
 
       <!-- Load More Button -->
-      {#if currentPage < totalPages && !loadingMore}
+      {#if properties.length > 3}
         <div class="mt-10 flex justify-center">
           <Button
             variant="outline"
@@ -328,7 +376,7 @@
             class="px-8 py-3 transition-all hover:bg-gray-50 dark:hover:bg-gray-700 rounded-full"
           >
             <div class="flex items-center">
-              <span>{$t('auction.loadMore')}</span>
+              <span>{$t('properties.viewMore')} ({properties.length - 3} {$t('properties.more')})</span>
               <svg class="{isRTL ? 'mr-2' : 'ml-2'} w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
               </svg>
@@ -351,7 +399,7 @@
     {/if}
     
     <!-- Create Property Info Box for Non-Authorized Users -->
-    {#if !canCreateProperty && !loading && properties.length > 0 && $user}
+    {#if !canCreateProperty && !loading && displayedProperties.length > 0 && $user}
       <div class="mt-10 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl shadow-md p-6">
         <div class="sm:flex sm:items-center sm:justify-between">
           <div class="max-w-md">
@@ -413,7 +461,7 @@
           </button>
         </div>
         
-        <!-- Mobile Search Component -->
+        <!-- Mobile Search Component (Using PropertySearch component) -->
         <div class="p-4 flex-1">
           <PropertySearch
             {searchParams}
