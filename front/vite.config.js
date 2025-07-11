@@ -6,12 +6,10 @@ export default defineConfig({
 	plugins: [tailwindcss(), sveltekit()],
 	server: {
 		host: '0.0.0.0',
-		port: 5173,
+		port: 5173,  // Changed from deployment port to local port
 		watch: { usePolling: true, interval: 1000 },
-
 		cors: true,
-		allowedHosts: ['auction.pinealdevelopers.com']
-		
+		// allowedHosts: ['auction.pinealdevelopers.com']
 	},
 	optimizeDeps: {
 		exclude: ['clsx'],

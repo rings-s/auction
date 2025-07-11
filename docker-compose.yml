@@ -76,7 +76,8 @@ services:
       - /app/.svelte-kit
       - /app/.vite
     ports:
-      - "7500:5173"
+      - "5173:5173"  # Changed from "7500:5173"
+
     environment:
       - CHOKIDAR_USEPOLLING=true
       - NODE_ENV=development
