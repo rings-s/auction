@@ -963,6 +963,8 @@ export const arTranslations = {
     logOut: 'تسجيل الخروج',
     userRole: 'دور المستخدم',
     roleUser: 'مستخدم عادي',
+    roleLandlord: 'مالك مستأجر',
+    rolePropertyManager: 'مدير عقارات',
     roleOwner: 'مالك العقار',
     roleAppraiser: 'مقيم عقاري',
     roleDataEntry: 'أخصائي إدخال بيانات',

@@ -61,7 +61,7 @@ class MediaListCreateView(generics.ListCreateAPIView):
     API endpoint for listing media files or uploading new ones.
     Media can be linked to various models (Property, Auction, etc.) via GenericForeignKey.
     """
-    queryset = Media.objects.select_related('content_type') # Optimizes DB query by fetching related ContentType.
+    queryset = Media.objects.select_related('content_type', 'owner').order_by('-created_at') # Optimized queries
     serializer_class = MediaSerializer
     permission_classes = [drf_permissions.AllowAny] # Base permission, refined by get_permissions for POST.
     filter_backends = [drf_django_filters.DjangoFilterBackend, filters.SearchFilter]
@@ -119,7 +119,7 @@ class MediaDetailView(generics.RetrieveUpdateDestroyAPIView):
     """
     API endpoint for managing a specific media file.
     """
-    queryset = Media.objects.select_related('content_type')
+    queryset = Media.objects.select_related('content_type', 'owner')
     serializer_class = MediaSerializer
 
     def get_permissions(self):

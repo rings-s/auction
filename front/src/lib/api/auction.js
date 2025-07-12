@@ -11,6 +11,11 @@ const BID_URL = `${API_BASE_URL}/bids`;
 async function apiRequest(url, options = {}) {
   const token = localStorage.getItem('accessToken');
   
+  // Check if user is authenticated for bid endpoints
+  if (url.includes('/bids/') && !token) {
+    throw new Error('Authentication required. Please log in to view bids.');
+  }
+  
   const defaultHeaders = {
     'Content-Type': 'application/json',
     ...(token ? { 'Authorization': `Bearer ${token}` } : {}),
@@ -37,6 +42,11 @@ async function apiRequest(url, options = {}) {
         throw new Error('Your session has expired. Please log in again.');
       }
     }
+    
+    // Handle rate limiting
+    if (response.status === 429) {
+      throw new Error('Too many requests. Please wait a moment before trying again.');
+    }
 
     // Parse response data
     let data;
@@ -51,6 +61,15 @@ async function apiRequest(url, options = {}) {
     // Handle error responses
     if (!response.ok) {
       const errorMessage = extractErrorMessage(data, response.status);
+      
+      // Special handling for verification errors
+      if (response.status === 401 && url.includes('/bids/')) {
+        if (errorMessage.toLowerCase().includes('verified') || 
+            errorMessage.toLowerCase().includes('verification')) {
+          throw new Error('Email verification required. Please verify your email address to access bids.');
+        }
+      }
+      
       throw new Error(errorMessage);
     }
 
@@ -147,10 +166,16 @@ export async function fetchAuctionBidsBySlug(slug) {
     // First get the auction to get its ID
     const auction = await fetchAuctionBySlug(slug);
     
+    // Ensure auction was fetched successfully
+    if (!auction || !auction.id) {
+      throw new Error('Failed to fetch auction information');
+    }
+    
     // Then fetch bids for that auction
     const url = `${BID_URL}/?auction=${auction.id}&ordering=-bid_time`;
     return await apiRequest(url, { method: 'GET' });
   } catch (error) {
+    // If auction fetch fails, don't attempt to fetch bids
     throw error;
   }
 }

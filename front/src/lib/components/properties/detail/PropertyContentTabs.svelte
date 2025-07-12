@@ -417,7 +417,7 @@
     </h2>
 
     {#if property.rooms && property.rooms.length > 0}
-      <div class="grid gap-6">
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
         {#each property.rooms as room, index}
           <div class="bg-white dark:bg-gray-750 border border-gray-200 dark:border-gray-600 rounded-xl p-6 shadow-sm hover:shadow-md transition-shadow">
             <div class="flex flex-col md:flex-row md:items-start justify-between mb-4">

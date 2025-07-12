@@ -13,12 +13,15 @@
     let error = '';
     let success = '';
   
-    // Form data
+    // Form data - matches backend UserProfileUpdateSerializer fields
     let profileData = {
+      // Basic user fields
       first_name: '',
       last_name: '',
       phone_number: '',
       date_of_birth: '',
+      
+      // Basic profile fields
       bio: '',
       company_name: '',
       company_registration: '',
@@ -31,7 +34,19 @@
       license_number: '',
       license_expiry: '',
       preferred_locations: '',
-      property_preferences: ''
+      property_preferences: '',
+      
+      // Enhanced profile fields
+      identification_type: '',
+      identification_number: '',
+      identification_expiry: '',
+      tax_certification_number: '',
+      bank_account_name: '',
+      bank_account_number: '',
+      bank_name: '',
+      digital_signature: '',
+      emergency_contact_name: '',
+      emergency_contact_phone: ''
     };
   
     let passwordData = {
@@ -538,6 +553,162 @@
                       bind:value={profileData.property_preferences}
                       class="mt-1 focus:ring-primary-500 focus:border-primary-500 block w-full shadow-sm sm:text-sm border-gray-300 dark:border-gray-700 rounded-md dark:bg-gray-800 dark:text-white"
                     />
+                  </div>
+
+                  <!-- Identification Information -->
+                  <div class="sm:col-span-6 border-t border-gray-200 dark:border-gray-700 pt-5">
+                    <h3 class="text-lg font-medium leading-6 text-gray-900 dark:text-white">Identification Information</h3>
+                    <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">Identity verification details</p>
+                  </div>
+
+                  <!-- Identification type and number -->
+                  <div class="sm:col-span-3">
+                    <label for="identification_type" class="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                      Identification Type
+                    </label>
+                    <select
+                      id="identification_type"
+                      bind:value={profileData.identification_type}
+                      class="mt-1 focus:ring-primary-500 focus:border-primary-500 block w-full shadow-sm sm:text-sm border-gray-300 dark:border-gray-700 rounded-md dark:bg-gray-800 dark:text-white"
+                    >
+                      <option value="">Select ID Type</option>
+                      <option value="passport">Passport</option>
+                      <option value="national_id">National ID</option>
+                      <option value="drivers_license">Driver's License</option>
+                      <option value="state_id">State ID</option>
+                    </select>
+                  </div>
+
+                  <div class="sm:col-span-3">
+                    <label for="identification_number" class="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                      Identification Number
+                    </label>
+                    <input
+                      type="text"
+                      id="identification_number"
+                      bind:value={profileData.identification_number}
+                      class="mt-1 focus:ring-primary-500 focus:border-primary-500 block w-full shadow-sm sm:text-sm border-gray-300 dark:border-gray-700 rounded-md dark:bg-gray-800 dark:text-white"
+                    />
+                  </div>
+
+                  <!-- Identification expiry and tax certification -->
+                  <div class="sm:col-span-3">
+                    <label for="identification_expiry" class="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                      Identification Expiry
+                    </label>
+                    <input
+                      type="date"
+                      id="identification_expiry"
+                      bind:value={profileData.identification_expiry}
+                      class="mt-1 focus:ring-primary-500 focus:border-primary-500 block w-full shadow-sm sm:text-sm border-gray-300 dark:border-gray-700 rounded-md dark:bg-gray-800 dark:text-white"
+                    />
+                  </div>
+
+                  <div class="sm:col-span-3">
+                    <label for="tax_certification_number" class="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                      Tax Certification Number
+                    </label>
+                    <input
+                      type="text"
+                      id="tax_certification_number"
+                      bind:value={profileData.tax_certification_number}
+                      class="mt-1 focus:ring-primary-500 focus:border-primary-500 block w-full shadow-sm sm:text-sm border-gray-300 dark:border-gray-700 rounded-md dark:bg-gray-800 dark:text-white"
+                    />
+                  </div>
+
+                  <!-- Banking Information -->
+                  <div class="sm:col-span-6 border-t border-gray-200 dark:border-gray-700 pt-5">
+                    <h3 class="text-lg font-medium leading-6 text-gray-900 dark:text-white">Banking Information</h3>
+                    <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">Bank account details for transactions</p>
+                  </div>
+
+                  <!-- Bank account name and number -->
+                  <div class="sm:col-span-3">
+                    <label for="bank_account_name" class="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                      Bank Account Name
+                    </label>
+                    <input
+                      type="text"
+                      id="bank_account_name"
+                      bind:value={profileData.bank_account_name}
+                      class="mt-1 focus:ring-primary-500 focus:border-primary-500 block w-full shadow-sm sm:text-sm border-gray-300 dark:border-gray-700 rounded-md dark:bg-gray-800 dark:text-white"
+                    />
+                  </div>
+
+                  <div class="sm:col-span-3">
+                    <label for="bank_account_number" class="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                      Bank Account Number
+                    </label>
+                    <input
+                      type="text"
+                      id="bank_account_number"
+                      bind:value={profileData.bank_account_number}
+                      class="mt-1 focus:ring-primary-500 focus:border-primary-500 block w-full shadow-sm sm:text-sm border-gray-300 dark:border-gray-700 rounded-md dark:bg-gray-800 dark:text-white"
+                    />
+                  </div>
+
+                  <!-- Bank name -->
+                  <div class="sm:col-span-6">
+                    <label for="bank_name" class="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                      Bank Name
+                    </label>
+                    <input
+                      type="text"
+                      id="bank_name"
+                      bind:value={profileData.bank_name}
+                      class="mt-1 focus:ring-primary-500 focus:border-primary-500 block w-full shadow-sm sm:text-sm border-gray-300 dark:border-gray-700 rounded-md dark:bg-gray-800 dark:text-white"
+                    />
+                  </div>
+
+                  <!-- Emergency Contact Information -->
+                  <div class="sm:col-span-6 border-t border-gray-200 dark:border-gray-700 pt-5">
+                    <h3 class="text-lg font-medium leading-6 text-gray-900 dark:text-white">Emergency Contact</h3>
+                    <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">Emergency contact information</p>
+                  </div>
+
+                  <!-- Emergency contact name and phone -->
+                  <div class="sm:col-span-3">
+                    <label for="emergency_contact_name" class="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                      Emergency Contact Name
+                    </label>
+                    <input
+                      type="text"
+                      id="emergency_contact_name"
+                      bind:value={profileData.emergency_contact_name}
+                      class="mt-1 focus:ring-primary-500 focus:border-primary-500 block w-full shadow-sm sm:text-sm border-gray-300 dark:border-gray-700 rounded-md dark:bg-gray-800 dark:text-white"
+                    />
+                  </div>
+
+                  <div class="sm:col-span-3">
+                    <label for="emergency_contact_phone" class="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                      Emergency Contact Phone
+                    </label>
+                    <input
+                      type="tel"
+                      id="emergency_contact_phone"
+                      bind:value={profileData.emergency_contact_phone}
+                      class="mt-1 focus:ring-primary-500 focus:border-primary-500 block w-full shadow-sm sm:text-sm border-gray-300 dark:border-gray-700 rounded-md dark:bg-gray-800 dark:text-white"
+                    />
+                  </div>
+
+                  <!-- Digital Signature -->
+                  <div class="sm:col-span-6 border-t border-gray-200 dark:border-gray-700 pt-5">
+                    <h3 class="text-lg font-medium leading-6 text-gray-900 dark:text-white">Digital Signature</h3>
+                    <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">Digital signature for legal documents</p>
+                  </div>
+
+                  <!-- Digital signature -->
+                  <div class="sm:col-span-6">
+                    <label for="digital_signature" class="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                      Digital Signature Text
+                    </label>
+                    <textarea
+                      id="digital_signature"
+                      bind:value={profileData.digital_signature}
+                      rows="2"
+                      placeholder="Enter your full name as digital signature"
+                      class="mt-1 focus:ring-primary-500 focus:border-primary-500 block w-full shadow-sm sm:text-sm border-gray-300 dark:border-gray-700 rounded-md dark:bg-gray-800 dark:text-white"
+                    ></textarea>
                   </div>
                 </div>
   

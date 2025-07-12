@@ -531,3 +531,104 @@ class UpdateAvatarView(APIView):
             data={"user": UserProfileSerializer(user, context={'request': request}).data},
             message="Avatar updated successfully"
         )
+
+class EnhancedProfileView(APIView):
+    """Enhanced user profile view with property management fields"""
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        """Get current user's enhanced profile"""
+        try:
+            # Ensure profile exists
+            profile, created = UserProfile.objects.get_or_create(user=request.user)
+            
+            # Use the enhanced serializer
+            serializer = UserProfileSerializer(request.user, context={'request': request})
+            
+            return create_response(
+                data={
+                    "user": serializer.data,
+                    "profile_status": {
+                        "is_complete": bool(profile.identification_number and profile.bank_account_number),
+                        "verification_level": "full" if profile.is_fully_verified else "partial",
+                        "missing_fields": self._get_missing_fields(profile)
+                    }
+                },
+                message="Enhanced profile retrieved successfully"
+            )
+        except Exception as e:
+            logger.error(f"Error retrieving enhanced profile for user {request.user.id}: {str(e)}")
+            return create_response(
+                error="Failed to retrieve enhanced profile",
+                error_code="server_error",
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+
+    def patch(self, request):
+        """Update current user's enhanced profile"""
+        try:
+            # Ensure profile exists
+            profile, created = UserProfile.objects.get_or_create(user=request.user)
+            
+            # Use the enhanced update serializer
+            serializer = UserProfileUpdateSerializer(
+                request.user, data=request.data, partial=True, context={'request': request}
+            )
+            
+            if serializer.is_valid():
+                updated_user = serializer.save()
+                
+                # Refresh profile
+                profile.refresh_from_db()
+                
+                logger.info(f"Enhanced profile updated for user {request.user.email}")
+                
+                return create_response(
+                    data={
+                        "user": UserProfileSerializer(updated_user, context={'request': request}).data,
+                        "profile_status": {
+                            "is_complete": bool(profile.identification_number and profile.bank_account_number),
+                            "verification_level": "full" if profile.is_fully_verified else "partial",
+                            "updated_fields": list(request.data.keys())
+                        }
+                    },
+                    message="Enhanced profile updated successfully"
+                )
+            else:
+                return create_response(
+                    error=serializer.errors,
+                    error_code="validation_error",
+                    status_code=status.HTTP_400_BAD_REQUEST
+                )
+                
+        except Exception as e:
+            logger.error(f"Error updating enhanced profile for user {request.user.id}: {str(e)}")
+            return create_response(
+                error="Failed to update enhanced profile",
+                error_code="server_error",
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+    
+    def _get_missing_fields(self, profile):
+        """Get list of important missing fields"""
+        missing = []
+        
+        # Check important identity fields
+        if not profile.identification_type:
+            missing.append('identification_type')
+        if not profile.identification_number:
+            missing.append('identification_number')
+            
+        # Check banking fields
+        if not profile.bank_account_number:
+            missing.append('bank_account_number')
+        if not profile.bank_name:
+            missing.append('bank_name')
+            
+        # Check emergency contact
+        if not profile.emergency_contact_name:
+            missing.append('emergency_contact_name')
+        if not profile.emergency_contact_phone:
+            missing.append('emergency_contact_phone')
+            
+        return missing

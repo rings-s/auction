@@ -89,6 +89,7 @@
     $page.url.pathname === '/' ? 'home' :
     $page.url.pathname.startsWith('/properties') ? 'properties' :
     $page.url.pathname.startsWith('/auctions') ? 'auctions' :
+    $page.url.pathname.startsWith('/core') ? 'core' :
     $page.url.pathname.startsWith('/dashboard') ? 'dashboard' :
     $page.url.pathname.startsWith('/messages') ? 'messages' : 'default';
     
@@ -124,6 +125,12 @@
       loginBtn: 'border-indigo-200 dark:border-indigo-800 hover:bg-indigo-50 dark:hover:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400 focus:ring-indigo-400',
       signupBtn: 'bg-indigo-600 hover:bg-indigo-700 dark:bg-indigo-500 dark:hover:bg-indigo-600 focus:ring-indigo-400'
     },
+    core: {
+      logoAccent: 'from-teal-500 to-teal-600',
+      navActive: 'border-teal-500 text-teal-600 dark:text-teal-400',
+      loginBtn: 'border-teal-200 dark:border-teal-800 hover:bg-teal-50 dark:hover:bg-teal-900/30 text-teal-600 dark:text-teal-400 focus:ring-teal-400',
+      signupBtn: 'bg-teal-600 hover:bg-teal-700 dark:bg-teal-500 dark:hover:bg-teal-600 focus:ring-teal-400'
+    },
     default: {
       logoAccent: 'from-blue-500 to-blue-600',
       navActive: 'border-blue-500 text-blue-600 dark:text-blue-400',
@@ -136,6 +143,9 @@
 
   // Check if user can access dashboard
   $: canAccessDashboard = $user && $user.is_verified;
+  
+  // Check if user can access core property management features
+  $: canAccessCore = $user && ($user.role === 'landlord' || $user.role === 'property_manager' || $user.role === 'appraiser' || $user.is_staff || $user.is_superuser);
 </script>
 
 <svelte:window bind:scrollY on:scroll={handleScroll} />
@@ -216,6 +226,17 @@
                   : 'border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300'
               }`}
             >{$t('nav.messages')}</a>
+            
+            {#if canAccessCore}
+              <a 
+                href="/core" 
+                class={`inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium transition-all duration-300 ${
+                  $page.url.pathname.startsWith('/core') 
+                    ? 'border-teal-500 text-teal-600 dark:text-teal-400'
+                    : 'border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300'
+                }`}
+              >Property Management</a>
+            {/if}
           </slot>
         </div>
       </div>
@@ -275,6 +296,19 @@
                   }`}
                 >
                   {$t('nav.dashboard')}
+                </a>
+              {/if}
+              
+              {#if canAccessCore}
+                <a 
+                  href="/core" 
+                  class={`block px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors duration-200 ${
+                    $page.url.pathname.startsWith('/core') 
+                      ? 'bg-teal-50 dark:bg-teal-900/20 text-teal-700 dark:text-teal-300' 
+                      : ''
+                  }`}
+                >
+                  Property Management
                 </a>
               {/if}
               
@@ -420,6 +454,27 @@
                 </svg>
               </span>
               {$t('nav.dashboard')}
+            </a>
+          {/if}
+
+          <!-- Property Management Link - Mobile -->
+          {#if canAccessCore}
+            <a 
+              href="/core" 
+              class={`flex items-center pl-3 pr-4 py-3 rounded-lg transition-all duration-300 ${
+                $page.url.pathname.startsWith('/core') 
+                  ? 'bg-teal-50/50 dark:bg-teal-900/30 text-teal-700 dark:text-teal-300'
+                  : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100/50 dark:hover:bg-gray-700/50'
+              }`}
+              on:click={() => isOpen = false}
+              in:fly={{ x: -10, duration: 300, delay: 400 }}
+            >
+              <span class={`mr-3 text-lg ${$page.url.pathname.startsWith('/core') ? 'text-teal-500' : 'text-gray-400'}`}>
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                  <path d="M4 4a2 2 0 00-2 2v1h16V6a2 2 0 00-2-2H4zM18 9H2v5a2 2 0 002 2h12a2 2 0 002-2V9zM4 13a1 1 0 011-1h1a1 1 0 110 2H5a1 1 0 01-1-1zm5-1a1 1 0 100 2h1a1 1 0 100-2H9z" />
+                </svg>
+              </span>
+              Property Management
             </a>
           {/if}
           

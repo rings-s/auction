@@ -91,6 +91,37 @@ export const MESSAGE_ENDPOINTS = {
   STATS: `${API_BASE_URL}/messages/stats/`,
 };
 
+// Core Property Management endpoints
+export const CORE_ENDPOINTS = {
+  BASE: `${API_BASE_URL}/core/`,
+  DASHBOARD: `${API_BASE_URL}/core/dashboard/`,
+  ANALYTICS: `${API_BASE_URL}/core/analytics/`,
+  
+  // Financial Management
+  TRANSACTIONS: `${API_BASE_URL}/core/transactions/`,
+  TRANSACTION_DETAIL: function(id) { return `${API_BASE_URL}/core/transactions/${id}/`; },
+  EXPENSES: `${API_BASE_URL}/core/expenses/`,
+  EXPENSE_DETAIL: function(id) { return `${API_BASE_URL}/core/expenses/${id}/`; },
+  
+  // Rental Property Management
+  RENTAL_PROPERTIES: `${API_BASE_URL}/core/rental-properties/`,
+  RENTAL_PROPERTY_DETAIL: function(id) { return `${API_BASE_URL}/core/rental-properties/${id}/`; },
+  LEASES: `${API_BASE_URL}/core/leases/`,
+  LEASE_DETAIL: function(id) { return `${API_BASE_URL}/core/leases/${id}/`; },
+  
+  // Maintenance Management
+  MAINTENANCE_REQUESTS: `${API_BASE_URL}/core/maintenance-requests/`,
+  MAINTENANCE_REQUEST_DETAIL: function(id) { return `${API_BASE_URL}/core/maintenance-requests/${id}/`; },
+  VENDORS: `${API_BASE_URL}/core/vendors/`,
+  VENDOR_DETAIL: function(id) { return `${API_BASE_URL}/core/vendors/${id}/`; },
+  
+  // Contract Management
+  CONTRACT_TEMPLATES: `${API_BASE_URL}/core/contract-templates/`,
+  CONTRACT_TEMPLATE_DETAIL: function(id) { return `${API_BASE_URL}/core/contract-templates/${id}/`; },
+  CONTRACTS: `${API_BASE_URL}/core/contracts/`,
+  CONTRACT_DETAIL: function(id) { return `${API_BASE_URL}/core/contracts/${id}/`; },
+};
+
 // WebSocket endpoints
 export const WS_ENDPOINTS = {
   AUCTION: function(auctionId) { return `${WS_BASE_URL}/auctions/${auctionId}/`; },
@@ -198,6 +229,24 @@ export const SUCCESS_MESSAGES = {
   BID_PLACED: 'Bid placed successfully!',
   MESSAGE_SENT: 'Message sent successfully!',
   FILE_UPLOADED: 'File uploaded successfully!',
+  
+  // Core Property Management
+  TRANSACTION_CREATED: 'Financial transaction created successfully!',
+  TRANSACTION_UPDATED: 'Transaction updated successfully!',
+  EXPENSE_CREATED: 'Property expense recorded successfully!',
+  EXPENSE_UPDATED: 'Expense updated successfully!',
+  RENTAL_PROPERTY_CREATED: 'Rental property created successfully!',
+  RENTAL_PROPERTY_UPDATED: 'Rental property updated successfully!',
+  LEASE_CREATED: 'Lease agreement created successfully!',
+  LEASE_UPDATED: 'Lease updated successfully!',
+  LEASE_SIGNED: 'Lease signed successfully!',
+  MAINTENANCE_REQUEST_CREATED: 'Maintenance request submitted successfully!',
+  MAINTENANCE_REQUEST_UPDATED: 'Maintenance request updated successfully!',
+  VENDOR_CREATED: 'Vendor added successfully!',
+  VENDOR_UPDATED: 'Vendor information updated successfully!',
+  CONTRACT_CREATED: 'Contract created successfully!',
+  CONTRACT_UPDATED: 'Contract updated successfully!',
+  CONTRACT_SIGNED: 'Contract signed successfully!',
 };
 
 // =============================================================================

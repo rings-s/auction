@@ -40,8 +40,15 @@ class CustomUserManager(BaseUserManager):
 
 class CustomUser(AbstractUser):
     ROLE_CHOICES = [
-        ('owner', _('Property Owner')), ('appraiser', _('Property Appraiser')),
-        ('data_entry', _('Data Entry Specialist')), ('user', _('User')),
+        ('owner', _('Property Owner')), 
+        ('appraiser', _('Property Appraiser')),
+        ('data_entry', _('Data Entry Specialist')), 
+        ('user', _('User')),
+        ('landlord', _('Landlord')),
+        ('tenant', _('Tenant')),
+        ('property_manager', _('Property Manager')),
+        ('maintenance_staff', _('Maintenance Staff')),
+        ('vendor', _('Vendor/Contractor')),
     ]
     
     uuid = models.UUIDField(default=uuid.uuid4, editable=False, unique=True, verbose_name=_('UUID'), db_index=True)
@@ -180,7 +187,16 @@ class CustomUser(AbstractUser):
 
 
 class UserProfile(models.Model):
+    IDENTIFICATION_TYPES = [
+        ('national_id', _('National Identity')),
+        ('residency', _('Residency')),
+        ('gulf_citizen', _('Gulf Citizen')),
+        ('diplomatic', _('Diplomatic')),
+    ]
+    
     user = models.OneToOneField(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='profile', primary_key=True)
+    
+    # Basic profile fields
     bio = models.TextField(blank=True, verbose_name=_('نبذة شخصية'))
     company_name = models.CharField(max_length=200, blank=True, verbose_name=_('اسم الشركة'))
     company_registration = models.CharField(max_length=100, blank=True, unique=True, null=True, verbose_name=_('رقم تسجيل الشركة'))
@@ -197,9 +213,79 @@ class UserProfile(models.Model):
     preferred_locations = models.TextField(blank=True, verbose_name=_('المواقع المفضلة'))
     property_preferences = models.TextField(blank=True, verbose_name=_('تفضيلات العقارات'))
 
+    # Enhanced Identity & Legal Information
+    identification_type = models.CharField(
+        max_length=20, 
+        choices=IDENTIFICATION_TYPES, 
+        blank=True,
+        verbose_name=_('نوع الهوية')
+    )
+    identification_number = models.CharField(
+        max_length=50, 
+        blank=True,
+        verbose_name=_('رقم الهوية')
+    )
+    identification_expiry = models.DateField(
+        null=True, 
+        blank=True,
+        verbose_name=_('تاريخ انتهاء الهوية')
+    )
+    
+    # Enhanced Tax & Banking Information
+    tax_certification_number = models.CharField(
+        max_length=100, 
+        blank=True,
+        verbose_name=_('رقم الشهادة الضريبية')
+    )
+    bank_account_name = models.CharField(
+        max_length=255, 
+        blank=True,
+        verbose_name=_('اسم صاحب الحساب البنكي')
+    )
+    bank_account_number = models.CharField(
+        max_length=50, 
+        blank=True,
+        verbose_name=_('رقم الحساب البنكي')
+    )
+    bank_name = models.CharField(
+        max_length=255, 
+        blank=True,
+        verbose_name=_('اسم البنك')
+    )
+    
+    # Digital Signature
+    digital_signature = models.TextField(
+        blank=True,
+        verbose_name=_('بيانات التوقيع الرقمي')
+    )
+    signature_created_date = models.DateTimeField(
+        null=True, 
+        blank=True,
+        verbose_name=_('تاريخ إنشاء التوقيع')
+    )
+    
+    # Property Management Specific
+    emergency_contact_name = models.CharField(max_length=255, blank=True, verbose_name=_('اسم جهة الاتصال للطوارئ'))
+    emergency_contact_phone = models.CharField(max_length=20, blank=True, verbose_name=_('هاتف جهة الاتصال للطوارئ'))
+    
+    # Verification Status
+    identity_verified = models.BooleanField(default=False, verbose_name=_('تم التحقق من الهوية'))
+    bank_verified = models.BooleanField(default=False, verbose_name=_('تم التحقق من البنك'))
+    tax_verified = models.BooleanField(default=False, verbose_name=_('تم التحقق من الضرائب'))
+
     class Meta:
         verbose_name = _('ملف تعريف المستخدم')
         verbose_name_plural = _('ملفات تعريف المستخدمين')
 
     def __str__(self):
         return f"Profile for {self.user.email}"
+
+    @property
+    def is_fully_verified(self):
+        """Check if user is fully verified"""
+        return all([
+            self.user.is_verified,
+            self.identity_verified,
+            self.bank_verified if self.bank_account_number else True,
+            self.tax_verified if self.tax_certification_number else True,
+        ])

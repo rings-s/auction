@@ -267,10 +267,12 @@
           transition-all duration-200
         "
       >
-        <option value="data_entry">{$t('auth.roleDataEntry')}</option>
         <option value="user">{$t('auth.roleUser')}</option>
+        <option value="landlord">{$t('auth.roleLandlord')}</option>
+        <option value="property_manager">{$t('auth.rolePropertyManager')}</option>
         <option value="owner">{$t('auth.roleOwner')}</option>
         <option value="appraiser">{$t('auth.roleAppraiser')}</option>
+        <option value="data_entry">{$t('auth.roleDataEntry')}</option>
       </select>
       <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">
         {$t('auth.roleHelp')}

@@ -43,9 +43,12 @@ class UserProfileSerializer(serializers.ModelSerializer):
     date_joined = serializers.DateTimeField(read_only=True)
     is_active = serializers.BooleanField(read_only=True)
     is_staff = serializers.BooleanField(read_only=True)
+    role = serializers.CharField(read_only=True)
+    role_display = serializers.CharField(source='get_role_display', read_only=True)
     avatar_url = serializers.SerializerMethodField()
+    verification_status = serializers.SerializerMethodField()
 
-    # Profile fields
+    # Basic profile fields
     bio = serializers.CharField(source='profile.bio', read_only=True, allow_null=True)
     company_name = serializers.CharField(source='profile.company_name', read_only=True, allow_null=True)
     company_registration = serializers.CharField(source='profile.company_registration', read_only=True, allow_null=True)
@@ -62,14 +65,37 @@ class UserProfileSerializer(serializers.ModelSerializer):
     preferred_locations = serializers.CharField(source='profile.preferred_locations', read_only=True, allow_null=True)
     property_preferences = serializers.CharField(source='profile.property_preferences', read_only=True, allow_null=True)
 
+    # Enhanced profile fields
+    identification_type = serializers.CharField(source='profile.identification_type', read_only=True, allow_null=True)
+    identification_number = serializers.CharField(source='profile.identification_number', read_only=True, allow_null=True)
+    identification_expiry = serializers.DateField(source='profile.identification_expiry', read_only=True, allow_null=True)
+    tax_certification_number = serializers.CharField(source='profile.tax_certification_number', read_only=True, allow_null=True)
+    bank_account_name = serializers.CharField(source='profile.bank_account_name', read_only=True, allow_null=True)
+    bank_account_number = serializers.CharField(source='profile.bank_account_number', read_only=True, allow_null=True)
+    bank_name = serializers.CharField(source='profile.bank_name', read_only=True, allow_null=True)
+    digital_signature = serializers.CharField(source='profile.digital_signature', read_only=True, allow_null=True)
+    signature_created_date = serializers.DateTimeField(source='profile.signature_created_date', read_only=True, allow_null=True)
+    emergency_contact_name = serializers.CharField(source='profile.emergency_contact_name', read_only=True, allow_null=True)
+    emergency_contact_phone = serializers.CharField(source='profile.emergency_contact_phone', read_only=True, allow_null=True)
+    identity_verified = serializers.BooleanField(source='profile.identity_verified', read_only=True)
+    bank_verified = serializers.BooleanField(source='profile.bank_verified', read_only=True)
+    tax_verified = serializers.BooleanField(source='profile.tax_verified', read_only=True)
+
     class Meta:
         model = User
         fields = (
             'id', 'uuid', 'email', 'first_name', 'last_name', 'phone_number', 'date_of_birth',
-            'avatar_url', 'is_verified', 'is_active', 'is_staff', 'date_joined',
+            'avatar_url', 'is_verified', 'is_active', 'is_staff', 'date_joined', 'role', 'role_display',
+            'verification_status',
+            # Basic profile fields
             'bio', 'company_name', 'company_registration', 'tax_id', 'address', 'city', 'state',
             'postal_code', 'country', 'license_number', 'license_expiry', 'preferred_locations',
             'property_preferences', 'credit_limit', 'rating',
+            # Enhanced profile fields
+            'identification_type', 'identification_number', 'identification_expiry',
+            'tax_certification_number', 'bank_account_name', 'bank_account_number', 'bank_name',
+            'digital_signature', 'signature_created_date', 'emergency_contact_name', 'emergency_contact_phone',
+            'identity_verified', 'bank_verified', 'tax_verified',
         )
         read_only_fields = fields
 
@@ -82,17 +108,41 @@ class UserProfileSerializer(serializers.ModelSerializer):
                 logger.warning(f"Could not build avatar URL: {e}")
         return None
 
+    def get_verification_status(self, obj):
+        """Get verification status summary"""
+        profile = getattr(obj, 'profile', None)
+        if profile:
+            return {
+                'is_fully_verified': profile.is_fully_verified,
+                'identity_verified': profile.identity_verified,
+                'bank_verified': profile.bank_verified,
+                'tax_verified': profile.tax_verified,
+            }
+        return {
+            'is_fully_verified': False,
+            'identity_verified': False,
+            'bank_verified': False,
+            'tax_verified': False,
+        }
+
     def to_representation(self, instance):
         rep = super().to_representation(instance)
         profile = getattr(instance, 'profile', None)
 
         text_fields = [
+            # Basic fields
             'bio', 'company_name', 'company_registration', 'tax_id', 'address',
             'city', 'state', 'postal_code', 'country', 'license_number',
-            'preferred_locations', 'property_preferences'
+            'preferred_locations', 'property_preferences',
+            # Enhanced fields
+            'identification_type', 'identification_number', 'tax_certification_number',
+            'bank_account_name', 'bank_account_number', 'bank_name', 'digital_signature',
+            'emergency_contact_name', 'emergency_contact_phone'
         ]
         decimal_fields = ['credit_limit', 'rating']
-        date_fields = ['license_expiry']
+        date_fields = ['license_expiry', 'identification_expiry']
+        datetime_fields = ['signature_created_date']
+        boolean_fields = ['identity_verified', 'bank_verified', 'tax_verified']
 
         for field in text_fields:
             rep[field] = getattr(profile, field, '') if profile else ''
@@ -103,6 +153,12 @@ class UserProfileSerializer(serializers.ModelSerializer):
         for field in date_fields:
             rep[field] = getattr(profile, field, None) if profile else None
 
+        for field in datetime_fields:
+            rep[field] = getattr(profile, field, None) if profile else None
+
+        for field in boolean_fields:
+            rep[field] = getattr(profile, field, False) if profile else False
+
         return rep
 
 class UserProfileUpdateSerializer(serializers.ModelSerializer):
@@ -112,7 +168,7 @@ class UserProfileUpdateSerializer(serializers.ModelSerializer):
     date_of_birth = serializers.DateField(required=False, allow_null=True)
     avatar = serializers.ImageField(required=False, allow_null=True)
 
-    # Profile fields
+    # Basic profile fields
     bio = serializers.CharField(source='profile.bio', required=False, allow_blank=True)
     company_name = serializers.CharField(source='profile.company_name', required=False, allow_blank=True)
     company_registration = serializers.CharField(source='profile.company_registration', required=False, allow_blank=True, allow_null=True)
@@ -127,17 +183,36 @@ class UserProfileUpdateSerializer(serializers.ModelSerializer):
     preferred_locations = serializers.CharField(source='profile.preferred_locations', required=False, allow_blank=True)
     property_preferences = serializers.CharField(source='profile.property_preferences', required=False, allow_blank=True)
 
+    # Enhanced profile fields
+    identification_type = serializers.CharField(source='profile.identification_type', required=False, allow_blank=True)
+    identification_number = serializers.CharField(source='profile.identification_number', required=False, allow_blank=True)
+    identification_expiry = serializers.DateField(source='profile.identification_expiry', required=False, allow_null=True)
+    tax_certification_number = serializers.CharField(source='profile.tax_certification_number', required=False, allow_blank=True)
+    bank_account_name = serializers.CharField(source='profile.bank_account_name', required=False, allow_blank=True)
+    bank_account_number = serializers.CharField(source='profile.bank_account_number', required=False, allow_blank=True)
+    bank_name = serializers.CharField(source='profile.bank_name', required=False, allow_blank=True)
+    digital_signature = serializers.CharField(source='profile.digital_signature', required=False, allow_blank=True)
+    emergency_contact_name = serializers.CharField(source='profile.emergency_contact_name', required=False, allow_blank=True)
+    emergency_contact_phone = serializers.CharField(source='profile.emergency_contact_phone', required=False, allow_blank=True)
+
     class Meta:
         model = User
         fields = (
             'first_name', 'last_name', 'phone_number', 'date_of_birth', 'avatar',
+            # Basic profile fields
             'bio', 'company_name', 'company_registration', 'tax_id', 'address',
             'city', 'state', 'postal_code', 'country', 'license_number',
             'license_expiry', 'preferred_locations', 'property_preferences',
+            # Enhanced profile fields
+            'identification_type', 'identification_number', 'identification_expiry',
+            'tax_certification_number', 'bank_account_name', 'bank_account_number', 'bank_name',
+            'digital_signature', 'emergency_contact_name', 'emergency_contact_phone',
         )
 
     @transaction.atomic
     def update(self, instance, validated_data):
+        from django.utils import timezone
+        
         profile, _ = UserProfile.objects.get_or_create(user=instance)
 
         profile_data = {}
@@ -150,6 +225,10 @@ class UserProfileUpdateSerializer(serializers.ModelSerializer):
                 profile_data[profile_field_name] = value
             else:
                 user_data[field_name] = value
+
+        # Handle digital signature date update
+        if 'digital_signature' in profile_data and profile_data['digital_signature']:
+            profile_data['signature_created_date'] = timezone.now()
 
         if user_data:
             for attr, value in user_data.items():

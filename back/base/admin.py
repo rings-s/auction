@@ -130,3 +130,7 @@ class DashboardMetricsAdmin(admin.ModelAdmin):
     
     def has_add_permission(self, request):
         return False  # Metrics are auto-generated
+
+
+
+admin.site.site_name = "Auctions"

@@ -921,6 +921,8 @@ export const enTranslations = {
     logOut: 'Log out',
     userRole: 'User Role',
     roleUser: 'Regular User',
+    roleLandlord: 'Landlord',
+    rolePropertyManager: 'Property Manager',
     roleOwner: 'Property Owner',
     roleAppraiser: 'Property Appraiser',
     roleDataEntry: 'Data Entry Specialist',
