@@ -142,7 +142,7 @@
 </script>
 
 <svelte:head>
-  <title>Financial Management | Property Management</title>
+  <title>{$t('core.financial.title')} | {$t('app.name')}</title>
 </svelte:head>
 
 <div class="space-y-6">
@@ -152,10 +152,10 @@
       <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between">
         <div class="flex-1 min-w-0">
           <h1 class="text-2xl font-bold leading-7 text-gray-900 dark:text-white sm:text-3xl sm:truncate">
-            Financial Management
+            {$t('core.financial.title')}
           </h1>
           <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">
-            Manage transactions, expenses, and financial reporting
+            {$t('core.financial.subtitle')}
           </p>
         </div>
         <div class="mt-4 flex items-center space-x-3 sm:mt-0 sm:ml-4">
@@ -165,7 +165,7 @@
             onclick={() => showMobileFilters = !showMobileFilters}
             class="sm:hidden"
           >
-            Filters
+            {$t('core.common.filters')}
           </Button>
           <Button
             onclick={() => showCreateModal = true}
@@ -174,7 +174,7 @@
             <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
             </svg>
-            Add {activeTab === 'transactions' ? 'Transaction' : 'Expense'}
+            {$t('core.common.add')} {activeTab === 'transactions' ? $t('core.financial.transaction') : $t('core.financial.expense')}
           </Button>
         </div>
       </div>
@@ -196,7 +196,7 @@
           <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 6v12m-3-2.818.879.659c1.171.879 3.07.879 4.242 0 1.172-.879 1.172-2.303 0-3.182C13.536 12.219 12.768 12 12 12c-.725 0-1.467-.22-2.121-.659-1.172-.879-1.172-2.303 0-3.182s3.07-.879 4.242 0L15 9m-3 0V6m0 12v-3" />
           </svg>
-          Transactions
+          {$t('core.financial.transactions')}
         </button>
         <button
           onclick={() => activeTab = 'expenses'}
@@ -209,7 +209,7 @@
           <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M15.75 10.5V6a3.75 3.75 0 1 0-7.5 0v4.5m11.356-1.993 1.263 12c.07.665-.45 1.243-1.119 1.243H4.25a1.125 1.125 0 0 1-1.12-1.243l1.264-12A1.125 1.125 0 0 1 5.513 7.5h12.974c.576 0 1.059.435 1.119 1.007ZM8.625 10.5a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Zm7.5 0a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Z" />
           </svg>
-          Expenses
+          {$t('core.financial.expenses')}
         </button>
       </nav>
     </div>
@@ -227,7 +227,7 @@
             <input
               type="text"
               bind:value={searchQuery}
-              placeholder={`Search ${activeTab}...`}
+              placeholder={$t('core.common.searchPlaceholder', { type: activeTab === 'transactions' ? $t('core.financial.transactions') : $t('core.financial.expenses') })}
               class="block w-full pl-10 pr-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md leading-5 bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:placeholder-gray-400 focus:ring-1 focus:ring-primary-500 focus:border-primary-500 text-sm"
             />
           </div>
@@ -241,11 +241,11 @@
               onchange={(e) => updateFilters({ status: e.target.value })}
               class="block w-32 pl-3 pr-10 py-2 text-base border border-gray-300 dark:border-gray-600 focus:outline-none focus:ring-primary-500 focus:border-primary-500 text-sm rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
             >
-              <option value="">All Status</option>
-              <option value="pending">Pending</option>
-              <option value="completed">Completed</option>
-              <option value="failed">Failed</option>
-              <option value="overdue">Overdue</option>
+              <option value="">{$t('core.financial.filters.allStatus')}</option>
+              <option value="pending">{$t('core.financial.status.pending')}</option>
+              <option value="completed">{$t('core.financial.status.completed')}</option>
+              <option value="failed">{$t('core.financial.status.failed')}</option>
+              <option value="overdue">{$t('core.financial.status.overdue')}</option>
             </select>
           </div>
 
@@ -257,16 +257,16 @@
                 onchange={(e) => updateFilters({ transaction_type: e.target.value })}
                 class="block w-40 pl-3 pr-10 py-2 text-base border border-gray-300 dark:border-gray-600 focus:outline-none focus:ring-primary-500 focus:border-primary-500 text-sm rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
               >
-                <option value="">All Types</option>
-                <option value="rent_payment">Rent Payment</option>
-                <option value="security_deposit">Security Deposit</option>
-                <option value="maintenance_cost">Maintenance Cost</option>
-                <option value="auction_payment">Auction Payment</option>
-                <option value="commission">Commission</option>
-                <option value="utility_bill">Utility Bill</option>
-                <option value="insurance">Insurance</option>
-                <option value="tax_payment">Tax Payment</option>
-                <option value="other">Other</option>
+                <option value="">{$t('core.financial.filters.allTypes')}</option>
+                <option value="rent_payment">{$t('core.financial.transactionTypes.rentPayment')}</option>
+                <option value="security_deposit">{$t('core.financial.transactionTypes.securityDeposit')}</option>
+                <option value="maintenance_cost">{$t('core.financial.transactionTypes.maintenanceCost')}</option>
+                <option value="auction_payment">{$t('core.financial.transactionTypes.auctionPayment')}</option>
+                <option value="commission">{$t('core.financial.transactionTypes.commission')}</option>
+                <option value="utility_bill">{$t('core.financial.transactionTypes.utilityBill')}</option>
+                <option value="insurance">{$t('core.financial.transactionTypes.insurance')}</option>
+                <option value="tax_payment">{$t('core.financial.transactionTypes.taxPayment')}</option>
+                <option value="other">{$t('core.financial.transactionTypes.other')}</option>
               </select>
             </div>
           {/if}
@@ -278,10 +278,10 @@
               onchange={(e) => updateFilters({ sort: e.target.value })}
               class="block w-32 pl-3 pr-10 py-2 text-base border border-gray-300 dark:border-gray-600 focus:outline-none focus:ring-primary-500 focus:border-primary-500 text-sm rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
             >
-              <option value="newest">Newest</option>
-              <option value="oldest">Oldest</option>
-              <option value="amount_high">Amount: High</option>
-              <option value="amount_low">Amount: Low</option>
+              <option value="newest">{$t('core.financial.sort.newest')}</option>
+              <option value="oldest">{$t('core.financial.sort.oldest')}</option>
+              <option value="amount_high">{$t('core.financial.sort.amountHigh')}</option>
+              <option value="amount_low">{$t('core.financial.sort.amountLow')}</option>
             </select>
           </div>
         </div>
@@ -298,16 +298,16 @@
         </div>
       {:else if error}
         <EmptyState
-          title="Failed to Load Data"
+          title={$t('core.common.failedToLoad')}
           description={error}
-          actionText="Try Again"
+          actionText={$t('core.common.tryAgain')}
           onAction={() => financialActions.loadAll()}
         />
       {:else if (activeTab === 'transactions' ? displayedTransactions : displayedExpenses).length === 0}
         <EmptyState
-          title={`No ${activeTab} found`}
-          description={`Start by creating your first ${activeTab.slice(0, -1)}`}
-          actionText={`Add ${activeTab === 'transactions' ? 'Transaction' : 'Expense'}`}
+          title={$t('core.financial.noItemsFound', { type: activeTab === 'transactions' ? $t('core.financial.transactions') : $t('core.financial.expenses') })}
+          description={$t('core.financial.createFirstItem', { type: activeTab === 'transactions' ? $t('core.financial.transaction') : $t('core.financial.expense') })}
+          actionText={$t('core.common.add') + ' ' + (activeTab === 'transactions' ? $t('core.financial.transaction') : $t('core.financial.expense'))}
           onAction={() => showCreateModal = true}
         />
       {:else}
@@ -350,14 +350,14 @@
                         {#if activeTab === 'transactions'}
                           <span>{item.transaction_type_display || item.transaction_type}</span>
                           {#if item.due_date}
-                            <span>Due: {formatDate(item.due_date)}</span>
+                            <span>{$t('core.financial.due')}: {formatDate(item.due_date)}</span>
                           {/if}
                           {#if item.reference_number}
-                            <span>Ref: {item.reference_number}</span>
+                            <span>{$t('core.financial.reference')}: {item.reference_number}</span>
                           {/if}
                         {:else}
                           <span>{item.category_display || item.category}</span>
-                          <span>Vendor: {item.vendor_name}</span>
+                          <span>{$t('core.financial.vendor')}: {item.vendor_name}</span>
                           <span>{formatDate(item.expense_date)}</span>
                         {/if}
                       </div>
@@ -375,10 +375,10 @@
                   </div>
                   <div class="flex items-center space-x-2">
                     <Button size="sm" variant="outline">
-                      Edit
+                      {$t('core.common.edit')}
                     </Button>
                     <Button size="sm" variant="outline">
-                      View
+                      {$t('core.common.view')}
                     </Button>
                   </div>
                 </div>
@@ -396,20 +396,20 @@
                 onclick={() => handlePageChange(currentPage - 1)}
                 disabled={currentPage === 1}
               >
-                Previous
+                {$t('core.common.previous')}
               </Button>
               <Button
                 variant="outline"
                 onclick={() => handlePageChange(currentPage + 1)}
                 disabled={currentPage === totalPages}
               >
-                Next
+                {$t('core.common.next')}
               </Button>
             </div>
             <div class="hidden sm:flex-1 sm:flex sm:items-center sm:justify-between">
               <div>
                 <p class="text-sm text-gray-700 dark:text-gray-300">
-                  Showing page <span class="font-medium">{currentPage}</span> of <span class="font-medium">{totalPages}</span>
+                  {$t('core.common.showingPage', { current: currentPage, total: totalPages })}
                 </p>
               </div>
               <div>
@@ -438,13 +438,13 @@
 </div>
 
 <!-- Create Modal -->
-<Modal bind:open={showCreateModal} title={`Add ${activeTab === 'transactions' ? 'Transaction' : 'Expense'}`}>
+<Modal bind:open={showCreateModal} title={$t('core.common.add') + ' ' + (activeTab === 'transactions' ? $t('core.financial.transaction') : $t('core.financial.expense'))}>
   <form onsubmit={handleCreateTransaction} class="space-y-4">
     <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
       {#if activeTab === 'transactions'}
         <div>
           <label for="transaction_type" class="block text-sm font-medium text-gray-700 dark:text-gray-300">
-            Transaction Type
+            {$t('core.financial.transactionType')}
           </label>
           <select
             id="transaction_type"
@@ -452,21 +452,21 @@
             required
             class="mt-1 block w-full border border-gray-300 dark:border-gray-600 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-primary-500 focus:border-primary-500 text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
           >
-            <option value="">Select Type</option>
-            <option value="rent_payment">Rent Payment</option>
-            <option value="security_deposit">Security Deposit</option>
-            <option value="maintenance_cost">Maintenance Cost</option>
-            <option value="auction_payment">Auction Payment</option>
-            <option value="commission">Commission</option>
-            <option value="utility_bill">Utility Bill</option>
-            <option value="insurance">Insurance</option>
-            <option value="tax_payment">Tax Payment</option>
-            <option value="other">Other</option>
+            <option value="">{$t('core.financial.selectType')}</option>
+            <option value="rent_payment">{$t('core.financial.transactionTypes.rentPayment')}</option>
+            <option value="security_deposit">{$t('core.financial.transactionTypes.securityDeposit')}</option>
+            <option value="maintenance_cost">{$t('core.financial.transactionTypes.maintenanceCost')}</option>
+            <option value="auction_payment">{$t('core.financial.transactionTypes.auctionPayment')}</option>
+            <option value="commission">{$t('core.financial.transactionTypes.commission')}</option>
+            <option value="utility_bill">{$t('core.financial.transactionTypes.utilityBill')}</option>
+            <option value="insurance">{$t('core.financial.transactionTypes.insurance')}</option>
+            <option value="tax_payment">{$t('core.financial.transactionTypes.taxPayment')}</option>
+            <option value="other">{$t('core.financial.transactionTypes.other')}</option>
           </select>
         </div>
         <div>
           <label for="due_date" class="block text-sm font-medium text-gray-700 dark:text-gray-300">
-            Due Date
+            {$t('core.financial.dueDate')}
           </label>
           <input
             type="date"
@@ -478,7 +478,7 @@
       {:else}
         <div>
           <label for="category" class="block text-sm font-medium text-gray-700 dark:text-gray-300">
-            Category
+            {$t('core.financial.category')}
           </label>
           <select
             id="category"
@@ -486,20 +486,20 @@
             required
             class="mt-1 block w-full border border-gray-300 dark:border-gray-600 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-primary-500 focus:border-primary-500 text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
           >
-            <option value="">Select Category</option>
-            <option value="maintenance">Maintenance</option>
-            <option value="utilities">Utilities</option>
-            <option value="insurance">Insurance</option>
-            <option value="taxes">Taxes</option>
-            <option value="management">Management</option>
-            <option value="marketing">Marketing</option>
-            <option value="legal">Legal</option>
-            <option value="other">Other</option>
+            <option value="">{$t('core.financial.selectCategory')}</option>
+            <option value="maintenance">{$t('core.financial.categories.maintenance')}</option>
+            <option value="utilities">{$t('core.financial.categories.utilities')}</option>
+            <option value="insurance">{$t('core.financial.categories.insurance')}</option>
+            <option value="taxes">{$t('core.financial.categories.taxes')}</option>
+            <option value="management">{$t('core.financial.categories.management')}</option>
+            <option value="marketing">{$t('core.financial.categories.marketing')}</option>
+            <option value="legal">{$t('core.financial.categories.legal')}</option>
+            <option value="other">{$t('core.financial.categories.other')}</option>
           </select>
         </div>
         <div>
           <label for="vendor_name" class="block text-sm font-medium text-gray-700 dark:text-gray-300">
-            Vendor Name
+            {$t('core.financial.vendorName')}
           </label>
           <input
             type="text"
@@ -511,7 +511,7 @@
         </div>
         <div>
           <label for="expense_date" class="block text-sm font-medium text-gray-700 dark:text-gray-300">
-            Expense Date
+            {$t('core.financial.expenseDate')}
           </label>
           <input
             type="date"
@@ -525,7 +525,7 @@
       
       <div>
         <label for="amount" class="block text-sm font-medium text-gray-700 dark:text-gray-300">
-          Amount
+          {$t('core.financial.amount')}
         </label>
         <input
           type="number"
@@ -541,7 +541,7 @@
     
     <div>
       <label for="description" class="block text-sm font-medium text-gray-700 dark:text-gray-300">
-        Description
+        {$t('core.financial.description')}
       </label>
       <textarea
         id="description"
@@ -558,10 +558,10 @@
         variant="outline"
         onclick={() => showCreateModal = false}
       >
-        Cancel
+        {$t('core.common.cancel')}
       </Button>
       <Button type="submit">
-        Create {activeTab === 'transactions' ? 'Transaction' : 'Expense'}
+        {$t('core.common.create')} {activeTab === 'transactions' ? $t('core.financial.transaction') : $t('core.financial.expense')}
       </Button>
     </div>
   </form>

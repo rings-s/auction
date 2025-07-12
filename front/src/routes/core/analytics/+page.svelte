@@ -49,7 +49,8 @@
   }
 
   function formatPercentage(value) {
-    return `${(value || 0).toFixed(1)}%`;
+    const numValue = Number(value) || 0;
+    return `${numValue.toFixed(1)}%`;
   }
 
   function formatNumber(value) {
@@ -63,7 +64,7 @@
 </script>
 
 <svelte:head>
-  <title>Analytics & Reports | Property Management</title>
+  <title>{$t('core.analytics.title')} | {$t('app.name')}</title>
 </svelte:head>
 
 <div class="space-y-6">
@@ -73,10 +74,10 @@
       <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between">
         <div class="flex-1 min-w-0">
           <h1 class="text-2xl font-bold leading-7 text-gray-900 dark:text-white sm:text-3xl sm:truncate">
-            Analytics & Reports
+            {$t('core.analytics.title')}
           </h1>
           <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">
-            Comprehensive insights into your property management performance
+            {$t('core.analytics.subtitle')}
           </p>
         </div>
         <div class="mt-4 flex items-center space-x-3 sm:mt-0 sm:ml-4">
@@ -85,13 +86,13 @@
             onchange={handleDateRangeChange}
             class="block w-32 pl-3 pr-10 py-2 text-base border border-gray-300 dark:border-gray-600 focus:outline-none focus:ring-primary-500 focus:border-primary-500 text-sm rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
           >
-            <option value="7d">Last 7 days</option>
-            <option value="30d">Last 30 days</option>
-            <option value="90d">Last 90 days</option>
-            <option value="1y">Last year</option>
+            <option value="7d">{$t('core.analytics.dateRanges.last7Days')}</option>
+            <option value="30d">{$t('core.analytics.dateRanges.last30Days')}</option>
+            <option value="90d">{$t('core.analytics.dateRanges.last90Days')}</option>
+            <option value="1y">{$t('core.analytics.dateRanges.lastYear')}</option>
           </select>
           <Button size="sm" variant="outline">
-            Export Report
+            {$t('core.analytics.exportReport')}
           </Button>
         </div>
       </div>
@@ -102,7 +103,7 @@
   {#if !$analyticsLoading}
     <div class="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6" in:slide={{ duration: 400 }}>
       <CoreStatsCard
-        title="Total Revenue"
+        title={$t('core.analytics.totalRevenue')}
         value={formatCurrency(metrics?.totalRevenue || 0)}
         icon="currency-dollar"
         color="green"
@@ -111,7 +112,7 @@
       />
       
       <CoreStatsCard
-        title="Total Expenses"
+        title={$t('core.analytics.totalExpenses')}
         value={formatCurrency(metrics?.totalExpenses || 0)}
         icon="credit-card"
         color="red"
@@ -120,7 +121,7 @@
       />
       
       <CoreStatsCard
-        title="Net Income"
+        title={$t('core.analytics.netIncome')}
         value={formatCurrency(metrics?.netIncome || 0)}
         icon="trending-up"
         color={(metrics?.netIncome || 0) >= 0 ? "green" : "red"}
@@ -129,7 +130,7 @@
       />
       
       <CoreStatsCard
-        title="Occupancy Rate"
+        title={$t('core.analytics.occupancyRate')}
         value={formatPercentage(metrics?.occupancyRate || 0)}
         icon="home"
         color="blue"
@@ -138,14 +139,14 @@
       />
       
       <CoreStatsCard
-        title="Maintenance Requests"
+        title={$t('core.analytics.maintenanceRequests')}
         value={(metrics?.maintenanceRequests || 0).toString()}
         icon="wrench-screwdriver"
         color="orange"
       />
       
       <CoreStatsCard
-        title="Active Leases"
+        title={$t('core.analytics.activeLeases')}
         value={(metrics?.activeLeases || 0).toString()}
         icon="document-text"
         color="purple"
@@ -174,7 +175,7 @@
           <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
           </svg>
-          Overview
+          {$t('core.analytics.tabs.overview')}
         </button>
         <button
           onclick={() => activeTab = 'financial'}
@@ -187,7 +188,7 @@
           <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1" />
           </svg>
-          Financial
+          {$t('core.analytics.tabs.financial')}
         </button>
         <button
           onclick={() => activeTab = 'maintenance'}
@@ -200,7 +201,7 @@
           <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
           </svg>
-          Maintenance
+          {$t('core.analytics.tabs.maintenance')}
         </button>
         <button
           onclick={() => activeTab = 'occupancy'}
@@ -213,7 +214,7 @@
           <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2H5a2 2 0 00-2-2z" />
           </svg>
-          Occupancy
+          {$t('core.analytics.tabs.occupancy')}
         </button>
       </nav>
     </div>
@@ -231,7 +232,7 @@
           title="Failed to Load Analytics"
           description={$analyticsError}
           actionText="Try Again"
-          onAction={loadAnalyticsData}
+          onAction={() => analyticsActions.loadDashboard()}
         />
       {:else}
         <div class="space-y-6" in:slide={{ duration: 300 }}>
@@ -240,23 +241,23 @@
             <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
               <!-- Revenue vs Expenses Chart Placeholder -->
               <div class="bg-gray-50 dark:bg-gray-700 rounded-lg p-6">
-                <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">Revenue vs Expenses</h3>
+                <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">{$t('core.analytics.revenueVsExpenses')}</h3>
                 <div class="h-64 flex items-center justify-center bg-gray-100 dark:bg-gray-600 rounded-lg">
                   <div class="text-center">
                     <svg class="w-12 h-12 text-gray-400 mx-auto mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
                     </svg>
-                    <p class="text-gray-500 dark:text-gray-400">Chart will be rendered here</p>
+                    <p class="text-gray-500 dark:text-gray-400">{$t('core.analytics.chartsPlaceholder')}</p>
                   </div>
                 </div>
               </div>
 
               <!-- Property Performance -->
               <div class="bg-gray-50 dark:bg-gray-700 rounded-lg p-6">
-                <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">Property Performance</h3>
+                <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">{$t('core.analytics.propertyPerformance')}</h3>
                 <div class="space-y-4">
                   <div class="flex justify-between items-center">
-                    <span class="text-sm text-gray-600 dark:text-gray-400">Occupancy Rate</span>
+                    <span class="text-sm text-gray-600 dark:text-gray-400">{$t('core.analytics.occupancyRate')}</span>
                     <span class="text-sm font-medium text-gray-900 dark:text-white">{formatPercentage(metrics?.occupancyRate || 0)}</span>
                   </div>
                   <div class="w-full bg-gray-200 dark:bg-gray-600 rounded-full h-2">
@@ -264,7 +265,7 @@
                   </div>
                   
                   <div class="flex justify-between items-center">
-                    <span class="text-sm text-gray-600 dark:text-gray-400">Maintenance Response</span>
+                    <span class="text-sm text-gray-600 dark:text-gray-400">{$t('core.analytics.maintenanceResponse')}</span>
                     <span class="text-sm font-medium text-gray-900 dark:text-white">85%</span>
                   </div>
                   <div class="w-full bg-gray-200 dark:bg-gray-600 rounded-full h-2">
@@ -272,7 +273,7 @@
                   </div>
                   
                   <div class="flex justify-between items-center">
-                    <span class="text-sm text-gray-600 dark:text-gray-400">Tenant Satisfaction</span>
+                    <span class="text-sm text-gray-600 dark:text-gray-400">{$t('core.analytics.tenantSatisfaction')}</span>
                     <span class="text-sm font-medium text-gray-900 dark:text-white">92%</span>
                   </div>
                   <div class="w-full bg-gray-200 dark:bg-gray-600 rounded-full h-2">
@@ -294,7 +295,7 @@
                       </svg>
                     </div>
                     <div class="ml-4">
-                      <p class="text-sm font-medium text-green-600 dark:text-green-400">Total Revenue</p>
+                      <p class="text-sm font-medium text-green-600 dark:text-green-400">{$t('core.analytics.totalRevenue')}</p>
                       <p class="text-2xl font-bold text-green-900 dark:text-green-100">{formatCurrency(metrics?.totalRevenue || 0)}</p>
                     </div>
                   </div>
@@ -308,7 +309,7 @@
                       </svg>
                     </div>
                     <div class="ml-4">
-                      <p class="text-sm font-medium text-red-600 dark:text-red-400">Total Expenses</p>
+                      <p class="text-sm font-medium text-red-600 dark:text-red-400">{$t('core.analytics.totalExpenses')}</p>
                       <p class="text-2xl font-bold text-red-900 dark:text-red-100">{formatCurrency(metrics?.totalExpenses || 0)}</p>
                     </div>
                   </div>
@@ -322,7 +323,7 @@
                       </svg>
                     </div>
                     <div class="ml-4">
-                      <p class="text-sm font-medium text-blue-600 dark:text-blue-400">Net Income</p>
+                      <p class="text-sm font-medium text-blue-600 dark:text-blue-400">{$t('core.analytics.netIncome')}</p>
                       <p class="text-2xl font-bold text-blue-900 dark:text-blue-100">{formatCurrency(metrics?.netIncome || 0)}</p>
                     </div>
                   </div>
@@ -331,13 +332,13 @@
               
               <!-- Financial Chart Placeholder -->
               <div class="bg-gray-50 dark:bg-gray-700 rounded-lg p-6">
-                <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">Financial Trends</h3>
+                <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">{$t('core.analytics.financialTrends')}</h3>
                 <div class="h-64 flex items-center justify-center bg-gray-100 dark:bg-gray-600 rounded-lg">
                   <div class="text-center">
                     <svg class="w-12 h-12 text-gray-400 mx-auto mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
                     </svg>
-                    <p class="text-gray-500 dark:text-gray-400">Financial trend chart will be rendered here</p>
+                    <p class="text-gray-500 dark:text-gray-400">{$t('core.analytics.financialChartsPlaceholder')}</p>
                   </div>
                 </div>
               </div>
@@ -349,25 +350,25 @@
               <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
                 <div class="bg-yellow-50 dark:bg-yellow-900/20 rounded-lg p-4">
                   <div class="text-center">
-                    <p class="text-sm font-medium text-yellow-600 dark:text-yellow-400">Pending Requests</p>
+                    <p class="text-sm font-medium text-yellow-600 dark:text-yellow-400">{$t('core.maintenance.pendingRequests')}</p>
                     <p class="text-2xl font-bold text-yellow-900 dark:text-yellow-100">{maintenance?.pendingRequests || 0}</p>
                   </div>
                 </div>
                 <div class="bg-blue-50 dark:bg-blue-900/20 rounded-lg p-4">
                   <div class="text-center">
-                    <p class="text-sm font-medium text-blue-600 dark:text-blue-400">In Progress</p>
+                    <p class="text-sm font-medium text-blue-600 dark:text-blue-400">{$t('core.maintenance.inProgressRequests')}</p>
                     <p class="text-2xl font-bold text-blue-900 dark:text-blue-100">{maintenance?.inProgressRequests || 0}</p>
                   </div>
                 </div>
                 <div class="bg-green-50 dark:bg-green-900/20 rounded-lg p-4">
                   <div class="text-center">
-                    <p class="text-sm font-medium text-green-600 dark:text-green-400">Completed</p>
+                    <p class="text-sm font-medium text-green-600 dark:text-green-400">{$t('core.maintenance.completedRequests')}</p>
                     <p class="text-2xl font-bold text-green-900 dark:text-green-100">{maintenance?.completedRequests || 0}</p>
                   </div>
                 </div>
                 <div class="bg-red-50 dark:bg-red-900/20 rounded-lg p-4">
                   <div class="text-center">
-                    <p class="text-sm font-medium text-red-600 dark:text-red-400">Emergency</p>
+                    <p class="text-sm font-medium text-red-600 dark:text-red-400">{$t('core.maintenance.emergencyRequests')}</p>
                     <p class="text-2xl font-bold text-red-900 dark:text-red-100">{maintenance?.emergencyRequests || 0}</p>
                   </div>
                 </div>
@@ -375,13 +376,13 @@
 
               <!-- Maintenance Chart Placeholder -->
               <div class="bg-gray-50 dark:bg-gray-700 rounded-lg p-6">
-                <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">Maintenance Request Trends</h3>
+                <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">{$t('core.analytics.maintenanceRequestTrends')}</h3>
                 <div class="h-64 flex items-center justify-center bg-gray-100 dark:bg-gray-600 rounded-lg">
                   <div class="text-center">
                     <svg class="w-12 h-12 text-gray-400 mx-auto mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
                     </svg>
-                    <p class="text-gray-500 dark:text-gray-400">Maintenance trend chart will be rendered here</p>
+                    <p class="text-gray-500 dark:text-gray-400">{$t('core.analytics.maintenanceChartsPlaceholder')}</p>
                   </div>
                 </div>
               </div>
@@ -393,19 +394,19 @@
               <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
                 <div class="bg-blue-50 dark:bg-blue-900/20 rounded-lg p-6">
                   <div class="text-center">
-                    <p class="text-sm font-medium text-blue-600 dark:text-blue-400">Current Occupancy</p>
+                    <p class="text-sm font-medium text-blue-600 dark:text-blue-400">{$t('core.analytics.currentOccupancy')}</p>
                     <p class="text-3xl font-bold text-blue-900 dark:text-blue-100">{formatPercentage(metrics?.occupancyRate || 0)}</p>
                   </div>
                 </div>
                 <div class="bg-green-50 dark:bg-green-900/20 rounded-lg p-6">
                   <div class="text-center">
-                    <p class="text-sm font-medium text-green-600 dark:text-green-400">Active Leases</p>
+                    <p class="text-sm font-medium text-green-600 dark:text-green-400">{$t('core.analytics.activeLeases')}</p>
                     <p class="text-3xl font-bold text-green-900 dark:text-green-100">{metrics?.activeLeases || 0}</p>
                   </div>
                 </div>
                 <div class="bg-purple-50 dark:bg-purple-900/20 rounded-lg p-6">
                   <div class="text-center">
-                    <p class="text-sm font-medium text-purple-600 dark:text-purple-400">Avg Lease Duration</p>
+                    <p class="text-sm font-medium text-purple-600 dark:text-purple-400">{$t('core.analytics.avgLeaseDuration')}</p>
                     <p class="text-3xl font-bold text-purple-900 dark:text-purple-100">{rental?.averageLeaseDuration || '12'} mo</p>
                   </div>
                 </div>
@@ -413,13 +414,13 @@
 
               <!-- Occupancy Chart Placeholder -->
               <div class="bg-gray-50 dark:bg-gray-700 rounded-lg p-6">
-                <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">Occupancy Trends</h3>
+                <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">{$t('core.analytics.occupancyTrends')}</h3>
                 <div class="h-64 flex items-center justify-center bg-gray-100 dark:bg-gray-600 rounded-lg">
                   <div class="text-center">
                     <svg class="w-12 h-12 text-gray-400 mx-auto mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
                     </svg>
-                    <p class="text-gray-500 dark:text-gray-400">Occupancy trend chart will be rendered here</p>
+                    <p class="text-gray-500 dark:text-gray-400">{$t('core.analytics.chartsPlaceholder')}</p>
                   </div>
                 </div>
               </div>

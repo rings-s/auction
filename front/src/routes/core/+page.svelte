@@ -83,12 +83,13 @@
   }
 
   function formatPercentage(value) {
-    return `${(value || 0).toFixed(1)}%`;
+    const numValue = Number(value) || 0;
+    return `${numValue.toFixed(1)}%`;
   }
 </script>
 
 <svelte:head>
-  <title>Property Management Dashboard | Real Estate Platform</title>
+  <title>{$t('core.dashboard.title')} | {$t('app.name')}</title>
 </svelte:head>
 
 <div class="space-y-6">
@@ -98,10 +99,10 @@
       <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between">
         <div class="flex-1 min-w-0">
           <h1 class="text-2xl font-bold leading-7 text-gray-900 dark:text-white sm:text-3xl sm:truncate">
-            Property Management Dashboard
+            {$t('core.dashboard.title')}
           </h1>
           <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">
-            Comprehensive overview of your property portfolio and operations
+            {$t('core.dashboard.subtitle')}
           </p>
         </div>
         <div class="mt-4 flex items-center space-x-3 sm:mt-0 sm:ml-4">
@@ -115,10 +116,10 @@
             <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
             </svg>
-            Refresh
+            {$t('core.dashboard.refresh')}
           </Button>
           <Button href="/core/analytics" size="sm">
-            View Reports
+            {$t('core.dashboard.viewReports')}
           </Button>
         </div>
       </div>
@@ -146,7 +147,7 @@
     <div class="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4" in:slide={{ duration: 400 }}>
       <!-- Total Properties -->
       <StatCard
-        title="Total Properties"
+        title={$t('core.dashboard.totalProperties')}
         value={dashboardSummaryData?.totalProperties || 0}
         change="+2.5%"
         trend="up"
@@ -156,7 +157,7 @@
       
       <!-- Monthly Income -->
       <StatCard
-        title="Monthly Income"
+        title={$t('core.dashboard.monthlyIncome')}
         value={formatCurrency(dashboardSummaryData?.monthlyIncome || 0)}
         change="+8.2%"
         trend="up"
@@ -166,7 +167,7 @@
       
       <!-- Occupancy Rate -->
       <StatCard
-        title="Occupancy Rate"
+        title={$t('core.dashboard.occupancyRate')}
         value={formatPercentage(dashboardSummaryData?.occupancyRate || 0)}
         change="-1.3%"
         trend="down"
@@ -176,7 +177,7 @@
       
       <!-- Pending Maintenance -->
       <StatCard
-        title="Pending Maintenance"
+        title={$t('core.dashboard.pendingMaintenance')}
         value={dashboardSummaryData?.pendingMaintenance || 0}
         change="+12"
         trend="neutral"
@@ -190,11 +191,11 @@
       <div class="border-b border-gray-200 dark:border-gray-700">
         <nav class="-mb-px flex space-x-8 px-6" aria-label="Tabs">
           {#each [
-            { id: 'overview', label: 'Overview', icon: 'chart-bar' },
-            { id: 'financial', label: 'Financial', icon: 'currency-dollar' },
-            { id: 'maintenance', label: 'Maintenance', icon: 'wrench-screwdriver' },
-            { id: 'leases', label: 'Leases', icon: 'document-text' },
-            { id: 'contracts', label: 'Contracts', icon: 'clipboard-document-list' }
+            { id: 'overview', label: $t('core.dashboard.tabs.overview'), icon: 'chart-bar' },
+            { id: 'financial', label: $t('core.dashboard.tabs.financial'), icon: 'currency-dollar' },
+            { id: 'maintenance', label: $t('core.dashboard.tabs.maintenance'), icon: 'wrench-screwdriver' },
+            { id: 'leases', label: $t('core.dashboard.tabs.leases'), icon: 'document-text' },
+            { id: 'contracts', label: $t('core.dashboard.tabs.contracts'), icon: 'clipboard-document-list' }
           ] as section}
             <button
               onclick={() => activeSection = section.id}
@@ -227,26 +228,26 @@
       <div class="p-6">
         {#if activeSection === 'overview'}
           <div in:fade={{ duration: 300 }}>
-            <h3 class="text-lg font-medium text-gray-900 dark:text-white mb-4">Portfolio Overview</h3>
+            <h3 class="text-lg font-medium text-gray-900 dark:text-white mb-4">{$t('core.dashboard.portfolioOverview')}</h3>
             <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               <!-- Rental Properties Summary -->
               <div class="bg-gray-50 dark:bg-gray-700 rounded-lg p-4">
-                <h4 class="text-sm font-medium text-gray-900 dark:text-white mb-3">Rental Properties</h4>
+                <h4 class="text-sm font-medium text-gray-900 dark:text-white mb-3">{$t('core.dashboard.rentalProperties')}</h4>
                 <div class="space-y-2">
                   <div class="flex justify-between">
-                    <span class="text-sm text-gray-600 dark:text-gray-400">Total Properties</span>
+                    <span class="text-sm text-gray-600 dark:text-gray-400">{$t('core.dashboard.totalProperties')}</span>
                     <span class="text-sm font-medium text-gray-900 dark:text-white">
                       {rentalData?.totalProperties || 0}
                     </span>
                   </div>
                   <div class="flex justify-between">
-                    <span class="text-sm text-gray-600 dark:text-gray-400">Occupied</span>
+                    <span class="text-sm text-gray-600 dark:text-gray-400">{$t('core.dashboard.occupied')}</span>
                     <span class="text-sm font-medium text-gray-900 dark:text-white">
                       {rentalData?.occupiedProperties || 0}
                     </span>
                   </div>
                   <div class="flex justify-between">
-                    <span class="text-sm text-gray-600 dark:text-gray-400">Vacant</span>
+                    <span class="text-sm text-gray-600 dark:text-gray-400">{$t('core.dashboard.vacant')}</span>
                     <span class="text-sm font-medium text-gray-900 dark:text-white">
                       {rentalData?.vacantProperties || 0}
                     </span>
@@ -256,22 +257,22 @@
 
               <!-- Financial Summary -->
               <div class="bg-gray-50 dark:bg-gray-700 rounded-lg p-4">
-                <h4 class="text-sm font-medium text-gray-900 dark:text-white mb-3">Financial Performance</h4>
+                <h4 class="text-sm font-medium text-gray-900 dark:text-white mb-3">{$t('core.dashboard.financialPerformance')}</h4>
                 <div class="space-y-2">
                   <div class="flex justify-between">
-                    <span class="text-sm text-gray-600 dark:text-gray-400">YTD Income</span>
+                    <span class="text-sm text-gray-600 dark:text-gray-400">{$t('core.dashboard.ytdIncome')}</span>
                     <span class="text-sm font-medium text-green-600 dark:text-green-400">
                       {formatCurrency(financialData?.ytdIncome || 0)}
                     </span>
                   </div>
                   <div class="flex justify-between">
-                    <span class="text-sm text-gray-600 dark:text-gray-400">YTD Expenses</span>
+                    <span class="text-sm text-gray-600 dark:text-gray-400">{$t('core.dashboard.ytdExpenses')}</span>
                     <span class="text-sm font-medium text-red-600 dark:text-red-400">
                       {formatCurrency(financialData?.ytdExpenses || 0)}
                     </span>
                   </div>
                   <div class="flex justify-between">
-                    <span class="text-sm text-gray-600 dark:text-gray-400">Net Profit</span>
+                    <span class="text-sm text-gray-600 dark:text-gray-400">{$t('core.dashboard.netProfit')}</span>
                     <span class="text-sm font-medium text-gray-900 dark:text-white">
                       {formatCurrency(financialData?.netIncome || 0)}
                     </span>
@@ -281,25 +282,25 @@
 
               <!-- Quick Actions -->
               <div class="bg-gray-50 dark:bg-gray-700 rounded-lg p-4">
-                <h4 class="text-sm font-medium text-gray-900 dark:text-white mb-3">Quick Actions</h4>
+                <h4 class="text-sm font-medium text-gray-900 dark:text-white mb-3">{$t('core.dashboard.quickActions')}</h4>
                 <div class="space-y-3">
                   <Button href="/core/financial" size="sm" variant="outline" class="w-full justify-start">
                     <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
                     </svg>
-                    Add Transaction
+                    {$t('core.dashboard.addTransaction')}
                   </Button>
                   <Button href="/core/maintenance" size="sm" variant="outline" class="w-full justify-start">
                     <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
                     </svg>
-                    New Maintenance Request
+                    {$t('core.dashboard.newMaintenanceRequest')}
                   </Button>
                   <Button href="/core/contracts" size="sm" variant="outline" class="w-full justify-start">
                     <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
                     </svg>
-                    Create Contract
+                    {$t('core.dashboard.createContract')}
                   </Button>
                 </div>
               </div>
@@ -308,45 +309,45 @@
         {:else if activeSection === 'financial'}
           <div in:fade={{ duration: 300 }}>
             <div class="flex justify-between items-center mb-4">
-              <h3 class="text-lg font-medium text-gray-900 dark:text-white">Financial Overview</h3>
-              <Button href="/core/financial" size="sm">View Details</Button>
+              <h3 class="text-lg font-medium text-gray-900 dark:text-white">{$t('core.dashboard.tabs.financial')}</h3>
+              <Button href="/core/financial" size="sm">{$t('core.dashboard.viewDetails')}</Button>
             </div>
             <!-- Financial summary content would go here -->
             <div class="text-center py-8 text-gray-500 dark:text-gray-400">
-              Financial overview charts and summaries will be displayed here
+              {$t('core.dashboard.overviewCharts')}
             </div>
           </div>
         {:else if activeSection === 'maintenance'}
           <div in:fade={{ duration: 300 }}>
             <div class="flex justify-between items-center mb-4">
-              <h3 class="text-lg font-medium text-gray-900 dark:text-white">Maintenance Overview</h3>
-              <Button href="/core/maintenance" size="sm">View All Requests</Button>
+              <h3 class="text-lg font-medium text-gray-900 dark:text-white">{$t('core.dashboard.tabs.maintenance')}</h3>
+              <Button href="/core/maintenance" size="sm">{$t('core.dashboard.viewAllRequests')}</Button>
             </div>
             <!-- Maintenance summary content would go here -->
             <div class="text-center py-8 text-gray-500 dark:text-gray-400">
-              Maintenance requests summary and recent activity will be displayed here
+              {$t('core.dashboard.maintenanceOverview')}
             </div>
           </div>
         {:else if activeSection === 'leases'}
           <div in:fade={{ duration: 300 }}>
             <div class="flex justify-between items-center mb-4">
-              <h3 class="text-lg font-medium text-gray-900 dark:text-white">Lease Overview</h3>
-              <Button href="/core/rentals" size="sm">Manage Leases</Button>
+              <h3 class="text-lg font-medium text-gray-900 dark:text-white">{$t('core.dashboard.tabs.leases')}</h3>
+              <Button href="/core/rentals" size="sm">{$t('core.dashboard.manageLeases')}</Button>
             </div>
             <!-- Lease summary content would go here -->
             <div class="text-center py-8 text-gray-500 dark:text-gray-400">
-              Lease status overview and expiring contracts will be displayed here
+              {$t('core.dashboard.leaseOverview')}
             </div>
           </div>
         {:else if activeSection === 'contracts'}
           <div in:fade={{ duration: 300 }}>
             <div class="flex justify-between items-center mb-4">
-              <h3 class="text-lg font-medium text-gray-900 dark:text-white">Contract Overview</h3>
-              <Button href="/core/contracts" size="sm">View Contracts</Button>
+              <h3 class="text-lg font-medium text-gray-900 dark:text-white">{$t('core.dashboard.tabs.contracts')}</h3>
+              <Button href="/core/contracts" size="sm">{$t('core.dashboard.viewContracts')}</Button>
             </div>
             <!-- Contract summary content would go here -->
             <div class="text-center py-8 text-gray-500 dark:text-gray-400">
-              Contract status overview and pending signatures will be displayed here
+              {$t('core.dashboard.contractOverview')}
             </div>
           </div>
         {/if}

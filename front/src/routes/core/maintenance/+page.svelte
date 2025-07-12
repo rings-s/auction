@@ -107,7 +107,7 @@
 </script>
 
 <svelte:head>
-  <title>Maintenance Management | Property Management</title>
+  <title>{$t('core.maintenance.title')} | {$t('app.name')}</title>
 </svelte:head>
 
 <div class="space-y-6">
@@ -117,10 +117,10 @@
       <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between">
         <div class="flex-1 min-w-0">
           <h1 class="text-2xl font-bold leading-7 text-gray-900 dark:text-white sm:text-3xl sm:truncate">
-            Maintenance Management
+            {$t('core.maintenance.title')}
           </h1>
           <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">
-            Manage maintenance requests, vendors, and work orders
+            {$t('core.maintenance.subtitle')}
           </p>
         </div>
         <div class="mt-4 flex items-center space-x-3 sm:mt-0 sm:ml-4">
@@ -132,7 +132,7 @@
             <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
             </svg>
-            Manage Vendors
+            {$t('core.maintenance.manageVendors')}
           </Button>
           <Button
             onclick={() => showCreateModal = true}
@@ -141,7 +141,7 @@
             <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
             </svg>
-            New Request
+            {$t('core.maintenance.newRequest')}
           </Button>
         </div>
       </div>
@@ -152,28 +152,28 @@
   {#if !$maintenanceLoading}
     <div class="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6" in:slide={{ duration: 400 }}>
       <CoreStatsCard
-        title="Total Requests"
+        title={$t('core.maintenance.totalRequests')}
         value={$maintenanceStats.totalRequests.toString()}
         icon="wrench-screwdriver"
         color="blue"
       />
       
       <CoreStatsCard
-        title="Pending"
+        title={$t('core.maintenance.pending')}
         value={$maintenanceStats.pendingRequests.toString()}
         icon="clock"
         color="yellow"
       />
       
       <CoreStatsCard
-        title="In Progress"
+        title={$t('core.maintenance.inProgress')}
         value={$maintenanceStats.inProgressRequests.toString()}
         icon="cog"
         color="blue"
       />
       
       <CoreStatsCard
-        title="Completed"
+        title={$t('core.maintenance.completed')}
         value={$maintenanceStats.completedRequests.toString()}
         icon="check-circle"
         color="green"
@@ -182,14 +182,14 @@
       />
       
       <CoreStatsCard
-        title="Emergency"
+        title={$t('core.maintenance.emergency')}
         value={$maintenanceStats.emergencyRequests.toString()}
         icon="exclamation-triangle"
         color="red"
       />
       
       <CoreStatsCard
-        title="YTD Cost"
+        title={$t('core.maintenance.ytdCost')}
         value={formatCurrency($maintenanceStats.totalCostYTD)}
         icon="currency-dollar"
         color="purple"
@@ -220,7 +220,7 @@
           <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M11.42 15.17 17.25 21A2.652 2.652 0 0 0 21 17.25l-5.877-5.877M11.42 15.17l2.496-3.03c.317-.384.74-.626 1.208-.766M11.42 15.17l-4.655 5.653a2.548 2.548 0 1 1-3.586-3.586l6.837-5.63m5.108-.233c.55-.164 1.163-.188 1.743-.14a4.5 4.5 0 0 0 4.486-6.336l-3.276 3.277a3.004 3.004 0 0 1-2.25-2.25l3.276-3.276a4.5 4.5 0 0 0-6.336 4.486c.091 1.076-.071 2.264-.904 2.95l-.102.085m-1.745 1.437L5.909 7.5H4.5L2.25 3.75l1.5-1.5L7.5 4.5v1.409l4.26 4.26m-1.745 1.437 1.745-1.437m6.615 8.206L15.75 15.75M4.867 19.125h.008v.008h-.008v-.008Z" />
           </svg>
-          Maintenance Requests ({$maintenanceStats.totalRequests})
+          {$t('core.maintenance.maintenanceRequestsCount', { count: $maintenanceStats.totalRequests })}
         </button>
         <button
           onclick={() => activeTab = 'vendors'}
@@ -233,7 +233,7 @@
           <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M15 19.128a9.38 9.38 0 0 0 2.625.372 9.337 9.337 0 0 0 4.121-.952 4.125 4.125 0 0 0-7.533-2.493M15 19.128v-.003c0-1.113-.285-2.16-.786-3.07M15 19.128v.106A12.318 12.318 0 0 1 8.624 21c-2.331 0-4.512-.645-6.374-1.766l-.001-.109a6.375 6.375 0 0 1 11.964-3.07M12 6.375a3.375 3.375 0 1 1-6.75 0 3.375 3.375 0 0 1 6.75 0Zm8.25 2.25a2.625 2.625 0 1 1-5.25 0 2.625 2.625 0 0 1 5.25 0Z" />
           </svg>
-          Vendors ({$vendors.length})
+          {$t('core.maintenance.vendorsCount', { count: $vendors.length })}
         </button>
       </nav>
     </div>
@@ -251,7 +251,7 @@
             <input
               type="text"
               bind:value={$maintenanceFilters.search}
-              placeholder={`Search ${activeTab}...`}
+              placeholder={$t('core.common.searchPlaceholder', { type: activeTab === 'requests' ? $t('core.maintenance.requests') : $t('core.maintenance.vendors') })}
               oninput={() => maintenanceActions.loadAll()}
               class="block w-full pl-10 pr-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md leading-5 bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:placeholder-gray-400 focus:ring-1 focus:ring-primary-500 focus:border-primary-500 text-sm"
             />
@@ -267,11 +267,11 @@
                 onchange={() => maintenanceActions.loadAll()}
                 class="block w-32 pl-3 pr-10 py-2 text-base border border-gray-300 dark:border-gray-600 focus:outline-none focus:ring-primary-500 focus:border-primary-500 text-sm rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
               >
-                <option value="">All Status</option>
-                <option value="submitted">Submitted</option>
-                <option value="in_progress">In Progress</option>
-                <option value="completed">Completed</option>
-                <option value="cancelled">Cancelled</option>
+                <option value="">{$t('core.maintenance.filters.allStatus')}</option>
+                <option value="submitted">{$t('core.maintenance.status.submitted')}</option>
+                <option value="in_progress">{$t('core.maintenance.status.inProgress')}</option>
+                <option value="completed">{$t('core.maintenance.status.completed')}</option>
+                <option value="cancelled">{$t('core.maintenance.status.cancelled')}</option>
               </select>
             </div>
 
@@ -282,11 +282,11 @@
                 onchange={() => maintenanceActions.loadAll()}
                 class="block w-32 pl-3 pr-10 py-2 text-base border border-gray-300 dark:border-gray-600 focus:outline-none focus:ring-primary-500 focus:border-primary-500 text-sm rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
               >
-                <option value="">All Priority</option>
-                <option value="low">Low</option>
-                <option value="medium">Medium</option>
-                <option value="high">High</option>
-                <option value="emergency">Emergency</option>
+                <option value="">{$t('core.maintenance.filters.allPriority')}</option>
+                <option value="low">{$t('core.maintenance.priorities.low')}</option>
+                <option value="medium">{$t('core.maintenance.priorities.medium')}</option>
+                <option value="high">{$t('core.maintenance.priorities.high')}</option>
+                <option value="emergency">{$t('core.maintenance.priorities.emergency')}</option>
               </select>
             </div>
 
@@ -297,13 +297,13 @@
                 onchange={() => maintenanceActions.loadAll()}
                 class="block w-32 pl-3 pr-10 py-2 text-base border border-gray-300 dark:border-gray-600 focus:outline-none focus:ring-primary-500 focus:border-primary-500 text-sm rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
               >
-                <option value="">All Categories</option>
-                <option value="plumbing">Plumbing</option>
-                <option value="electrical">Electrical</option>
-                <option value="hvac">HVAC</option>
-                <option value="appliances">Appliances</option>
-                <option value="structural">Structural</option>
-                <option value="other">Other</option>
+                <option value="">{$t('core.maintenance.filters.allCategories')}</option>
+                <option value="plumbing">{$t('core.maintenance.categories.plumbing')}</option>
+                <option value="electrical">{$t('core.maintenance.categories.electrical')}</option>
+                <option value="hvac">{$t('core.maintenance.categories.hvac')}</option>
+                <option value="appliances">{$t('core.maintenance.categories.appliances')}</option>
+                <option value="structural">{$t('core.maintenance.categories.structural')}</option>
+                <option value="other">{$t('core.maintenance.categories.other')}</option>
               </select>
             </div>
           </div>
@@ -321,16 +321,16 @@
         </div>
       {:else if $maintenanceError}
         <EmptyState
-          title="Failed to Load Data"
+          title={$t('core.common.failedToLoad')}
           description={$maintenanceError}
-          actionText="Try Again"
+          actionText={$t('core.common.tryAgain')}
           onAction={maintenanceActions.loadAll}
         />
       {:else if (activeTab === 'requests' ? $filteredMaintenanceRequests : $vendors).length === 0}
         <EmptyState
-          title={`No ${activeTab} found`}
-          description={`Start by creating your first ${activeTab.slice(0, -1)}`}
-          actionText={`Add ${activeTab === 'requests' ? 'Request' : 'Vendor'}`}
+          title={$t('core.maintenance.noItemsFound', { type: activeTab === 'requests' ? $t('core.maintenance.requests') : $t('core.maintenance.vendors') })}
+          description={$t('core.maintenance.createFirstItem', { type: activeTab === 'requests' ? $t('core.maintenance.request') : $t('core.maintenance.vendor') })}
+          actionText={$t('core.common.add') + ' ' + (activeTab === 'requests' ? $t('core.maintenance.request') : $t('core.maintenance.vendor'))}
           onAction={() => showCreateModal = true}
         />
       {:else}
@@ -366,24 +366,24 @@
                       <div class="text-sm text-gray-600 dark:text-gray-400 space-y-1">
                         <p>{request.description}</p>
                         <div class="flex items-center space-x-4">
-                          <span class="font-medium">Property:</span>
-                          <span>{request.property_info?.title || 'Unknown Property'}</span>
+                          <span class="font-medium">{$t('core.maintenance.property')}:</span>
+                          <span>{request.property_info?.title || $t('core.maintenance.unknownProperty')}</span>
                         </div>
                         <div class="flex items-center space-x-4">
-                          <span class="font-medium">Category:</span>
+                          <span class="font-medium">{$t('core.maintenance.category')}:</span>
                           <span>{request.category_display || request.category}</span>
                           {#if request.assigned_to_info}
-                            <span class="font-medium">Assigned to:</span>
+                            <span class="font-medium">{$t('core.maintenance.assignedTo')}:</span>
                             <span>{request.assigned_to_info.full_name}</span>
                           {/if}
                         </div>
                         <div class="flex items-center space-x-4">
-                          <span>Created: {formatDate(request.requested_date)}</span>
+                          <span>{$t('core.maintenance.created')}: {formatDate(request.requested_date)}</span>
                           {#if request.scheduled_date}
-                            <span>Scheduled: {formatDate(request.scheduled_date)}</span>
+                            <span>{$t('core.maintenance.scheduled')}: {formatDate(request.scheduled_date)}</span>
                           {/if}
                           {#if request.completed_date}
-                            <span>Completed: {formatDate(request.completed_date)}</span>
+                            <span>{$t('core.maintenance.completed')}: {formatDate(request.completed_date)}</span>
                           {/if}
                         </div>
                       </div>
@@ -395,20 +395,20 @@
                         <div class="text-lg font-semibold text-gray-900 dark:text-white">
                           {formatCurrency(request.actual_cost)}
                         </div>
-                        <div class="text-sm text-gray-500 dark:text-gray-400">Actual Cost</div>
+                        <div class="text-sm text-gray-500 dark:text-gray-400">{$t('core.maintenance.actualCost')}</div>
                       {:else if request.estimated_cost}
                         <div class="text-lg font-semibold text-gray-900 dark:text-white">
                           {formatCurrency(request.estimated_cost)}
                         </div>
-                        <div class="text-sm text-gray-500 dark:text-gray-400">Estimated</div>
+                        <div class="text-sm text-gray-500 dark:text-gray-400">{$t('core.maintenance.estimated')}</div>
                       {/if}
                     </div>
                     <div class="flex items-center space-x-2">
                       <Button size="sm" variant="outline">
-                        Edit
+                        {$t('core.common.edit')}
                       </Button>
                       <Button size="sm" variant="outline">
-                        View
+                        {$t('core.common.view')}
                       </Button>
                     </div>
                   </div>
@@ -437,20 +437,20 @@
                         ? 'bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-400'
                         : 'bg-gray-100 text-gray-800 dark:bg-gray-900/20 dark:text-gray-400'
                     }`}>
-                      {vendor.is_active ? 'Active' : 'Inactive'}
+                      {vendor.is_active ? $t('core.maintenance.vendorStatus.active') : $t('core.maintenance.vendorStatus.inactive')}
                     </span>
                   </div>
 
                   <div class="space-y-2">
                     <div class="flex justify-between items-center">
-                      <span class="text-sm text-gray-500 dark:text-gray-400">Contact</span>
+                      <span class="text-sm text-gray-500 dark:text-gray-400">{$t('core.maintenance.contact')}</span>
                       <span class="text-sm text-gray-900 dark:text-white">
-                        {vendor.contact_person || 'Not specified'}
+                        {vendor.contact_person || $t('core.maintenance.notSpecified')}
                       </span>
                     </div>
 
                     <div class="flex justify-between items-center">
-                      <span class="text-sm text-gray-500 dark:text-gray-400">Phone</span>
+                      <span class="text-sm text-gray-500 dark:text-gray-400">{$t('core.maintenance.phone')}</span>
                       <span class="text-sm text-gray-900 dark:text-white">
                         {vendor.phone}
                       </span>
@@ -458,7 +458,7 @@
 
                     {#if vendor.email}
                       <div class="flex justify-between items-center">
-                        <span class="text-sm text-gray-500 dark:text-gray-400">Email</span>
+                        <span class="text-sm text-gray-500 dark:text-gray-400">{$t('core.maintenance.email')}</span>
                         <span class="text-sm text-gray-900 dark:text-white">
                           {vendor.email}
                         </span>
@@ -467,7 +467,7 @@
 
                     {#if vendor.hourly_rate}
                       <div class="flex justify-between items-center">
-                        <span class="text-sm text-gray-500 dark:text-gray-400">Rate</span>
+                        <span class="text-sm text-gray-500 dark:text-gray-400">{$t('core.maintenance.rate')}</span>
                         <span class="text-sm font-medium text-gray-900 dark:text-white">
                           {formatCurrency(vendor.hourly_rate)}/hr
                         </span>
@@ -476,7 +476,7 @@
 
                     {#if vendor.rating}
                       <div class="flex justify-between items-center">
-                        <span class="text-sm text-gray-500 dark:text-gray-400">Rating</span>
+                        <span class="text-sm text-gray-500 dark:text-gray-400">{$t('core.maintenance.rating')}</span>
                         <span class="text-sm font-medium text-gray-900 dark:text-white">
                           {vendor.rating}/5.0 ⭐
                         </span>
@@ -486,7 +486,7 @@
                     {#if vendor.is_preferred}
                       <div class="mt-2">
                         <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800 dark:bg-blue-900/20 dark:text-blue-400">
-                          Preferred Vendor
+                          {$t('core.maintenance.preferredVendor')}
                         </span>
                       </div>
                     {/if}
@@ -494,14 +494,14 @@
 
                   <div class="flex items-center justify-between mt-4 pt-4 border-t border-gray-200 dark:border-gray-600">
                     <div class="text-xs text-gray-500 dark:text-gray-400">
-                      {vendor.license_number ? `License: ${vendor.license_number}` : ''}
+                      {vendor.license_number ? $t('core.maintenance.license', { number: vendor.license_number }) : ''}
                     </div>
                     <div class="flex space-x-2">
                       <Button size="sm" variant="outline">
-                        Edit
+                        {$t('core.common.edit')}
                       </Button>
                       <Button size="sm" variant="outline">
-                        Contact
+                        {$t('core.maintenance.contact')}
                       </Button>
                     </div>
                   </div>
@@ -516,12 +516,12 @@
 </div>
 
 <!-- Create Maintenance Request Modal -->
-<Modal bind:open={showCreateModal} title="New Maintenance Request">
+<Modal bind:open={showCreateModal} title={$t('core.maintenance.newMaintenanceRequest')}>
   <form onsubmit={handleCreateRequest} class="space-y-4">
     <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
       <div class="sm:col-span-2">
         <label for="property_id" class="block text-sm font-medium text-gray-700 dark:text-gray-300">
-          Property
+          {$t('core.maintenance.property')}
         </label>
         <select
           id="property_id"
@@ -529,14 +529,14 @@
           required
           class="mt-1 block w-full border border-gray-300 dark:border-gray-600 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-primary-500 focus:border-primary-500 text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
         >
-          <option value="">Select Property</option>
+          <option value="">{$t('core.maintenance.selectProperty')}</option>
           <!-- Properties would be loaded dynamically -->
         </select>
       </div>
       
       <div class="sm:col-span-2">
         <label for="title" class="block text-sm font-medium text-gray-700 dark:text-gray-300">
-          Title
+          {$t('core.maintenance.title')}
         </label>
         <input
           type="text"
@@ -549,7 +549,7 @@
 
       <div>
         <label for="category" class="block text-sm font-medium text-gray-700 dark:text-gray-300">
-          Category
+          {$t('core.maintenance.category')}
         </label>
         <select
           id="category"
@@ -557,19 +557,19 @@
           required
           class="mt-1 block w-full border border-gray-300 dark:border-gray-600 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-primary-500 focus:border-primary-500 text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
         >
-          <option value="">Select Category</option>
-          <option value="plumbing">Plumbing</option>
-          <option value="electrical">Electrical</option>
-          <option value="hvac">HVAC</option>
-          <option value="appliances">Appliances</option>
-          <option value="structural">Structural</option>
-          <option value="other">Other</option>
+          <option value="">{$t('core.maintenance.selectCategory')}</option>
+          <option value="plumbing">{$t('core.maintenance.categories.plumbing')}</option>
+          <option value="electrical">{$t('core.maintenance.categories.electrical')}</option>
+          <option value="hvac">{$t('core.maintenance.categories.hvac')}</option>
+          <option value="appliances">{$t('core.maintenance.categories.appliances')}</option>
+          <option value="structural">{$t('core.maintenance.categories.structural')}</option>
+          <option value="other">{$t('core.maintenance.categories.other')}</option>
         </select>
       </div>
 
       <div>
         <label for="priority" class="block text-sm font-medium text-gray-700 dark:text-gray-300">
-          Priority
+          {$t('core.maintenance.priority')}
         </label>
         <select
           id="priority"
@@ -577,16 +577,16 @@
           required
           class="mt-1 block w-full border border-gray-300 dark:border-gray-600 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-primary-500 focus:border-primary-500 text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
         >
-          <option value="low">Low</option>
-          <option value="medium">Medium</option>
-          <option value="high">High</option>
-          <option value="emergency">Emergency</option>
+          <option value="low">{$t('core.maintenance.priorities.low')}</option>
+          <option value="medium">{$t('core.maintenance.priorities.medium')}</option>
+          <option value="high">{$t('core.maintenance.priorities.high')}</option>
+          <option value="emergency">{$t('core.maintenance.priorities.emergency')}</option>
         </select>
       </div>
 
       <div>
         <label for="estimated_cost" class="block text-sm font-medium text-gray-700 dark:text-gray-300">
-          Estimated Cost
+          {$t('core.maintenance.estimatedCost')}
         </label>
         <input
           type="number"
@@ -600,7 +600,7 @@
 
       <div>
         <label for="scheduled_date" class="block text-sm font-medium text-gray-700 dark:text-gray-300">
-          Scheduled Date
+          {$t('core.maintenance.scheduledDate')}
         </label>
         <input
           type="date"
@@ -613,7 +613,7 @@
     
     <div>
       <label for="description" class="block text-sm font-medium text-gray-700 dark:text-gray-300">
-        Description
+        {$t('core.maintenance.description')}
       </label>
       <textarea
         id="description"
@@ -630,10 +630,10 @@
         variant="outline"
         onclick={() => showCreateModal = false}
       >
-        Cancel
+        {$t('core.common.cancel')}
       </Button>
       <Button type="submit">
-        Create Request
+        {$t('core.maintenance.createRequest')}
       </Button>
     </div>
   </form>

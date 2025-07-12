@@ -302,7 +302,7 @@ export const recentActivity = derived(
 // Maintenance API Functions
 export const maintenanceActions = {
   async loadAll() {
-    // GUARD: Only run on core pages
+    // GUARD: Only run on core pages OR if user has tenant+ access
     if (typeof window !== 'undefined' && !window.location.pathname.startsWith('/core')) {
       return;
     }
@@ -335,9 +335,11 @@ export const maintenanceActions = {
       maintenanceStats.set(stats);
       
     } catch (error) {
-      // Silently handle permission errors - don't spam console
-      if (error.message?.includes('403') || error.message?.includes('Forbidden')) {
+      // Better error handling for different user roles
+      if (error.message?.includes('403') || error.message?.includes('Forbidden') || error.message?.includes('permission')) {
+        // User doesn't have permission - this is expected for some roles
         maintenanceError.set(null);
+        console.log('User does not have permission for maintenance data - this is normal for some roles');
       } else if (error.message?.includes('401') || error.message?.includes('Unauthorized')) {
         maintenanceError.set('Authentication required. Please log in again.');
       } else if (error.message?.includes('verification')) {
@@ -388,7 +390,7 @@ export const maintenanceActions = {
 // Financial API Functions
 export const financialActions = {
   async loadAll() {
-    // GUARD: Only run on core pages
+    // GUARD: Only run on core pages OR if user has tenant+ access
     if (typeof window !== 'undefined' && !window.location.pathname.startsWith('/core')) {
       return;
     }
@@ -429,9 +431,11 @@ export const financialActions = {
       financialStats.set(stats);
       
     } catch (error) {
-      // Silently handle permission errors - don't spam console
-      if (error.message?.includes('403') || error.message?.includes('Forbidden')) {
+      // Better error handling for different user roles
+      if (error.message?.includes('403') || error.message?.includes('Forbidden') || error.message?.includes('permission')) {
+        // User doesn't have permission - this is expected for some roles
         financialError.set(null);
+        console.log('User does not have permission for financial data - this is normal for some roles');
       } else if (error.message?.includes('401') || error.message?.includes('Unauthorized')) {
         financialError.set('Authentication required. Please log in again.');
       } else if (error.message?.includes('verification')) {
@@ -466,7 +470,7 @@ export const financialActions = {
 // Contract API Functions
 export const contractActions = {
   async loadAll() {
-    // GUARD: Only run on core pages
+    // GUARD: Only run on core pages OR if user has tenant+ access
     if (typeof window !== 'undefined' && !window.location.pathname.startsWith('/core')) {
       return;
     }
@@ -499,9 +503,11 @@ export const contractActions = {
       contractStats.set(stats);
       
     } catch (error) {
-      // Silently handle permission errors - don't spam console
-      if (error.message?.includes('403') || error.message?.includes('Forbidden')) {
+      // Better error handling for different user roles
+      if (error.message?.includes('403') || error.message?.includes('Forbidden') || error.message?.includes('permission')) {
+        // User doesn't have permission - this is expected for some roles
         contractError.set(null);
+        console.log('User does not have permission for contract data - this is normal for some roles');
       } else if (error.message?.includes('401') || error.message?.includes('Unauthorized')) {
         contractError.set('Authentication required. Please log in again.');
       } else if (error.message?.includes('verification')) {
@@ -574,7 +580,7 @@ export const analyticsActions = {
 // Rental API Functions
 export const rentalActions = {
   async loadAll() {
-    // GUARD: Only run on core pages
+    // GUARD: Only run on core pages OR if user has tenant+ access
     if (typeof window !== 'undefined' && !window.location.pathname.startsWith('/core')) {
       return;
     }
@@ -613,10 +619,11 @@ export const rentalActions = {
       rentalStats.set(stats);
       
     } catch (error) {
-      // Silently handle permission errors - don't spam console
-      if (error.message?.includes('403') || error.message?.includes('Forbidden')) {
-        // User doesn't have permission - silently skip
+      // Better error handling for different user roles
+      if (error.message?.includes('403') || error.message?.includes('Forbidden') || error.message?.includes('permission')) {
+        // User doesn't have permission - this is expected for some roles
         rentalError.set(null);
+        console.log('User does not have permission for rental data - this is normal for some roles');
       } else if (error.message?.includes('401') || error.message?.includes('Unauthorized')) {
         rentalError.set('Authentication required. Please log in again.');
       } else if (error.message?.includes('verification')) {

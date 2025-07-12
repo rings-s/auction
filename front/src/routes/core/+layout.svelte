@@ -9,47 +9,54 @@
 
   // State
   let showMobileNav = false;
+  let showDesktopSidebar = true;
   let isRTL = $derived($locale === 'ar');
 
-  // Navigation items
-  const navItems = [
+  // Navigation items with role-based visibility - make reactive
+  let navItems = $derived([
     {
       href: '/core',
       icon: 'chart-bar',
-      label: 'Dashboard',
-      description: 'Overview and analytics'
+      label: $t('core.nav.dashboard'),
+      description: $t('core.nav.dashboardDesc'),
+      roles: ['landlord', 'property_manager', 'appraiser', 'data_entry', 'tenant']
     },
     {
       href: '/core/financial',
       icon: 'currency-dollar',
-      label: 'Financial',
-      description: 'Transactions and expenses'
+      label: $t('core.nav.financial'),
+      description: $t('core.nav.financialDesc'),
+      roles: ['landlord', 'property_manager', 'tenant', 'appraiser']
     },
     {
       href: '/core/rentals',
       icon: 'home',
-      label: 'Rentals',
-      description: 'Properties and leases'
+      label: $t('core.nav.rentals'),
+      description: $t('core.nav.rentalsDesc'),
+      roles: ['landlord', 'property_manager', 'tenant']
     },
     {
       href: '/core/maintenance',
       icon: 'wrench-screwdriver',
-      label: 'Maintenance',
-      description: 'Requests and vendors'
+      label: $t('core.nav.maintenance'),
+      description: $t('core.nav.maintenanceDesc'),
+      roles: ['landlord', 'property_manager', 'tenant', 'maintenance_staff', 'vendor']
     },
     {
       href: '/core/contracts',
       icon: 'document-text',
-      label: 'Contracts',
-      description: 'Templates and agreements'
+      label: $t('core.nav.contracts'),
+      description: $t('core.nav.contractsDesc'),
+      roles: ['landlord', 'property_manager', 'tenant']
     },
     {
       href: '/core/analytics',
       icon: 'chart-pie',
-      label: 'Analytics',
-      description: 'Reports and insights'
+      label: $t('core.nav.analytics'),
+      description: $t('core.nav.analyticsDesc'),
+      roles: ['landlord', 'property_manager', 'appraiser']
     }
-  ];
+  ]);
 
   // Check permissions
   onMount(() => {
@@ -58,12 +65,23 @@
       return;
     }
 
-    // Check if user has access to core features
-    const allowedRoles = ['landlord', 'property_manager', 'appraiser', 'data_entry'];
+    // Check if user has access to any core features
+    // Backend allows tenants to access certain features (maintenance requests, leases, etc.)
+    const allowedRoles = ['landlord', 'property_manager', 'appraiser', 'data_entry', 'tenant', 'maintenance_staff', 'vendor'];
     if (!$user.is_superuser && !allowedRoles.includes($user.role)) {
       goto('/dashboard');
     }
   });
+
+  // Check if user can access a specific nav item
+  function canAccessNavItem(navItem) {
+    if (!$user) return false;
+    if ($user.is_superuser) return true;
+    return navItem.roles.includes($user.role);
+  }
+
+  // Get visible nav items for current user
+  let visibleNavItems = $derived(navItems.filter(item => canAccessNavItem(item)));
 
   function isActive(href) {
     if (href === '/core') {
@@ -83,18 +101,26 @@
     };
     return icons[iconName] || '';
   }
+
+  function closeSidebar() {
+    showDesktopSidebar = false;
+  }
+
+  function openSidebar() {
+    showDesktopSidebar = true;
+  }
 </script>
 
 <svelte:head>
-  <title>Property Management | Real Estate Platform</title>
+  <title>{$t('core.layout.title')} | {$t('app.name')}</title>
 </svelte:head>
 
 <div class="min-h-screen bg-gray-50 dark:bg-gray-900">
-  <!-- Mobile navigation toggle -->
-  <div class="lg:hidden">
+  <!-- Mobile navigation toggle - Fixed to be truly mobile-only -->
+  <div class="lg:hidden fixed top-0 left-0 right-0 z-30">
     <div class="flex items-center justify-between bg-white dark:bg-gray-800 px-4 py-3 border-b border-gray-200 dark:border-gray-700">
       <h1 class="text-lg font-semibold text-gray-900 dark:text-white">
-        Property Management
+        {$t('core.layout.title')}
       </h1>
       <button
         type="button"
@@ -110,37 +136,49 @@
 
   <div class="flex">
     <!-- Desktop Sidebar -->
-    <div class="hidden lg:flex lg:w-64 lg:flex-col lg:fixed lg:inset-y-0">
-      <div class="flex flex-col flex-grow pt-5 bg-white dark:bg-gray-800 border-r border-gray-200 dark:border-gray-700 overflow-y-auto">
-        <div class="flex items-center flex-shrink-0 px-4">
-          <h1 class="text-xl font-semibold text-gray-900 dark:text-white">
-            Property Management
-          </h1>
-        </div>
-        <div class="mt-5 flex-1 flex flex-col">
-          <nav class="flex-1 px-2 pb-4 space-y-1">
-            {#each navItems as item}
-              <a
-                href={item.href}
-                class={`${
-                  isActive(item.href)
-                    ? 'bg-primary-50 dark:bg-primary-900/20 border-primary-500 text-primary-700 dark:text-primary-300'
-                    : 'border-transparent text-gray-600 hover:text-gray-900 dark:text-gray-300 dark:hover:text-white hover:bg-gray-50 dark:hover:bg-gray-700'
-                } group flex items-center px-3 py-2 text-sm font-medium border-l-4 transition-colors duration-200`}
-              >
-                <svg class="mr-3 flex-shrink-0 h-6 w-6" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
-                  {@html getIcon(item.icon)}
-                </svg>
-                <div>
-                  <div class="font-medium">{item.label}</div>
-                  <div class="text-xs text-gray-500 dark:text-gray-400">{item.description}</div>
-                </div>
-              </a>
-            {/each}
-          </nav>
+    {#if showDesktopSidebar}
+      <div class="hidden lg:flex lg:w-64 lg:flex-col lg:fixed lg:inset-y-0 z-20">
+        <div class="flex flex-col flex-grow pt-5 bg-white dark:bg-gray-800 border-r border-gray-200 dark:border-gray-700 overflow-y-auto">
+          <div class="flex items-center justify-between flex-shrink-0 px-4">
+            <h1 class="text-xl font-semibold text-gray-900 dark:text-white">
+              {$t('core.layout.title')}
+            </h1>
+            <button
+              type="button"
+              class="p-1.5 rounded-md text-gray-500 hover:text-gray-600 hover:bg-gray-100 dark:text-gray-400 dark:hover:text-gray-300 dark:hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-primary-500"
+              onclick={closeSidebar}
+              title="Hide sidebar"
+            >
+              <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+          </div>
+          <div class="mt-5 flex-1 flex flex-col">
+            <nav class="flex-1 px-2 pb-4 space-y-1">
+              {#each visibleNavItems as item}
+                <a
+                  href={item.href}
+                  class={`${
+                    isActive(item.href)
+                      ? 'bg-primary-50 dark:bg-primary-900/20 border-primary-500 text-primary-700 dark:text-primary-300'
+                      : 'border-transparent text-gray-600 hover:text-gray-900 dark:text-gray-300 dark:hover:text-white hover:bg-gray-50 dark:hover:bg-gray-700'
+                  } group flex items-center px-3 py-2 text-sm font-medium border-l-4 transition-colors duration-200`}
+                >
+                  <svg class="mr-3 flex-shrink-0 h-6 w-6" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                    {@html getIcon(item.icon)}
+                  </svg>
+                  <div>
+                    <div class="font-medium">{item.label}</div>
+                    <div class="text-xs text-gray-500 dark:text-gray-400">{item.description}</div>
+                  </div>
+                </a>
+              {/each}
+            </nav>
+          </div>
         </div>
       </div>
-    </div>
+    {/if}
 
     <!-- Mobile Sidebar -->
     {#if showMobileNav}
@@ -161,11 +199,11 @@
           <div class="flex-1 h-0 pt-5 pb-4 overflow-y-auto">
             <div class="flex-shrink-0 flex items-center px-4">
               <h1 class="text-xl font-semibold text-gray-900 dark:text-white">
-                Property Management
+                {$t('core.layout.title')}
               </h1>
             </div>
             <nav class="mt-5 px-2 space-y-1">
-              {#each navItems as item}
+              {#each visibleNavItems as item}
                 <a
                   href={item.href}
                   onclick={() => showMobileNav = false}
@@ -191,9 +229,26 @@
     {/if}
 
     <!-- Main Content -->
-    <div class="lg:pl-64 flex flex-col flex-1">
+    <div class={`${showDesktopSidebar ? 'lg:pl-64' : 'lg:pl-0'} flex flex-col flex-1 transition-all duration-300`}>
       <main class="flex-1">
-        <div class="py-6 px-4 sm:px-6 lg:px-8">
+        <!-- Desktop sidebar toggle when collapsed -->
+        {#if !showDesktopSidebar}
+          <div class="hidden lg:block fixed top-4 left-4 z-30">
+            <button
+              type="button"
+              class="p-2 rounded-md bg-white dark:bg-gray-800 shadow-lg text-gray-500 hover:text-gray-600 hover:bg-gray-100 dark:text-gray-400 dark:hover:text-gray-300 dark:hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-primary-500 border border-gray-200 dark:border-gray-700"
+              onclick={openSidebar}
+              title="Show sidebar"
+            >
+              <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5" />
+              </svg>
+            </button>
+          </div>
+        {/if}
+        
+        <!-- Add top padding on mobile to account for fixed header -->
+        <div class="py-6 px-4 sm:px-6 lg:px-8 pt-20 lg:pt-6">
           <slot />
         </div>
       </main>

@@ -35,6 +35,14 @@ export const arTranslations = {
     search: 'بحث',
     view: 'عرض',
     daysAgo: 'منذ {count} يوم',
+    add: 'إضافة',
+    create: 'إنشاء',
+    filters: 'فلاتر',
+    previous: 'السابق',
+    next: 'التالي',
+    failedToLoad: 'فشل في تحميل البيانات',
+    searchPlaceholder: 'بحث في {type}...',
+    showingPage: 'عرض صفحة {current} من {total}',
     // Social sharing
     shareOptions: 'خيارات المشاركة',
     facebook: 'مشاركة على فيسبوك',
@@ -1278,5 +1286,573 @@ dashboard: {
   winningOnly: 'الفائزة فقط',
   maxBid: 'أعلى مزايدة',
   viewAuction: 'عرض المزاد'
+  },
+
+  core: {
+    title: 'إدارة العقارات',
+    subtitle: 'إدارة شاملة للعقارات والعمليات',
+    
+    // Navigation
+    nav: {
+      dashboard: 'لوحة التحكم',
+      dashboardDesc: 'نظرة عامة والتحليلات',
+      financial: 'المالية',
+      financialDesc: 'المعاملات والمصروفات',
+      rentals: 'الإيجارات',
+      rentalsDesc: 'العقارات وعقود الإيجار',
+      maintenance: 'الصيانة',
+      maintenanceDesc: 'الطلبات والموردين',
+      contracts: 'العقود',
+      contractsDesc: 'القوالب والاتفاقيات',
+      analytics: 'التحليلات',
+      analyticsDesc: 'التقارير والرؤى'
+    },
+
+    // Layout
+    layout: {
+      title: 'إدارة العقارات'
+    },
+
+    // Dashboard
+    dashboard: {
+      title: 'لوحة تحكم إدارة العقارات',
+      subtitle: 'نظرة شاملة على محفظة العقارات والعمليات',
+      totalProperties: 'إجمالي العقارات',
+      monthlyIncome: 'الدخل الشهري',
+      occupancyRate: 'معدل الإشغال',
+      pendingMaintenance: 'الصيانة المعلقة',
+      refresh: 'تحديث',
+      viewReports: 'عرض التقارير',
+      
+      tabs: {
+        overview: 'نظرة عامة',
+        financial: 'المالية',
+        maintenance: 'الصيانة',
+        leases: 'عقود الإيجار',
+        contracts: 'العقود'
+      },
+
+      portfolioOverview: 'نظرة عامة على المحفظة',
+      rentalProperties: 'العقارات المؤجرة',
+      occupied: 'مؤجرة',
+      vacant: 'شاغرة',
+      financialPerformance: 'الأداء المالي',
+      ytdIncome: 'دخل العام حتى الآن',
+      ytdExpenses: 'مصروفات العام حتى الآن',
+      netProfit: 'صافي الربح',
+      quickActions: 'إجراءات سريعة',
+      addTransaction: 'إضافة معاملة',
+      newMaintenanceRequest: 'طلب صيانة جديد',
+      createContract: 'إنشاء عقد',
+      
+      overviewCharts: 'سيتم عرض الرسوم البيانية والملخصات العامة هنا',
+      maintenanceOverview: 'سيتم عرض ملخص طلبات الصيانة والنشاط الأخير هنا',
+      leaseOverview: 'سيتم عرض نظرة عامة على حالة الإيجار والعقود المنتهية الصلاحية هنا',
+      contractOverview: 'سيتم عرض نظرة عامة على حالة العقود والتوقيعات المعلقة هنا',
+      viewDetails: 'عرض التفاصيل',
+      viewAllRequests: 'عرض جميع الطلبات',
+      manageLeases: 'إدارة عقود الإيجار',
+      viewContracts: 'عرض العقود'
+    },
+
+    // Financial Management
+    financial: {
+      title: 'الإدارة المالية',
+      subtitle: 'إدارة المعاملات والمصروفات والتقارير المالية',
+      
+      // Stats
+      totalIncome: 'إجمالي الدخل',
+      totalExpenses: 'إجمالي المصروفات',
+      netIncome: 'صافي الدخل',
+      monthlyIncome: 'الدخل الشهري',
+      monthlyExpenses: 'المصروفات الشهرية',
+      ytdIncome: 'دخل العام حتى الآن',
+      ytdExpenses: 'مصروفات العام حتى الآن',
+      
+      // Transactions
+      transactions: 'المعاملات',
+      expenses: 'المصروفات',
+      transaction: 'معاملة',
+      expense: 'مصروف',
+      newTransaction: 'معاملة جديدة',
+      transactionType: 'نوع المعاملة',
+      income: 'دخل',
+      amount: 'المبلغ',
+      description: 'الوصف',
+      category: 'الفئة',
+      date: 'التاريخ',
+      property: 'العقار',
+      dueDate: 'تاريخ الاستحقاق',
+      expenseDate: 'تاريخ المصروف',
+      vendorName: 'اسم المورد',
+      vendor: 'المورد',
+      due: 'مستحق',
+      reference: 'مرجع',
+      selectType: 'اختر النوع',
+      selectCategory: 'اختر الفئة',
+      
+      // Transaction Types
+      transactionTypes: {
+        rentPayment: 'دفع إيجار',
+        securityDeposit: 'تأمين',
+        maintenanceCost: 'تكلفة صيانة',
+        auctionPayment: 'دفع مزاد',
+        commission: 'عمولة',
+        utilityBill: 'فاتورة مرافق',
+        insurance: 'تأمين',
+        taxPayment: 'دفع ضرائب',
+        other: 'أخرى'
+      },
+      
+      // Categories
+      categories: {
+        rent: 'إيجار',
+        utilities: 'المرافق',
+        maintenance: 'الصيانة',
+        insurance: 'التأمين',
+        taxes: 'الضرائب',
+        management: 'الإدارة',
+        marketing: 'التسويق',
+        legal: 'قانوني',
+        other: 'أخرى'
+      },
+
+      // Status
+      status: {
+        pending: 'معلق',
+        completed: 'مكتمل',
+        failed: 'فشل',
+        overdue: 'متأخر'
+      },
+
+      // Filters
+      filters: {
+        allTypes: 'جميع الأنواع',
+        allCategories: 'جميع الفئات',
+        allProperties: 'جميع العقارات',
+        allStatus: 'جميع الحالات',
+        dateFrom: 'من تاريخ',
+        dateTo: 'إلى تاريخ'
+      },
+
+      // Sort
+      sort: {
+        newest: 'الأحدث',
+        oldest: 'الأقدم',
+        amountHigh: 'المبلغ: عالي',
+        amountLow: 'المبلغ: منخفض'
+      },
+
+      noTransactions: 'لم يتم العثور على معاملات',
+      addFirstTransaction: 'أضف معاملتك الأولى للبدء',
+      noItemsFound: 'لم يتم العثور على {type}',
+      createFirstItem: 'ابدأ بإنشاء {type} الأول'
+    },
+
+    // Rental Management
+    rentals: {
+      title: 'إدارة الإيجارات',
+      subtitle: 'إدارة العقارات المؤجرة وعقود الإيجار وعلاقات المستأجرين',
+      
+      // Actions
+      addProperty: 'إضافة عقار',
+      convertToRental: 'تحويل إلى إيجار',
+      convertPropertyToRental: 'تحويل العقار إلى إيجار',
+      createRentalProperty: 'إنشاء عقار للإيجار',
+      selectProperty: 'اختر عقار',
+      
+      // Stats
+      totalProperties: 'إجمالي العقارات',
+      occupiedProperties: 'العقارات المؤجرة',
+      vacantProperties: 'العقارات الشاغرة',
+      occupied: 'مؤجر',
+      vacant: 'شاغر',
+      activeLeases: 'عقود الإيجار النشطة',
+      expiringLeases: 'عقود الإيجار المنتهية الصلاحية',
+      expiringSoon: 'تنتهي قريباً',
+      within30Days: 'خلال 30 يوم',
+      occupancyRate: 'معدل الإشغال',
+      occupancyPercent: '{rate}% إشغال',
+      monthlyIncome: 'الدخل الشهري',
+      
+      // Properties
+      properties: 'العقارات',
+      property: 'عقار',
+      newProperty: 'عقار جديد',
+      propertyName: 'اسم العقار',
+      address: 'العنوان',
+      noAddress: 'لا يوجد عنوان',
+      untitledProperty: 'عقار بدون عنوان',
+      type: 'النوع',
+      status: 'الحالة',
+      rent: 'الإيجار',
+      tenant: 'المستأجر',
+      currentTenant: 'المستأجر الحالي',
+      rentalPropertiesCount: 'العقارات المؤجرة ({count})',
+      bedrooms: 'غرف النوم',
+      bathrooms: 'الحمامات',
+      bedsBaths: 'غرف/حمامات',
+      furnished: 'مفروش',
+      petsAllowed: 'الحيوانات الأليفة مسموحة',
+      petsOK: 'حيوانات مسموحة',
+      availableDate: 'تاريخ الإتاحة',
+      
+      // Leases
+      leases: 'عقود الإيجار',
+      lease: 'عقد إيجار',
+      newLease: 'عقد إيجار جديد',
+      leaseStatus: 'حالة عقد الإيجار',
+      leaseAgreementsCount: 'اتفاقيات الإيجار ({count})',
+      startDate: 'تاريخ البداية',
+      endDate: 'تاريخ النهاية',
+      term: 'المدة',
+      monthlyRent: 'الإيجار الشهري',
+      securityDeposit: 'التأمين',
+      perMonth: 'شهرياً',
+      leaseExpiresIn: 'ينتهي عقد الإيجار خلال {days} يوم',
+      daysRemaining: '{days} يوم متبقي',
+      yieldPercent: '{yield}% عائد',
+      
+      // Rental Types
+      rentalType: 'نوع الإيجار',
+      rentalTypes: {
+        longTerm: 'طويل المدى',
+        shortTerm: 'قصير المدى',
+        vacation: 'إجازة',
+        commercial: 'تجاري',
+        longTermRental: 'إيجار طويل المدى',
+        shortTermRental: 'إيجار قصير المدى',
+        vacationRental: 'إيجار إجازة',
+        commercialRental: 'إيجار تجاري'
+      },
+      
+      // Status
+      statuses: {
+        available: 'متاح',
+        occupied: 'مؤجر',
+        maintenance: 'تحت الصيانة',
+        active: 'نشط',
+        expired: 'منتهي الصلاحية',
+        terminated: 'منتهي'
+      },
+
+      // Filters
+      filters: {
+        allTypes: 'جميع الأنواع',
+        allStatus: 'جميع الحالات'
+      },
+
+      // Sort
+      sort: {
+        newest: 'الأحدث',
+        oldest: 'الأقدم',
+        rentHigh: 'الإيجار: عالي',
+        rentLow: 'الإيجار: منخفض'
+      },
+
+      noProperties: 'لم يتم العثور على عقارات',
+      addFirstProperty: 'أضف عقارك الأول للبدء',
+      noItemsFound: 'لم يتم العثور على {type}',
+      createFirstItem: 'ابدأ بإنشاء {type} الأول'
+    },
+
+    // Maintenance Management
+    maintenance: {
+      title: 'إدارة الصيانة',
+      subtitle: 'إدارة طلبات الصيانة والموردين وأوامر العمل',
+      
+      // Actions
+      manageVendors: 'إدارة الموردين',
+      newRequest: 'طلب جديد',
+      newMaintenanceRequest: 'طلب صيانة جديد',
+      createRequest: 'إنشاء طلب',
+      selectProperty: 'اختر عقار',
+      selectCategory: 'اختر فئة',
+      
+      // Stats
+      totalRequests: 'إجمالي الطلبات',
+      pending: 'معلق',
+      inProgress: 'قيد التنفيذ',
+      completed: 'مكتمل',
+      emergency: 'طارئ',
+      ytdCost: 'تكلفة العام',
+      pendingRequests: 'معلقة',
+      inProgressRequests: 'قيد التنفيذ',
+      completedRequests: 'مكتملة',
+      emergencyRequests: 'طارئة',
+      totalCostYTD: 'إجمالي التكلفة للعام',
+      
+      // Navigation
+      maintenanceRequestsCount: 'طلبات الصيانة ({count})',
+      vendorsCount: 'الموردين ({count})',
+      
+      // Requests
+      requests: 'طلبات الصيانة',
+      request: 'طلب',
+      requestTitle: 'عنوان الطلب',
+      title: 'العنوان',
+      description: 'الوصف',
+      priority: 'الأولوية',
+      category: 'الفئة',
+      status: 'الحالة',
+      property: 'العقار',
+      unknownProperty: 'عقار غير معروف',
+      assignedTo: 'مُسند إلى',
+      created: 'تم الإنشاء',
+      scheduled: 'مجدول',
+      requestedDate: 'تاريخ الطلب',
+      scheduledDate: 'التاريخ المجدول',
+      estimatedCost: 'التكلفة المقدرة',
+      actualCost: 'التكلفة الفعلية',
+      estimated: 'مقدر',
+      
+      // Vendors
+      vendors: 'الموردين',
+      vendor: 'مورد',
+      newVendor: 'مورد جديد',
+      vendorName: 'اسم المورد',
+      contactInfo: 'معلومات الاتصال',
+      contact: 'اتصال',
+      phone: 'الهاتف',
+      email: 'البريد الإلكتروني',
+      rate: 'السعر',
+      rating: 'التقييم',
+      specialties: 'التخصصات',
+      preferredVendor: 'مورد مفضل',
+      license: 'الرخصة: {number}',
+      notSpecified: 'غير محدد',
+      
+      // Vendor Status
+      vendorStatus: {
+        active: 'نشط',
+        inactive: 'غير نشط'
+      },
+      
+      // Priority levels
+      priorities: {
+        low: 'منخفضة',
+        medium: 'متوسطة',
+        high: 'عالية',
+        emergency: 'طارئة'
+      },
+
+      // Categories
+      categories: {
+        plumbing: 'السباكة',
+        electrical: 'الكهرباء',
+        hvac: 'التكييف والتهوية',
+        appliances: 'الأجهزة',
+        structural: 'هيكلي',
+        flooring: 'الأرضيات',
+        painting: 'الدهان',
+        roofing: 'الأسقف',
+        other: 'أخرى'
+      },
+
+      // Status
+      status: {
+        submitted: 'مُقدم',
+        inProgress: 'قيد التنفيذ',
+        completed: 'مكتمل',
+        cancelled: 'ملغي'
+      },
+      
+      statuses: {
+        submitted: 'مُقدم',
+        in_progress: 'قيد التنفيذ',
+        completed: 'مكتمل',
+        cancelled: 'ملغي'
+      },
+
+      // Filters
+      filters: {
+        allStatus: 'جميع الحالات',
+        allPriority: 'جميع الأولويات',
+        allCategories: 'جميع الفئات'
+      },
+
+      noRequests: 'لم يتم العثور على طلبات صيانة',
+      addFirstRequest: 'قدم طلب الصيانة الأول',
+      noItemsFound: 'لم يتم العثور على {type}',
+      createFirstItem: 'ابدأ بإنشاء {type} الأول'
+    },
+
+    // Contract Management
+    contracts: {
+      title: 'إدارة العقود',
+      subtitle: 'إدارة العقود والقوالب والاتفاقيات القانونية',
+      
+      // Navigation
+      contractsCount: 'العقود ({count})',
+      templatesCount: 'القوالب ({count})',
+      
+      // Stats
+      totalContracts: 'إجمالي العقود',
+      active: 'نشطة',
+      draft: 'مسودة',
+      signed: 'موقعة',
+      expired: 'منتهية الصلاحية',
+      templates: 'القوالب',
+      
+      // Contracts
+      contracts: 'العقود',
+      contract: 'عقد',
+      template: 'قالب',
+      newContract: 'عقد جديد',
+      contractTitle: 'عنوان العقد',
+      description: 'الوصف',
+      parties: 'الأطراف',
+      partiesInvolved: 'الأطراف المشاركة',
+      partiesPlaceholder: 'مثال: أحمد محمد، شركة إدارة العقارات',
+      terms: 'الشروط',
+      startDate: 'تاريخ البداية',
+      endDate: 'تاريخ النهاية',
+      contractValue: 'قيمة العقد',
+      created: 'تم الإنشاء',
+      
+      // Templates
+      selectTemplate: 'اختر قالب',
+      useTemplate: 'استخدام القالب',
+      
+      // Form Labels
+      status: {
+        label: 'الحالة',
+        draft: 'مسودة',
+        active: 'نشط',
+        signed: 'موقع',
+        expired: 'منتهي الصلاحية',
+        terminated: 'منتهي'
+      },
+
+      // Actions
+      createContract: 'إنشاء عقد',
+      
+      // Filters
+      filters: {
+        allStatus: 'جميع الحالات'
+      },
+      
+      // Empty states
+      noItemsFound: 'لم يتم العثور على {type}',
+      createFirstItem: 'ابدأ بإنشاء {type} الأول'
+    },
+
+    // Analytics
+    analytics: {
+      title: 'التحليلات والتقارير',
+      subtitle: 'رؤى شاملة حول أداء إدارة العقارات',
+      
+      // Stats
+      totalRevenue: 'إجمالي الإيرادات',
+      totalExpenses: 'إجمالي المصروفات',
+      netIncome: 'صافي الدخل',
+      occupancyRate: 'معدل الإشغال',
+      maintenanceRequests: 'طلبات الصيانة',
+      activeLeases: 'عقود الإيجار النشطة',
+      
+      // Tabs
+      tabs: {
+        overview: 'نظرة عامة',
+        financial: 'المالية',
+        maintenance: 'الصيانة',
+        occupancy: 'الإشغال'
+      },
+
+      // Date ranges
+      dateRanges: {
+        last7Days: 'آخر 7 أيام',
+        last30Days: 'آخر 30 يوم',
+        last90Days: 'آخر 90 يوم',
+        lastYear: 'العام الماضي'
+      },
+
+      exportReport: 'تصدير التقرير',
+      
+      // Charts
+      revenueVsExpenses: 'الإيرادات مقابل المصروفات',
+      propertyPerformance: 'أداء العقارات',
+      maintenanceResponse: 'استجابة الصيانة',
+      tenantSatisfaction: 'رضا المستأجرين',
+      
+      // Financial
+      financialTrends: 'اتجاهات مالية',
+      
+      // Maintenance
+      maintenanceRequestTrends: 'اتجاهات طلبات الصيانة',
+      
+      // Occupancy
+      currentOccupancy: 'الإشغال الحالي',
+      avgLeaseDuration: 'متوسط مدة الإيجار',
+      occupancyTrends: 'اتجاهات الإشغال',
+      
+      chartsPlaceholder: 'سيتم عرض الرسم البياني هنا',
+      financialChartsPlaceholder: 'سيتم عرض الرسم البياني للاتجاهات المالية هنا',
+      maintenanceChartsPlaceholder: 'سيتم عرض الرسم البياني لاتجاهات الصيانة هنا',
+      occupancyChartsPlaceholder: 'سيتم عرض الرسم البياني لاتجاهات الإشغال هنا'
+    },
+
+    // Common elements
+    common: {
+      search: 'بحث',
+      filter: 'تصفية',
+      sort: 'ترتيب',
+      export: 'تصدير',
+      print: 'طباعة',
+      save: 'حفظ',
+      cancel: 'إلغاء',
+      edit: 'تعديل',
+      view: 'عرض',
+      delete: 'حذف',
+      create: 'إنشاء',
+      add: 'إضافة',
+      update: 'تحديث',
+      loading: 'جاري التحميل...',
+      noData: 'لا توجد بيانات متاحة',
+      tryAgain: 'حاول مرة أخرى',
+      
+      // Sorting
+      sortBy: 'ترتيب حسب',
+      newest: 'الأحدث',
+      oldest: 'الأقدم',
+      nameAsc: 'الاسم أ-ي',
+      nameDesc: 'الاسم ي-أ',
+      amountAsc: 'المبلغ من الأقل للأعلى',
+      amountDesc: 'المبلغ من الأعلى للأقل',
+      
+      // Filters
+      allStatus: 'جميع الحالات',
+      allCategories: 'جميع الفئات',
+      allTypes: 'جميع الأنواع',
+      allPriorities: 'جميع الأولويات',
+      
+      // Actions
+      viewDetails: 'عرض التفاصيل',
+      viewAll: 'عرض الكل',
+      manageAll: 'إدارة الكل',
+      
+      // Forms
+      required: 'مطلوب',
+      optional: 'اختياري',
+      selectOption: 'اختر خيار',
+      enterValue: 'أدخل القيمة'
+    },
+
+    // Error messages
+    errors: {
+      loadFailed: 'فشل في تحميل البيانات',
+      saveFailed: 'فشل في الحفظ',
+      deleteFailed: 'فشل في الحذف',
+      updateFailed: 'فشل في التحديث',
+      permissionDenied: 'تم رفض الصلاحية',
+      networkError: 'خطأ في الشبكة'
+    },
+
+    // Success messages
+    success: {
+      saved: 'تم الحفظ بنجاح',
+      deleted: 'تم الحذف بنجاح',
+      updated: 'تم التحديث بنجاح',
+      created: 'تم الإنشاء بنجاح'
+    }
   }
 };

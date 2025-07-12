@@ -139,7 +139,7 @@
 </script>
 
 <svelte:head>
-  <title>Rental Management | Property Management</title>
+  <title>{$t('core.rentals.title')} | {$t('app.name')}</title>
 </svelte:head>
 
 <div class="space-y-6">
@@ -149,10 +149,10 @@
       <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between">
         <div class="flex-1 min-w-0">
           <h1 class="text-2xl font-bold leading-7 text-gray-900 dark:text-white sm:text-3xl sm:truncate">
-            Rental Management
+            {$t('core.rentals.title')}
           </h1>
           <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">
-            Manage rental properties, leases, and tenant relationships
+            {$t('core.rentals.subtitle')}
           </p>
         </div>
         <div class="mt-4 flex items-center space-x-3 sm:mt-0 sm:ml-4">
@@ -164,7 +164,7 @@
             <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
             </svg>
-            Add Property
+            {$t('core.rentals.addProperty')}
           </Button>
           <Button
             onclick={() => showCreateModal = true}
@@ -173,7 +173,7 @@
             <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
             </svg>
-            Convert to Rental
+            {$t('core.rentals.convertToRental')}
           </Button>
         </div>
       </div>
@@ -184,7 +184,7 @@
   {#if !loading}
     <div class="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6" in:slide={{ duration: 400 }}>
       <CoreStatsCard
-        title="Total Properties"
+        title={$t('core.rentals.totalProperties')}
         value={stats.totalProperties.toString()}
         icon="home"
         color="blue"
@@ -192,22 +192,22 @@
       />
       
       <CoreStatsCard
-        title="Occupied"
+        title={$t('core.rentals.occupied')}
         value={stats.occupiedProperties.toString()}
-        subtitle={`${getOccupancyRate()}% occupancy`}
+        subtitle={$t('core.rentals.occupancyPercent', { rate: getOccupancyRate() })}
         icon="check-circle"
         color="green"
       />
       
       <CoreStatsCard
-        title="Vacant"
+        title={$t('core.rentals.vacant')}
         value={stats.vacantProperties.toString()}
         icon="exclamation-triangle"
         color="yellow"
       />
       
       <CoreStatsCard
-        title="Active Leases"
+        title={$t('core.rentals.activeLeases')}
         value={stats.activeLeases.toString()}
         icon="document-text"
         color="purple"
@@ -215,15 +215,15 @@
       />
       
       <CoreStatsCard
-        title="Expiring Soon"
+        title={$t('core.rentals.expiringSoon')}
         value={stats.expiringLeases.toString()}
-        subtitle="Within 30 days"
+        subtitle={$t('core.rentals.within30Days')}
         icon="clock"
         color="red"
       />
       
       <CoreStatsCard
-        title="Monthly Income"
+        title={$t('core.rentals.monthlyIncome')}
         value={formatCurrency(stats.monthlyIncome)}
         icon="currency-dollar"
         color="green"
@@ -254,7 +254,7 @@
           <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="m2.25 12 8.954-8.955c.44-.439 1.152-.439 1.591 0L21.75 12M4.5 9.75v10.125c0 .621.504 1.125 1.125 1.125H9.75v-4.875c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125V21h4.125c.621 0 1.125-.504 1.125-1.125V9.75M8.25 21h8.25" />
           </svg>
-          Rental Properties ({stats.totalProperties})
+          {$t('core.rentals.rentalPropertiesCount', { count: stats.totalProperties })}
         </button>
         <button
           onclick={() => activeTab = 'leases'}
@@ -267,7 +267,7 @@
           <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M19.5 14.25v-2.625a3.375 3.375 0 0 0-3.375-3.375h-1.5A1.125 1.125 0 0 1 13.5 7.125v-1.5a3.375 3.375 0 0 0-3.375-3.375H8.25m2.25 0H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 0 0-9-9Z" />
           </svg>
-          Lease Agreements ({stats.activeLeases})
+          {$t('core.rentals.leaseAgreementsCount', { count: stats.activeLeases })}
         </button>
       </nav>
     </div>
@@ -285,7 +285,7 @@
             <input
               type="text"
               bind:value={searchQuery}
-              placeholder={`Search ${activeTab}...`}
+              placeholder={$t('core.common.searchPlaceholder', { type: activeTab === 'properties' ? $t('core.rentals.properties') : $t('core.rentals.leases') })}
               class="block w-full pl-10 pr-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md leading-5 bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:placeholder-gray-400 focus:ring-1 focus:ring-primary-500 focus:border-primary-500 text-sm"
             />
           </div>
@@ -300,11 +300,11 @@
                 onchange={(e) => updateFilters({ rental_type: e.target.value })}
                 class="block w-40 pl-3 pr-10 py-2 text-base border border-gray-300 dark:border-gray-600 focus:outline-none focus:ring-primary-500 focus:border-primary-500 text-sm rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
               >
-                <option value="">All Types</option>
-                <option value="long_term">Long-term</option>
-                <option value="short_term">Short-term</option>
-                <option value="vacation">Vacation</option>
-                <option value="commercial">Commercial</option>
+                <option value="">{$t('core.rentals.filters.allTypes')}</option>
+                <option value="long_term">{$t('core.rentals.rentalTypes.longTerm')}</option>
+                <option value="short_term">{$t('core.rentals.rentalTypes.shortTerm')}</option>
+                <option value="vacation">{$t('core.rentals.rentalTypes.vacation')}</option>
+                <option value="commercial">{$t('core.rentals.rentalTypes.commercial')}</option>
               </select>
             </div>
 
@@ -315,9 +315,9 @@
                 onchange={(e) => updateFilters({ is_currently_rented: e.target.value })}
                 class="block w-32 pl-3 pr-10 py-2 text-base border border-gray-300 dark:border-gray-600 focus:outline-none focus:ring-primary-500 focus:border-primary-500 text-sm rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
               >
-                <option value="">All Status</option>
-                <option value="true">Occupied</option>
-                <option value="false">Vacant</option>
+                <option value="">{$t('core.rentals.filters.allStatus')}</option>
+                <option value="true">{$t('core.rentals.occupied')}</option>
+                <option value="false">{$t('core.rentals.vacant')}</option>
               </select>
             </div>
           {/if}
@@ -329,10 +329,10 @@
               onchange={(e) => updateFilters({ sort: e.target.value })}
               class="block w-32 pl-3 pr-10 py-2 text-base border border-gray-300 dark:border-gray-600 focus:outline-none focus:ring-primary-500 focus:border-primary-500 text-sm rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
             >
-              <option value="newest">Newest</option>
-              <option value="oldest">Oldest</option>
-              <option value="rent_high">Rent: High</option>
-              <option value="rent_low">Rent: Low</option>
+              <option value="newest">{$t('core.rentals.sort.newest')}</option>
+              <option value="oldest">{$t('core.rentals.sort.oldest')}</option>
+              <option value="rent_high">{$t('core.rentals.sort.rentHigh')}</option>
+              <option value="rent_low">{$t('core.rentals.sort.rentLow')}</option>
             </select>
           </div>
         </div>
@@ -349,16 +349,16 @@
         </div>
       {:else if error}
         <EmptyState
-          title="Failed to Load Data"
+          title={$t('core.common.failedToLoad')}
           description={error}
-          actionText="Try Again"
+          actionText={$t('core.common.tryAgain')}
           onAction={() => rentalActions.loadAll()}
         />
       {:else if (activeTab === 'properties' ? displayedProperties : displayedLeases).length === 0}
         <EmptyState
-          title={`No ${activeTab} found`}
-          description={`Start by creating your first ${activeTab.slice(0, -1)}`}
-          actionText={`Add ${activeTab === 'properties' ? 'Property' : 'Lease'}`}
+          title={$t('core.rentals.noItemsFound', { type: activeTab === 'properties' ? $t('core.rentals.properties') : $t('core.rentals.leases') })}
+          description={$t('core.rentals.createFirstItem', { type: activeTab === 'properties' ? $t('core.rentals.property') : $t('core.rentals.lease') })}
+          actionText={$t('core.common.add') + ' ' + (activeTab === 'properties' ? $t('core.rentals.property') : $t('core.rentals.lease'))}
           onAction={() => showCreateModal = true}
         />
       {:else}
@@ -374,10 +374,10 @@
                   <div class="flex items-start justify-between mb-4">
                     <div class="flex-1">
                       <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-1">
-                        {property.property_info?.title || 'Untitled Property'}
+                        {property.property_info?.title || $t('core.rentals.untitledProperty')}
                       </h3>
                       <p class="text-sm text-gray-500 dark:text-gray-400">
-                        {property.property_info?.address || 'No address'}
+                        {property.property_info?.address || $t('core.rentals.noAddress')}
                       </p>
                     </div>
                     <span class={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
@@ -385,34 +385,34 @@
                         ? 'bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-400'
                         : 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/20 dark:text-yellow-400'
                     }`}>
-                      {property.is_currently_rented ? 'Occupied' : 'Vacant'}
+                      {property.is_currently_rented ? $t('core.rentals.occupied') : $t('core.rentals.vacant')}
                     </span>
                   </div>
 
                   <div class="space-y-3">
                     <div class="flex justify-between items-center">
-                      <span class="text-sm text-gray-500 dark:text-gray-400">Monthly Rent</span>
+                      <span class="text-sm text-gray-500 dark:text-gray-400">{$t('core.rentals.monthlyRent')}</span>
                       <span class="text-lg font-semibold text-gray-900 dark:text-white">
                         {formatCurrency(property.monthly_rent)}
                       </span>
                     </div>
 
                     <div class="flex justify-between items-center">
-                      <span class="text-sm text-gray-500 dark:text-gray-400">Security Deposit</span>
+                      <span class="text-sm text-gray-500 dark:text-gray-400">{$t('core.rentals.securityDeposit')}</span>
                       <span class="text-sm font-medium text-gray-900 dark:text-white">
                         {formatCurrency(property.security_deposit)}
                       </span>
                     </div>
 
                     <div class="flex justify-between items-center">
-                      <span class="text-sm text-gray-500 dark:text-gray-400">Type</span>
+                      <span class="text-sm text-gray-500 dark:text-gray-400">{$t('core.rentals.type')}</span>
                       <span class="text-sm text-gray-900 dark:text-white">
                         {property.rental_type_display || property.rental_type}
                       </span>
                     </div>
 
                     <div class="flex justify-between items-center">
-                      <span class="text-sm text-gray-500 dark:text-gray-400">Beds/Baths</span>
+                      <span class="text-sm text-gray-500 dark:text-gray-400">{$t('core.rentals.bedsBaths')}</span>
                       <span class="text-sm text-gray-900 dark:text-white">
                         {property.bedrooms}bd / {property.bathrooms}ba
                       </span>
@@ -422,12 +422,12 @@
                       <div class="flex flex-wrap gap-1 mt-2">
                         {#if property.furnished}
                           <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800 dark:bg-blue-900/20 dark:text-blue-400">
-                            Furnished
+                            {$t('core.rentals.furnished')}
                           </span>
                         {/if}
                         {#if property.pets_allowed}
                           <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-400">
-                            Pets OK
+                            {$t('core.rentals.petsOK')}
                           </span>
                         {/if}
                       </div>
@@ -435,12 +435,12 @@
 
                     {#if property.current_lease}
                       <div class="border-t border-gray-200 dark:border-gray-600 pt-3 mt-3">
-                        <div class="text-sm text-gray-500 dark:text-gray-400 mb-1">Current Tenant</div>
+                        <div class="text-sm text-gray-500 dark:text-gray-400 mb-1">{$t('core.rentals.currentTenant')}</div>
                         <div class="text-sm font-medium text-gray-900 dark:text-white">
                           {property.current_lease.tenant_name}
                         </div>
                         <div class="text-xs text-gray-500 dark:text-gray-400">
-                          Lease expires in {property.current_lease.days_remaining} days
+                          {$t('core.rentals.leaseExpiresIn', { days: property.current_lease.days_remaining })}
                         </div>
                       </div>
                     {/if}
@@ -448,14 +448,14 @@
 
                   <div class="flex items-center justify-between mt-4 pt-4 border-t border-gray-200 dark:border-gray-600">
                     <div class="text-xs text-gray-500 dark:text-gray-400">
-                      {property.monthly_yield ? `${property.monthly_yield.toFixed(2)}% yield` : ''}
+                      {property.monthly_yield ? $t('core.rentals.yieldPercent', { yield: property.monthly_yield.toFixed(2) }) : ''}
                     </div>
                     <div class="flex space-x-2">
                       <Button size="sm" variant="outline">
-                        Edit
+                        {$t('core.common.edit')}
                       </Button>
                       <Button size="sm" variant="outline">
-                        View
+                        {$t('core.common.view')}
                       </Button>
                     </div>
                   </div>
@@ -490,18 +490,18 @@
                         </div>
                         <div class="mt-1 text-sm text-gray-500 dark:text-gray-400 space-y-1">
                           <div class="flex items-center space-x-4">
-                            <span class="font-medium">Property:</span>
+                            <span class="font-medium">{$t('core.rentals.property')}:</span>
                             <span>{lease.rental_property_info?.property_title}</span>
                           </div>
                           <div class="flex items-center space-x-4">
-                            <span class="font-medium">Tenant:</span>
+                            <span class="font-medium">{$t('core.rentals.tenant')}:</span>
                             <span>{lease.tenant_info?.full_name || lease.tenant_info?.email}</span>
                           </div>
                           <div class="flex items-center space-x-4">
-                            <span>Term: {formatDate(lease.start_date)} - {formatDate(lease.end_date)}</span>
+                            <span>{$t('core.rentals.term')}: {formatDate(lease.start_date)} - {formatDate(lease.end_date)}</span>
                             {#if lease.days_remaining > 0}
                               <span class="text-yellow-600 dark:text-yellow-400">
-                                {lease.days_remaining} days remaining
+                                {$t('core.rentals.daysRemaining', { days: lease.days_remaining })}
                               </span>
                             {/if}
                           </div>
@@ -514,15 +514,15 @@
                           {formatCurrency(lease.monthly_rent)}
                         </div>
                         <div class="text-sm text-gray-500 dark:text-gray-400">
-                          per month
+                          {$t('core.rentals.perMonth')}
                         </div>
                       </div>
                       <div class="flex items-center space-x-2">
                         <Button size="sm" variant="outline">
-                          Edit
+                          {$t('core.common.edit')}
                         </Button>
                         <Button size="sm" variant="outline">
-                          View
+                          {$t('core.common.view')}
                         </Button>
                       </div>
                     </div>
@@ -538,12 +538,12 @@
 </div>
 
 <!-- Create Rental Property Modal -->
-<Modal bind:open={showCreateModal} title="Convert Property to Rental">
+<Modal bind:open={showCreateModal} title={$t('core.rentals.convertPropertyToRental')}>
   <form onsubmit={handleCreateRentalProperty} class="space-y-4">
     <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
       <div class="sm:col-span-2">
         <label for="property_id" class="block text-sm font-medium text-gray-700 dark:text-gray-300">
-          Property
+          {$t('core.rentals.property')}
         </label>
         <select
           id="property_id"
@@ -551,14 +551,14 @@
           required
           class="mt-1 block w-full border border-gray-300 dark:border-gray-600 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-primary-500 focus:border-primary-500 text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
         >
-          <option value="">Select Property</option>
+          <option value="">{$t('core.rentals.selectProperty')}</option>
           <!-- Properties would be loaded dynamically -->
         </select>
       </div>
       
       <div>
         <label for="rental_type" class="block text-sm font-medium text-gray-700 dark:text-gray-300">
-          Rental Type
+          {$t('core.rentals.rentalType')}
         </label>
         <select
           id="rental_type"
@@ -566,16 +566,16 @@
           required
           class="mt-1 block w-full border border-gray-300 dark:border-gray-600 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-primary-500 focus:border-primary-500 text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
         >
-          <option value="long_term">Long-term Rental</option>
-          <option value="short_term">Short-term Rental</option>
-          <option value="vacation">Vacation Rental</option>
-          <option value="commercial">Commercial Rental</option>
+          <option value="long_term">{$t('core.rentals.rentalTypes.longTermRental')}</option>
+          <option value="short_term">{$t('core.rentals.rentalTypes.shortTermRental')}</option>
+          <option value="vacation">{$t('core.rentals.rentalTypes.vacationRental')}</option>
+          <option value="commercial">{$t('core.rentals.rentalTypes.commercialRental')}</option>
         </select>
       </div>
 
       <div>
         <label for="monthly_rent" class="block text-sm font-medium text-gray-700 dark:text-gray-300">
-          Monthly Rent
+          {$t('core.rentals.monthlyRent')}
         </label>
         <input
           type="number"
@@ -590,7 +590,7 @@
 
       <div>
         <label for="security_deposit" class="block text-sm font-medium text-gray-700 dark:text-gray-300">
-          Security Deposit
+          {$t('core.rentals.securityDeposit')}
         </label>
         <input
           type="number"
@@ -605,7 +605,7 @@
 
       <div>
         <label for="bedrooms" class="block text-sm font-medium text-gray-700 dark:text-gray-300">
-          Bedrooms
+          {$t('core.rentals.bedrooms')}
         </label>
         <input
           type="number"
@@ -618,7 +618,7 @@
 
       <div>
         <label for="bathrooms" class="block text-sm font-medium text-gray-700 dark:text-gray-300">
-          Bathrooms
+          {$t('core.rentals.bathrooms')}
         </label>
         <input
           type="number"
@@ -632,7 +632,7 @@
 
       <div>
         <label for="available_date" class="block text-sm font-medium text-gray-700 dark:text-gray-300">
-          Available Date
+          {$t('core.rentals.availableDate')}
         </label>
         <input
           type="date"
@@ -652,7 +652,7 @@
               class="h-4 w-4 text-primary-600 focus:ring-primary-500 border-gray-300 rounded"
             />
             <label for="furnished" class="ml-2 block text-sm text-gray-900 dark:text-white">
-              Furnished
+              {$t('core.rentals.furnished')}
             </label>
           </div>
           <div class="flex items-center">
@@ -663,7 +663,7 @@
               class="h-4 w-4 text-primary-600 focus:ring-primary-500 border-gray-300 rounded"
             />
             <label for="pets_allowed" class="ml-2 block text-sm text-gray-900 dark:text-white">
-              Pets Allowed
+              {$t('core.rentals.petsAllowed')}
             </label>
           </div>
         </div>
@@ -676,10 +676,10 @@
         variant="outline"
         onclick={() => showCreateModal = false}
       >
-        Cancel
+        {$t('core.common.cancel')}
       </Button>
       <Button type="submit">
-        Create Rental Property
+        {$t('core.rentals.createRentalProperty')}
       </Button>
     </div>
   </form>

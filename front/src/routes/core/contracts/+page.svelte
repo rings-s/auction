@@ -27,6 +27,14 @@
   let showCreateModal = $state(false);
   let searchQuery = $state('');
   let isRTL = $derived($locale === 'ar');
+  
+  // Derived store values
+  let loading = $derived($contractLoading);
+  let error = $derived($contractError);
+  let stats = $derived($contractStats);
+  let templates = $derived($contractTemplates);
+  let contractList = $derived($filteredContracts);
+  let filters = $derived($contractFilters);
 
   // Form data for new contract
   let formData = $state({
@@ -45,6 +53,11 @@
   function updateSearch(value) {
     contractFilters.update(f => ({ ...f, search: value }));
   }
+  
+  // Watch for search query changes and update filters
+  $effect(() => {
+    contractFilters.update(f => ({ ...f, search: searchQuery }));
+  });
 
   onMount(async () => {
     await contractActions.loadAll();
@@ -101,7 +114,7 @@
 </script>
 
 <svelte:head>
-  <title>Contract Management | Property Management</title>
+  <title>{$t('core.contracts.title')} | {$t('app.name')}</title>
 </svelte:head>
 
 <div class="space-y-6">
@@ -111,10 +124,10 @@
       <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between">
         <div class="flex-1 min-w-0">
           <h1 class="text-2xl font-bold leading-7 text-gray-900 dark:text-white sm:text-3xl sm:truncate">
-            Contract Management
+            {$t('core.contracts.title')}
           </h1>
           <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">
-            Manage contracts, templates, and legal agreements
+            {$t('core.contracts.subtitle')}
           </p>
         </div>
         <div class="mt-4 flex items-center space-x-3 sm:mt-0 sm:ml-4">
@@ -125,7 +138,7 @@
             <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
             </svg>
-            New Contract
+            {$t('core.contracts.newContract')}
           </Button>
         </div>
       </div>
@@ -136,29 +149,29 @@
   {#if !loading}
     <div class="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6" in:slide={{ duration: 400 }}>
       <CoreStatsCard
-        title="Total Contracts"
-        value={$contractStats.totalContracts.toString()}
+        title={$t('core.contracts.totalContracts')}
+        value={(stats?.totalContracts || 0).toString()}
         icon="document-text"
         color="blue"
       />
       
       <CoreStatsCard
-        title="Active"
-        value={stats.activeContracts.toString()}
+        title={$t('core.contracts.active')}
+        value={(stats?.activeContracts || 0).toString()}
         icon="check-circle"
         color="green"
       />
       
       <CoreStatsCard
-        title="Draft"
-        value={stats.draftContracts.toString()}
+        title={$t('core.contracts.draft')}
+        value={(stats?.draftContracts || 0).toString()}
         icon="document"
         color="gray"
       />
       
       <CoreStatsCard
-        title="Signed"
-        value={stats.signedContracts.toString()}
+        title={$t('core.contracts.signed')}
+        value={(stats?.signedContracts || 0).toString()}
         icon="pencil-alt"
         color="blue"
         trend="up"
@@ -166,15 +179,15 @@
       />
       
       <CoreStatsCard
-        title="Expired"
-        value={stats.expiredContracts.toString()}
+        title={$t('core.contracts.expired')}
+        value={(stats?.expiredContracts || 0).toString()}
         icon="exclamation-circle"
         color="red"
       />
       
       <CoreStatsCard
-        title="Templates"
-        value={stats.totalTemplates.toString()}
+        title={$t('core.contracts.templates')}
+        value={(stats?.totalTemplates || 0).toString()}
         icon="template"
         color="purple"
       />
@@ -202,7 +215,7 @@
           <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
           </svg>
-          Contracts ({stats.totalContracts})
+          {$t('core.contracts.contractsCount', { count: stats?.totalContracts || 0 })}
         </button>
         <button
           onclick={() => activeTab = 'templates'}
@@ -215,7 +228,7 @@
           <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 5a1 1 0 011-1h14a1 1 0 011 1v2a1 1 0 01-1 1H5a1 1 0 01-1-1V5zM4 13a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H5a1 1 0 01-1-1v-6zM16 13a1 1 0 011-1h2a1 1 0 011 1v6a1 1 0 01-1 1h-2a1 1 0 01-1-1v-6z" />
           </svg>
-          Templates ({stats.totalTemplates})
+          {$t('core.contracts.templatesCount', { count: stats?.totalTemplates || 0 })}
         </button>
       </nav>
     </div>
@@ -233,7 +246,7 @@
             <input
               type="text"
               bind:value={searchQuery}
-              placeholder={`Search ${activeTab}...`}
+              placeholder={$t('core.common.searchPlaceholder', { type: activeTab === 'contracts' ? $t('core.contracts.contracts') : $t('core.contracts.templates') })}
               class="block w-full pl-10 pr-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md leading-5 bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:placeholder-gray-400 focus:ring-1 focus:ring-primary-500 focus:border-primary-500 text-sm"
             />
           </div>
@@ -244,15 +257,16 @@
             <!-- Status Filter -->
             <div class="relative">
               <select
-                bind:value={filters.status}
+                value={filters?.status || ''}
+                onchange={(e) => contractFilters.update(f => ({ ...f, status: e.target.value }))}
                 class="block w-32 pl-3 pr-10 py-2 text-base border border-gray-300 dark:border-gray-600 focus:outline-none focus:ring-primary-500 focus:border-primary-500 text-sm rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
               >
-                <option value="">All Status</option>
-                <option value="draft">Draft</option>
-                <option value="active">Active</option>
-                <option value="signed">Signed</option>
-                <option value="expired">Expired</option>
-                <option value="terminated">Terminated</option>
+                <option value="">{$t('core.contracts.filters.allStatus')}</option>
+                <option value="draft">{$t('core.contracts.status.draft')}</option>
+                <option value="active">{$t('core.contracts.status.active')}</option>
+                <option value="signed">{$t('core.contracts.status.signed')}</option>
+                <option value="expired">{$t('core.contracts.status.expired')}</option>
+                <option value="terminated">{$t('core.contracts.status.terminated')}</option>
               </select>
             </div>
           </div>
@@ -270,23 +284,23 @@
         </div>
       {:else if error}
         <EmptyState
-          title="Failed to Load Data"
+          title={$t('core.common.failedToLoad')}
           description={error}
-          actionText="Try Again"
-          onAction={loadData}
+          actionText={$t('core.common.tryAgain')}
+          onAction={() => contractActions.loadAll()}
         />
-      {:else if (activeTab === 'contracts' ? filteredContracts : templates).length === 0}
+      {:else if (activeTab === 'contracts' ? (contractList || []) : (templates || [])).length === 0}
         <EmptyState
-          title={`No ${activeTab} found`}
-          description={`Start by creating your first ${activeTab.slice(0, -1)}`}
-          actionText={`Add ${activeTab === 'contracts' ? 'Contract' : 'Template'}`}
+          title={$t('core.contracts.noItemsFound', { type: activeTab === 'contracts' ? $t('core.contracts.contracts') : $t('core.contracts.templates') })}
+          description={$t('core.contracts.createFirstItem', { type: activeTab === 'contracts' ? $t('core.contracts.contract') : $t('core.contracts.template') })}
+          actionText={$t('core.common.add') + ' ' + (activeTab === 'contracts' ? $t('core.contracts.contract') : $t('core.contracts.template'))}
           onAction={() => showCreateModal = true}
         />
       {:else}
         <div class="space-y-4" in:slide={{ duration: 300 }}>
           {#if activeTab === 'contracts'}
             <!-- Contracts List -->
-            {#each filteredContracts as contract, index}
+            {#each (contractList || []) as contract, index}
               <div
                 class="bg-gray-50 dark:bg-gray-700 rounded-lg p-6 hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors duration-200"
                 in:fly={{ y: 20, duration: 300, delay: index * 50 }}
@@ -312,13 +326,13 @@
                       <div class="text-sm text-gray-600 dark:text-gray-400 space-y-1">
                         <p>{contract.description}</p>
                         <div class="flex items-center space-x-4">
-                          <span class="font-medium">Parties:</span>
+                          <span class="font-medium">{$t('core.contracts.parties')}:</span>
                           <span>{contract.parties}</span>
                         </div>
                         <div class="flex items-center space-x-4">
-                          <span>Start: {formatDate(contract.start_date)}</span>
+                          <span>{$t('core.contracts.startDate')}: {formatDate(contract.start_date)}</span>
                           {#if contract.end_date}
-                            <span>End: {formatDate(contract.end_date)}</span>
+                            <span>{$t('core.contracts.endDate')}: {formatDate(contract.end_date)}</span>
                           {/if}
                         </div>
                       </div>
@@ -330,15 +344,15 @@
                         <div class="text-lg font-semibold text-gray-900 dark:text-white">
                           {formatCurrency(contract.value)}
                         </div>
-                        <div class="text-sm text-gray-500 dark:text-gray-400">Contract Value</div>
+                        <div class="text-sm text-gray-500 dark:text-gray-400">{$t('core.contracts.contractValue')}</div>
                       </div>
                     {/if}
                     <div class="flex items-center space-x-2">
                       <Button size="sm" variant="outline">
-                        Edit
+                        {$t('core.common.edit')}
                       </Button>
                       <Button size="sm" variant="outline">
-                        View
+                        {$t('core.common.view')}
                       </Button>
                     </div>
                   </div>
@@ -348,7 +362,7 @@
           {:else}
             <!-- Templates Grid -->
             <div class="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
-              {#each templates as template, index}
+              {#each (templates || []) as template, index}
                 <div
                   class="bg-gray-50 dark:bg-gray-700 rounded-lg p-6 hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors duration-200"
                   in:fly={{ y: 20, duration: 300, delay: index * 50 }}
@@ -372,14 +386,14 @@
 
                   <div class="flex items-center justify-between mt-4 pt-4 border-t border-gray-200 dark:border-gray-600">
                     <div class="text-xs text-gray-500 dark:text-gray-400">
-                      Created: {formatDate(template.created_at)}
+                      {$t('core.contracts.created')}: {formatDate(template.created_at)}
                     </div>
                     <div class="flex space-x-2">
                       <Button size="sm" variant="outline">
-                        Use Template
+                        {$t('core.contracts.useTemplate')}
                       </Button>
                       <Button size="sm" variant="outline">
-                        Edit
+                        {$t('core.common.edit')}
                       </Button>
                     </div>
                   </div>
@@ -394,12 +408,12 @@
 </div>
 
 <!-- Create Contract Modal -->
-<Modal bind:open={showCreateModal} title="New Contract">
+<Modal bind:open={showCreateModal} title={$t('core.contracts.newContract')}>
   <form onsubmit={handleCreateContract} class="space-y-4">
     <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
       <div class="sm:col-span-2">
         <label for="title" class="block text-sm font-medium text-gray-700 dark:text-gray-300">
-          Contract Title
+          {$t('core.contracts.contractTitle')}
         </label>
         <input
           type="text"
@@ -412,15 +426,15 @@
 
       <div>
         <label for="template_id" class="block text-sm font-medium text-gray-700 dark:text-gray-300">
-          Template
+          {$t('core.contracts.template')}
         </label>
         <select
           id="template_id"
           bind:value={formData.template_id}
           class="mt-1 block w-full border border-gray-300 dark:border-gray-600 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-primary-500 focus:border-primary-500 text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
         >
-          <option value="">Select Template</option>
-          {#each templates as template}
+          <option value="">{$t('core.contracts.selectTemplate')}</option>
+          {#each (templates || []) as template}
             <option value={template.id}>{template.name}</option>
           {/each}
         </select>
@@ -428,7 +442,7 @@
 
       <div>
         <label for="status" class="block text-sm font-medium text-gray-700 dark:text-gray-300">
-          Status
+          {$t('core.contracts.status.label')}
         </label>
         <select
           id="status"
@@ -436,15 +450,15 @@
           required
           class="mt-1 block w-full border border-gray-300 dark:border-gray-600 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-primary-500 focus:border-primary-500 text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
         >
-          <option value="draft">Draft</option>
-          <option value="active">Active</option>
-          <option value="signed">Signed</option>
+          <option value="draft">{$t('core.contracts.status.draft')}</option>
+          <option value="active">{$t('core.contracts.status.active')}</option>
+          <option value="signed">{$t('core.contracts.status.signed')}</option>
         </select>
       </div>
 
       <div>
         <label for="start_date" class="block text-sm font-medium text-gray-700 dark:text-gray-300">
-          Start Date
+          {$t('core.contracts.startDate')}
         </label>
         <input
           type="date"
@@ -456,7 +470,7 @@
 
       <div>
         <label for="end_date" class="block text-sm font-medium text-gray-700 dark:text-gray-300">
-          End Date
+          {$t('core.contracts.endDate')}
         </label>
         <input
           type="date"
@@ -469,20 +483,20 @@
     
     <div>
       <label for="parties" class="block text-sm font-medium text-gray-700 dark:text-gray-300">
-        Parties Involved
+        {$t('core.contracts.partiesInvolved')}
       </label>
       <input
         type="text"
         id="parties"
         bind:value={formData.parties}
-        placeholder="e.g., John Smith, ABC Property Management"
+        placeholder={$t('core.contracts.partiesPlaceholder')}
         class="mt-1 block w-full border border-gray-300 dark:border-gray-600 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-primary-500 focus:border-primary-500 text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
       />
     </div>
     
     <div>
       <label for="description" class="block text-sm font-medium text-gray-700 dark:text-gray-300">
-        Description
+        {$t('core.contracts.description')}
       </label>
       <textarea
         id="description"
@@ -499,10 +513,10 @@
         variant="outline"
         onclick={() => showCreateModal = false}
       >
-        Cancel
+        {$t('core.common.cancel')}
       </Button>
       <Button type="submit">
-        Create Contract
+        {$t('core.contracts.createContract')}
       </Button>
     </div>
   </form>

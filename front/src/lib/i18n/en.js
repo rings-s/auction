@@ -42,6 +42,15 @@ export const enTranslations = {
     search: 'Search',
     clear: 'Clear',
     clearAll: 'Clear All',
+    add: 'Add',
+    create: 'Create',
+    filters: 'Filters',
+    previous: 'Previous',
+    next: 'Next',
+    failedToLoad: 'Failed to Load Data',
+    tryAgain: 'Try Again',
+    searchPlaceholder: 'Search {type}...',
+    showingPage: 'Showing page {current} of {total}',
     
   },
 
@@ -1100,5 +1109,573 @@ export const enTranslations = {
     users: '15K+ Users',
     viewAuctions: 'View Auctions',
     browseProperties: 'Browse Properties'
+  },
+
+  core: {
+    title: 'Property Management',
+    subtitle: 'Comprehensive property management and operations',
+    
+    // Navigation
+    nav: {
+      dashboard: 'Dashboard',
+      dashboardDesc: 'Overview and analytics',
+      financial: 'Financial',
+      financialDesc: 'Transactions and expenses',
+      rentals: 'Rentals',
+      rentalsDesc: 'Properties and leases',
+      maintenance: 'Maintenance',
+      maintenanceDesc: 'Requests and vendors',
+      contracts: 'Contracts',
+      contractsDesc: 'Templates and agreements',
+      analytics: 'Analytics',
+      analyticsDesc: 'Reports and insights'
+    },
+
+    // Layout
+    layout: {
+      title: 'Property Management'
+    },
+
+    // Dashboard
+    dashboard: {
+      title: 'Property Management Dashboard',
+      subtitle: 'Comprehensive overview of your property portfolio and operations',
+      totalProperties: 'Total Properties',
+      monthlyIncome: 'Monthly Income',
+      occupancyRate: 'Occupancy Rate',
+      pendingMaintenance: 'Pending Maintenance',
+      refresh: 'Refresh',
+      viewReports: 'View Reports',
+      
+      tabs: {
+        overview: 'Overview',
+        financial: 'Financial',
+        maintenance: 'Maintenance',
+        leases: 'Leases',
+        contracts: 'Contracts'
+      },
+
+      portfolioOverview: 'Portfolio Overview',
+      rentalProperties: 'Rental Properties',
+      occupied: 'Occupied',
+      vacant: 'Vacant',
+      financialPerformance: 'Financial Performance',
+      ytdIncome: 'YTD Income',
+      ytdExpenses: 'YTD Expenses',
+      netProfit: 'Net Profit',
+      quickActions: 'Quick Actions',
+      addTransaction: 'Add Transaction',
+      newMaintenanceRequest: 'New Maintenance Request',
+      createContract: 'Create Contract',
+      
+      overviewCharts: 'Overview charts and summaries will be displayed here',
+      maintenanceOverview: 'Maintenance requests summary and recent activity will be displayed here',
+      leaseOverview: 'Lease status overview and expiring contracts will be displayed here',
+      contractOverview: 'Contract status overview and pending signatures will be displayed here',
+      viewDetails: 'View Details',
+      viewAllRequests: 'View All Requests',
+      manageLeases: 'Manage Leases',
+      viewContracts: 'View Contracts'
+    },
+
+    // Financial Management
+    financial: {
+      title: 'Financial Management',
+      subtitle: 'Manage transactions, expenses, and financial reporting',
+      
+      // Stats
+      totalIncome: 'Total Income',
+      totalExpenses: 'Total Expenses',
+      netIncome: 'Net Income',
+      monthlyIncome: 'Monthly Income',
+      monthlyExpenses: 'Monthly Expenses',
+      ytdIncome: 'YTD Income',
+      ytdExpenses: 'YTD Expenses',
+      
+      // Transactions
+      transactions: 'Transactions',
+      expenses: 'Expenses',
+      transaction: 'Transaction',
+      expense: 'Expense',
+      newTransaction: 'New Transaction',
+      transactionType: 'Transaction Type',
+      income: 'Income',
+      amount: 'Amount',
+      description: 'Description',
+      category: 'Category',
+      date: 'Date',
+      property: 'Property',
+      dueDate: 'Due Date',
+      expenseDate: 'Expense Date',
+      vendorName: 'Vendor Name',
+      vendor: 'Vendor',
+      due: 'Due',
+      reference: 'Ref',
+      selectType: 'Select Type',
+      selectCategory: 'Select Category',
+      
+      // Transaction Types
+      transactionTypes: {
+        rentPayment: 'Rent Payment',
+        securityDeposit: 'Security Deposit',
+        maintenanceCost: 'Maintenance Cost',
+        auctionPayment: 'Auction Payment',
+        commission: 'Commission',
+        utilityBill: 'Utility Bill',
+        insurance: 'Insurance',
+        taxPayment: 'Tax Payment',
+        other: 'Other'
+      },
+      
+      // Categories
+      categories: {
+        rent: 'Rent',
+        utilities: 'Utilities',
+        maintenance: 'Maintenance',
+        insurance: 'Insurance',
+        taxes: 'Taxes',
+        management: 'Management',
+        marketing: 'Marketing',
+        legal: 'Legal',
+        other: 'Other'
+      },
+
+      // Status
+      status: {
+        pending: 'Pending',
+        completed: 'Completed',
+        failed: 'Failed',
+        overdue: 'Overdue'
+      },
+
+      // Filters
+      filters: {
+        allTypes: 'All Types',
+        allCategories: 'All Categories',
+        allProperties: 'All Properties',
+        allStatus: 'All Status',
+        dateFrom: 'Date From',
+        dateTo: 'Date To'
+      },
+
+      // Sort
+      sort: {
+        newest: 'Newest',
+        oldest: 'Oldest',
+        amountHigh: 'Amount: High',
+        amountLow: 'Amount: Low'
+      },
+
+      noTransactions: 'No transactions found',
+      addFirstTransaction: 'Add your first transaction to get started',
+      noItemsFound: 'No {type} found',
+      createFirstItem: 'Start by creating your first {type}'
+    },
+
+    // Rental Management
+    rentals: {
+      title: 'Rental Management',
+      subtitle: 'Manage rental properties, leases, and tenant relationships',
+      
+      // Actions
+      addProperty: 'Add Property',
+      convertToRental: 'Convert to Rental',
+      convertPropertyToRental: 'Convert Property to Rental',
+      createRentalProperty: 'Create Rental Property',
+      selectProperty: 'Select Property',
+      
+      // Stats
+      totalProperties: 'Total Properties',
+      occupiedProperties: 'Occupied Properties',
+      vacantProperties: 'Vacant Properties',
+      occupied: 'Occupied',
+      vacant: 'Vacant',
+      activeLeases: 'Active Leases',
+      expiringLeases: 'Expiring Leases',
+      expiringSoon: 'Expiring Soon',
+      within30Days: 'Within 30 days',
+      occupancyRate: 'Occupancy Rate',
+      occupancyPercent: '{rate}% occupancy',
+      monthlyIncome: 'Monthly Income',
+      
+      // Properties
+      properties: 'Properties',
+      property: 'Property',
+      newProperty: 'New Property',
+      propertyName: 'Property Name',
+      address: 'Address',
+      noAddress: 'No address',
+      untitledProperty: 'Untitled Property',
+      type: 'Type',
+      status: 'Status',
+      rent: 'Rent',
+      tenant: 'Tenant',
+      currentTenant: 'Current Tenant',
+      rentalPropertiesCount: 'Rental Properties ({count})',
+      bedrooms: 'Bedrooms',
+      bathrooms: 'Bathrooms',
+      bedsBaths: 'Beds/Baths',
+      furnished: 'Furnished',
+      petsAllowed: 'Pets Allowed',
+      petsOK: 'Pets OK',
+      availableDate: 'Available Date',
+      
+      // Leases
+      leases: 'Leases',
+      lease: 'Lease',
+      newLease: 'New Lease',
+      leaseStatus: 'Lease Status',
+      leaseAgreementsCount: 'Lease Agreements ({count})',
+      startDate: 'Start Date',
+      endDate: 'End Date',
+      term: 'Term',
+      monthlyRent: 'Monthly Rent',
+      securityDeposit: 'Security Deposit',
+      perMonth: 'per month',
+      leaseExpiresIn: 'Lease expires in {days} days',
+      daysRemaining: '{days} days remaining',
+      yieldPercent: '{yield}% yield',
+      
+      // Rental Types
+      rentalType: 'Rental Type',
+      rentalTypes: {
+        longTerm: 'Long-term',
+        shortTerm: 'Short-term',
+        vacation: 'Vacation',
+        commercial: 'Commercial',
+        longTermRental: 'Long-term Rental',
+        shortTermRental: 'Short-term Rental',
+        vacationRental: 'Vacation Rental',
+        commercialRental: 'Commercial Rental'
+      },
+      
+      // Status
+      statuses: {
+        available: 'Available',
+        occupied: 'Occupied',
+        maintenance: 'Under Maintenance',
+        active: 'Active',
+        expired: 'Expired',
+        terminated: 'Terminated'
+      },
+
+      // Filters
+      filters: {
+        allTypes: 'All Types',
+        allStatus: 'All Status'
+      },
+
+      // Sort
+      sort: {
+        newest: 'Newest',
+        oldest: 'Oldest',
+        rentHigh: 'Rent: High',
+        rentLow: 'Rent: Low'
+      },
+
+      noProperties: 'No properties found',
+      addFirstProperty: 'Add your first property to get started',
+      noItemsFound: 'No {type} found',
+      createFirstItem: 'Start by creating your first {type}'
+    },
+
+    // Maintenance Management
+    maintenance: {
+      title: 'Maintenance Management',
+      subtitle: 'Manage maintenance requests, vendors, and work orders',
+      
+      // Actions
+      manageVendors: 'Manage Vendors',
+      newRequest: 'New Request',
+      newMaintenanceRequest: 'New Maintenance Request',
+      createRequest: 'Create Request',
+      selectProperty: 'Select Property',
+      selectCategory: 'Select Category',
+      
+      // Stats
+      totalRequests: 'Total Requests',
+      pending: 'Pending',
+      inProgress: 'In Progress',
+      completed: 'Completed',
+      emergency: 'Emergency',
+      ytdCost: 'YTD Cost',
+      pendingRequests: 'Pending',
+      inProgressRequests: 'In Progress',
+      completedRequests: 'Completed',
+      emergencyRequests: 'Emergency',
+      totalCostYTD: 'Total Cost YTD',
+      
+      // Navigation
+      maintenanceRequestsCount: 'Maintenance Requests ({count})',
+      vendorsCount: 'Vendors ({count})',
+      
+      // Requests
+      requests: 'Maintenance Requests',
+      request: 'Request',
+      requestTitle: 'Request Title',
+      title: 'Title',
+      description: 'Description',
+      priority: 'Priority',
+      category: 'Category',
+      status: 'Status',
+      property: 'Property',
+      unknownProperty: 'Unknown Property',
+      assignedTo: 'Assigned to',
+      created: 'Created',
+      scheduled: 'Scheduled',
+      requestedDate: 'Requested Date',
+      scheduledDate: 'Scheduled Date',
+      estimatedCost: 'Estimated Cost',
+      actualCost: 'Actual Cost',
+      estimated: 'Estimated',
+      
+      // Vendors
+      vendors: 'Vendors',
+      vendor: 'Vendor',
+      newVendor: 'New Vendor',
+      vendorName: 'Vendor Name',
+      contactInfo: 'Contact Info',
+      contact: 'Contact',
+      phone: 'Phone',
+      email: 'Email',
+      rate: 'Rate',
+      rating: 'Rating',
+      specialties: 'Specialties',
+      preferredVendor: 'Preferred Vendor',
+      license: 'License: {number}',
+      notSpecified: 'Not specified',
+      
+      // Vendor Status
+      vendorStatus: {
+        active: 'Active',
+        inactive: 'Inactive'
+      },
+      
+      // Priority levels
+      priorities: {
+        low: 'Low',
+        medium: 'Medium',
+        high: 'High',
+        emergency: 'Emergency'
+      },
+
+      // Categories
+      categories: {
+        plumbing: 'Plumbing',
+        electrical: 'Electrical',
+        hvac: 'HVAC',
+        appliances: 'Appliances',
+        structural: 'Structural',
+        flooring: 'Flooring',
+        painting: 'Painting',
+        roofing: 'Roofing',
+        other: 'Other'
+      },
+
+      // Status
+      status: {
+        submitted: 'Submitted',
+        inProgress: 'In Progress',
+        completed: 'Completed',
+        cancelled: 'Cancelled'
+      },
+      
+      statuses: {
+        submitted: 'Submitted',
+        in_progress: 'In Progress',
+        completed: 'Completed',
+        cancelled: 'Cancelled'
+      },
+
+      // Filters
+      filters: {
+        allStatus: 'All Status',
+        allPriority: 'All Priority',
+        allCategories: 'All Categories'
+      },
+
+      noRequests: 'No maintenance requests found',
+      addFirstRequest: 'Submit your first maintenance request',
+      noItemsFound: 'No {type} found',
+      createFirstItem: 'Start by creating your first {type}'
+    },
+
+    // Contract Management
+    contracts: {
+      title: 'Contract Management',
+      subtitle: 'Manage contracts, templates, and legal agreements',
+      
+      // Navigation
+      contractsCount: 'Contracts ({count})',
+      templatesCount: 'Templates ({count})',
+      
+      // Stats
+      totalContracts: 'Total Contracts',
+      active: 'Active',
+      draft: 'Draft',
+      signed: 'Signed',
+      expired: 'Expired',
+      templates: 'Templates',
+      
+      // Contracts
+      contracts: 'Contracts',
+      contract: 'Contract',
+      template: 'Template',
+      newContract: 'New Contract',
+      contractTitle: 'Contract Title',
+      description: 'Description',
+      parties: 'Parties',
+      partiesInvolved: 'Parties Involved',
+      partiesPlaceholder: 'e.g., John Smith, ABC Property Management',
+      terms: 'Terms',
+      startDate: 'Start Date',
+      endDate: 'End Date',
+      contractValue: 'Contract Value',
+      created: 'Created',
+      
+      // Templates
+      selectTemplate: 'Select Template',
+      useTemplate: 'Use Template',
+      
+      // Form Labels
+      status: {
+        label: 'Status',
+        draft: 'Draft',
+        active: 'Active',
+        signed: 'Signed',
+        expired: 'Expired',
+        terminated: 'Terminated'
+      },
+
+      // Actions
+      createContract: 'Create Contract',
+      
+      // Filters
+      filters: {
+        allStatus: 'All Status'
+      },
+      
+      // Empty states
+      noItemsFound: 'No {type} found',
+      createFirstItem: 'Start by creating your first {type}'
+    },
+
+    // Analytics
+    analytics: {
+      title: 'Analytics & Reports',
+      subtitle: 'Comprehensive insights into your property management performance',
+      
+      // Stats
+      totalRevenue: 'Total Revenue',
+      totalExpenses: 'Total Expenses',
+      netIncome: 'Net Income',
+      occupancyRate: 'Occupancy Rate',
+      maintenanceRequests: 'Maintenance Requests',
+      activeLeases: 'Active Leases',
+      
+      // Tabs
+      tabs: {
+        overview: 'Overview',
+        financial: 'Financial',
+        maintenance: 'Maintenance',
+        occupancy: 'Occupancy'
+      },
+
+      // Date ranges
+      dateRanges: {
+        last7Days: 'Last 7 days',
+        last30Days: 'Last 30 days',
+        last90Days: 'Last 90 days',
+        lastYear: 'Last year'
+      },
+
+      exportReport: 'Export Report',
+      
+      // Charts
+      revenueVsExpenses: 'Revenue vs Expenses',
+      propertyPerformance: 'Property Performance',
+      maintenanceResponse: 'Maintenance Response',
+      tenantSatisfaction: 'Tenant Satisfaction',
+      
+      // Financial
+      financialTrends: 'Financial Trends',
+      
+      // Maintenance
+      maintenanceRequestTrends: 'Maintenance Request Trends',
+      
+      // Occupancy
+      currentOccupancy: 'Current Occupancy',
+      avgLeaseDuration: 'Avg Lease Duration',
+      occupancyTrends: 'Occupancy Trends',
+      
+      chartsPlaceholder: 'Chart will be rendered here',
+      financialChartsPlaceholder: 'Financial trend chart will be rendered here',
+      maintenanceChartsPlaceholder: 'Maintenance trend chart will be rendered here',
+      occupancyChartsPlaceholder: 'Occupancy trend chart will be rendered here'
+    },
+
+    // Common elements
+    common: {
+      search: 'Search',
+      filter: 'Filter',
+      sort: 'Sort',
+      export: 'Export',
+      print: 'Print',
+      save: 'Save',
+      cancel: 'Cancel',
+      edit: 'Edit',
+      view: 'View',
+      delete: 'Delete',
+      create: 'Create',
+      add: 'Add',
+      update: 'Update',
+      loading: 'Loading...',
+      noData: 'No data available',
+      tryAgain: 'Try Again',
+      
+      // Sorting
+      sortBy: 'Sort by',
+      newest: 'Newest',
+      oldest: 'Oldest',
+      nameAsc: 'Name A-Z',
+      nameDesc: 'Name Z-A',
+      amountAsc: 'Amount Low-High',
+      amountDesc: 'Amount High-Low',
+      
+      // Filters
+      allStatus: 'All Status',
+      allCategories: 'All Categories',
+      allTypes: 'All Types',
+      allPriorities: 'All Priorities',
+      
+      // Actions
+      viewDetails: 'View Details',
+      viewAll: 'View All',
+      manageAll: 'Manage All',
+      
+      // Forms
+      required: 'Required',
+      optional: 'Optional',
+      selectOption: 'Select an option',
+      enterValue: 'Enter value'
+    },
+
+    // Error messages
+    errors: {
+      loadFailed: 'Failed to load data',
+      saveFailed: 'Failed to save',
+      deleteFailed: 'Failed to delete',
+      updateFailed: 'Failed to update',
+      permissionDenied: 'Permission denied',
+      networkError: 'Network error'
+    },
+
+    // Success messages
+    success: {
+      saved: 'Saved successfully',
+      deleted: 'Deleted successfully',
+      updated: 'Updated successfully',
+      created: 'Created successfully'
+    }
   }
 };
