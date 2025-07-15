@@ -24,13 +24,16 @@
   import AuctionSidebar from '$lib/components/auction/detail/AuctionSidebar.svelte';
   import AuctionModals from '$lib/components/auction/detail/AuctionModals.svelte';
   
+  // Data from load function
+  export let data;
+  
   // State management
-  let auction = null;
-  let property = null;
+  let auction = data.auction;
+  let property = data.auction?.related_property || null;
   let bids = [];
-  let loading = true;
+  let loading = false;
   let bidsLoading = false;
-  let error = null;
+  let error = data.error || null;
   let bidError = '';
   let bidSuccess = '';
   let refreshInterval;
@@ -42,6 +45,7 @@
   let enableAutoBidding = false;
   let bidNotes = '';
   let isRegistered = true;
+  let quickBidAmounts = [];
   
   // Modal states
   let showBidModal = false;
@@ -88,17 +92,40 @@
     return bids.find(bid => bid.bidder_info?.id === $user.id);
   }
   
+  function generateQuickBidAmounts() {
+    if (!auction) return [];
+    
+    const currentBid = auction.current_bid || auction.starting_bid || 0;
+    const increment = auction.minimum_increment || 100;
+    const baseAmount = parseFloat(currentBid) + parseFloat(increment);
+    
+    return [
+      baseAmount,
+      baseAmount + increment,
+      baseAmount + (increment * 2),
+      baseAmount + (increment * 5)
+    ];
+  }
+  
 
   
   async function loadAuctionData() {
-    loading = true;
-    error = null;
+    if (!auction) {
+      loading = true;
+      error = null;
+      
+      try {
+        const auctionData = await fetchAuctionBySlug(slug);
+        auction = auctionData;
+      } catch (err) {
+        error = err.message;
+        loading = false;
+        return;
+      }
+    }
     
     try {
-      const auctionData = await fetchAuctionBySlug(slug);
-      auction = auctionData;
-      
-      if (auction.id) {
+      if (auction?.id) {
         const statusInfo = await getAuctionStatus(auction.id);
         auction = { 
           ...auction, 
@@ -110,14 +137,16 @@
         };
       }
       
-      if (auction.related_property) {
+      if (auction?.related_property) {
         property = auction.related_property;
       }
-      
       
       if ($user) {
         isRegistered = true;
       }
+      
+      // Generate quick bid amounts
+      quickBidAmounts = generateQuickBidAmounts();
       
     } catch (err) {
       error = err.message;
@@ -286,9 +315,12 @@
   }
   
   onMount(async () => {
+    // Load auction data (will use existing data if available)
     await loadAuctionData();
+    // Load bids 
     await loadAuctionBids();
     
+    // Set up refresh interval for real-time updates
     refreshInterval = setInterval(async () => {
       if (!placingBid) {
         await Promise.all([loadAuctionData(), loadAuctionBids()]);
