@@ -2,7 +2,7 @@ from rest_framework import serializers
 from django.contrib.auth import get_user_model
 from django.contrib.auth.password_validation import validate_password
 from django.utils.translation import gettext_lazy as _
-from .models import UserProfile
+from .models import UserProfile, BankAccount, Payment
 from django.db import transaction
 import logging
 
@@ -44,6 +44,12 @@ class UserProfileSerializer(serializers.ModelSerializer):
     is_active = serializers.BooleanField(read_only=True)
     is_staff = serializers.BooleanField(read_only=True)
     avatar_url = serializers.SerializerMethodField()
+    profile_image_url = serializers.SerializerMethodField()
+
+    # Identity fields
+    identity_type = serializers.CharField(source='profile.identity_type', read_only=True, allow_null=True)
+    identity_type_display = serializers.SerializerMethodField()
+    identity_number = serializers.CharField(source='profile.identity_number', read_only=True, allow_null=True)
 
     # Profile fields
     bio = serializers.CharField(source='profile.bio', read_only=True, allow_null=True)
@@ -66,7 +72,8 @@ class UserProfileSerializer(serializers.ModelSerializer):
         model = User
         fields = (
             'id', 'uuid', 'email', 'first_name', 'last_name', 'phone_number', 'date_of_birth',
-            'avatar_url', 'is_verified', 'is_active', 'is_staff', 'date_joined',
+            'avatar_url', 'profile_image_url', 'is_verified', 'is_active', 'is_staff', 'date_joined',
+            'identity_type', 'identity_type_display', 'identity_number',
             'bio', 'company_name', 'company_registration', 'tax_id', 'address', 'city', 'state',
             'postal_code', 'country', 'license_number', 'license_expiry', 'preferred_locations',
             'property_preferences', 'credit_limit', 'rating',
@@ -82,6 +89,22 @@ class UserProfileSerializer(serializers.ModelSerializer):
                 logger.warning(f"Could not build avatar URL: {e}")
         return None
 
+    def get_profile_image_url(self, obj):
+        request = self.context.get('request')
+        profile = getattr(obj, 'profile', None)
+        if profile and profile.profile_image and hasattr(profile.profile_image, 'url') and request:
+            try:
+                return request.build_absolute_uri(profile.profile_image.url)
+            except Exception as e:
+                logger.warning(f"Could not build profile image URL: {e}")
+        return None
+
+    def get_identity_type_display(self, obj):
+        profile = getattr(obj, 'profile', None)
+        if profile and profile.identity_type:
+            return profile.get_identity_type_display()
+        return None
+
     def to_representation(self, instance):
         rep = super().to_representation(instance)
         profile = getattr(instance, 'profile', None)
@@ -89,7 +112,7 @@ class UserProfileSerializer(serializers.ModelSerializer):
         text_fields = [
             'bio', 'company_name', 'company_registration', 'tax_id', 'address',
             'city', 'state', 'postal_code', 'country', 'license_number',
-            'preferred_locations', 'property_preferences'
+            'preferred_locations', 'property_preferences', 'identity_type', 'identity_number'
         ]
         decimal_fields = ['credit_limit', 'rating']
         date_fields = ['license_expiry']
@@ -112,6 +135,25 @@ class UserProfileUpdateSerializer(serializers.ModelSerializer):
     date_of_birth = serializers.DateField(required=False, allow_null=True)
     avatar = serializers.ImageField(required=False, allow_null=True)
 
+    # Identity fields  
+    identity_type = serializers.ChoiceField(
+        source='profile.identity_type',
+        choices=UserProfile.IDENTITY_TYPE_CHOICES,
+        required=False,
+        allow_null=True
+    )
+    identity_number = serializers.CharField(
+        source='profile.identity_number', 
+        required=False, 
+        allow_blank=True,
+        max_length=50
+    )
+    profile_image = serializers.ImageField(
+        source='profile.profile_image',
+        required=False,
+        allow_null=True
+    )
+
     # Profile fields
     bio = serializers.CharField(source='profile.bio', required=False, allow_blank=True)
     company_name = serializers.CharField(source='profile.company_name', required=False, allow_blank=True)
@@ -131,6 +173,7 @@ class UserProfileUpdateSerializer(serializers.ModelSerializer):
         model = User
         fields = (
             'first_name', 'last_name', 'phone_number', 'date_of_birth', 'avatar',
+            'identity_type', 'identity_number', 'profile_image',
             'bio', 'company_name', 'company_registration', 'tax_id', 'address',
             'city', 'state', 'postal_code', 'country', 'license_number',
             'license_expiry', 'preferred_locations', 'property_preferences',
@@ -173,3 +216,119 @@ class UserBriefSerializer(serializers.ModelSerializer):
 
     def get_full_name(self, obj):
         return f"{obj.first_name} {obj.last_name}".strip() or obj.email
+
+
+# -------------------------------------------------------------------------
+# Bank Account Serializers
+# -------------------------------------------------------------------------
+
+class BankAccountSerializer(serializers.ModelSerializer):
+    user_name = serializers.SerializerMethodField()
+    
+    class Meta:
+        model = BankAccount
+        fields = [
+            'id', 'user', 'user_name', 'bank_account_name', 'bank_name', 
+            'iban_number', 'account_number', 'swift_code', 'is_primary', 
+            'is_verified', 'notes', 'created_at', 'updated_at'
+        ]
+        read_only_fields = ['id', 'user', 'created_at', 'updated_at']
+    
+    def get_user_name(self, obj):
+        return f"{obj.user.first_name} {obj.user.last_name}".strip() or obj.user.email
+
+class BankAccountCreateSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = BankAccount
+        fields = [
+            'bank_account_name', 'bank_name', 'iban_number', 'account_number', 
+            'swift_code', 'is_primary', 'notes'
+        ]
+    
+    def create(self, validated_data):
+        validated_data['user'] = self.context['request'].user
+        return super().create(validated_data)
+
+class BankAccountUpdateSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = BankAccount
+        fields = [
+            'bank_account_name', 'bank_name', 'iban_number', 'account_number', 
+            'swift_code', 'is_primary', 'notes'
+        ]
+
+class BankAccountBriefSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = BankAccount
+        fields = ['id', 'bank_account_name', 'bank_name', 'iban_number', 'is_primary']
+
+
+# -------------------------------------------------------------------------
+# Payment Serializers  
+# -------------------------------------------------------------------------
+
+class PaymentSerializer(serializers.ModelSerializer):
+    user_name = serializers.SerializerMethodField()
+    property_title = serializers.SerializerMethodField()
+    tenant_name = serializers.SerializerMethodField()
+    bank_account_name = serializers.SerializerMethodField()
+    payment_type_display = serializers.CharField(source='get_payment_type_display', read_only=True)
+    status_display = serializers.CharField(source='get_status_display', read_only=True)
+    is_overdue = serializers.BooleanField(read_only=True)
+    days_overdue = serializers.IntegerField(read_only=True)
+    
+    class Meta:
+        model = Payment
+        fields = [
+            'id', 'payment_id', 'user', 'user_name', 'amount', 'currency', 
+            'payment_type', 'payment_type_display', 'status', 'status_display',
+            'property_reference', 'property_title', 'tenant_reference', 'tenant_name',
+            'payment_date', 'due_date', 'description', 'notes', 'bank_account',
+            'bank_account_name', 'is_overdue', 'days_overdue', 'created_at', 'updated_at'
+        ]
+        read_only_fields = ['id', 'payment_id', 'user', 'created_at', 'updated_at']
+    
+    def get_user_name(self, obj):
+        return f"{obj.user.first_name} {obj.user.last_name}".strip() or obj.user.email
+    
+    def get_property_title(self, obj):
+        return obj.property_reference.title if obj.property_reference else None
+    
+    def get_tenant_name(self, obj):
+        return obj.tenant_reference.full_name if obj.tenant_reference else None
+    
+    def get_bank_account_name(self, obj):
+        return obj.bank_account.bank_account_name if obj.bank_account else None
+
+class PaymentCreateSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Payment
+        fields = [
+            'amount', 'currency', 'payment_type', 'status', 'property_reference', 
+            'tenant_reference', 'payment_date', 'due_date', 'description', 
+            'notes', 'bank_account'
+        ]
+    
+    def create(self, validated_data):
+        validated_data['user'] = self.context['request'].user
+        return super().create(validated_data)
+
+class PaymentUpdateSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Payment
+        fields = [
+            'amount', 'currency', 'payment_type', 'status', 'property_reference', 
+            'tenant_reference', 'payment_date', 'due_date', 'description', 
+            'notes', 'bank_account'
+        ]
+
+class PaymentBriefSerializer(serializers.ModelSerializer):
+    payment_type_display = serializers.CharField(source='get_payment_type_display', read_only=True)
+    status_display = serializers.CharField(source='get_status_display', read_only=True)
+    
+    class Meta:
+        model = Payment
+        fields = [
+            'id', 'payment_id', 'amount', 'currency', 'payment_type', 
+            'payment_type_display', 'status', 'status_display', 'payment_date'
+        ]

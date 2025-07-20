@@ -1,10 +1,10 @@
 // lib/i18n/translations/index.js
-import { enTranslations } from '../en.js';
-import { arTranslations } from '../ar.js';
+import { enTranslations } from '$lib/i18n/en.js';
+import { arTranslations } from '$lib/i18n/ar.js';
 
 export const translations = {
-  en: enTranslations,
-  ar: arTranslations
+	en: enTranslations,
+	ar: arTranslations
 };
 
 export { enTranslations, arTranslations };

@@ -1,66 +1,66 @@
 {
-  "name": "Real Estate Auction Platform",
-  "short_name": "RE Auction",
-  "description": "Premier real estate auction platform with transparent bidding",
-  "start_url": "/",
-  "scope": "/",
-  "display": "standalone",
-  "orientation": "portrait-primary",
-  "background_color": "#ffffff",
-  "theme_color": "#a78bfa",
-  "categories": ["business", "finance", "lifestyle"],
-  "lang": "en",
-  "dir": "auto",
-  "icons": [
-    {
-      "src": "/pwa-64x64.png",
-      "sizes": "64x64",
-      "type": "image/png",
-      "purpose": "any"
-    },
-    {
-      "src": "/pwa-192x192.png",
-      "sizes": "192x192",
-      "type": "image/png",
-      "purpose": "any"
-    },
-    {
-      "src": "/pwa-512x512.png",
-      "sizes": "512x512",
-      "type": "image/png",
-      "purpose": "any"
-    },
-    {
-      "src": "/maskable-icon-512x512.png",
-      "sizes": "512x512",
-      "type": "image/png",
-      "purpose": "maskable"
-    }
-  ],
-  "shortcuts": [
-    {
-      "name": "Live Auctions",
-      "short_name": "Auctions",
-      "description": "View all active property auctions",
-      "url": "/auctions",
-      "icons": [{ "src": "/pwa-192x192.png", "sizes": "192x192" }]
-    },
-    {
-      "name": "My Bids",
-      "short_name": "Bids",
-      "description": "Track your active bids",
-      "url": "/dashboard/bids",
-      "icons": [{ "src": "/pwa-192x192.png", "sizes": "192x192" }]
-    }
-  ],
-  "screenshots": [
-    {
-      "src": "/screenshots/home.png",
-      "sizes": "1280x720",
-      "type": "image/png",
-      "label": "Homepage"
-    }
-  ],
-  "related_applications": [],
-  "prefer_related_applications": false
+	"name": "Real Estate Auction Platform",
+	"short_name": "RE Auction",
+	"description": "Premier real estate auction platform with transparent bidding",
+	"start_url": "/",
+	"scope": "/",
+	"display": "standalone",
+	"orientation": "portrait-primary",
+	"background_color": "#ffffff",
+	"theme_color": "#a78bfa",
+	"categories": ["business", "finance", "lifestyle"],
+	"lang": "en",
+	"dir": "auto",
+	"icons": [
+		{
+			"src": "/pwa-64x64.png",
+			"sizes": "64x64",
+			"type": "image/png",
+			"purpose": "any"
+		},
+		{
+			"src": "/pwa-192x192.png",
+			"sizes": "192x192",
+			"type": "image/png",
+			"purpose": "any"
+		},
+		{
+			"src": "/pwa-512x512.png",
+			"sizes": "512x512",
+			"type": "image/png",
+			"purpose": "any"
+		},
+		{
+			"src": "/maskable-icon-512x512.png",
+			"sizes": "512x512",
+			"type": "image/png",
+			"purpose": "maskable"
+		}
+	],
+	"shortcuts": [
+		{
+			"name": "Live Auctions",
+			"short_name": "Auctions",
+			"description": "View all active property auctions",
+			"url": "/auctions",
+			"icons": [{ "src": "/pwa-192x192.png", "sizes": "192x192" }]
+		},
+		{
+			"name": "My Bids",
+			"short_name": "Bids",
+			"description": "Track your active bids",
+			"url": "/dashboard/bids",
+			"icons": [{ "src": "/pwa-192x192.png", "sizes": "192x192" }]
+		}
+	],
+	"screenshots": [
+		{
+			"src": "/screenshots/home.png",
+			"sizes": "1280x720",
+			"type": "image/png",
+			"label": "Homepage"
+		}
+	],
+	"related_applications": [],
+	"prefer_related_applications": false
 }

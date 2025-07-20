@@ -70,33 +70,59 @@ print(f"🔥 ALLOWED_HOSTS: {ALLOWED_HOSTS}")
 
 # DATABASE CONFIGURATION
 # ======================
+# def get_database_config():
+    # """Get database configuration based on environment"""
+    
+    # # Default values for local development
+    # default_config = {
+    #     'ENGINE': 'django.db.backends.postgresql',
+    #     'NAME': os.getenv('DB_NAME', 'auction'),
+    #     'USER': os.getenv('DB_USER', 'postgres'),
+    #     'PASSWORD': os.getenv('DB_PASSWORD', 'postgres'),
+    #     'PORT': os.getenv('DB_PORT', '5432'),
+    #     'CONN_MAX_AGE': 60,
+    #     'OPTIONS': {
+    #         'connect_timeout': 10,
+    #     }
+    # }
+    
+
 def get_database_config():
     """Get database configuration based on environment"""
     
-    # Default values for local development
-    default_config = {
-        'ENGINE': 'django.db.backends.postgresql',
-        'NAME': os.getenv('DB_NAME', 'auction'),
-        'USER': os.getenv('DB_USER', 'postgres'),
-        'PASSWORD': os.getenv('DB_PASSWORD', 'postgres'),
-        'PORT': os.getenv('DB_PORT', '5432'),
-        'CONN_MAX_AGE': 60,
-        'OPTIONS': {
-            'connect_timeout': 10,
-        }
+    # Default to SQLite for simplicity and reliability
+    sqlite_config = {
+        'ENGINE': 'django.db.backends.sqlite3',
+        'NAME': BASE_DIR / 'db.sqlite3',
     }
     
-    # Determine the database host
-    if RUNNING_IN_DOCKER:
-        # Always use Docker service name when in container
-        default_config['HOST'] = 'db'
-        print(f"🔥 DATABASE: Using Docker service name 'db'")
-    else:
-        # Local development, use localhost
-        default_config['HOST'] = 'localhost'
-        print(f"🔥 DATABASE: Using localhost for local development")
+    # Only use PostgreSQL if explicitly requested
+    if os.getenv('USE_POSTGRESQL', 'False').lower() == 'true':
+        print(f"🔥 DATABASE: Using PostgreSQL (explicitly requested)")
+        postgresql_config = {
+            'ENGINE': 'django.db.backends.postgresql',
+            'NAME': os.getenv('DB_NAME', 'auction'),
+            'USER': os.getenv('DB_USER', 'postgres'),
+            'PASSWORD': os.getenv('DB_PASSWORD', 'postgres'),
+            'PORT': os.getenv('DB_PORT', '5432'),
+            'CONN_MAX_AGE': 60,
+            'OPTIONS': {
+                'connect_timeout': 10,
+            }
+        }
+        
+        # Determine the database host
+        if RUNNING_IN_DOCKER:
+            postgresql_config['HOST'] = 'db'
+            print(f"🔥 DATABASE: PostgreSQL with Docker service 'db'")
+        else:
+            postgresql_config['HOST'] = 'localhost'
+            print(f"🔥 DATABASE: PostgreSQL with localhost")
+        
+        return postgresql_config
     
-    return default_config
+    print(f"🔥 DATABASE: Using SQLite (default)")
+    return sqlite_config
 
 DATABASES = {'default': get_database_config()}
 
@@ -316,46 +342,76 @@ SIMPLE_JWT = {
 
 # CHANNEL LAYERS
 # ==============
-CHANNEL_LAYERS = {
-    'default': {
-        'BACKEND': 'channels_redis.core.RedisChannelLayer',
-        'CONFIG': {
-            "hosts": [REDIS_URL],
-            "capacity": 1500,
-            "expiry": 10,
-        },
-    }
-}
-
-# CACHE CONFIGURATION
-# ===================
-CACHES = {
-    'default': {
-        'BACKEND': 'django.core.cache.backends.redis.RedisCache',
-        'LOCATION': REDIS_URL,
-        'KEY_PREFIX': f'auction_{ENVIRONMENT}',
-        'TIMEOUT': 300,
-    }
-}
-
-# If Redis is not available, fall back to dummy cache for local development
-if not RUNNING_IN_DOCKER and not DEBUG:
-    try:
-        import redis
-        r = redis.Redis.from_url(REDIS_URL)
-        r.ping()
-        print("🔥 REDIS: Connection successful")
-    except:
-        print("⚠️  REDIS: Not available, using dummy cache")
-        CACHES = {
+def get_channel_layers_config():
+    """Get channel layers configuration based on environment"""
+    if ENVIRONMENT == 'development' and not RUNNING_IN_DOCKER:
+        # Use in-memory channel layer for local development
+        return {
             'default': {
-                'BACKEND': 'django.core.cache.backends.dummy.DummyCache',
+                'BACKEND': 'channels.layers.InMemoryChannelLayer',
+            }
+        }
+    else:
+        # Use Redis for production/Docker environments
+        return {
+            'default': {
+                'BACKEND': 'channels_redis.core.RedisChannelLayer',
+                'CONFIG': {
+                    "hosts": [REDIS_URL],
+                    "capacity": 1500,
+                    "expiry": 10,
+                },
             }
         }
 
+CHANNEL_LAYERS = get_channel_layers_config()
+
+# CACHE CONFIGURATION
+# ===================
+def get_cache_config():
+    """Get cache configuration based on environment"""
+    # Default to database cache for SQLite compatibility
+    if os.getenv('USE_REDIS_CACHE', 'False').lower() == 'true':
+        print("🔥 CACHE: Using Redis cache")
+        return {
+            'default': {
+                'BACKEND': 'django.core.cache.backends.redis.RedisCache',
+                'LOCATION': REDIS_URL,
+                'KEY_PREFIX': f'auction_{ENVIRONMENT}',
+                'TIMEOUT': 300,
+            }
+        }
+    else:
+        # Use database cache (SQLite compatible)
+        print("🔥 CACHE: Using database cache (SQLite compatible)")
+        return {
+            'default': {
+                'BACKEND': 'django.core.cache.backends.db.DatabaseCache',
+                'LOCATION': 'cache_table',
+                'TIMEOUT': 300,
+                'KEY_PREFIX': f'auction_{ENVIRONMENT}',
+            }
+        }
+
+CACHES = get_cache_config()
+
+# Create cache table for database cache (will be ignored if not using db cache)
+# Note: You'll need to run 'python manage.py createcachetable' for this to work
+
 # SESSION CONFIGURATION
 # ====================
-SESSION_ENGINE = 'django.contrib.sessions.backends.cache'
+def get_session_config():
+    """Get session configuration based on environment"""
+    # Default to database sessions for SQLite compatibility
+    if os.getenv('USE_CACHE_SESSIONS', 'False').lower() == 'true':
+        print("🔥 SESSION: Using cache sessions")
+        return 'django.contrib.sessions.backends.cache'
+    else:
+        # Use database sessions (SQLite compatible)
+        print("🔥 SESSION: Using database sessions (SQLite compatible)")
+        return 'django.contrib.sessions.backends.db'
+
+SESSION_ENGINE = get_session_config()
 SESSION_CACHE_ALIAS = 'default'
 SESSION_COOKIE_AGE = 86400 * 7  # 7 days
 SESSION_COOKIE_NAME = 'auction_sessionid'

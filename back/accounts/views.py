@@ -12,8 +12,12 @@ from rest_framework.parsers import MultiPartParser, FormParser
 from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework_simplejwt.exceptions import TokenError
 
-from .models import UserProfile
-from .serializers import UserRegistrationSerializer, UserProfileSerializer, UserProfileUpdateSerializer
+from .models import UserProfile, BankAccount, Payment
+from .serializers import (
+    UserRegistrationSerializer, UserProfileSerializer, UserProfileUpdateSerializer,
+    BankAccountSerializer, BankAccountCreateSerializer, BankAccountUpdateSerializer,
+    PaymentSerializer, PaymentCreateSerializer, PaymentUpdateSerializer
+)
 from .utils import send_verification_email, send_password_reset_email, EmailRateLimitExceeded, create_response, debug_request
 from .middleware import track_successful_login
 from .permissions import IsOwnerOrAdmin, IsAdminUser
@@ -531,3 +535,169 @@ class UpdateAvatarView(APIView):
             data={"user": UserProfileSerializer(user, context={'request': request}).data},
             message="Avatar updated successfully"
         )
+
+
+# -------------------------------------------------------------------------
+# Bank Account Management Views
+# -------------------------------------------------------------------------
+
+class BankAccountListCreateView(APIView):
+    permission_classes = [IsAuthenticated]
+    
+    def get(self, request):
+        bank_accounts = BankAccount.objects.filter(user=request.user)
+        serializer = BankAccountSerializer(bank_accounts, many=True)
+        return create_response(data={'bank_accounts': serializer.data})
+    
+    def post(self, request):
+        serializer = BankAccountCreateSerializer(data=request.data, context={'request': request})
+        if serializer.is_valid():
+            bank_account = serializer.save()
+            return create_response(
+                data={'bank_account': BankAccountSerializer(bank_account).data},
+                message="Bank account created successfully",
+                status_code=status.HTTP_201_CREATED
+            )
+        return create_response(
+            error=serializer.errors,
+            error_code="validation_error",
+            status_code=status.HTTP_400_BAD_REQUEST
+        )
+
+class BankAccountDetailView(APIView):
+    permission_classes = [IsAuthenticated, IsOwnerOrAdmin]
+    
+    def get_object(self, pk, user):
+        try:
+            bank_account = BankAccount.objects.get(pk=pk, user=user)
+            return bank_account
+        except BankAccount.DoesNotExist:
+            return None
+    
+    def get(self, request, pk):
+        bank_account = self.get_object(pk, request.user)
+        if not bank_account:
+            return create_response(
+                error="Bank account not found",
+                error_code="not_found",
+                status_code=status.HTTP_404_NOT_FOUND
+            )
+        serializer = BankAccountSerializer(bank_account)
+        return create_response(data={'bank_account': serializer.data})
+    
+    def put(self, request, pk):
+        bank_account = self.get_object(pk, request.user)
+        if not bank_account:
+            return create_response(
+                error="Bank account not found",
+                error_code="not_found",
+                status_code=status.HTTP_404_NOT_FOUND
+            )
+        
+        serializer = BankAccountUpdateSerializer(bank_account, data=request.data, partial=True)
+        if serializer.is_valid():
+            bank_account = serializer.save()
+            return create_response(
+                data={'bank_account': BankAccountSerializer(bank_account).data},
+                message="Bank account updated successfully"
+            )
+        return create_response(
+            error=serializer.errors,
+            error_code="validation_error",
+            status_code=status.HTTP_400_BAD_REQUEST
+        )
+    
+    def delete(self, request, pk):
+        bank_account = self.get_object(pk, request.user)
+        if not bank_account:
+            return create_response(
+                error="Bank account not found",
+                error_code="not_found",
+                status_code=status.HTTP_404_NOT_FOUND
+            )
+        
+        bank_account.delete()
+        return create_response(message="Bank account deleted successfully")
+
+
+# -------------------------------------------------------------------------
+# Payment Management Views
+# -------------------------------------------------------------------------
+
+class PaymentListCreateView(APIView):
+    permission_classes = [IsAuthenticated]
+    
+    def get(self, request):
+        payments = Payment.objects.filter(user=request.user).order_by('-payment_date')
+        serializer = PaymentSerializer(payments, many=True)
+        return create_response(data={'payments': serializer.data})
+    
+    def post(self, request):
+        serializer = PaymentCreateSerializer(data=request.data, context={'request': request})
+        if serializer.is_valid():
+            payment = serializer.save()
+            return create_response(
+                data={'payment': PaymentSerializer(payment).data},
+                message="Payment created successfully",
+                status_code=status.HTTP_201_CREATED
+            )
+        return create_response(
+            error=serializer.errors,
+            error_code="validation_error",
+            status_code=status.HTTP_400_BAD_REQUEST
+        )
+
+class PaymentDetailView(APIView):
+    permission_classes = [IsAuthenticated, IsOwnerOrAdmin]
+    
+    def get_object(self, pk, user):
+        try:
+            payment = Payment.objects.get(pk=pk, user=user)
+            return payment
+        except Payment.DoesNotExist:
+            return None
+    
+    def get(self, request, pk):
+        payment = self.get_object(pk, request.user)
+        if not payment:
+            return create_response(
+                error="Payment not found",
+                error_code="not_found",
+                status_code=status.HTTP_404_NOT_FOUND
+            )
+        serializer = PaymentSerializer(payment)
+        return create_response(data={'payment': serializer.data})
+    
+    def put(self, request, pk):
+        payment = self.get_object(pk, request.user)
+        if not payment:
+            return create_response(
+                error="Payment not found",
+                error_code="not_found",
+                status_code=status.HTTP_404_NOT_FOUND
+            )
+        
+        serializer = PaymentUpdateSerializer(payment, data=request.data, partial=True)
+        if serializer.is_valid():
+            payment = serializer.save()
+            return create_response(
+                data={'payment': PaymentSerializer(payment).data},
+                message="Payment updated successfully"
+            )
+        return create_response(
+            error=serializer.errors,
+            error_code="validation_error",
+            status_code=status.HTTP_400_BAD_REQUEST
+        )
+    
+    def delete(self, request, pk):
+        payment = self.get_object(pk, request.user)
+        if not payment:
+            return create_response(
+                error="Payment not found",
+                error_code="not_found",
+                status_code=status.HTTP_404_NOT_FOUND
+            )
+        
+        payment.delete()
+        return create_response(message="Payment deleted successfully")

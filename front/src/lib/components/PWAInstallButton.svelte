@@ -7,7 +7,8 @@
 	onMount(() => {
 		if (browser) {
 			// Check if the app is already installed. Do not show the button if it is.
-			const isStandalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone;
+			const isStandalone =
+				window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone;
 			if (isStandalone) {
 				return;
 			}
@@ -49,12 +50,17 @@
 	<div class="fixed top-4 right-4 z-50">
 		<button
 			type="button"
-			class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-lg text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors shadow-lg"
+			class="inline-flex items-center rounded-lg border border-transparent bg-blue-600 px-4 py-2 text-sm font-medium text-white shadow-lg transition-colors hover:bg-blue-700 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:outline-none"
 			on:click={handleInstall}
 			title="Install App"
 		>
-			<svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-				<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v12m0-12l-4 4m4-4l4 4m-8 6h8"></path>
+			<svg class="mr-2 h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+				<path
+					stroke-linecap="round"
+					stroke-linejoin="round"
+					stroke-width="2"
+					d="M12 4v12m0-12l-4 4m4-4l4 4m-8 6h8"
+				></path>
 			</svg>
 			📱 Install App
 		</button>

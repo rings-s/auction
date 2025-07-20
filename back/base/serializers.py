@@ -684,3 +684,492 @@ class RecentActivitySerializer(serializers.Serializer):
     related_slug = serializers.CharField(required=False)
     priority = serializers.CharField()  # 'low', 'medium', 'high', 'urgent'
     user_name = serializers.CharField(required=False)
+
+
+# -------------------------------------------------------------------------
+# Property Management Serializers
+# -------------------------------------------------------------------------
+
+class RentalPropertySerializer(serializers.ModelSerializer):
+    """Serializer for rental property management"""
+    property_details = PropertySerializer(source='property', read_only=True)
+    current_tenant = serializers.SerializerMethodField()
+    occupancy_rate = serializers.SerializerMethodField()
+    annual_income = serializers.SerializerMethodField()
+    is_occupied = serializers.SerializerMethodField()
+    
+    class Meta:
+        model = RentalProperty
+        fields = '__all__'
+        read_only_fields = ['created_at', 'updated_at', 'total_rental_income']
+        
+    def get_current_tenant(self, obj):
+        tenant = obj.current_tenant
+        if tenant:
+            return {
+                'id': tenant.id,
+                'full_name': tenant.full_name,
+                'email': tenant.email,
+                'phone': tenant.phone,
+            }
+        return None
+        
+    def get_occupancy_rate(self, obj):
+        return round(obj.occupancy_rate, 2)
+        
+    def get_annual_income(self, obj):
+        return obj.calculate_annual_income()
+        
+    def get_is_occupied(self, obj):
+        return obj.is_occupied
+
+    def validate(self, attrs):
+        """Validate rental property data"""
+        # Ensure monthly rent is reasonable
+        monthly_rent = attrs.get('monthly_rent', 0)
+        if monthly_rent <= 0:
+            raise serializers.ValidationError("Monthly rent must be greater than zero")
+            
+        # Validate lease periods
+        min_period = attrs.get('minimum_lease_period', 0)
+        max_period = attrs.get('maximum_lease_period', 0)
+        if min_period > max_period:
+            raise serializers.ValidationError("Minimum lease period cannot be greater than maximum lease period")
+            
+        return attrs
+
+
+class TenantSerializer(serializers.ModelSerializer):
+    """Serializer for tenant management"""
+    full_name = serializers.SerializerMethodField()
+    current_property = serializers.SerializerMethodField()
+    current_lease = serializers.SerializerMethodField()
+    user_email = serializers.CharField(source='user.email', read_only=True)
+    
+    class Meta:
+        model = Tenant
+        fields = '__all__'
+        read_only_fields = ['created_at', 'updated_at']
+        extra_kwargs = {
+            'national_id': {'write_only': True},
+            'bank_account_info': {'write_only': True},
+        }
+        
+    def get_full_name(self, obj):
+        return obj.full_name
+        
+    def get_current_property(self, obj):
+        current_property = obj.current_property
+        if current_property:
+            return {
+                'id': current_property.property.id,
+                'title': current_property.property.title,
+                'address': current_property.property.address,
+            }
+        return None
+        
+    def get_current_lease(self, obj):
+        lease = obj.current_lease
+        if lease:
+            return {
+                'id': lease.id,
+                'lease_number': lease.lease_number,
+                'start_date': lease.start_date,
+                'end_date': lease.end_date,
+                'monthly_rent': lease.monthly_rent,
+                'status': lease.status,
+            }
+        return None
+
+    def validate_email(self, value):
+        """Ensure email is unique"""
+        if self.instance and self.instance.email == value:
+            return value
+        if Tenant.objects.filter(email=value).exists():
+            raise serializers.ValidationError("A tenant with this email already exists")
+        return value
+
+    def validate_national_id(self, value):
+        """Ensure national ID is unique"""
+        if self.instance and self.instance.national_id == value:
+            return value
+        if Tenant.objects.filter(national_id=value).exists():
+            raise serializers.ValidationError("A tenant with this national ID already exists")
+        return value
+
+
+class LeaseSerializer(serializers.ModelSerializer):
+    """Serializer for lease agreements"""
+    tenant_details = TenantSerializer(source='tenant', read_only=True)
+    property_details = serializers.SerializerMethodField()
+    duration_months = serializers.SerializerMethodField()
+    total_rent_amount = serializers.SerializerMethodField()
+    is_active = serializers.SerializerMethodField()
+    days_remaining = serializers.SerializerMethodField()
+    
+    class Meta:
+        model = Lease
+        fields = '__all__'
+        read_only_fields = ['created_at', 'updated_at', 'lease_number']
+        
+    def get_property_details(self, obj):
+        if obj.rental_property:
+            return {
+                'id': obj.rental_property.property.id,
+                'title': obj.rental_property.property.title,
+                'address': obj.rental_property.property.address,
+                'rental_id': obj.rental_property.id,
+            }
+        return None
+        
+    def get_duration_months(self, obj):
+        return obj.duration_months
+        
+    def get_total_rent_amount(self, obj):
+        return obj.total_rent_amount
+        
+    def get_is_active(self, obj):
+        return obj.is_active
+        
+    def get_days_remaining(self, obj):
+        return obj.days_remaining
+
+    def validate(self, attrs):
+        """Validate lease data"""
+        start_date = attrs.get('start_date')
+        end_date = attrs.get('end_date')
+        
+        if start_date and end_date and start_date >= end_date:
+            raise serializers.ValidationError("End date must be after start date")
+            
+        # Validate rent amount
+        monthly_rent = attrs.get('monthly_rent', 0)
+        if monthly_rent <= 0:
+            raise serializers.ValidationError("Monthly rent must be greater than zero")
+            
+        return attrs
+
+
+class MaintenanceCategorySerializer(serializers.ModelSerializer):
+    """Serializer for maintenance categories"""
+    request_count = serializers.SerializerMethodField()
+    
+    class Meta:
+        model = MaintenanceCategory
+        fields = '__all__'
+        read_only_fields = ['created_at', 'updated_at']
+        
+    def get_request_count(self, obj):
+        return obj.requests.count()
+
+
+class MaintenanceRequestSerializer(serializers.ModelSerializer):
+    """Serializer for maintenance requests"""
+    property_details = serializers.SerializerMethodField()
+    category_details = MaintenanceCategorySerializer(source='category', read_only=True)
+    requested_by_name = serializers.SerializerMethodField()
+    assigned_to_name = serializers.SerializerMethodField()
+    is_overdue = serializers.SerializerMethodField()
+    duration_days = serializers.SerializerMethodField()
+    cost_variance = serializers.SerializerMethodField()
+    
+    class Meta:
+        model = MaintenanceRequest
+        fields = '__all__'
+        read_only_fields = ['created_at', 'updated_at', 'reported_date']
+        
+    def get_property_details(self, obj):
+        return {
+            'id': obj.property.id,
+            'title': obj.property.title,
+            'address': obj.property.address,
+        } if obj.property else None
+        
+    def get_requested_by_name(self, obj):
+        if obj.requested_by:
+            return f"{obj.requested_by.first_name} {obj.requested_by.last_name}".strip()
+        return None
+        
+    def get_assigned_to_name(self, obj):
+        if obj.assigned_to:
+            return f"{obj.assigned_to.first_name} {obj.assigned_to.last_name}".strip()
+        return None
+        
+    def get_is_overdue(self, obj):
+        return obj.is_overdue
+        
+    def get_duration_days(self, obj):
+        return obj.duration_days
+        
+    def get_cost_variance(self, obj):
+        return obj.cost_variance
+
+    def validate(self, attrs):
+        """Validate maintenance request"""
+        due_date = attrs.get('due_date')
+        if due_date and due_date < timezone.now():
+            raise serializers.ValidationError("Due date cannot be in the past")
+            
+        estimated_cost = attrs.get('estimated_cost')
+        actual_cost = attrs.get('actual_cost')
+        
+        if estimated_cost is not None and estimated_cost < 0:
+            raise serializers.ValidationError("Estimated cost cannot be negative")
+            
+        if actual_cost is not None and actual_cost < 0:
+            raise serializers.ValidationError("Actual cost cannot be negative")
+            
+        return attrs
+
+
+class ExpenseCategorySerializer(serializers.ModelSerializer):
+    """Serializer for expense categories"""
+    expense_count = serializers.SerializerMethodField()
+    total_amount = serializers.SerializerMethodField()
+    
+    class Meta:
+        model = ExpenseCategory
+        fields = '__all__'
+        read_only_fields = ['created_at', 'updated_at']
+        
+    def get_expense_count(self, obj):
+        return obj.expenses.count()
+        
+    def get_total_amount(self, obj):
+        return obj.expenses.aggregate(total=Sum('total_amount'))['total'] or 0
+
+
+class ExpenseSerializer(serializers.ModelSerializer):
+    """Serializer for expense management"""
+    property_details = serializers.SerializerMethodField()
+    category_details = ExpenseCategorySerializer(source='category', read_only=True)
+    created_by_name = serializers.SerializerMethodField()
+    approved_by_name = serializers.SerializerMethodField()
+    is_overdue = serializers.SerializerMethodField()
+    days_until_due = serializers.SerializerMethodField()
+    
+    class Meta:
+        model = Expense
+        fields = '__all__'
+        read_only_fields = ['created_at', 'updated_at', 'total_amount']
+        
+    def get_property_details(self, obj):
+        return {
+            'id': obj.property.id,
+            'title': obj.property.title,
+            'address': obj.property.address,
+        } if obj.property else None
+        
+    def get_created_by_name(self, obj):
+        if obj.created_by:
+            return f"{obj.created_by.first_name} {obj.created_by.last_name}".strip()
+        return None
+        
+    def get_approved_by_name(self, obj):
+        if obj.approved_by:
+            return f"{obj.approved_by.first_name} {obj.approved_by.last_name}".strip()
+        return None
+        
+    def get_is_overdue(self, obj):
+        return obj.is_overdue
+        
+    def get_days_until_due(self, obj):
+        return obj.days_until_due
+
+    def validate(self, attrs):
+        """Validate expense data"""
+        amount = attrs.get('amount')
+        tax_amount = attrs.get('tax_amount', 0)
+        
+        if amount <= 0:
+            raise serializers.ValidationError("Amount must be greater than zero")
+            
+        if tax_amount < 0:
+            raise serializers.ValidationError("Tax amount cannot be negative")
+            
+        # Auto-calculate total amount
+        attrs['total_amount'] = amount + tax_amount
+        
+        return attrs
+
+
+class PropertyAnalyticsSerializer(serializers.ModelSerializer):
+    """Serializer for property analytics"""
+    property_title = serializers.CharField(source='property.title', read_only=True)
+    
+    class Meta:
+        model = PropertyAnalytics
+        fields = '__all__'
+        read_only_fields = ['created_at', 'updated_at', 'calculation_date']
+
+
+class ReportSerializer(serializers.ModelSerializer):
+    """Serializer for generated reports"""
+    generated_by_name = serializers.SerializerMethodField()
+    properties_count = serializers.SerializerMethodField()
+    
+    class Meta:
+        model = Report
+        fields = '__all__'
+        read_only_fields = ['created_at', 'updated_at', 'generation_time']
+        
+    def get_generated_by_name(self, obj):
+        if obj.generated_by:
+            return f"{obj.generated_by.first_name} {obj.generated_by.last_name}".strip()
+        return None
+        
+    def get_properties_count(self, obj):
+        return obj.properties.count()
+
+
+# -------------------------------------------------------------------------
+# Dashboard Serializers for Property Management
+# -------------------------------------------------------------------------
+
+class PropertyDashboardSerializer(serializers.ModelSerializer):
+    """Dashboard serializer for properties"""
+    rental_info = serializers.SerializerMethodField()
+    maintenance_status = serializers.SerializerMethodField()
+    location_display = serializers.SerializerMethodField()
+    
+    class Meta:
+        model = Property
+        fields = ['id', 'title', 'slug', 'property_number', 'property_type', 
+                 'status', 'market_value', 'size_sqm', 'location_display', 
+                 'rental_info', 'maintenance_status', 'created_at']
+        
+    def get_rental_info(self, obj):
+        if hasattr(obj, 'rental_info'):
+            rental = obj.rental_info
+            return {
+                'rental_status': rental.rental_status,
+                'monthly_rent': float(rental.monthly_rent),
+                'is_occupied': rental.is_occupied,
+                'current_tenant': rental.current_tenant.full_name if rental.current_tenant else None,
+            }
+        return None
+        
+    def get_maintenance_status(self, obj):
+        pending_requests = obj.maintenance_requests.filter(status='pending').count()
+        overdue_requests = obj.maintenance_requests.filter(
+            due_date__lt=timezone.now(),
+            status__in=['pending', 'assigned', 'in_progress']
+        ).count()
+        
+        return {
+            'pending_requests': pending_requests,
+            'overdue_requests': overdue_requests,
+        }
+        
+    def get_location_display(self, obj):
+        if obj.location:
+            return f"{obj.location.city}, {obj.location.state}"
+        return obj.address[:50] + "..." if len(obj.address) > 50 else obj.address
+
+
+class TenantDashboardSerializer(serializers.ModelSerializer):
+    """Dashboard serializer for tenants"""
+    current_lease_info = serializers.SerializerMethodField()
+    payment_status = serializers.SerializerMethodField()
+    
+    class Meta:
+        model = Tenant
+        fields = ['id', 'full_name', 'email', 'phone', 'status', 
+                 'current_lease_info', 'payment_status', 'created_at']
+        
+    def get_current_lease_info(self, obj):
+        lease = obj.current_lease
+        if lease:
+            return {
+                'property_title': lease.rental_property.property.title,
+                'monthly_rent': float(lease.monthly_rent),
+                'start_date': lease.start_date,
+                'end_date': lease.end_date,
+                'days_remaining': lease.days_remaining,
+            }
+        return None
+        
+    def get_payment_status(self, obj):
+        # This would be implemented with a payment tracking system
+        return {
+            'last_payment': None,
+            'next_due_date': None,
+            'overdue_amount': 0,
+        }
+
+
+class MaintenanceDashboardSerializer(serializers.ModelSerializer):
+    """Dashboard serializer for maintenance requests"""
+    property_title = serializers.CharField(source='property.title')
+    category_name = serializers.CharField(source='category.name')
+    days_since_reported = serializers.SerializerMethodField()
+    
+    class Meta:
+        model = MaintenanceRequest
+        fields = ['id', 'title', 'property_title', 'category_name', 'priority', 
+                 'status', 'estimated_cost', 'days_since_reported', 'is_overdue', 'reported_date']
+        
+    def get_days_since_reported(self, obj):
+        if obj.reported_date:
+            return (timezone.now() - obj.reported_date).days
+        return 0
+
+
+# -------------------------------------------------------------------------
+# Worker Management Serializers
+# -------------------------------------------------------------------------
+
+class WorkerCategorySerializer(serializers.ModelSerializer):
+    worker_count = serializers.SerializerMethodField()
+    
+    class Meta:
+        model = WorkerCategory
+        fields = '__all__'
+        read_only_fields = ['created_at', 'updated_at']
+    
+    def get_worker_count(self, obj):
+        return obj.workers.filter(status='active').count()
+
+class WorkerSerializer(serializers.ModelSerializer):
+    full_name = serializers.SerializerMethodField()
+    category_names = serializers.SerializerMethodField()
+    current_jobs_count = serializers.SerializerMethodField()
+    can_take_new_job = serializers.SerializerMethodField()
+    supervisor_name = serializers.SerializerMethodField()
+    
+    class Meta:
+        model = Worker
+        fields = '__all__'
+        read_only_fields = ['employee_id', 'total_jobs_completed', 'created_at', 'updated_at']
+    
+    def get_full_name(self, obj):
+        return obj.full_name
+    
+    def get_category_names(self, obj):
+        return [category.name for category in obj.categories.all()]
+    
+    def get_current_jobs_count(self, obj):
+        return obj.current_active_jobs
+    
+    def get_can_take_new_job(self, obj):
+        return obj.can_take_new_job
+    
+    def get_supervisor_name(self, obj):
+        if obj.supervisor:
+            return f"{obj.supervisor.first_name} {obj.supervisor.last_name}"
+        return None
+
+class WorkerBriefSerializer(serializers.ModelSerializer):
+    full_name = serializers.SerializerMethodField()
+    category_names = serializers.SerializerMethodField()
+    
+    class Meta:
+        model = Worker
+        fields = ['id', 'employee_id', 'full_name', 'phone', 'category_names', 
+                 'is_available', 'status', 'rating']
+    
+    def get_full_name(self, obj):
+        return obj.full_name
+    
+    def get_category_names(self, obj):
+        return [category.name for category in obj.categories.all()]

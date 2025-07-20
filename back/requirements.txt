@@ -36,3 +36,9 @@ uvicorn==0.34.2
 vine==5.1.0
 wcwidth==0.2.13
 whitenoise==6.9.0
+
+# Data Visualization Dependencies
+plotly==5.17.0
+pandas==2.1.4
+numpy==1.24.3
+matplotlib==3.8.2

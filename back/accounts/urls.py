@@ -24,4 +24,12 @@ urlpatterns = [
     path('password/reset/verify/', views.VerifyResetCodeView.as_view(), name='verify-reset-token'),
     path('password/reset/confirm/', views.ResetPasswordView.as_view(), name='reset-password'),
     path('resend-verification/', views.ResendVerificationView.as_view(), name='resend-verification'),
+    
+    # Bank Account Management
+    path('bank-accounts/', views.BankAccountListCreateView.as_view(), name='bank-accounts'),
+    path('bank-accounts/<int:pk>/', views.BankAccountDetailView.as_view(), name='bank-account'),
+    
+    # Payment Management
+    path('payments/', views.PaymentListCreateView.as_view(), name='payments'),
+    path('payments/<int:pk>/', views.PaymentDetailView.as_view(), name='payment'),
 ]

@@ -4,8 +4,8 @@ import { browser } from '$app/environment';
 
 // Supported locales configuration
 export const LOCALES = {
-  en: { code: 'en', name: 'English', dir: 'ltr' },
-  ar: { code: 'ar', name: 'العربية', dir: 'rtl' }
+	en: { code: 'en', name: 'English', dir: 'ltr' },
+	ar: { code: 'ar', name: 'العربية', dir: 'rtl' }
 };
 
 export const DEFAULT_LOCALE = 'en';
@@ -16,28 +16,28 @@ export const locales = writable(LOCALES);
 
 // Initial locale detection with better fallback
 function detectInitialLocale() {
-  if (!browser) return DEFAULT_LOCALE;
-  
-  try {
-    // Check localStorage first
-    const saved = localStorage.getItem('app-locale');
-    if (saved && SUPPORTED_LOCALES.includes(saved)) return saved;
-    
-    // Check browser language
-    const browserLang = navigator.language.split('-')[0];
-    if (SUPPORTED_LOCALES.includes(browserLang)) return browserLang;
-    
-    // Check Accept-Language header preference
-    const languages = navigator.languages || [];
-    for (const lang of languages) {
-      const code = lang.split('-')[0];
-      if (SUPPORTED_LOCALES.includes(code)) return code;
-    }
-  } catch (error) {
-    // Silently handle locale detection failures
-  }
-  
-  return DEFAULT_LOCALE;
+	if (!browser) return DEFAULT_LOCALE;
+
+	try {
+		// Check localStorage first
+		const saved = localStorage.getItem('app-locale');
+		if (saved && SUPPORTED_LOCALES.includes(saved)) return saved;
+
+		// Check browser language
+		const browserLang = navigator.language.split('-')[0];
+		if (SUPPORTED_LOCALES.includes(browserLang)) return browserLang;
+
+		// Check Accept-Language header preference
+		const languages = navigator.languages || [];
+		for (const lang of languages) {
+			const code = lang.split('-')[0];
+			if (SUPPORTED_LOCALES.includes(code)) return code;
+		}
+	} catch (error) {
+		// Silently handle locale detection failures
+	}
+
+	return DEFAULT_LOCALE;
 }
 
 // Current locale store
@@ -45,18 +45,18 @@ export const locale = writable(detectInitialLocale());
 
 // Subscribe to locale changes and apply DOM updates
 if (browser) {
-  locale.subscribe((value) => {
-    try {
-      localStorage.setItem('app-locale', value);
-      const config = LOCALES[value];
-      if (config) {
-        document.documentElement.lang = value;
-        document.documentElement.dir = config.dir;
-        document.documentElement.classList.remove('ltr', 'rtl');
-        document.documentElement.classList.add(config.dir);
-      }
-    } catch (error) {
-      // Silently handle locale settings update failures
-    }
-  });
+	locale.subscribe((value) => {
+		try {
+			localStorage.setItem('app-locale', value);
+			const config = LOCALES[value];
+			if (config) {
+				document.documentElement.lang = value;
+				document.documentElement.dir = config.dir;
+				document.documentElement.classList.remove('ltr', 'rtl');
+				document.documentElement.classList.add(config.dir);
+			}
+		} catch (error) {
+			// Silently handle locale settings update failures
+		}
+	});
 }

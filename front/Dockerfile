@@ -1,15 +1,16 @@
-# Stage 1: Build the SvelteKit application
 FROM node:20-alpine
 WORKDIR /app
 
 # Set environment variables for file watching
 ENV CHOKIDAR_USEPOLLING=true
 
-# Copy package.json and package-lock.json (if available)
+# Copy package files
 COPY package*.json ./
 
-# Install all dependencies (including devDependencies for development)
-RUN npm install
+# Install dependencies with retry logic and increased timeout
+RUN npm install --prefer-offline --no-audit --timeout=600000 --registry=https://registry.npmjs.org/ || \
+    npm install --prefer-offline --no-audit --timeout=600000 --registry=https://registry.npmjs.org/ || \
+    npm install --timeout=600000 --registry=https://registry.npmjs.org/
 
 # Copy the rest of the application code
 COPY . .

@@ -1010,3 +1010,1069 @@ class DashboardMetrics(BaseModel):
         
     def __str__(self):
         return f"{self.user.email} - {self.metric_type}"
+
+
+# -------------------------------------------------------------------------
+# Property Management Models
+# -------------------------------------------------------------------------
+
+class RentalProperty(BaseModel):
+    """Extended property model for rental management"""
+    RENTAL_STATUS_CHOICES = [
+        ('available', _('متاح للإيجار')),
+        ('rented', _('مؤجر')),
+        ('maintenance', _('تحت الصيانة')),
+        ('unavailable', _('غير متاح')),
+    ]
+    
+    RENTAL_TYPE_CHOICES = [
+        ('monthly', _('شهري')),
+        ('yearly', _('سنوي')),
+        ('daily', _('يومي')),
+        ('weekly', _('أسبوعي')),
+    ]
+
+    # Link to base property
+    base_property = models.OneToOneField(Property, on_delete=models.CASCADE, related_name='rental_info', verbose_name=_('العقار'))
+    
+    # Rental-specific fields
+    rental_status = models.CharField(_('حالة الإيجار'), max_length=20, choices=RENTAL_STATUS_CHOICES, default='available')
+    rental_type = models.CharField(_('نوع الإيجار'), max_length=20, choices=RENTAL_TYPE_CHOICES, default='monthly')
+    monthly_rent = models.DecimalField(_('الإيجار الشهري'), max_digits=12, decimal_places=2)
+    security_deposit = models.DecimalField(_('التأمين'), max_digits=12, decimal_places=2, default=0)
+    management_fee_percentage = models.DecimalField(_('نسبة رسوم الإدارة'), max_digits=5, decimal_places=2, default=0)
+    
+    # Utilities and services
+    utilities_included = models.BooleanField(_('المرافق مشمولة'), default=False)
+    utilities_details = models.JSONField(_('تفاصيل المرافق'), default=dict, blank=True)
+    parking_spaces = models.PositiveIntegerField(_('أماكن الوقوف'), default=0)
+    furnished = models.BooleanField(_('مفروش'), default=False)
+    pets_allowed = models.BooleanField(_('الحيوانات الأليفة مسموحة'), default=False)
+    smoking_allowed = models.BooleanField(_('التدخين مسموح'), default=False)
+    
+    # Availability
+    available_from = models.DateField(_('متاح من'), null=True, blank=True)
+    minimum_lease_period = models.PositiveIntegerField(_('أقل مدة إيجار (بالأشهر)'), default=12)
+    maximum_lease_period = models.PositiveIntegerField(_('أقصى مدة إيجار (بالأشهر)'), default=36)
+    
+    # Financial tracking
+    total_rental_income = models.DecimalField(_('إجمالي الدخل الإيجاري'), max_digits=14, decimal_places=2, default=0)
+    last_rent_increase = models.DateField(_('آخر زيادة إيجار'), null=True, blank=True)
+    next_rent_review = models.DateField(_('موعد مراجعة الإيجار القادم'), null=True, blank=True)
+
+    class Meta:
+        verbose_name = _('عقار إيجاري')
+        verbose_name_plural = _('العقارات الإيجارية')
+        indexes = [
+            models.Index(fields=['rental_status']),
+            models.Index(fields=['monthly_rent']),
+            models.Index(fields=['available_from']),
+        ]
+
+    def __str__(self):
+        return f"{self.base_property.title} - {self.get_rental_status_display()}"
+
+    @property
+    def current_tenant(self):
+        """Get the current active tenant"""
+        from django.utils import timezone
+        active_lease = self.leases.filter(
+            status='active',
+            start_date__lte=timezone.now().date(),
+            end_date__gte=timezone.now().date()
+        ).first()
+        return active_lease.tenant if active_lease else None
+
+    @property
+    def is_occupied(self):
+        """Check if property is currently occupied"""
+        return self.current_tenant is not None
+
+    @property
+    def occupancy_rate(self):
+        """Calculate occupancy rate for the current year"""
+        from django.utils import timezone
+        from datetime import timedelta
+        
+        current_year = timezone.now().year
+        year_start = timezone.datetime(current_year, 1, 1).date()
+        year_end = timezone.datetime(current_year, 12, 31).date()
+        
+        occupied_days = 0
+        total_days = (year_end - year_start).days + 1
+        
+        active_leases = self.leases.filter(
+            models.Q(start_date__lte=year_end) & models.Q(end_date__gte=year_start)
+        )
+        
+        for lease in active_leases:
+            lease_start = max(lease.start_date, year_start)
+            lease_end = min(lease.end_date, year_end)
+            occupied_days += (lease_end - lease_start).days + 1
+        
+        return (occupied_days / total_days) * 100 if total_days > 0 else 0
+
+    def calculate_annual_income(self):
+        """Calculate expected annual income"""
+        return float(self.monthly_rent) * 12
+
+    def to_dict(self):
+        """Return dictionary representation for API responses"""
+        base_dict = self.base_property.to_dict()
+        base_dict.update({
+            'rental_info': {
+                'id': self.id,
+                'rental_status': self.rental_status,
+                'rental_status_display': self.get_rental_status_display(),
+                'rental_type': self.rental_type,
+                'rental_type_display': self.get_rental_type_display(),
+                'monthly_rent': float(self.monthly_rent),
+                'security_deposit': float(self.security_deposit),
+                'utilities_included': self.utilities_included,
+                'parking_spaces': self.parking_spaces,
+                'furnished': self.furnished,
+                'pets_allowed': self.pets_allowed,
+                'smoking_allowed': self.smoking_allowed,
+                'available_from': self.available_from.isoformat() if self.available_from else None,
+                'minimum_lease_period': self.minimum_lease_period,
+                'current_tenant': self.current_tenant.to_dict() if self.current_tenant else None,
+                'is_occupied': self.is_occupied,
+                'occupancy_rate': round(self.occupancy_rate, 2),
+                'annual_income': self.calculate_annual_income(),
+            }
+        })
+        return base_dict
+
+
+class Tenant(BaseModel):
+    """Tenant information and management"""
+    TENANT_TYPE_CHOICES = [
+        ('individual', _('فردي')),
+        ('family', _('عائلة')),
+        ('company', _('شركة')),
+        ('government', _('حكومي')),
+    ]
+    
+    STATUS_CHOICES = [
+        ('active', _('نشط')),
+        ('inactive', _('غير نشط')),
+        ('blacklisted', _('مدرج في القائمة السوداء')),
+        ('former', _('سابق')),
+    ]
+
+    # Link to user account (optional)
+    user = models.OneToOneField(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, 
+                               null=True, blank=True, related_name='tenant_profile', verbose_name=_('حساب المستخدم'))
+    
+    # Basic information
+    first_name = models.CharField(_('الاسم الأول'), max_length=100)
+    last_name = models.CharField(_('اسم العائلة'), max_length=100)
+    middle_name = models.CharField(_('الاسم الأوسط'), max_length=100, blank=True)
+    tenant_type = models.CharField(_('نوع المستأجر'), max_length=20, choices=TENANT_TYPE_CHOICES, default='individual')
+    status = models.CharField(_('الحالة'), max_length=20, choices=STATUS_CHOICES, default='active')
+    
+    # Contact information
+    email = models.EmailField(_('البريد الإلكتروني'), unique=True)
+    phone = models.CharField(_('رقم الهاتف'), max_length=17)
+    alternative_phone = models.CharField(_('رقم بديل'), max_length=17, blank=True)
+    
+    # Personal information
+    national_id = models.CharField(_('رقم الهوية'), max_length=20, unique=True)
+    date_of_birth = models.DateField(_('تاريخ الميلاد'), null=True, blank=True)
+    nationality = models.CharField(_('الجنسية'), max_length=50, default='سعودي')
+    occupation = models.CharField(_('المهنة'), max_length=100, blank=True)
+    employer = models.CharField(_('جهة العمل'), max_length=200, blank=True)
+    monthly_income = models.DecimalField(_('الدخل الشهري'), max_digits=12, decimal_places=2, null=True, blank=True)
+    
+    # Address
+    current_address = models.TextField(_('العنوان الحالي'))
+    emergency_contact_name = models.CharField(_('اسم الشخص للطوارئ'), max_length=100, blank=True)
+    emergency_contact_phone = models.CharField(_('هاتف الطوارئ'), max_length=17, blank=True)
+    emergency_contact_relation = models.CharField(_('صلة القرابة'), max_length=50, blank=True)
+    
+    # Company information (if applicable)
+    company_name = models.CharField(_('اسم الشركة'), max_length=200, blank=True)
+    company_registration = models.CharField(_('رقم السجل التجاري'), max_length=50, blank=True)
+    company_address = models.TextField(_('عنوان الشركة'), blank=True)
+    
+    # Credit and references
+    credit_score = models.PositiveIntegerField(_('التقييم الائتماني'), null=True, blank=True)
+    references = models.JSONField(_('المراجع'), default=list, blank=True)
+    background_check_passed = models.BooleanField(_('تم فحص السجل'), default=False)
+    background_check_date = models.DateField(_('تاريخ فحص السجل'), null=True, blank=True)
+    
+    # Notes and history
+    notes = models.TextField(_('ملاحظات'), blank=True)
+    move_in_date = models.DateField(_('تاريخ الانتقال'), null=True, blank=True)
+    move_out_date = models.DateField(_('تاريخ المغادرة'), null=True, blank=True)
+    
+    # Financial information
+    preferred_payment_method = models.CharField(_('طريقة الدفع المفضلة'), max_length=50, blank=True)
+    bank_account_info = models.JSONField(_('معلومات الحساب البنكي'), default=dict, blank=True)
+
+    class Meta:
+        verbose_name = _('مستأجر')
+        verbose_name_plural = _('المستأجرون')
+        ordering = ['-created_at']
+        indexes = [
+            models.Index(fields=['email']),
+            models.Index(fields=['national_id']),
+            models.Index(fields=['status']),
+            models.Index(fields=['tenant_type']),
+        ]
+
+    def __str__(self):
+        return f"{self.first_name} {self.last_name} ({self.email})"
+
+    @property
+    def full_name(self):
+        """Get tenant's full name"""
+        names = [self.first_name, self.middle_name, self.last_name]
+        return ' '.join(filter(None, names))
+
+    @property
+    def current_lease(self):
+        """Get current active lease"""
+        from django.utils import timezone
+        return self.leases.filter(
+            status='active',
+            start_date__lte=timezone.now().date(),
+            end_date__gte=timezone.now().date()
+        ).first()
+
+    @property
+    def current_property(self):
+        """Get currently rented property"""
+        lease = self.current_lease
+        return lease.rental_property if lease else None
+
+    def get_lease_history(self):
+        """Get all lease history for this tenant"""
+        return self.leases.all().order_by('-start_date')
+
+    def to_dict(self):
+        """Return dictionary representation for API responses"""
+        return {
+            'id': self.id,
+            'full_name': self.full_name,
+            'first_name': self.first_name,
+            'last_name': self.last_name,
+            'email': self.email,
+            'phone': self.phone,
+            'tenant_type': self.tenant_type,
+            'tenant_type_display': self.get_tenant_type_display(),
+            'status': self.status,
+            'status_display': self.get_status_display(),
+            'national_id': self.national_id,
+            'occupation': self.occupation,
+            'monthly_income': float(self.monthly_income) if self.monthly_income else None,
+            'current_property': self.current_property.base_property.title if self.current_property else None,
+            'move_in_date': self.move_in_date.isoformat() if self.move_in_date else None,
+            'created_at': self.created_at.isoformat() if self.created_at else None,
+        }
+
+
+class Lease(BaseModel):
+    """Lease agreements between tenants and rental properties"""
+    STATUS_CHOICES = [
+        ('draft', _('مسودة')),
+        ('active', _('نشط')),
+        ('expired', _('منتهي')),
+        ('terminated', _('مفسوخ')),
+        ('renewed', _('تم تجديده')),
+    ]
+    
+    PAYMENT_FREQUENCY_CHOICES = [
+        ('monthly', _('شهري')),
+        ('quarterly', _('ربع سنوي')),
+        ('semi_annually', _('نصف سنوي')),
+        ('annually', _('سنوي')),
+    ]
+
+    # Relationships
+    tenant = models.ForeignKey(Tenant, on_delete=models.CASCADE, related_name='leases', verbose_name=_('المستأجر'))
+    rental_property = models.ForeignKey(RentalProperty, on_delete=models.CASCADE, related_name='leases', verbose_name=_('العقار'))
+    
+    # Lease details
+    lease_number = models.CharField(_('رقم العقد'), max_length=50, unique=True)
+    status = models.CharField(_('حالة العقد'), max_length=20, choices=STATUS_CHOICES, default='draft')
+    
+    # Dates
+    start_date = models.DateField(_('تاريخ البداية'))
+    end_date = models.DateField(_('تاريخ النهاية'))
+    signed_date = models.DateField(_('تاريخ التوقيع'), null=True, blank=True)
+    
+    # Financial terms
+    monthly_rent = models.DecimalField(_('الإيجار الشهري'), max_digits=12, decimal_places=2)
+    security_deposit = models.DecimalField(_('مبلغ التأمين'), max_digits=12, decimal_places=2)
+    payment_frequency = models.CharField(_('دورية الدفع'), max_length=20, choices=PAYMENT_FREQUENCY_CHOICES, default='monthly')
+    payment_due_day = models.PositiveIntegerField(_('يوم استحقاق الدفع'), default=1)
+    late_fee_amount = models.DecimalField(_('غرامة التأخير'), max_digits=8, decimal_places=2, default=0)
+    late_fee_grace_period = models.PositiveIntegerField(_('مهلة الغرامة (بالأيام)'), default=5)
+    
+    # Terms and conditions
+    terms_and_conditions = models.TextField(_('الشروط والأحكام'))
+    special_clauses = models.TextField(_('بنود خاصة'), blank=True)
+    renewal_option = models.BooleanField(_('خيار التجديد'), default=True)
+    rent_increase_percentage = models.DecimalField(_('نسبة زيادة الإيجار'), max_digits=5, decimal_places=2, default=0)
+    
+    # Utilities and services
+    utilities_included = models.JSONField(_('المرافق المشمولة'), default=list)
+    tenant_responsibilities = models.JSONField(_('مسؤوليات المستأجر'), default=list)
+    landlord_responsibilities = models.JSONField(_('مسؤوليات المالك'), default=list)
+    
+    # Documents and attachments
+    lease_document = models.FileField(_('وثيقة العقد'), upload_to='leases/%Y/%m/', null=True, blank=True)
+    attachments = GenericRelation(Media, related_query_name='lease')
+    
+    # Renewal tracking
+    parent_lease = models.ForeignKey('self', on_delete=models.SET_NULL, null=True, blank=True, 
+                                   related_name='renewals', verbose_name=_('العقد الأصلي'))
+    auto_renewal = models.BooleanField(_('التجديد التلقائي'), default=False)
+    renewal_notice_period = models.PositiveIntegerField(_('مدة إشعار التجديد (بالأيام)'), default=30)
+
+    class Meta:
+        verbose_name = _('عقد إيجار')
+        verbose_name_plural = _('عقود الإيجار')
+        ordering = ['-start_date']
+        indexes = [
+            models.Index(fields=['lease_number']),
+            models.Index(fields=['status']),
+            models.Index(fields=['start_date', 'end_date']),
+            models.Index(fields=['tenant']),
+            models.Index(fields=['rental_property']),
+        ]
+
+    def __str__(self):
+        return f"عقد {self.lease_number} - {self.tenant.full_name}"
+
+    def save(self, *args, **kwargs):
+        if not self.lease_number:
+            self.lease_number = self._generate_lease_number()
+        super().save(*args, **kwargs)
+
+    def _generate_lease_number(self):
+        """Generate unique lease number"""
+        from django.utils import timezone
+        year = timezone.now().year
+        count = Lease.objects.filter(created_at__year=year).count() + 1
+        return f"LSE-{year}-{count:05d}"
+
+    @property
+    def duration_months(self):
+        """Calculate lease duration in months"""
+        if self.start_date and self.end_date:
+            return (self.end_date.year - self.start_date.year) * 12 + (self.end_date.month - self.start_date.month)
+        return 0
+
+    @property
+    def total_rent_amount(self):
+        """Calculate total rent for the lease period"""
+        return float(self.monthly_rent) * self.duration_months
+
+    @property
+    def is_active(self):
+        """Check if lease is currently active"""
+        from django.utils import timezone
+        today = timezone.now().date()
+        return (self.status == 'active' and 
+                self.start_date <= today <= self.end_date)
+
+    @property
+    def days_remaining(self):
+        """Calculate days remaining in lease"""
+        from django.utils import timezone
+        if self.end_date:
+            days = (self.end_date - timezone.now().date()).days
+            return max(0, days)
+        return 0
+
+    def to_dict(self):
+        """Return dictionary representation for API responses"""
+        return {
+            'id': self.id,
+            'lease_number': self.lease_number,
+            'status': self.status,
+            'status_display': self.get_status_display(),
+            'tenant': self.tenant.to_dict() if self.tenant else None,
+            'property': self.rental_property.base_property.title if self.rental_property else None,
+            'start_date': self.start_date.isoformat() if self.start_date else None,
+            'end_date': self.end_date.isoformat() if self.end_date else None,
+            'monthly_rent': float(self.monthly_rent),
+            'security_deposit': float(self.security_deposit),
+            'duration_months': self.duration_months,
+            'total_rent_amount': self.total_rent_amount,
+            'is_active': self.is_active,
+            'days_remaining': self.days_remaining,
+            'created_at': self.created_at.isoformat() if self.created_at else None,
+        }
+
+
+class MaintenanceCategory(BaseModel):
+    """Categories for maintenance requests"""
+    name = models.CharField(_('اسم الفئة'), max_length=100, unique=True)
+    description = models.TextField(_('الوصف'), blank=True)
+    icon = models.CharField(_('أيقونة'), max_length=50, blank=True)
+    color = models.CharField(_('اللون'), max_length=7, default='#007bff')
+    priority_level = models.PositiveIntegerField(_('مستوى الأولوية'), default=3, help_text='1=عاجل, 5=منخفض')
+    estimated_cost_range_min = models.DecimalField(_('الحد الأدنى للتكلفة المتوقعة'), max_digits=10, decimal_places=2, default=0)
+    estimated_cost_range_max = models.DecimalField(_('الحد الأقصى للتكلفة المتوقعة'), max_digits=10, decimal_places=2, default=0)
+    is_active = models.BooleanField(_('نشط'), default=True)
+
+    class Meta:
+        verbose_name = _('فئة صيانة')
+        verbose_name_plural = _('فئات الصيانة')
+        ordering = ['priority_level', 'name']
+
+    def __str__(self):
+        return self.name
+
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'name': self.name,
+            'description': self.description,
+            'icon': self.icon,
+            'color': self.color,
+            'priority_level': self.priority_level,
+            'estimated_cost_range': {
+                'min': float(self.estimated_cost_range_min),
+                'max': float(self.estimated_cost_range_max)
+            },
+            'is_active': self.is_active,
+        }
+
+
+# -------------------------------------------------------------------------
+# Worker/Staff Models for Property Management
+# -------------------------------------------------------------------------
+
+class WorkerCategory(BaseModel):
+    """Categories/Skills for workers (plumber, electrician, cleaner, etc.)"""
+    name = models.CharField(_('اسم الفئة'), max_length=100, unique=True)
+    description = models.TextField(_('الوصف'), blank=True)
+    icon = models.CharField(_('أيقونة'), max_length=50, blank=True)
+    color = models.CharField(_('اللون'), max_length=7, default='#28a745')
+    hourly_rate_min = models.DecimalField(_('الحد الأدنى للأجر بالساعة'), max_digits=8, decimal_places=2, default=0)
+    hourly_rate_max = models.DecimalField(_('الحد الأقصى للأجر بالساعة'), max_digits=8, decimal_places=2, default=0)
+    is_active = models.BooleanField(_('نشط'), default=True)
+    
+    class Meta:
+        verbose_name = _('فئة عامل')
+        verbose_name_plural = _('فئات العمال')
+        ordering = ['name']
+    
+    def __str__(self):
+        return self.name
+
+class Worker(BaseModel):
+    """Workers/Staff for property maintenance and management"""
+    EMPLOYMENT_TYPE_CHOICES = [
+        ('full_time', _('دوام كامل')),
+        ('part_time', _('دوام جزئي')),
+        ('contract', _('مقاول')),
+        ('freelance', _('عمل حر')),
+    ]
+    
+    STATUS_CHOICES = [
+        ('active', _('نشط')),
+        ('inactive', _('غير نشط')),
+        ('on_leave', _('في إجازة')),
+        ('suspended', _('موقوف')),
+    ]
+    
+    # Personal Information
+    first_name = models.CharField(_('الاسم الأول'), max_length=100)
+    last_name = models.CharField(_('اسم العائلة'), max_length=100)
+    email = models.EmailField(_('البريد الإلكتروني'), unique=True, null=True, blank=True)
+    phone = models.CharField(_('رقم الهاتف'), max_length=20)
+    national_id = models.CharField(_('رقم الهوية'), max_length=50, unique=True)
+    
+    # Professional Information
+    employee_id = models.CharField(_('رقم الموظف'), max_length=20, unique=True, blank=True)
+    categories = models.ManyToManyField(WorkerCategory, related_name='workers', verbose_name=_('المهارات/الفئات'))
+    employment_type = models.CharField(_('نوع التوظيف'), max_length=20, choices=EMPLOYMENT_TYPE_CHOICES, default='full_time')
+    status = models.CharField(_('الحالة'), max_length=20, choices=STATUS_CHOICES, default='active')
+    
+    # Contact Information  
+    address = models.TextField(_('العنوان'), blank=True)
+    city = models.CharField(_('المدينة'), max_length=100, blank=True)
+    emergency_contact = models.CharField(_('جهة اتصال الطوارئ'), max_length=200, blank=True)
+    emergency_phone = models.CharField(_('هاتف الطوارئ'), max_length=20, blank=True)
+    
+    # Work Information
+    hourly_rate = models.DecimalField(_('الأجر بالساعة'), max_digits=8, decimal_places=2, default=0)
+    hire_date = models.DateField(_('تاريخ التوظيف'), default=timezone.now)
+    supervisor = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, blank=True,
+                                 related_name='supervised_workers', verbose_name=_('المشرف'))
+    
+    # Availability
+    is_available = models.BooleanField(_('متاح للعمل'), default=True)
+    max_concurrent_jobs = models.PositiveIntegerField(_('الحد الأقصى للمهام المتزامنة'), default=3)
+    notes = models.TextField(_('ملاحظات'), blank=True)
+    
+    # Profile Image
+    profile_image = models.ImageField(_('صورة الملف الشخصي'), upload_to='workers/profiles/%Y/%m/', null=True, blank=True)
+    
+    # Ratings and Performance
+    rating = models.DecimalField(_('التقييم'), max_digits=3, decimal_places=2, null=True, blank=True, 
+                               help_text='من 1.00 إلى 5.00')
+    total_jobs_completed = models.PositiveIntegerField(_('إجمالي المهام المكتملة'), default=0)
+    
+    class Meta:
+        verbose_name = _('عامل')
+        verbose_name_plural = _('العمال')
+        ordering = ['first_name', 'last_name']
+        indexes = [
+            models.Index(fields=['status', 'is_available']),
+            models.Index(fields=['employee_id']),
+            models.Index(fields=['national_id']),
+            models.Index(fields=['email']),
+        ]
+    
+    def __str__(self):
+        return f"{self.first_name} {self.last_name} ({self.employee_id or self.national_id})"
+    
+    @property
+    def full_name(self):
+        return f"{self.first_name} {self.last_name}".strip()
+    
+    @property
+    def current_active_jobs(self):
+        """Get count of current active maintenance jobs"""
+        return self.assigned_maintenance.filter(
+            status__in=['assigned', 'in_progress']
+        ).count()
+    
+    @property
+    def can_take_new_job(self):
+        """Check if worker can take a new job based on availability and workload"""
+        return (self.is_available and 
+                self.status == 'active' and 
+                self.current_active_jobs < self.max_concurrent_jobs)
+    
+    def save(self, *args, **kwargs):
+        # Auto-generate employee ID if not provided
+        if not self.employee_id:
+            # Format: WRK-YYYY-NNNN
+            year = timezone.now().year
+            last_worker = Worker.objects.filter(
+                employee_id__startswith=f'WRK-{year}-'
+            ).order_by('employee_id').last()
+            
+            if last_worker and last_worker.employee_id:
+                try:
+                    last_num = int(last_worker.employee_id.split('-')[-1])
+                    new_num = last_num + 1
+                except (ValueError, IndexError):
+                    new_num = 1
+            else:
+                new_num = 1
+            
+            self.employee_id = f'WRK-{year}-{new_num:04d}'
+        
+        super().save(*args, **kwargs)
+    
+    def to_dict(self):
+        """Return dictionary representation for API responses"""
+        return {
+            'id': self.id,
+            'employee_id': self.employee_id,
+            'full_name': self.full_name,
+            'email': self.email,
+            'phone': self.phone,
+            'categories': [cat.name for cat in self.categories.all()],
+            'employment_type': self.get_employment_type_display(),
+            'status': self.get_status_display(),
+            'hourly_rate': float(self.hourly_rate),
+            'is_available': self.is_available,
+            'can_take_new_job': self.can_take_new_job,
+            'current_active_jobs': self.current_active_jobs,
+            'rating': float(self.rating) if self.rating else None,
+            'total_jobs_completed': self.total_jobs_completed,
+            'profile_image_url': self.profile_image.url if self.profile_image else None,
+        }
+
+
+class MaintenanceRequest(BaseModel):
+    """Maintenance requests for properties"""
+    PRIORITY_CHOICES = [
+        ('urgent', _('عاجل')),
+        ('high', _('عالي')),
+        ('medium', _('متوسط')),
+        ('low', _('منخفض')),
+    ]
+    
+    STATUS_CHOICES = [
+        ('pending', _('قيد الانتظار')),
+        ('assigned', _('مُعين')),
+        ('in_progress', _('قيد التنفيذ')),
+        ('completed', _('مكتمل')),
+        ('cancelled', _('ملغي')),
+        ('on_hold', _('معلق')),
+    ]
+
+    # Relationships
+    base_property = models.ForeignKey(Property, on_delete=models.CASCADE, related_name='maintenance_requests', verbose_name=_('العقار'))
+    rental_property = models.ForeignKey(RentalProperty, on_delete=models.CASCADE, null=True, blank=True, 
+                                      related_name='maintenance_requests', verbose_name=_('العقار الإيجاري'))
+    category = models.ForeignKey(MaintenanceCategory, on_delete=models.SET_NULL, null=True, blank=True, 
+                               related_name='requests', verbose_name=_('الفئة'))
+    requested_by = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, 
+                                   related_name='maintenance_requests', verbose_name=_('طالب الصيانة'))
+    assigned_to = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, blank=True,
+                                  related_name='assigned_maintenance', verbose_name=_('مُعين إلى (مشرف)'))
+    assigned_worker = models.ForeignKey('Worker', on_delete=models.SET_NULL, null=True, blank=True,
+                                      related_name='assigned_maintenance', verbose_name=_('العامل المُعين'))
+    
+    # Request details
+    title = models.CharField(_('عنوان الطلب'), max_length=200)
+    description = models.TextField(_('وصف المشكلة'))
+    priority = models.CharField(_('الأولوية'), max_length=20, choices=PRIORITY_CHOICES, default='medium')
+    status = models.CharField(_('الحالة'), max_length=20, choices=STATUS_CHOICES, default='pending')
+    
+    # Location within property
+    specific_location = models.CharField(_('الموقع المحدد'), max_length=200, blank=True, 
+                                       help_text='مثل: غرفة النوم الرئيسية، المطبخ، الحمام')
+    
+    # Timing
+    reported_date = models.DateTimeField(_('تاريخ الإبلاغ'), auto_now_add=True)
+    due_date = models.DateTimeField(_('التاريخ المستهدف'), null=True, blank=True)
+    started_date = models.DateTimeField(_('تاريخ البدء'), null=True, blank=True)
+    completed_date = models.DateTimeField(_('تاريخ الإنجاز'), null=True, blank=True)
+    
+    # Cost tracking
+    estimated_cost = models.DecimalField(_('التكلفة المتوقعة'), max_digits=10, decimal_places=2, null=True, blank=True)
+    actual_cost = models.DecimalField(_('التكلفة الفعلية'), max_digits=10, decimal_places=2, null=True, blank=True)
+    
+    # Contractor information
+    contractor_name = models.CharField(_('اسم المقاول'), max_length=200, blank=True)
+    contractor_phone = models.CharField(_('هاتف المقاول'), max_length=17, blank=True)
+    contractor_email = models.EmailField(_('بريد المقاول'), blank=True)
+    
+    # Additional details
+    tenant_access_required = models.BooleanField(_('يتطلب دخول المستأجر'), default=False)
+    tenant_notified = models.BooleanField(_('تم إشعار المستأجر'), default=False)
+    emergency_repair = models.BooleanField(_('إصلاح طارئ'), default=False)
+    warranty_work = models.BooleanField(_('عمل تحت الضمان'), default=False)
+    
+    # Work details
+    work_description = models.TextField(_('وصف العمل المنجز'), blank=True)
+    materials_used = models.JSONField(_('المواد المستخدمة'), default=list, blank=True)
+    notes = models.TextField(_('ملاحظات'), blank=True)
+    
+    # Quality and satisfaction
+    quality_rating = models.PositiveIntegerField(_('تقييم الجودة'), null=True, blank=True, 
+                                               help_text='من 1 إلى 5')
+    tenant_satisfaction = models.PositiveIntegerField(_('رضا المستأجر'), null=True, blank=True, 
+                                                    help_text='من 1 إلى 5')
+    
+    # Media attachments
+    attachments = GenericRelation(Media, related_query_name='maintenance_request')
+
+    class Meta:
+        verbose_name = _('طلب صيانة')
+        verbose_name_plural = _('طلبات الصيانة')
+        ordering = ['-reported_date']
+        indexes = [
+            models.Index(fields=['status', 'priority']),
+            models.Index(fields=['base_property', 'status']),
+            models.Index(fields=['assigned_to', 'status']),
+            models.Index(fields=['assigned_worker', 'status']),
+            models.Index(fields=['due_date']),
+            models.Index(fields=['reported_date']),
+        ]
+
+    def __str__(self):
+        return f"{self.title} - {self.base_property.title}"
+
+    @property
+    def is_overdue(self):
+        """Check if maintenance request is overdue"""
+        from django.utils import timezone
+        return (self.due_date and 
+                self.due_date < timezone.now() and 
+                self.status not in ['completed', 'cancelled'])
+
+    @property
+    def duration_days(self):
+        """Calculate duration from start to completion"""
+        if self.started_date and self.completed_date:
+            return (self.completed_date.date() - self.started_date.date()).days
+        return None
+
+    @property
+    def cost_variance(self):
+        """Calculate variance between estimated and actual cost"""
+        if self.estimated_cost and self.actual_cost:
+            return float(self.actual_cost) - float(self.estimated_cost)
+        return None
+
+    def to_dict(self):
+        """Return dictionary representation for API responses"""
+        return {
+            'id': self.id,
+            'title': self.title,
+            'description': self.description,
+            'status': self.status,
+            'status_display': self.get_status_display(),
+            'priority': self.priority,
+            'priority_display': self.get_priority_display(),
+            'property': {
+                'id': self.base_property.id,
+                'title': self.base_property.title,
+            } if self.base_property else None,
+            'category': self.category.to_dict() if self.category else None,
+            'requested_by': {
+                'id': self.requested_by.id,
+                'name': f"{self.requested_by.first_name} {self.requested_by.last_name}",
+            } if self.requested_by else None,
+            'assigned_to': {
+                'id': self.assigned_to.id,
+                'name': f"{self.assigned_to.first_name} {self.assigned_to.last_name}",
+            } if self.assigned_to else None,
+            'assigned_worker': {
+                'id': self.assigned_worker.id,
+                'employee_id': self.assigned_worker.employee_id,
+                'name': self.assigned_worker.full_name,
+                'phone': self.assigned_worker.phone,
+                'categories': [cat.name for cat in self.assigned_worker.categories.all()],
+                'is_available': self.assigned_worker.is_available,
+            } if self.assigned_worker else None,
+            'specific_location': self.specific_location,
+            'reported_date': self.reported_date.isoformat() if self.reported_date else None,
+            'due_date': self.due_date.isoformat() if self.due_date else None,
+            'estimated_cost': float(self.estimated_cost) if self.estimated_cost else None,
+            'actual_cost': float(self.actual_cost) if self.actual_cost else None,
+            'is_overdue': self.is_overdue,
+            'emergency_repair': self.emergency_repair,
+            'tenant_access_required': self.tenant_access_required,
+            'created_at': self.created_at.isoformat() if self.created_at else None,
+        }
+
+
+class ExpenseCategory(BaseModel):
+    """Categories for property expenses"""
+    name = models.CharField(_('اسم الفئة'), max_length=100, unique=True)
+    description = models.TextField(_('الوصف'), blank=True)
+    icon = models.CharField(_('أيقونة'), max_length=50, blank=True)
+    color = models.CharField(_('اللون'), max_length=7, default='#28a745')
+    is_tax_deductible = models.BooleanField(_('قابل للخصم الضريبي'), default=True)
+    is_active = models.BooleanField(_('نشط'), default=True)
+    parent_category = models.ForeignKey('self', on_delete=models.SET_NULL, null=True, blank=True,
+                                      related_name='subcategories', verbose_name=_('الفئة الأب'))
+
+    class Meta:
+        verbose_name = _('فئة مصروف')
+        verbose_name_plural = _('فئات المصاريف')
+        ordering = ['name']
+
+    def __str__(self):
+        return self.name
+
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'name': self.name,
+            'description': self.description,
+            'icon': self.icon,
+            'color': self.color,
+            'is_tax_deductible': self.is_tax_deductible,
+            'is_active': self.is_active,
+            'parent_category': self.parent_category.name if self.parent_category else None,
+        }
+
+
+class Expense(BaseModel):
+    """Property-related expenses tracking"""
+    EXPENSE_TYPE_CHOICES = [
+        ('maintenance', _('صيانة')),
+        ('utilities', _('مرافق')),
+        ('management', _('إدارة')),
+        ('insurance', _('تأمين')),
+        ('taxes', _('ضرائب')),
+        ('marketing', _('تسويق')),
+        ('legal', _('قانونية')),
+        ('improvement', _('تحسينات')),
+        ('other', _('أخرى')),
+    ]
+    
+    PAYMENT_METHOD_CHOICES = [
+        ('cash', _('نقد')),
+        ('bank_transfer', _('تحويل بنكي')),
+        ('check', _('شيك')),
+        ('credit_card', _('بطاقة ائتمان')),
+        ('debit_card', _('بطاقة خصم')),
+    ]
+    
+    STATUS_CHOICES = [
+        ('pending', _('قيد الانتظار')),
+        ('approved', _('موافق عليه')),
+        ('paid', _('مدفوع')),
+        ('rejected', _('مرفوض')),
+    ]
+
+    # Relationships
+    base_property = models.ForeignKey(Property, on_delete=models.CASCADE, related_name='expenses', verbose_name=_('العقار'))
+    rental_property = models.ForeignKey(RentalProperty, on_delete=models.CASCADE, null=True, blank=True,
+                                      related_name='expenses', verbose_name=_('العقار الإيجاري'))
+    category = models.ForeignKey(ExpenseCategory, on_delete=models.SET_NULL, null=True, blank=True,
+                               related_name='expenses', verbose_name=_('الفئة'))
+    maintenance_request = models.ForeignKey(MaintenanceRequest, on_delete=models.SET_NULL, null=True, blank=True,
+                                          related_name='expenses', verbose_name=_('طلب الصيانة'))
+    created_by = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE,
+                                 related_name='created_expenses', verbose_name=_('أنشأه'))
+    approved_by = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, blank=True,
+                                  related_name='approved_expenses', verbose_name=_('وافق عليه'))
+    
+    # Expense details
+    title = models.CharField(_('عنوان المصروف'), max_length=200)
+    description = models.TextField(_('الوصف'))
+    expense_type = models.CharField(_('نوع المصروف'), max_length=20, choices=EXPENSE_TYPE_CHOICES)
+    status = models.CharField(_('الحالة'), max_length=20, choices=STATUS_CHOICES, default='pending')
+    
+    # Financial information
+    amount = models.DecimalField(_('المبلغ'), max_digits=12, decimal_places=2)
+    tax_amount = models.DecimalField(_('مبلغ الضريبة'), max_digits=10, decimal_places=2, default=0)
+    total_amount = models.DecimalField(_('المبلغ الإجمالي'), max_digits=12, decimal_places=2)
+    currency = models.CharField(_('العملة'), max_length=3, default='SAR')
+    
+    # Payment information
+    payment_method = models.CharField(_('طريقة الدفع'), max_length=20, choices=PAYMENT_METHOD_CHOICES, null=True, blank=True)
+    payment_date = models.DateField(_('تاريخ الدفع'), null=True, blank=True)
+    payment_reference = models.CharField(_('مرجع الدفعة'), max_length=100, blank=True)
+    
+    # Vendor information
+    vendor_name = models.CharField(_('اسم المورد'), max_length=200, blank=True)
+    vendor_phone = models.CharField(_('هاتف المورد'), max_length=17, blank=True)
+    vendor_email = models.EmailField(_('بريد المورد'), blank=True)
+    vendor_address = models.TextField(_('عنوان المورد'), blank=True)
+    
+    # Documentation
+    invoice_number = models.CharField(_('رقم الفاتورة'), max_length=100, blank=True)
+    invoice_date = models.DateField(_('تاريخ الفاتورة'), null=True, blank=True)
+    receipt_number = models.CharField(_('رقم الإيصال'), max_length=100, blank=True)
+    
+    # Dates
+    expense_date = models.DateField(_('تاريخ المصروف'))
+    due_date = models.DateField(_('تاريخ الاستحقاق'), null=True, blank=True)
+    
+    # Additional information
+    is_recurring = models.BooleanField(_('متكرر'), default=False)
+    recurring_frequency = models.CharField(_('تكرار'), max_length=20, blank=True, 
+                                         help_text='monthly, quarterly, annually')
+    is_emergency = models.BooleanField(_('طارئ'), default=False)
+    is_tax_deductible = models.BooleanField(_('قابل للخصم الضريبي'), default=True)
+    notes = models.TextField(_('ملاحظات'), blank=True)
+    
+    # Attachments
+    attachments = GenericRelation(Media, related_query_name='expense')
+
+    class Meta:
+        verbose_name = _('مصروف')
+        verbose_name_plural = _('المصاريف')
+        ordering = ['-expense_date']
+        indexes = [
+            models.Index(fields=['base_property', 'expense_date']),
+            models.Index(fields=['status']),
+            models.Index(fields=['expense_type']),
+            models.Index(fields=['payment_date']),
+            models.Index(fields=['due_date']),
+        ]
+
+    def __str__(self):
+        return f"{self.title} - {self.amount} {self.currency}"
+
+    def save(self, *args, **kwargs):
+        # Auto-calculate total amount if not provided
+        if not self.total_amount:
+            self.total_amount = self.amount + self.tax_amount
+        super().save(*args, **kwargs)
+
+    @property
+    def is_overdue(self):
+        """Check if expense payment is overdue"""
+        from django.utils import timezone
+        return (self.due_date and 
+                self.due_date < timezone.now().date() and 
+                self.status not in ['paid', 'rejected'])
+
+    @property
+    def days_until_due(self):
+        """Calculate days until due date"""
+        from django.utils import timezone
+        if self.due_date:
+            return (self.due_date - timezone.now().date()).days
+        return None
+
+    def to_dict(self):
+        """Return dictionary representation for API responses"""
+        return {
+            'id': self.id,
+            'title': self.title,
+            'description': self.description,
+            'expense_type': self.expense_type,
+            'expense_type_display': self.get_expense_type_display(),
+            'status': self.status,
+            'status_display': self.get_status_display(),
+            'amount': float(self.amount),
+            'tax_amount': float(self.tax_amount),
+            'total_amount': float(self.total_amount),
+            'currency': self.currency,
+            'property': {
+                'id': self.base_property.id,
+                'title': self.base_property.title,
+            } if self.base_property else None,
+            'category': self.category.to_dict() if self.category else None,
+            'vendor_name': self.vendor_name,
+            'expense_date': self.expense_date.isoformat() if self.expense_date else None,
+            'payment_date': self.payment_date.isoformat() if self.payment_date else None,
+            'due_date': self.due_date.isoformat() if self.due_date else None,
+            'is_overdue': self.is_overdue,
+            'is_recurring': self.is_recurring,
+            'is_emergency': self.is_emergency,
+            'is_tax_deductible': self.is_tax_deductible,
+            'created_at': self.created_at.isoformat() if self.created_at else None,
+        }
+
+
+class PropertyAnalytics(BaseModel):
+    """Cached analytics data for properties"""
+    base_property = models.OneToOneField(Property, on_delete=models.CASCADE, related_name='analytics', verbose_name=_('العقار'))
+    rental_property = models.OneToOneField(RentalProperty, on_delete=models.CASCADE, null=True, blank=True,
+                                         related_name='analytics', verbose_name=_('العقار الإيجاري'))
+    
+    # Financial metrics
+    total_revenue = models.DecimalField(_('إجمالي الإيرادات'), max_digits=14, decimal_places=2, default=0)
+    total_expenses = models.DecimalField(_('إجمالي المصاريف'), max_digits=14, decimal_places=2, default=0)
+    net_income = models.DecimalField(_('صافي الدخل'), max_digits=14, decimal_places=2, default=0)
+    roi_percentage = models.DecimalField(_('نسبة العائد على الاستثمار'), max_digits=5, decimal_places=2, default=0)
+    
+    # Occupancy metrics
+    occupancy_rate = models.DecimalField(_('معدل الإشغال'), max_digits=5, decimal_places=2, default=0)
+    vacancy_days = models.PositiveIntegerField(_('أيام الشغور'), default=0)
+    tenant_turnover_rate = models.DecimalField(_('معدل دوران المستأجرين'), max_digits=5, decimal_places=2, default=0)
+    
+    # Maintenance metrics
+    maintenance_cost = models.DecimalField(_('تكلفة الصيانة'), max_digits=12, decimal_places=2, default=0)
+    maintenance_requests_count = models.PositiveIntegerField(_('عدد طلبات الصيانة'), default=0)
+    average_repair_time = models.PositiveIntegerField(_('متوسط وقت الإصلاح (بالأيام)'), default=0)
+    
+    # Market metrics
+    market_rent_estimate = models.DecimalField(_('تقدير الإيجار السوقي'), max_digits=12, decimal_places=2, null=True, blank=True)
+    property_appreciation = models.DecimalField(_('تقدير ارتفاع قيمة العقار'), max_digits=5, decimal_places=2, default=0)
+    
+    # Time period for analytics
+    calculation_date = models.DateField(_('تاريخ الحساب'), auto_now=True)
+    period_start = models.DateField(_('بداية الفترة'))
+    period_end = models.DateField(_('نهاية الفترة'))
+    
+    # Additional metrics as JSON for flexibility
+    additional_metrics = models.JSONField(_('مقاييس إضافية'), default=dict, blank=True)
+
+    class Meta:
+        verbose_name = _('تحليلات العقار')
+        verbose_name_plural = _('تحليلات العقارات')
+        ordering = ['-calculation_date']
+
+    def __str__(self):
+        return f"تحليلات {self.base_property.title} - {self.calculation_date}"
+
+    def to_dict(self):
+        """Return dictionary representation for API responses"""
+        return {
+            'id': self.id,
+            'property_id': self.base_property.id,
+            'total_revenue': float(self.total_revenue),
+            'total_expenses': float(self.total_expenses),
+            'net_income': float(self.net_income),
+            'roi_percentage': float(self.roi_percentage),
+            'occupancy_rate': float(self.occupancy_rate),
+            'vacancy_days': self.vacancy_days,
+            'tenant_turnover_rate': float(self.tenant_turnover_rate),
+            'maintenance_cost': float(self.maintenance_cost),
+            'maintenance_requests_count': self.maintenance_requests_count,
+            'average_repair_time': self.average_repair_time,
+            'market_rent_estimate': float(self.market_rent_estimate) if self.market_rent_estimate else None,
+            'property_appreciation': float(self.property_appreciation),
+            'calculation_date': self.calculation_date.isoformat(),
+            'period_start': self.period_start.isoformat(),
+            'period_end': self.period_end.isoformat(),
+            'additional_metrics': self.additional_metrics,
+        }
+
+
+class Report(BaseModel):
+    """Generated reports for properties and analytics"""
+    REPORT_TYPE_CHOICES = [
+        ('financial', _('مالي')),
+        ('occupancy', _('إشغال')),
+        ('maintenance', _('صيانة')),
+        ('tenant', _('مستأجرين')),
+        ('expense', _('مصاريف')),
+        ('performance', _('أداء')),
+        ('tax', _('ضريبي')),
+        ('custom', _('مخصص')),
+    ]
+    
+    STATUS_CHOICES = [
+        ('generating', _('قيد الإنشاء')),
+        ('completed', _('مكتمل')),
+        ('failed', _('فشل')),
+    ]
+
+    # Report details
+    title = models.CharField(_('عنوان التقرير'), max_length=200)
+    report_type = models.CharField(_('نوع التقرير'), max_length=20, choices=REPORT_TYPE_CHOICES)
+    status = models.CharField(_('الحالة'), max_length=20, choices=STATUS_CHOICES, default='generating')
+    
+    # Scope
+    properties = models.ManyToManyField(Property, related_name='reports', verbose_name=_('العقارات'))
+    generated_by = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE,
+                                   related_name='generated_reports', verbose_name=_('أنشأه'))
+    
+    # Time period
+    period_start = models.DateField(_('بداية الفترة'))
+    period_end = models.DateField(_('نهاية الفترة'))
+    
+    # Report data
+    report_data = models.JSONField(_('بيانات التقرير'), default=dict)
+    summary = models.TextField(_('ملخص'), blank=True)
+    
+    # Files
+    pdf_file = models.FileField(_('ملف PDF'), upload_to='reports/%Y/%m/', null=True, blank=True)
+    excel_file = models.FileField(_('ملف Excel'), upload_to='reports/%Y/%m/', null=True, blank=True)
+    
+    # Generation details
+    generation_time = models.DurationField(_('وقت الإنشاء'), null=True, blank=True)
+    error_message = models.TextField(_('رسالة الخطأ'), blank=True)
+
+    class Meta:
+        verbose_name = _('تقرير')
+        verbose_name_plural = _('التقارير')
+        ordering = ['-created_at']
+        indexes = [
+            models.Index(fields=['report_type', 'status']),
+            models.Index(fields=['generated_by', '-created_at']),
+            models.Index(fields=['period_start', 'period_end']),
+        ]
+
+    def __str__(self):
+        return f"{self.title} - {self.get_report_type_display()}"
+
+    def to_dict(self):
+        """Return dictionary representation for API responses"""
+        return {
+            'id': self.id,
+            'title': self.title,
+            'report_type': self.report_type,
+            'report_type_display': self.get_report_type_display(),
+            'status': self.status,
+            'status_display': self.get_status_display(),
+            'period_start': self.period_start.isoformat(),
+            'period_end': self.period_end.isoformat(),
+            'properties_count': self.properties.count(),
+            'pdf_file': self.pdf_file.url if self.pdf_file else None,
+            'excel_file': self.excel_file.url if self.excel_file else None,
+            'created_at': self.created_at.isoformat() if self.created_at else None,
+        }

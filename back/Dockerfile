@@ -43,12 +43,12 @@ RUN chmod +x /entrypoint.sh \
 # Switch to non-root user
 USER appuser
 
-# Expose port 7500
-EXPOSE 7500
+# Expose port 8000
+EXPOSE 8000
 
 # Health check
 HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 \
-    CMD curl -f http://localhost:7500/admin/ || exit 1
+    CMD curl -f http://localhost:8000/admin/ || exit 1
 
 # Use entrypoint
 ENTRYPOINT ["/entrypoint.sh"]

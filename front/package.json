@@ -11,7 +11,9 @@
 		"check": "svelte-kit sync && svelte-check --tsconfig ./jsconfig.json",
 		"check:watch": "svelte-kit sync && svelte-check --tsconfig ./jsconfig.json --watch",
 		"format": "prettier --write .",
-		"lint": "prettier --check . && eslint ."
+		"lint": "prettier --check . && eslint .",
+		"dev:reset": "bash scripts/dev-reset.sh",
+		"dev:clean": "rm -rf node_modules/.vite .svelte-kit/output && npm run prepare"
 	},
 	"devDependencies": {
 		"@eslint/compat": "^1.2.5",
@@ -40,7 +42,8 @@
 	"dependencies": {
 		"chart.js": "^4.4.9",
 		"date-fns": "^4.1.0",
-		"leaflet": "^1.9.4"
+		"leaflet": "^1.9.4",
+		"plotly.js-dist-min": "^3.0.1"
 	},
 	"overrides": {
 		"cookie": "^0.6.0"

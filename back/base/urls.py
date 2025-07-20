@@ -67,4 +67,54 @@ urlpatterns = [
     path('dashboard/auctions/', views.DashboardAuctionsView.as_view(), name='dashboard-auctions'),
     path('dashboard/bids/', views.DashboardBidsView.as_view(), name='dashboard-bids'),
     
+    # Property Management Dashboard
+    path('dashboard/rental-properties/', views.DashboardRentalPropertiesView.as_view(), name='dashboard-rental-properties'),
+    path('dashboard/tenants/', views.DashboardTenantsView.as_view(), name='dashboard-tenants'),
+    path('dashboard/leases/', views.DashboardLeasesView.as_view(), name='dashboard-leases'),
+    path('dashboard/maintenance/', views.DashboardMaintenanceView.as_view(), name='dashboard-maintenance'),
+    path('dashboard/expenses/', views.DashboardExpensesView.as_view(), name='dashboard-expenses'),
+    path('dashboard/property-management-analytics/', views.PropertyManagementAnalyticsView.as_view(), name='dashboard-property-analytics'),
+    
+    # Property Management - Rental Properties
+    path('rental-properties/', views.RentalPropertyListCreateView.as_view(), name='rental-properties'),
+    path('rental-properties/<int:pk>/', views.RentalPropertyDetailView.as_view(), name='rental-property'),
+    
+    # Property Management - Tenants
+    path('tenants/', views.TenantListCreateView.as_view(), name='tenants'),
+    path('tenants/<int:pk>/', views.TenantDetailView.as_view(), name='tenant'),
+    
+    # Property Management - Leases
+    path('leases/', views.LeaseListCreateView.as_view(), name='leases'),
+    path('leases/<int:pk>/', views.LeaseDetailView.as_view(), name='lease'),
+    
+    # Property Management - Maintenance
+    path('maintenance/categories/', views.MaintenanceCategoryListCreateView.as_view(), name='maintenance-categories'),
+    path('maintenance/categories/<int:pk>/', views.MaintenanceCategoryDetailView.as_view(), name='maintenance-category'),
+    path('maintenance/requests/', views.MaintenanceRequestListCreateView.as_view(), name='maintenance-requests'),
+    path('maintenance/requests/<int:pk>/', views.MaintenanceRequestDetailView.as_view(), name='maintenance-request'),
+    
+    # Property Management - Expenses
+    path('expenses/categories/', views.ExpenseCategoryListCreateView.as_view(), name='expense-categories'),
+    path('expenses/categories/<int:pk>/', views.ExpenseCategoryDetailView.as_view(), name='expense-category'),
+    path('expenses/', views.ExpenseListCreateView.as_view(), name='expenses'),
+    path('expenses/<int:pk>/', views.ExpenseDetailView.as_view(), name='expense'),
+    
+    # Property Management - Analytics & Reports
+    path('analytics/', views.PropertyAnalyticsView.as_view(), name='property-analytics'),
+    path('analytics/<int:property_id>/', views.PropertyAnalyticsView.as_view(), name='property-analytics-detail'),
+    path('reports/', views.ReportListView.as_view(), name='reports'),
+    path('reports/generate/', views.ReportGenerationView.as_view(), name='generate-report'),
+    path('reports/<int:pk>/', views.ReportDetailView.as_view(), name='report'),
+    
+    # Enhanced Analytics Views with Heat Maps and Bar Charts
+    path('analytics/advanced/', views.AdvancedPropertyAnalyticsView.as_view(), name='advanced-property-analytics'),
+    path('analytics/workers/', views.WorkerAnalyticsView.as_view(), name='worker-analytics'),
+    path('analytics/payments/', views.PaymentAnalyticsView.as_view(), name='payment-analytics'),
+    
+    # Worker Management
+    path('workers/categories/', views.WorkerCategoryListCreateView.as_view(), name='worker-categories'),
+    path('workers/categories/<int:pk>/', views.WorkerCategoryDetailView.as_view(), name='worker-category'),
+    path('workers/', views.WorkerListCreateView.as_view(), name='workers'),
+    path('workers/<int:pk>/', views.WorkerDetailView.as_view(), name='worker'),
+    
 ]
