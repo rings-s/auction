@@ -177,3 +177,75 @@ class CanManageAuctions(BasePermission):
         return (request.user and request.user.is_authenticated and 
                 request.user.role in ['appraiser', 'owner'] or 
                 request.user.is_superuser)
+
+
+
+# back/base/permissions.py - Enhanced Property-Based Permissions
+
+class IsPropertyOwnerOrManager(BasePermission):
+    """Check if user owns or manages the property"""
+    message = _('You must be the property owner or assigned manager.')
+    
+    def has_object_permission(self, request, view, obj):
+        if not request.user or not request.user.is_authenticated:
+            return False
+            
+        if request.user.is_superuser:
+            return True
+            
+        # Get the property from different model types
+        property_obj = self._get_property_from_object(obj)
+        if not property_obj:
+            return False
+            
+        # Check ownership
+        if property_obj.owner == request.user:
+            return True
+            
+        # Check management assignment
+        if property_obj.property_manager == request.user:
+            return True
+            
+        # Check company management
+        if (property_obj.management_company and 
+            property_obj.management_company.contact_person == request.user):
+            return True
+            
+        return False
+    
+    def _get_property_from_object(self, obj):
+        """Extract property object from various model types"""
+        if isinstance(obj, Property):
+            return obj
+        elif hasattr(obj, 'property'):
+            return obj.property
+        elif hasattr(obj, 'base_property'):
+            return obj.base_property
+        elif hasattr(obj, 'related_property'):
+            return obj.related_property
+        elif hasattr(obj, 'rental_property'):
+            return obj.rental_property.base_property
+        return None
+
+class CanManageWorkers(BasePermission):
+    """Permission to manage workers for properties"""
+    message = _('You need property management permissions to manage workers.')
+    
+    def has_permission(self, request, view):
+        return (request.user and request.user.is_authenticated and 
+                (request.user.is_superuser or 
+                 request.user.role in ['appraiser', 'data_entry', 'owner'] or
+                 request.user.managed_properties.exists() or
+                 request.user.managed_companies.exists()))
+
+class CanAccessPropertyAnalytics(BasePermission):
+    """Permission to access property analytics"""
+    message = _('You need appropriate permissions to access property analytics.')
+    
+    def has_permission(self, request, view):
+        user = request.user
+        return (user and user.is_authenticated and 
+                (user.is_superuser or 
+                 user.role in ['appraiser', 'data_entry'] or
+                 user.owned_properties.exists() or
+                 user.managed_properties.exists()))

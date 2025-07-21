@@ -102,7 +102,6 @@
 			recentWorkers = workers;
 			bankAccounts = accounts;
 		} catch (error) {
-			console.error('Error loading property management data:', error);
 			// Don't show error for property management data as it's optional
 		} finally {
 			pmLoading = false;
@@ -284,7 +283,7 @@
 								value={stats.messages_unread || 0}
 								icon={messageIcon}
 								color="info"
-								href="/messages?filter=unread"
+								href="/dashboard/messages?filter=unread"
 							/>
 						{/if}
 					{/if}
@@ -395,7 +394,7 @@
 							{/if}
 							
 							<div class="mt-4 pt-3 border-t border-gray-200 dark:border-gray-600">
-								<Button variant="primary" size="compact" href="/create/payment" class="w-full">
+								<Button variant="primary" size="compact" href="/dashboard/payments/create" class="w-full">
 									{$t('payment.add')}
 								</Button>
 							</div>
@@ -455,7 +454,7 @@
 							{/if}
 							
 							<div class="mt-4 pt-3 border-t border-gray-200 dark:border-gray-600">
-								<Button variant="primary" size="compact" href="/create/worker" class="w-full">
+								<Button variant="primary" size="compact" href="/dashboard/workers/create" class="w-full">
 									{$t('worker.add')}
 								</Button>
 							</div>
@@ -505,37 +504,37 @@
 
 				<!-- Performance Metrics (for appraisers/data entry) -->
 				{#if stats && ($user?.role === 'appraiser' || $user?.role === 'data_entry')}
-					<div class="rounded-lg border border-gray-200 bg-white p-4">
-						<h3 class="mb-4 text-sm font-medium text-gray-900">
+					<div class="rounded-lg border border-gray-200 bg-white p-4 dark:bg-gray-800 dark:border-gray-700">
+						<h3 class="mb-4 text-sm font-medium text-gray-900 dark:text-white">
 							{$t('dashboard.performanceMetrics')}
 						</h3>
 
 						<div class="grid grid-cols-1 gap-4 md:grid-cols-3">
 							<div class="text-center">
-								<p class="text-lg font-semibold text-gray-900">
+								<p class="text-lg font-semibold text-gray-900 dark:text-white">
 									{stats.properties_this_month || 0}
 								</p>
-								<p class="text-xs text-gray-600">
+								<p class="text-xs text-gray-600 dark:text-gray-400">
 									{$t('dashboard.propertiesThisMonth')}
 								</p>
 							</div>
 
 							<div class="text-center">
-								<p class="text-lg font-semibold text-gray-900">
+								<p class="text-lg font-semibold text-gray-900 dark:text-white">
 									{stats.auctions_this_month || 0}
 								</p>
-								<p class="text-xs text-gray-600">
+								<p class="text-xs text-gray-600 dark:text-gray-400">
 									{$t('dashboard.auctionsThisMonth')}
 								</p>
 							</div>
 
 							<div class="text-center">
-								<p class="text-lg font-semibold text-gray-900">
+								<p class="text-lg font-semibold text-gray-900 dark:text-white">
 									{stats.avg_property_value
 										? `$${stats.avg_property_value.toLocaleString()}`
 										: '$0'}
 								</p>
-								<p class="text-xs text-gray-600">
+								<p class="text-xs text-gray-600 dark:text-gray-400">
 									{$t('dashboard.avgPropertyValue')}
 								</p>
 							</div>
@@ -560,29 +559,29 @@
 				</div>
 
 				<!-- User Info Card -->
-				<div class="rounded-lg border border-gray-200 bg-white p-4">
+				<div class="rounded-lg border border-gray-200 bg-white p-4 dark:bg-gray-800 dark:border-gray-700">
 					<div class="flex items-center space-x-3">
-						<div class="bg-primary-100 flex h-10 w-10 items-center justify-center rounded-full">
-							<span class="text-primary-600 text-sm font-medium">
+						<div class="bg-primary-100 dark:bg-primary-800 flex h-10 w-10 items-center justify-center rounded-full">
+							<span class="text-primary-600 dark:text-primary-200 text-sm font-medium">
 								{$user?.first_name?.[0] || $user?.email?.[0] || 'U'}
 							</span>
 						</div>
 
 						<div class="min-w-0 flex-1">
-							<p class="truncate text-sm font-medium text-gray-900">
+							<p class="truncate text-sm font-medium text-gray-900 dark:text-white">
 								{$user?.first_name}
 								{$user?.last_name}
 							</p>
-							<p class="text-xs text-gray-600">
+							<p class="text-xs text-gray-600 dark:text-gray-400">
 								{$t(`auth.role${$user?.role?.charAt(0)?.toUpperCase()}${$user?.role?.slice(1)}`)}
 							</p>
 						</div>
 					</div>
 
 					{#if $userPriority > 1}
-						<div class="mt-3 border-t border-gray-200 pt-3">
+						<div class="mt-3 border-t border-gray-200 dark:border-gray-600 pt-3">
 							<div class="flex items-center justify-between">
-								<span class="text-xs text-gray-600">
+								<span class="text-xs text-gray-600 dark:text-gray-400">
 									{$t('dashboard.userPriority')}
 								</span>
 								<div class="flex items-center space-x-1">
@@ -590,7 +589,7 @@
 										<div
 											class="h-2 w-2 rounded-full {i < $userPriority
 												? 'bg-primary-500'
-												: 'bg-gray-200'}"
+												: 'bg-gray-200 dark:bg-gray-600'}"
 										></div>
 									{/each}
 								</div>
