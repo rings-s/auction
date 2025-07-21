@@ -525,31 +525,7 @@ class DashboardMetricsSerializer(serializers.ModelSerializer):
         fields = '__all__'
         read_only_fields = ['user', 'last_updated']
 
-class PropertyDashboardSerializer(serializers.ModelSerializer):
-    """Simplified property serializer for dashboard"""
-    location_display = serializers.SerializerMethodField()
-    status_display = serializers.CharField(source='get_status_display', read_only=True)
-    property_type_display = serializers.CharField(source='get_property_type_display', read_only=True)
-    days_since_created = serializers.SerializerMethodField()
-    
-    class Meta:
-        model = Property
-        fields = [
-            'id', 'title', 'slug', 'property_number', 'property_type', 'property_type_display',
-            'status', 'status_display', 'market_value', 'size_sqm', 'location_display',
-            'is_published', 'is_featured', 'is_verified', 'view_count', 'created_at',
-            'days_since_created'
-        ]
-        
-    def get_location_display(self, obj):
-        if obj.location:
-            return f"{obj.location.city}, {obj.location.state}"
-        return None
-        
-    def get_days_since_created(self, obj):
-        if obj.created_at:
-            return (timezone.now() - obj.created_at).days
-        return 0
+# PropertyDashboardSerializer moved to dashboard serializers section below
 
 class AuctionDashboardSerializer(serializers.ModelSerializer):
     """Simplified auction serializer for dashboard"""
@@ -1027,16 +1003,22 @@ class ReportSerializer(serializers.ModelSerializer):
 # -------------------------------------------------------------------------
 
 class PropertyDashboardSerializer(serializers.ModelSerializer):
-    """Dashboard serializer for properties"""
+    """Comprehensive dashboard serializer for properties with rental and maintenance info"""
     rental_info = serializers.SerializerMethodField()
     maintenance_status = serializers.SerializerMethodField()
     location_display = serializers.SerializerMethodField()
+    status_display = serializers.CharField(source='get_status_display', read_only=True)
+    property_type_display = serializers.CharField(source='get_property_type_display', read_only=True)
+    days_since_created = serializers.SerializerMethodField()
     
     class Meta:
         model = Property
-        fields = ['id', 'title', 'slug', 'property_number', 'property_type', 
-                 'status', 'market_value', 'size_sqm', 'location_display', 
-                 'rental_info', 'maintenance_status', 'created_at']
+        fields = [
+            'id', 'title', 'slug', 'property_number', 'property_type', 'property_type_display',
+            'status', 'status_display', 'market_value', 'size_sqm', 'location_display',
+            'is_published', 'is_featured', 'is_verified', 'view_count', 'created_at',
+            'days_since_created', 'rental_info', 'maintenance_status'
+        ]
         
     def get_rental_info(self, obj):
         if hasattr(obj, 'rental_info'):
@@ -1065,6 +1047,11 @@ class PropertyDashboardSerializer(serializers.ModelSerializer):
         if obj.location:
             return f"{obj.location.city}, {obj.location.state}"
         return obj.address[:50] + "..." if len(obj.address) > 50 else obj.address
+    
+    def get_days_since_created(self, obj):
+        if obj.created_at:
+            return (timezone.now() - obj.created_at).days
+        return 0
 
 
 class TenantDashboardSerializer(serializers.ModelSerializer):
@@ -1173,3 +1160,38 @@ class WorkerBriefSerializer(serializers.ModelSerializer):
     
     def get_category_names(self, obj):
         return [category.name for category in obj.categories.all()]
+
+
+
+
+class PropertyManagementCompanySerializer(serializers.ModelSerializer):
+    total_properties = serializers.SerializerMethodField()
+    total_workers = serializers.SerializerMethodField()
+    
+    class Meta:
+        model = PropertyManagementCompany
+        fields = '__all__'
+        read_only_fields = ['created_at', 'updated_at']
+    
+    def get_total_properties(self, obj):
+        return obj.total_properties
+    
+    def get_total_workers(self, obj):
+        return obj.total_workers
+
+class WorkerPropertyAssignmentSerializer(serializers.ModelSerializer):
+    worker_name = serializers.CharField(source='worker.full_name', read_only=True)
+    property_title = serializers.CharField(source='property.title', read_only=True)
+    
+    class Meta:
+        model = WorkerPropertyAssignment
+        fields = '__all__'
+        read_only_fields = ['created_at', 'updated_at']
+
+class PropertyMaintenanceWorkflowSerializer(serializers.ModelSerializer):
+    maintenance_request_title = serializers.CharField(source='maintenance_request.title', read_only=True)
+    
+    class Meta:
+        model = PropertyMaintenanceWorkflow
+        fields = '__all__'
+        read_only_fields = ['created_at', 'updated_at']

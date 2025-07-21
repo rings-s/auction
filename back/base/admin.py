@@ -166,7 +166,7 @@ class RentalPropertyAdmin(admin.ModelAdmin):
     list_filter = ('rental_status', 'rental_type', 'furnished', 'pets_allowed')
     search_fields = ('base_property__title', 'base_property__property_number')
     readonly_fields = ('total_rental_income', 'created_at', 'updated_at')
-    inlines = [LeaseInline, MaintenanceRequestInline, ExpenseInline]
+    inlines = [LeaseInline]  # MaintenanceRequestInline and ExpenseInline removed - no direct FK relationship
     
     def base_property_title(self, obj):
         return obj.base_property.title if obj.base_property else '-'

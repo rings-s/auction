@@ -73,38 +73,32 @@ class Media(BaseModel):
         return self.name or os.path.basename(self.file.name)
 
     def save(self, *args, **kwargs):
+        from .utils import process_property_media, validate_image_file, log_model_action
+        
         if not self.name and self.file:
             self.name = os.path.basename(self.file.name)
         
         # Process image if it's an image file
         if self.media_type == 'image' and self.file and not self.pk:
             try:
-                img = Image.open(self.file)
+                # Validate image file first
+                validate_image_file(self.file)
                 
-                # Create thumbnail if needed
-                if img.height > 1200 or img.width > 1200:
-                    output_size = (1200, 1200)
-                    img.thumbnail(output_size)
-                    
-                    # Save the processed image
-                    output = BytesIO()
-                    img_format = 'JPEG' if self.file.name.lower().endswith('.jpg') else 'PNG'
-                    img.save(output, format=img_format, quality=85)
-                    output.seek(0)
-                    
-                    # Replace the file with optimized version
-                    self.file.save(
-                        self.file.name,
-                        ContentFile(output.read()),
-                        save=False
-                    )
+                # Process image using shared utility
+                processed_image = process_property_media(self.file)
+                
+                # Replace the file with optimized version
+                self.file.save(
+                    self.file.name,
+                    processed_image,
+                    save=False
+                )
+                
+                log_model_action('Media', 'image_processed', object_id=self.pk)
+                
             except Exception as e:
                 # Handle gracefully if not an image or processing fails
-                pass
-        # For document files, ensure we don't try to process them as images
-        elif self.media_type == 'document' and self.file and not self.pk:
-            # Log the document file but don't try to process it
-            pass
+                logger.error(f"Error processing media image: {str(e)}")
                 
         super().save(*args, **kwargs)
                     
@@ -145,6 +139,12 @@ class Media(BaseModel):
 # -------------------------------------------------------------------------
 # Location Model
 # -------------------------------------------------------------------------
+class LocationManager(models.Manager):
+    """Custom manager for Location model with natural key support"""
+    
+    def get_by_natural_key(self, city, state, country, postal_code):
+        return self.get(city=city, state=state, country=country, postal_code=postal_code)
+
 class Location(BaseModel):
     """Location model"""
     city = models.CharField(_('المدينة'), max_length=100)
@@ -161,6 +161,9 @@ class Location(BaseModel):
         indexes = [
             models.Index(fields=['city', 'state']),
         ]
+
+    # Custom manager with natural key support
+    objects = LocationManager()
         
     def __str__(self):
         return f"{self.city}, {self.state}, {self.country}"
@@ -171,10 +174,25 @@ class Location(BaseModel):
         if self.latitude and self.longitude:
             return (float(self.latitude), float(self.longitude))
         return None
+    
+    def natural_key(self):
+        """Return natural key for this location"""
+        return (self.city, self.state, self.country, self.postal_code)
+    
+    def get_absolute_url(self):
+        """Return the canonical URL for this location"""
+        from django.urls import reverse
+        return reverse('location', kwargs={'pk': self.pk})
 
 # -------------------------------------------------------------------------
 # Property Model
 # -------------------------------------------------------------------------
+class PropertyManager(models.Manager):
+    """Custom manager for Property model with natural key support"""
+    
+    def get_by_natural_key(self, slug):
+        return self.get(slug=slug)
+
 class Property(BaseModel):
     """Property model with integrated types as choices"""
     # Property Type choices integrated
@@ -254,10 +272,14 @@ class Property(BaseModel):
         indexes = [
             models.Index(fields=['property_number']),
             models.Index(fields=['deed_number']),
-            models.Index(fields=['status']),
+            models.Index(fields=['status', 'is_published']),  # Compound index
             models.Index(fields=['market_value']),
-            models.Index(fields=['property_type']),
+            models.Index(fields=['property_type', 'location']),  # Compound index
+            models.Index(fields=['owner', 'status']),  # For dashboard queries
         ]
+
+    # Custom manager with natural key support
+    objects = PropertyManager()
 
     def __str__(self):
         return self.title
@@ -388,6 +410,18 @@ class Property(BaseModel):
             'media_count': self.media.filter(is_deleted=False).count(),
             'created_at': self.created_at.isoformat() if self.created_at else None,
         }
+    
+    def natural_key(self):
+        """Return natural key for this property"""
+        return (self.slug,)
+    
+    def get_absolute_url(self):
+        """Return the canonical URL for this property"""
+        from django.urls import reverse
+        return reverse('property-by-slug', kwargs={'slug': self.slug})
+
+# PropertyManager moved to before Property class definition
+
 # -------------------------------------------------------------------------
 # Room Model
 # -------------------------------------------------------------------------
@@ -445,6 +479,12 @@ class Room(BaseModel):
 # -------------------------------------------------------------------------
 # Auction Model
 # -------------------------------------------------------------------------
+class AuctionManager(models.Manager):
+    """Custom manager for Auction model with natural key support"""
+    
+    def get_by_natural_key(self, slug):
+        return self.get(slug=slug)
+
 class Auction(BaseModel):
     """Enhanced Auction model with auto-status management"""
     AUCTION_TYPES = [
@@ -505,6 +545,9 @@ class Auction(BaseModel):
             models.Index(fields=['end_date']),
             models.Index(fields=['related_property']),
         ]
+
+    # Custom manager with natural key support
+    objects = AuctionManager()
 
     def __str__(self):
         return self.title
@@ -684,6 +727,16 @@ class Auction(BaseModel):
                 'max_extensions': self.max_extensions,
             }
         }
+    
+    def natural_key(self):
+        """Return natural key for this auction"""
+        return (self.slug,)
+    
+    def get_absolute_url(self):
+        """Return the canonical URL for this auction"""
+        from django.urls import reverse
+        return reverse('auction-by-slug', kwargs={'slug': self.slug})
+
 # -------------------------------------------------------------------------
 # Bid Model
 # -------------------------------------------------------------------------
@@ -996,6 +1049,7 @@ class MessageAttachment(BaseModel):
 
 
 
+
 class DashboardMetrics(BaseModel):
     """Store cached dashboard metrics for performance"""
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='dashboard_metrics')
@@ -1003,14 +1057,99 @@ class DashboardMetrics(BaseModel):
     metric_data = models.JSONField(default=dict)
     last_updated = models.DateTimeField(auto_now=True)
     
+    # Enhanced fields for better caching
+    expires_at = models.DateTimeField(_('ينتهي في'), null=True, blank=True)
+    calculation_time = models.DurationField(_('وقت الحساب'), null=True, blank=True)
+    cache_key = models.CharField(_('مفتاح التخزين'), max_length=100, db_index=True, blank=True)
+    
     class Meta:
         verbose_name = _('مقاييس لوحة التحكم')
         verbose_name_plural = _('مقاييس لوحات التحكم')
-        unique_together = ['user', 'metric_type']
+        unique_together = ['user', 'metric_type', 'cache_key']
+        indexes = [
+            models.Index(fields=['user', 'metric_type']),
+            models.Index(fields=['expires_at']),
+            models.Index(fields=['cache_key']),
+        ]
         
     def __str__(self):
         return f"{self.user.email} - {self.metric_type}"
+    
+    def is_expired(self):
+        """Check if metrics cache is expired"""
+        return self.expires_at and timezone.now() > self.expires_at
+    
+    @classmethod
+    def get_or_calculate(cls, user, metric_type, cache_key='default', calculator_func=None, expires_in_hours=1):
+        """Get cached metrics or calculate new ones"""
+        try:
+            metrics = cls.objects.get(user=user, metric_type=metric_type, cache_key=cache_key)
+            if not metrics.is_expired():
+                return metrics.metric_data
+        except cls.DoesNotExist:
+            pass
+        
+        # Calculate new metrics
+        if calculator_func:
+            start_time = timezone.now()
+            data = calculator_func(user)
+            calculation_time = timezone.now() - start_time
+            
+            # Cache the results
+            cls.objects.update_or_create(
+                user=user,
+                metric_type=metric_type,
+                cache_key=cache_key,
+                defaults={
+                    'metric_data': data,
+                    'expires_at': timezone.now() + timedelta(hours=expires_in_hours),
+                    'calculation_time': calculation_time,
+                }
+            )
+            return data
+        return {}
 
+
+class UserDashboardPreference(BaseModel):
+    """User dashboard customization preferences"""
+    user = models.OneToOneField(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name='dashboard_preferences'
+    )
+    
+    # Layout preferences
+    layout_type = models.CharField(
+        _('نوع التخطيط'),
+        max_length=20,
+        choices=[
+            ('grid', _('شبكة')),
+            ('list', _('قائمة')),
+            ('cards', _('بطاقات')),
+        ],
+        default='grid'
+    )
+    
+    # Widget preferences
+    visible_widgets = models.JSONField(_('الودجات المرئية'), default=list)
+    widget_order = models.JSONField(_('ترتيب الودجات'), default=list)
+    refresh_interval = models.PositiveIntegerField(_('فترة التحديث (ثواني)'), default=300)
+    
+    # Theme and display
+    theme = models.CharField(
+        _('المظهر'),
+        max_length=10,
+        choices=[('light', _('فاتح')), ('dark', _('داكن'))],
+        default='light'
+    )
+    
+    # Notification preferences
+    email_notifications = models.BooleanField(_('إشعارات البريد الإلكتروني'), default=True)
+    push_notifications = models.BooleanField(_('الإشعارات الفورية'), default=True)
+    
+    class Meta:
+        verbose_name = _('تفضيلات لوحة التحكم')
+        verbose_name_plural = _('تفضيلات لوحات التحكم')
 
 # -------------------------------------------------------------------------
 # Property Management Models
@@ -1769,7 +1908,7 @@ class WorkerPropertyAssignment(BaseModel):
         related_name='property_assignments',
         verbose_name=_('العامل')
     )
-    property = models.ForeignKey(
+    assigned_property = models.ForeignKey(
         'Property', 
         on_delete=models.CASCADE,
         related_name='worker_assignments',
@@ -1835,17 +1974,17 @@ class WorkerPropertyAssignment(BaseModel):
     class Meta:
         verbose_name = _('تعيين عامل لعقار')
         verbose_name_plural = _('تعيينات العمال للعقارات')
-        unique_together = ['worker', 'property']
+        unique_together = ['worker', 'assigned_property']
         ordering = ['-assigned_date']
         indexes = [
             models.Index(fields=['worker', 'is_active']),
-            models.Index(fields=['property', 'is_active']),
+            models.Index(fields=['assigned_property', 'is_active']),
             models.Index(fields=['assigned_date']),
             models.Index(fields=['status']),
         ]
     
     def __str__(self):
-        return f"{self.worker.full_name} -> {self.property.title}"
+        return f"{self.worker.full_name} -> {self.assigned_property.title}"
     
     def save(self, *args, **kwargs):
         # Set start_date if not provided
@@ -1863,8 +2002,8 @@ class WorkerPropertyAssignment(BaseModel):
                 'employee_id': self.worker.employee_id,
             },
             'property': {
-                'id': self.property.id,
-                'title': self.property.title,
+                'id': self.assigned_property.id,
+                'title': self.assigned_property.title,
             },
             'assigned_date': self.assigned_date.isoformat() if self.assigned_date else None,
             'start_date': self.start_date.isoformat() if self.start_date else None,
@@ -1907,21 +2046,14 @@ class MaintenanceRequest(BaseModel):
         ('emergency', _('طوارئ')),
     ]
 
-    # Relationships - Standardized to 'property'
-    property = models.ForeignKey(
+    # Relationships - Using 'maintenance_property' to avoid conflict with @property decorator
+    maintenance_property = models.ForeignKey(
         'Property', 
         on_delete=models.CASCADE, 
         related_name='maintenance_requests', 
         verbose_name=_('العقار')
     )
-    rental_property = models.ForeignKey(
-        'RentalProperty', 
-        on_delete=models.CASCADE, 
-        null=True, 
-        blank=True, 
-        related_name='maintenance_requests', 
-        verbose_name=_('العقار الإيجاري')
-    )
+    
     category = models.ForeignKey(
         'MaintenanceCategory', 
         on_delete=models.SET_NULL, 
@@ -2069,7 +2201,7 @@ class MaintenanceRequest(BaseModel):
         ordering = ['-reported_date']
         indexes = [
             models.Index(fields=['status', 'priority']),
-            models.Index(fields=['property', 'status']),
+            models.Index(fields=['maintenance_property', 'status']),
             models.Index(fields=['assigned_to', 'status']),
             models.Index(fields=['assigned_worker', 'status']),
             models.Index(fields=['due_date']),
@@ -2079,7 +2211,7 @@ class MaintenanceRequest(BaseModel):
         ]
 
     def __str__(self):
-        return f"{self.title} - {self.property.title}"
+        return f"{self.title} - {self.maintenance_property.title}"
 
     @property
     def is_overdue(self):
@@ -2117,7 +2249,7 @@ class MaintenanceRequest(BaseModel):
 
     def can_be_assigned_to_worker(self, worker):
         """Check if request can be assigned to specific worker"""
-        if not worker.can_work_on_property(self.property):
+        if not worker.can_work_on_property(self.maintenance_property):
             return False, _("Worker is not assigned to this property")
         
         if not worker.can_take_new_job:
@@ -2167,9 +2299,9 @@ class MaintenanceRequest(BaseModel):
             'priority': self.priority,
             'priority_display': self.get_priority_display(),
             'property': {
-                'id': self.property.id,
-                'title': self.property.title,
-            } if self.property else None,
+                'id': self.maintenance_property.id,
+                'title': self.maintenance_property.title,
+            } if self.maintenance_property else None,
             'category': self.category.to_dict() if self.category else None,
             'requested_by': {
                 'id': self.requested_by.id,
@@ -2530,21 +2662,21 @@ class Expense(BaseModel):
         ('rejected', _('مرفوض')),
     ]
 
-    # Relationships - Standardized to 'property'
-    property = models.ForeignKey(
+    # Relationships - Using 'expense_property' to avoid conflict with @property decorator
+    expense_property = models.ForeignKey(
         'Property', 
         on_delete=models.CASCADE, 
         related_name='expenses', 
         verbose_name=_('العقار')
     )
-    rental_property = models.ForeignKey(
-        'RentalProperty', 
-        on_delete=models.CASCADE, 
-        null=True, 
-        blank=True,
-        related_name='expenses', 
-        verbose_name=_('العقار الإيجاري')
-    )
+    # rental_property = models.ForeignKey(
+    #     'RentalProperty', 
+    #     on_delete=models.CASCADE, 
+    #     null=True, 
+    #     blank=True,
+    #     related_name='expenses', 
+    #     verbose_name=_('العقار الإيجاري')
+    # )
     category = models.ForeignKey(
         'ExpenseCategory', 
         on_delete=models.SET_NULL, 
@@ -2719,7 +2851,7 @@ class Expense(BaseModel):
         verbose_name_plural = _('المصاريف')
         ordering = ['-expense_date']
         indexes = [
-            models.Index(fields=['property', 'expense_date']),
+            models.Index(fields=['expense_property', 'expense_date']),
             models.Index(fields=['status']),
             models.Index(fields=['expense_type']),
             models.Index(fields=['payment_date']),
@@ -2733,22 +2865,15 @@ class Expense(BaseModel):
     def __str__(self):
         return f"{self.title} - {self.amount} {self.currency}"
 
+    def clean(self):
+        super().clean()
+        if self.minimum_bid and self.market_value and self.minimum_bid > self.market_value:
+            raise ValidationError(_('Minimum bid cannot be higher than market value'))
+    
     def save(self, *args, **kwargs):
-        # Auto-calculate total amount if not provided
-        if not self.total_amount:
-            self.total_amount = self.amount + self.tax_amount - self.discount_amount
-        
-        # Set approval requirement based on amount
-        if self.approval_threshold and self.amount >= self.approval_threshold:
-            self.requires_approval = True
-            if self.approval_status == 'not_required':
-                self.approval_status = 'pending'
-        
-        # Update approval date
-        if self.approval_status == 'approved' and not self.approval_date:
-            self.approval_date = timezone.now()
-        
+        self.full_clean()
         super().save(*args, **kwargs)
+
 
     @property
     def is_overdue(self):
@@ -2836,7 +2961,7 @@ class Expense(BaseModel):
         
         # Create new expense
         new_expense = Expense.objects.create(
-            property=self.property,
+            expense_property=self.expense_property,
             rental_property=self.rental_property,
             category=self.category,
             created_by=self.created_by,
@@ -2880,9 +3005,9 @@ class Expense(BaseModel):
             'total_amount': float(self.total_amount),
             'currency': self.currency,
             'property': {
-                'id': self.property.id,
-                'title': self.property.title,
-            } if self.property else None,
+                'id': self.expense_property.id,
+                'title': self.expense_property.title,
+            } if self.expense_property else None,
             'category': self.category.to_dict() if self.category else None,
             'maintenance_request': {
                 'id': self.maintenance_request.id,

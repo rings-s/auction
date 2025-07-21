@@ -49,8 +49,22 @@ class CustomUserManager(BaseUserManager):
 
 class CustomUser(AbstractUser):
     ROLE_CHOICES = [
-        ('owner', _('Property Owner')), ('appraiser', _('Property Appraiser')),
-        ('data_entry', _('Data Entry Specialist')), ('tenant', _('Tenant')), ('user', _('User')),
+        # Original roles
+        ('owner', _('Property Owner')),
+        ('appraiser', _('Property Appraiser')),
+        ('data_entry', _('Data Entry Specialist')),
+        ('tenant', _('Tenant')),
+        ('user', _('User')),
+        
+        # New specialized roles
+        ('administrator', _('System Administrator')),
+        ('manager', _('Property Management Manager')),
+        ('agent', _('Real Estate Agent')),
+        ('auctioneer', _('Auction Specialist')),
+        ('inspector', _('Property Inspector')),
+        ('accountant', _('Financial Accountant')),
+        ('maintenance_manager', _('Maintenance Manager')),
+        ('legal_advisor', _('Legal Advisor')),
     ]
     
     uuid = models.UUIDField(default=uuid.uuid4, editable=False, unique=True, verbose_name=_('UUID'), db_index=True)
@@ -85,7 +99,63 @@ class CustomUser(AbstractUser):
         verbose_name_plural = _('Users')
 
     def has_role(self, role_name):
+        """Check if user has a specific role or is superuser"""
         return self.role == role_name or self.is_superuser
+    
+    def has_any_role(self, role_names):
+        """Check if user has any of the specified roles"""
+        if not isinstance(role_names, (list, tuple)):
+            role_names = [role_names]
+        return self.role in role_names or self.is_superuser
+    
+    def is_admin_level(self):
+        """Check if user has administrative level access"""
+        admin_roles = ['administrator', 'manager']
+        return self.has_any_role(admin_roles)
+    
+    def is_property_professional(self):
+        """Check if user is a property-related professional"""
+        professional_roles = ['appraiser', 'agent', 'inspector', 'auctioneer']
+        return self.has_any_role(professional_roles)
+    
+    def is_financial_role(self):
+        """Check if user has financial/accounting access"""
+        financial_roles = ['accountant', 'legal_advisor']
+        return self.has_any_role(financial_roles)
+    
+    def can_manage_maintenance(self):
+        """Check if user can manage maintenance operations"""
+        maintenance_roles = ['maintenance_manager', 'manager', 'administrator']
+        return self.has_any_role(maintenance_roles)
+    
+    def can_create_auctions(self):
+        """Check if user can create auctions"""
+        auction_roles = ['auctioneer', 'manager', 'administrator', 'owner']
+        return self.has_any_role(auction_roles)
+    
+    def can_manage_properties(self):
+        """Check if user can manage properties"""
+        property_roles = ['owner', 'manager', 'administrator', 'agent']
+        return self.has_any_role(property_roles)
+    
+    def get_role_display_color(self):
+        """Get a color code for the user's role for UI purposes"""
+        color_map = {
+            'administrator': '#dc3545',  # red
+            'manager': '#fd7e14',       # orange
+            'auctioneer': '#6610f2',    # purple
+            'appraiser': '#0d6efd',     # blue
+            'legal_advisor': '#6f42c1', # indigo
+            'agent': '#198754',         # green
+            'owner': '#20c997',         # teal
+            'inspector': '#0dcaf0',     # cyan
+            'accountant': '#ffc107',    # yellow
+            'maintenance_manager': '#6c757d',  # gray
+            'data_entry': '#adb5bd',    # light gray
+            'tenant': '#e9ecef',        # lighter gray
+            'user': '#f8f9fa',          # lightest gray
+        }
+        return color_map.get(self.role, '#6c757d')
 
     def generate_verification_code(self, length=6):
         # Use cryptographically secure random for verification codes
@@ -151,53 +221,106 @@ class CustomUser(AbstractUser):
     def get_dashboard_priority(self):
         """Get user dashboard priority based on role"""
         priority_map = {
-            'owner': 3,
+            # High-level roles
+            'administrator': 5,
+            'manager': 4,
+            'auctioneer': 4,
             'appraiser': 4,
+            'legal_advisor': 4,
+            
+            # Mid-level roles
+            'agent': 3,
+            'owner': 3,
+            'inspector': 3,
+            'accountant': 3,
+            'maintenance_manager': 3,
+            
+            # Basic roles
             'data_entry': 2,
             'tenant': 2,
             'user': 1,
         }
         base_priority = priority_map.get(self.role, 1)
+        
         if self.is_superuser:
-            base_priority = 5
+            base_priority = 6  # Highest priority
         elif self.is_staff:
             base_priority += 1
+            
         return base_priority
 
     def get_accessible_properties(self):
         """Get properties accessible based on user role"""
-        if self.is_superuser or self.role in ['appraiser', 'data_entry']:
-            return Property.objects.all()
-        elif self.role == 'owner':
-            return Property.objects.filter(owner=self)
+        # Full access roles
+        if self.is_superuser or self.role in ['administrator', 'manager', 'appraiser', 'data_entry']:
+            return Property.objects.select_related('owner', 'location').prefetch_related('rooms')
+        
+        # Property ownership roles
+        elif self.role in ['owner', 'agent']:
+            if self.role == 'owner':
+                return Property.objects.select_related('location').prefetch_related('rooms').filter(owner=self)
+            else:  # agent
+                # Agents can see properties they manage (could be extended with agent-property relationships)
+                return Property.objects.select_related('owner', 'location').prefetch_related('rooms').filter(is_published=True)
+        
+        # Specialized access roles
+        elif self.role in ['auctioneer', 'inspector', 'accountant', 'maintenance_manager', 'legal_advisor']:
+            # These roles can see all published properties for their work
+            return Property.objects.filter(is_published=True)
+        
+        # Basic access roles
         elif self.role == 'tenant':
             # Tenants can see properties they are renting (will be implemented with lease relationship)
             return Property.objects.filter(is_published=True)
-        else:
+        
+        else:  # Default for 'user' and unknown roles
             return Property.objects.filter(is_published=True)
 
     def get_accessible_auctions(self):
         """Get auctions accessible based on user role"""
-        if self.is_superuser or self.role == 'appraiser':
-            return Auction.objects.all()
-        elif self.role == 'owner':
-            return Auction.objects.filter(related_property__owner=self)
-        elif self.role == 'tenant':
-            # Tenants can see published auctions
+        # Full access roles
+        if self.is_superuser or self.role in ['administrator', 'manager', 'auctioneer', 'appraiser']:
+            return Auction.objects.select_related('related_property', 'related_property__location', 'related_property__owner')
+        
+        # Property-related roles
+        elif self.role in ['owner', 'agent']:
+            if self.role == 'owner':
+                return Auction.objects.select_related('related_property', 'related_property__location').filter(related_property__owner=self)
+            else:  # agent
+                # Agents can see auctions for properties they manage
+                return Auction.objects.select_related('related_property', 'related_property__location', 'related_property__owner').filter(is_published=True)
+        
+        # Specialized access roles
+        elif self.role in ['inspector', 'accountant', 'legal_advisor']:
+            # These roles can see all published auctions for their work
             return Auction.objects.filter(is_published=True)
-        else:
+        
+        # Basic access roles
+        else:  # tenant, user, data_entry, maintenance_manager, and unknown roles
             return Auction.objects.filter(is_published=True)
 
     def get_accessible_bids(self):
         """Get bids accessible based on user role"""
-        if self.is_superuser or self.role == 'appraiser':
-            return Bid.objects.all()
-        elif self.role == 'owner':
-            return Bid.objects.filter(auction__related_property__owner=self)
-        elif self.role == 'tenant':
-            # Tenants can see their own bids
+        # Full access roles
+        if self.is_superuser or self.role in ['administrator', 'manager', 'auctioneer', 'appraiser']:
+            return Bid.objects.select_related('auction', 'auction__related_property', 'bidder')
+        
+        # Property-related roles
+        elif self.role in ['owner', 'agent']:
+            if self.role == 'owner':
+                return Bid.objects.select_related('auction', 'auction__related_property', 'bidder').filter(auction__related_property__owner=self)
+            else:  # agent
+                # Agents can see bids for auctions they manage (could be extended with agent relationships)
+                return Bid.objects.select_related('auction', 'auction__related_property', 'bidder').filter(bidder=self)
+        
+        # Specialized access roles
+        elif self.role in ['accountant', 'legal_advisor']:
+            # These roles might need to see bid data for financial/legal purposes
+            # For now, restrict to their own bids, but this could be expanded
             return Bid.objects.filter(bidder=self)
-        else:
+        
+        # Basic access roles
+        else:  # tenant, user, data_entry, inspector, maintenance_manager, and unknown roles
             return Bid.objects.filter(bidder=self)
 
 
@@ -266,31 +389,31 @@ class UserProfile(models.Model):
         return f"Profile for {self.user.email}"
     
     def save(self, *args, **kwargs):
+        from base.utils import process_profile_image, validate_image_file, log_model_action
+        
         # Process profile image if it's an image file
         if self.profile_image and not self.pk:
             try:
-                img = Image.open(self.profile_image)
+                # Validate image file first
+                validate_image_file(self.profile_image)
                 
-                # Resize image if too large
-                if img.height > 800 or img.width > 800:
-                    output_size = (800, 800)
-                    img.thumbnail(output_size, Image.Resampling.LANCZOS)
-                    
-                    # Save the processed image
-                    output = BytesIO()
-                    img_format = 'JPEG' if self.profile_image.name.lower().endswith('.jpg') else 'PNG'
-                    img.save(output, format=img_format, quality=85)
-                    output.seek(0)
-                    
-                    # Replace the file with optimized version
-                    self.profile_image.save(
-                        self.profile_image.name,
-                        ContentFile(output.read()),
-                        save=False
-                    )
+                # Process image using shared utility
+                processed_image = process_profile_image(self.profile_image)
+                
+                # Replace the file with optimized version
+                self.profile_image.save(
+                    self.profile_image.name,
+                    processed_image,
+                    save=False
+                )
+                
+                log_model_action('UserProfile', 'profile_image_processed', user=self.user, object_id=self.pk)
+                
             except Exception as e:
                 # Handle gracefully if not an image or processing fails
-                pass
+                import logging
+                logger = logging.getLogger(__name__)
+                logger.error(f"Error processing profile image: {str(e)}")
         
         super().save(*args, **kwargs)
     

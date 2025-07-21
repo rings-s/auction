@@ -44,6 +44,28 @@ class BaseDetailView(generics.RetrieveUpdateDestroyAPIView):
         context.update({"request": self.request})
         return context
 
+class BaseCreateView(generics.CreateAPIView):
+    def get_serializer_context(self):
+        context = super().get_serializer_context()
+        context.update({"request": self.request})
+        return context
+
+class BaseAPIView(APIView):
+    """Base API view with common functionality"""
+    permission_classes = [drf_permissions.IsAuthenticated]
+    
+    def handle_exception(self, exc):
+        logger.error(f"Error in {self.__class__.__name__}: {str(exc)}")
+        return super().handle_exception(exc)
+
+class BaseDashboardView(generics.ListAPIView):
+    """Base dashboard view with common dashboard functionality"""
+    
+    def get_serializer_context(self):
+        context = super().get_serializer_context()
+        context.update({"request": self.request})
+        return context
+
 # Location Views
 class LocationListCreateView(BaseListCreateView):
     queryset = Location.objects.all()
@@ -62,7 +84,7 @@ class LocationDetailView(BaseDetailView):
         return [drf_permissions.AllowAny()] if self.request.method in SAFE_METHODS else [IsAdminUser()]
 
 # Media Views
-class MediaListCreateView(generics.ListCreateAPIView):
+class MediaListCreateView(BaseListCreateView):
     """
     API endpoint for listing media files or uploading new ones.
     Media can be linked to various models (Property, Auction, etc.) via GenericForeignKey.
@@ -121,7 +143,7 @@ class MediaListCreateView(generics.ListCreateAPIView):
                 status=status.HTTP_400_BAD_REQUEST
             )
 
-class MediaDetailView(generics.RetrieveUpdateDestroyAPIView):
+class MediaDetailView(BaseDetailView):
     """
     API endpoint for managing a specific media file.
     """
@@ -227,7 +249,7 @@ class AuctionDetailView(BaseDetailView):
 class AuctionSlugDetailView(AuctionDetailView):
     lookup_field = 'slug'
 
-class AuctionStatusView(APIView):
+class AuctionStatusView(BaseAPIView):
     """Simple endpoint to check and update auction status"""
     permission_classes = [drf_permissions.AllowAny]
     
@@ -375,11 +397,11 @@ class MessageDetailView(BaseDetailView):
         serializer = self.get_serializer(instance)
         return Response(serializer.data)
 
-class MessageReplyView(generics.CreateAPIView):
+class MessageReplyView(BaseCreateView):
     serializer_class = MessageReplySerializer
     permission_classes = [drf_permissions.IsAuthenticated, CanSendMessages]
 
-class PropertyOwnerContactView(generics.CreateAPIView):
+class PropertyOwnerContactView(BaseCreateView):
     serializer_class = MessageSerializer
     permission_classes = [drf_permissions.IsAuthenticated, CanSendMessages]
 
@@ -407,7 +429,7 @@ class PropertyOwnerContactView(generics.CreateAPIView):
         
         return Response(serializer.data, status=status.HTTP_201_CREATED)
 
-class MessageStatsView(APIView):
+class MessageStatsView(BaseAPIView):
     """API endpoint to get message statistics for user"""
     permission_classes = [drf_permissions.IsAuthenticated]
 
@@ -437,13 +459,24 @@ class MessageStatsView(APIView):
 
 
 
-class UserDashboardView(APIView):
-    """Main dashboard view for authenticated users"""
-    permission_classes = [drf_permissions.IsAuthenticated, CanAccessDashboard]
+class UserDashboardView(BaseAPIView):
+    """Enhanced main dashboard view for authenticated users"""
     
     def get(self, request):
         user = request.user
         
+        # Get cached or calculate new metrics
+        dashboard_data = DashboardMetrics.get_or_calculate(
+            user=user,
+            metric_type='user_dashboard',
+            calculator_func=self._calculate_user_dashboard,
+            expires_in_hours=1
+        )
+        
+        return Response(dashboard_data)
+    
+    def _calculate_user_dashboard(self, user):
+        """Calculate comprehensive user dashboard data"""
         # Get user-accessible data based on role
         properties = user.get_accessible_properties()
         auctions = user.get_accessible_auctions()
@@ -455,67 +488,279 @@ class UserDashboardView(APIView):
         month_ago = now - timedelta(days=30)
         
         # Property statistics
-        property_stats = {
+        property_stats = self._calculate_property_stats(properties, week_ago, month_ago)
+        
+        # Auction statistics
+        auction_stats = self._calculate_auction_stats(auctions, week_ago, month_ago)
+        
+        # Bid statistics
+        bid_stats = self._calculate_bid_stats(bids, week_ago, month_ago)
+        
+        # Rental management statistics (if applicable)
+        rental_stats = self._calculate_rental_stats(user, properties)
+        
+        # Maintenance statistics
+        maintenance_stats = self._calculate_maintenance_stats(user, properties)
+        
+        # Financial summary
+        financial_stats = self._calculate_financial_stats(user, properties)
+        
+        # Recent activity
+        recent_activity = self._get_recent_activity_data(user, week_ago)
+        
+        # Alerts and notifications
+        alerts = self._get_user_alerts(user)
+        
+        return {
+            'user_info': {
+                'id': user.id,
+                'role': user.role,
+                'role_display': user.get_role_display(),
+                'dashboard_priority': user.get_dashboard_priority(),
+            },
+            'property_stats': property_stats,
+            'auction_stats': auction_stats,
+            'bid_stats': bid_stats,
+            'rental_stats': rental_stats,
+            'maintenance_stats': maintenance_stats,
+            'financial_stats': financial_stats,
+            'recent_activity': recent_activity,
+            'alerts': alerts,
+            'last_updated': timezone.now().isoformat(),
+        }
+    
+    def _calculate_property_stats(self, properties, week_ago, month_ago):
+        """Calculate property statistics"""
+        return {
             'total_properties': properties.count(),
             'published_properties': properties.filter(is_published=True).count(),
             'draft_properties': properties.filter(is_published=False).count(),
             'featured_properties': properties.filter(is_featured=True).count(),
             'verified_properties': properties.filter(is_verified=True).count(),
-            'properties_value': properties.aggregate(Sum('market_value'))['market_value__sum'] or 0,
+            'properties_value': float(properties.aggregate(Sum('market_value'))['market_value__sum'] or 0),
+            'recent_properties': properties.filter(created_at__gte=week_ago).count(),
+            'monthly_properties': properties.filter(created_at__gte=month_ago).count(),
+            'avg_property_value': float(properties.aggregate(Avg('market_value'))['market_value__avg'] or 0),
+            'status_breakdown': {
+                'available': properties.filter(status='available').count(),
+                'under_contract': properties.filter(status='under_contract').count(),
+                'sold': properties.filter(status='sold').count(),
+                'auction': properties.filter(status='auction').count(),
+            },
+            'type_breakdown': list(properties.values('property_type').annotate(
+                count=Count('id'),
+                avg_value=Avg('market_value')
+            ).order_by('-count'))
         }
-        
-        # Auction statistics
-        auction_stats = {
+    
+    def _calculate_auction_stats(self, auctions, week_ago, month_ago):
+        """Calculate auction statistics"""
+        return {
             'total_auctions': auctions.count(),
             'active_auctions': auctions.filter(status='live').count(),
             'scheduled_auctions': auctions.filter(status='scheduled').count(),
             'ended_auctions': auctions.filter(status='ended').count(),
+            'completed_auctions': auctions.filter(status='completed').count(),
+            'recent_auctions': auctions.filter(created_at__gte=week_ago).count(),
+            'monthly_auctions': auctions.filter(created_at__gte=month_ago).count(),
+            'total_auction_value': float(auctions.aggregate(Sum('current_bid'))['current_bid__sum'] or 0),
+            'avg_starting_bid': float(auctions.aggregate(Avg('starting_bid'))['starting_bid__avg'] or 0),
         }
-        
-        # Bid statistics
-        bid_stats = {
+    
+    def _calculate_bid_stats(self, bids, week_ago, month_ago):
+        """Calculate bid statistics"""
+        return {
             'total_bids': bids.count(),
             'winning_bids': bids.filter(status='winning').count(),
-            'total_bid_amount': bids.aggregate(Sum('bid_amount'))['bid_amount__sum'] or 0,
-        }
-        
-        # Activity statistics
-        activity_stats = {
-            'recent_properties': properties.filter(created_at__gte=week_ago).count(),
-            'recent_auctions': auctions.filter(created_at__gte=week_ago).count(),
+            'accepted_bids': bids.filter(status='accepted').count(),
+            'total_bid_amount': float(bids.aggregate(Sum('bid_amount'))['bid_amount__sum'] or 0),
             'recent_bids': bids.filter(created_at__gte=week_ago).count(),
-            'messages_unread': Message.objects.filter(recipient=user, status='unread').count(),
+            'monthly_bids': bids.filter(created_at__gte=month_ago).count(),
+            'avg_bid_amount': float(bids.aggregate(Avg('bid_amount'))['bid_amount__avg'] or 0),
         }
+    
+    def _calculate_rental_stats(self, user, properties):
+        """Calculate rental management statistics"""
+        rental_properties = RentalProperty.objects.filter(base_property__in=properties)
         
-        # Role-specific stats
-        role_stats = {}
-        if user.role in ['appraiser', 'data_entry']:
-            role_stats.update({
-                'properties_this_month': properties.filter(created_at__gte=month_ago).count(),
-                'auctions_this_month': auctions.filter(created_at__gte=month_ago).count(),
-                'avg_property_value': properties.aggregate(Avg('market_value'))['market_value__avg'] or 0,
+        if not rental_properties.exists():
+            return {'has_rentals': False}
+        
+        total_units = rental_properties.count()
+        occupied_units = rental_properties.filter(rental_status='rented').count()
+        occupancy_rate = (occupied_units / total_units * 100) if total_units > 0 else 0
+        
+        return {
+            'has_rentals': True,
+            'total_units': total_units,
+            'occupied_units': occupied_units,
+            'available_units': rental_properties.filter(rental_status='available').count(),
+            'maintenance_units': rental_properties.filter(rental_status='maintenance').count(),
+            'occupancy_rate': round(occupancy_rate, 2),
+            'total_monthly_rent': float(rental_properties.aggregate(Sum('monthly_rent'))['monthly_rent__sum'] or 0),
+            'occupied_monthly_rent': float(rental_properties.filter(rental_status='rented').aggregate(Sum('monthly_rent'))['monthly_rent__sum'] or 0),
+        }
+    
+    def _calculate_maintenance_stats(self, user, properties):
+        """Calculate maintenance statistics"""
+        maintenance_requests = MaintenanceRequest.objects.filter(property__in=properties)
+        
+        return {
+            'total_requests': maintenance_requests.count(),
+            'pending_requests': maintenance_requests.filter(status='pending').count(),
+            'in_progress_requests': maintenance_requests.filter(status='in_progress').count(),
+            'completed_requests': maintenance_requests.filter(status='completed').count(),
+            'urgent_requests': maintenance_requests.filter(priority='urgent').count(),
+            'overdue_requests': maintenance_requests.filter(
+                due_date__lt=timezone.now(),
+                status__in=['pending', 'assigned', 'in_progress']
+            ).count(),
+            'total_maintenance_cost': float(maintenance_requests.filter(
+                status='completed'
+            ).aggregate(Sum('actual_cost'))['actual_cost__sum'] or 0),
+        }
+    
+    def _calculate_financial_stats(self, user, properties):
+        """Calculate financial statistics"""
+        current_month = timezone.now().replace(day=1)
+        current_year = timezone.now().replace(month=1, day=1)
+        
+        # Get expenses
+        monthly_expenses = Expense.objects.filter(
+            property__in=properties,
+            expense_date__gte=current_month
+        ).aggregate(total=Sum('total_amount'))['total'] or 0
+        
+        yearly_expenses = Expense.objects.filter(
+            property__in=properties,
+            expense_date__gte=current_year
+        ).aggregate(total=Sum('total_amount'))['total'] or 0
+        
+        # Get rental income
+        rental_income = RentalProperty.objects.filter(
+            base_property__in=properties,
+            rental_status='rented'
+        ).aggregate(total=Sum('monthly_rent'))['total'] or 0
+        
+        return {
+            'monthly_expenses': float(monthly_expenses),
+            'yearly_expenses': float(yearly_expenses),
+            'monthly_rental_income': float(rental_income),
+            'annual_rental_income': float(rental_income * 12),
+            'net_monthly_income': float(rental_income) - float(monthly_expenses),
+            'property_value': float(properties.aggregate(Sum('market_value'))['market_value__sum'] or 0),
+        }
+    
+    def _get_recent_activity_data(self, user, week_ago):
+        """Get recent activity data"""
+        activities = []
+        
+        # Recent properties
+        recent_properties = user.get_accessible_properties().filter(created_at__gte=week_ago)[:5]
+        for prop in recent_properties:
+            activities.append({
+                'type': 'property',
+                'title': f'New Property: {prop.title}',
+                'timestamp': prop.created_at,
+                'id': prop.id,
             })
         
-        # Combine all stats
-        dashboard_data = {
-            'user_priority': user.get_dashboard_priority(),
-            'user_role': user.role,
-            'user_role_display': user.get_role_display(),
-            **property_stats,
-            **auction_stats,
-            **bid_stats,
-            **activity_stats,
-            **role_stats,
-        }
+        # Recent auctions
+        recent_auctions = user.get_accessible_auctions().filter(created_at__gte=week_ago)[:5]
+        for auction in recent_auctions:
+            activities.append({
+                'type': 'auction',
+                'title': f'New Auction: {auction.title}',
+                'timestamp': auction.created_at,
+                'id': auction.id,
+            })
         
-        serializer = UserDashboardStatsSerializer(dashboard_data)
-        return Response(serializer.data)
+        # Recent bids
+        recent_bids = user.get_accessible_bids().filter(created_at__gte=week_ago)[:5]
+        for bid in recent_bids:
+            activities.append({
+                'type': 'bid',
+                'title': f'Bid: ${bid.bid_amount:,.2f}',
+                'timestamp': bid.created_at,
+                'id': bid.id,
+            })
+        
+        # Sort by timestamp
+        activities.sort(key=lambda x: x['timestamp'], reverse=True)
+        return activities[:10]
+    
+    def _get_user_alerts(self, user):
+        """Get user alerts and notifications"""
+        alerts = []
+        properties = user.get_accessible_properties()
+        
+        # Maintenance alerts
+        urgent_maintenance = MaintenanceRequest.objects.filter(
+            property__in=properties,
+            priority='urgent',
+            status__in=['pending', 'assigned']
+        ).count()
+        
+        if urgent_maintenance > 0:
+            alerts.append({
+                'type': 'urgent',
+                'message': f'{urgent_maintenance} urgent maintenance requests need attention',
+                'count': urgent_maintenance
+            })
+        
+        # Lease expiration alerts
+        if hasattr(user, 'owned_properties'):
+            rental_properties = RentalProperty.objects.filter(base_property__in=properties)
+            next_month = timezone.now().date() + timedelta(days=30)
+            
+            expiring_leases = Lease.objects.filter(
+                rental_property__in=rental_properties,
+                status='active',
+                end_date__lte=next_month
+            ).count()
+            
+            if expiring_leases > 0:
+                alerts.append({
+                    'type': 'warning',
+                    'message': f'{expiring_leases} leases expiring in the next 30 days',
+                    'count': expiring_leases
+                })
+        
+        # Auction ending alerts
+        ending_auctions = user.get_accessible_auctions().filter(
+            status='live',
+            end_date__lte=timezone.now() + timedelta(hours=24)
+        ).count()
+        
+        if ending_auctions > 0:
+            alerts.append({
+                'type': 'info',
+                'message': f'{ending_auctions} auctions ending in the next 24 hours',
+                'count': ending_auctions
+            })
+        
+        return alerts
 
-class SystemDashboardView(APIView):
-    """System-wide dashboard for admins and appraisers"""
+
+class SystemDashboardView(BaseAPIView):
+    """Enhanced system-wide dashboard for admins and appraisers"""
     permission_classes = [drf_permissions.IsAuthenticated, CanAccessAdvancedDashboard]
     
     def get(self, request):
+        user = request.user
+        
+        # Get cached or calculate system metrics
+        dashboard_data = DashboardMetrics.get_or_calculate(
+            user=user,
+            metric_type='system_dashboard',
+            calculator_func=self._calculate_system_dashboard,
+            expires_in_hours=2  # System data can be cached longer
+        )
+        
+        return Response(dashboard_data)
+    
+    def _calculate_system_dashboard(self, user):
+        """Calculate system-wide dashboard metrics"""
         now = timezone.now()
         today = now.date()
         week_ago = now - timedelta(days=7)
@@ -527,6 +772,7 @@ class SystemDashboardView(APIView):
             'verified_users': User.objects.filter(is_verified=True).count(),
             'active_users_today': User.objects.filter(last_login__date=today).count(),
             'new_users_this_week': User.objects.filter(date_joined__gte=week_ago).count(),
+            'user_roles': list(User.objects.values('role').annotate(count=Count('id')).order_by('-count')),
         }
         
         # Property statistics
@@ -534,9 +780,11 @@ class SystemDashboardView(APIView):
         property_stats = {
             'total_properties': properties.count(),
             'published_properties': properties.filter(is_published=True).count(),
+            'verified_properties': properties.filter(is_verified=True).count(),
             'properties_this_month': properties.filter(created_at__gte=month_ago).count(),
-            'avg_property_value': properties.aggregate(Avg('market_value'))['market_value__avg'] or 0,
-            'highest_property_value': properties.aggregate(Max('market_value'))['market_value__max'] or 0,
+            'avg_property_value': float(properties.aggregate(Avg('market_value'))['market_value__avg'] or 0),
+            'highest_property_value': float(properties.aggregate(Max('market_value'))['market_value__max'] or 0),
+            'total_property_value': float(properties.aggregate(Sum('market_value'))['market_value__sum'] or 0),
         }
         
         # Auction statistics
@@ -545,7 +793,8 @@ class SystemDashboardView(APIView):
             'total_auctions': auctions.count(),
             'active_auctions': auctions.filter(status='live').count(),
             'completed_auctions': auctions.filter(status='completed').count(),
-            'total_auction_value': auctions.aggregate(Sum('current_bid'))['current_bid__sum'] or 0,
+            'total_auction_value': float(auctions.aggregate(Sum('current_bid'))['current_bid__sum'] or 0),
+            'auctions_this_month': auctions.filter(created_at__gte=month_ago).count(),
         }
         
         # Bid statistics
@@ -553,47 +802,67 @@ class SystemDashboardView(APIView):
         bid_stats = {
             'total_bids': bids.count(),
             'unique_bidders': bids.values('bidder').distinct().count(),
-            'total_bid_value': bids.aggregate(Sum('bid_amount'))['bid_amount__sum'] or 0,
-            'avg_bid_amount': bids.aggregate(Avg('bid_amount'))['bid_amount__avg'] or 0,
+            'total_bid_value': float(bids.aggregate(Sum('bid_amount'))['bid_amount__sum'] or 0),
+            'avg_bid_amount': float(bids.aggregate(Avg('bid_amount'))['bid_amount__avg'] or 0),
+            'bids_today': bids.filter(created_at__date=today).count(),
         }
         
         # Activity statistics
         activity_stats = {
-            'bids_today': bids.filter(created_at__date=today).count(),
             'auctions_ending_soon': auctions.filter(
                 end_date__gte=now,
                 end_date__lte=now + timedelta(hours=24),
                 status='live'
             ).count(),
             'pending_verifications': properties.filter(is_verified=False).count(),
+            'maintenance_requests_today': MaintenanceRequest.objects.filter(
+                reported_date__date=today
+            ).count(),
         }
         
         # Geographic statistics
         top_cities = Location.objects.annotate(
             property_count=Count('properties')
-        ).filter(property_count__gt=0).order_by('-property_count')[:5]
+        ).filter(property_count__gt=0).order_by('-property_count')[:10]
         
-        top_cities_data = [
-            {'city': loc.city, 'state': loc.state, 'count': loc.property_count}
+        geographic_stats = [
+            {
+                'city': loc.city,
+                'state': loc.state,
+                'property_count': loc.property_count,
+                'avg_value': float(properties.filter(location=loc).aggregate(
+                    avg=Avg('market_value')
+                )['avg'] or 0)
+            }
             for loc in top_cities
         ]
         
-        # Combine all stats
-        dashboard_data = {
-            **user_stats,
-            **property_stats,
-            **auction_stats,
-            **bid_stats,
-            **activity_stats,
-            'top_cities': top_cities_data,
+        # Financial overview
+        total_expenses = Expense.objects.filter(
+            expense_date__gte=month_ago
+        ).aggregate(total=Sum('total_amount'))['total'] or 0
+        
+        financial_stats = {
+            'monthly_expenses': float(total_expenses),
+            'total_rental_income': float(RentalProperty.objects.filter(
+                rental_status='rented'
+            ).aggregate(total=Sum('monthly_rent'))['total'] or 0) * 12,
         }
         
-        serializer = SystemDashboardStatsSerializer(dashboard_data)
-        return Response(serializer.data)
+        return {
+            'user_stats': user_stats,
+            'property_stats': property_stats,
+            'auction_stats': auction_stats,
+            'bid_stats': bid_stats,
+            'activity_stats': activity_stats,
+            'geographic_stats': geographic_stats,
+            'financial_stats': financial_stats,
+            'last_updated': timezone.now().isoformat(),
+        }
 
-class RecentActivityView(APIView):
+
+class RecentActivityView(BaseAPIView):
     """Recent activity feed for dashboard"""
-    permission_classes = [drf_permissions.IsAuthenticated, CanAccessDashboard]
     
     def get(self, request):
         user = request.user
@@ -652,10 +921,9 @@ class RecentActivityView(APIView):
         serializer = RecentActivitySerializer(activities, many=True)
         return Response(serializer.data)
 
-class DashboardPropertiesView(generics.ListAPIView):
+class DashboardPropertiesView(BaseDashboardView):
     """Properties for dashboard with pagination"""
     serializer_class = PropertyDashboardSerializer
-    permission_classes = [drf_permissions.IsAuthenticated, CanAccessDashboard]
     filter_backends = [filters.SearchFilter, filters.OrderingFilter]
     search_fields = ['title', 'property_number', 'location__city']
     ordering_fields = ['created_at', 'market_value', 'view_count']
@@ -677,10 +945,9 @@ class DashboardPropertiesView(generics.ListAPIView):
             
         return queryset
 
-class DashboardAuctionsView(generics.ListAPIView):
+class DashboardAuctionsView(BaseDashboardView):
     """Auctions for dashboard with pagination"""
     serializer_class = AuctionDashboardSerializer
-    permission_classes = [drf_permissions.IsAuthenticated, CanAccessDashboard]
     filter_backends = [filters.SearchFilter, filters.OrderingFilter]
     search_fields = ['title', 'related_property__title']
     ordering_fields = ['created_at', 'start_date', 'end_date', 'bid_count']
@@ -707,10 +974,9 @@ class DashboardAuctionsView(generics.ListAPIView):
             
         return queryset
 
-class DashboardBidsView(generics.ListAPIView):
+class DashboardBidsView(BaseDashboardView):
     """Bids for dashboard with pagination"""
     serializer_class = BidDashboardSerializer
-    permission_classes = [drf_permissions.IsAuthenticated, CanAccessDashboard]
     filter_backends = [filters.SearchFilter, filters.OrderingFilter]
     search_fields = ['auction__title', 'auction__related_property__title']
     ordering_fields = ['created_at', 'bid_amount', 'bid_time']
@@ -731,6 +997,193 @@ class DashboardBidsView(generics.ListAPIView):
             queryset = queryset.filter(status='winning')
             
         return queryset
+
+
+class DashboardWorkersView(BaseDashboardView):
+    """Dashboard view for worker management"""
+    serializer_class = WorkerBriefSerializer
+    permission_classes = [CanManageWorkers]  # Override base permission
+    filter_backends = [filters.SearchFilter, filters.OrderingFilter]
+    search_fields = ['first_name', 'last_name', 'employee_id']
+    ordering_fields = ['created_at', 'rating', 'total_jobs_completed']
+    ordering = ['-created_at']
+    
+    def get_queryset(self):
+        return Worker.objects.filter(status='active').prefetch_related('categories')
+    
+    def list(self, request, *args, **kwargs):
+        """Enhanced list with dashboard metrics"""
+        queryset = self.get_queryset()
+        
+        # Calculate worker metrics
+        metrics = DashboardMetrics.get_or_calculate(
+            user=request.user,
+            metric_type='worker_dashboard',
+            calculator_func=lambda user: self._calculate_worker_metrics(queryset),
+            expires_in_hours=1
+        )
+        
+        # Get paginated worker list
+        page = self.paginate_queryset(queryset)
+        if page is not None:
+            serializer = self.get_serializer(page, many=True)
+            result = self.get_paginated_response(serializer.data)
+            result.data['metrics'] = metrics
+            return result
+        
+        serializer = self.get_serializer(queryset, many=True)
+        return Response({
+            'workers': serializer.data,
+            'metrics': metrics
+        })
+    
+    def _calculate_worker_metrics(self, queryset):
+        """Calculate worker dashboard metrics"""
+        total_workers = queryset.count()
+        available_workers = queryset.filter(is_available=True).count()
+        
+        # Performance metrics
+        avg_rating = queryset.aggregate(avg=Avg('rating'))['avg'] or 0
+        total_jobs = queryset.aggregate(total=Sum('total_jobs_completed'))['total'] or 0
+        
+        # Category breakdown
+        categories = WorkerCategory.objects.annotate(
+            worker_count=Count('workers', filter=Q(workers__status='active'))
+        ).order_by('-worker_count')[:5]
+        
+        return {
+            'total_workers': total_workers,
+            'available_workers': available_workers,
+            'busy_workers': total_workers - available_workers,
+            'average_rating': round(float(avg_rating), 2),
+            'total_jobs_completed': total_jobs,
+            'top_categories': [
+                {
+                    'name': cat.name,
+                    'worker_count': cat.worker_count,
+                    'hourly_rate_range': {
+                        'min': float(cat.hourly_rate_min),
+                        'max': float(cat.hourly_rate_max)
+                    }
+                }
+                for cat in categories
+            ]
+        }
+
+
+class DashboardCompaniesView(BaseDashboardView):
+    """Dashboard view for property management companies"""
+    serializer_class = PropertyManagementCompanySerializer
+    permission_classes = [drf_permissions.IsAuthenticated, IsAdminUser]
+    filter_backends = [filters.SearchFilter, filters.OrderingFilter]
+    search_fields = ['name', 'registration_number', 'city']
+    ordering = ['-created_at']
+    
+    def get_queryset(self):
+        return PropertyManagementCompany.objects.filter(is_active=True)
+    
+    def list(self, request, *args, **kwargs):
+        """Enhanced list with company metrics"""
+        queryset = self.get_queryset()
+        
+        # Calculate company metrics
+        metrics = {
+            'total_companies': queryset.count(),
+            'verified_companies': queryset.filter(is_verified=True).count(),
+            'total_managed_properties': Property.objects.filter(
+                management_company__in=queryset
+            ).count(),
+            'total_workers': Worker.objects.filter(
+                management_company__in=queryset,
+                status='active'
+            ).count(),
+            'average_rating': float(queryset.aggregate(
+                avg=Avg('rating')
+            )['avg'] or 0),
+        }
+        
+        response = super().list(request, *args, **kwargs)
+        response.data['metrics'] = metrics
+        return response
+
+
+class DashboardAnalyticsView(BaseDashboardView):
+    """Dashboard view for property analytics"""
+    serializer_class = PropertyAnalyticsSerializer
+    permission_classes = [CanAccessPropertyAnalytics]  # Override base permission
+    
+    def get_queryset(self):
+        user = self.request.user
+        accessible_properties = user.get_accessible_properties()
+        return PropertyAnalytics.objects.filter(base_property__in=accessible_properties)
+    
+    def list(self, request, *args, **kwargs):
+        """Enhanced analytics with performance metrics"""
+        queryset = self.get_queryset()
+        
+        # Calculate analytics summary
+        analytics_summary = DashboardMetrics.get_or_calculate(
+            user=request.user,
+            metric_type='analytics_dashboard',
+            calculator_func=lambda user: self._calculate_analytics_summary(queryset),
+            expires_in_hours=2
+        )
+        
+        response = super().list(request, *args, **kwargs)
+        response.data['analytics_summary'] = analytics_summary
+        return response
+    
+    def _calculate_analytics_summary(self, queryset):
+        """Calculate analytics dashboard summary"""
+        if not queryset.exists():
+            return {}
+        
+        return {
+            'total_properties_analyzed': queryset.count(),
+            'average_roi': float(queryset.aggregate(avg=Avg('roi_percentage'))['avg'] or 0),
+            'average_occupancy': float(queryset.aggregate(avg=Avg('occupancy_rate'))['avg'] or 0),
+            'total_revenue': float(queryset.aggregate(total=Sum('total_revenue'))['total'] or 0),
+            'total_expenses': float(queryset.aggregate(total=Sum('total_expenses'))['total'] or 0),
+            'net_income': float(queryset.aggregate(total=Sum('net_income'))['total'] or 0),
+            'best_performing_property': queryset.order_by('-roi_percentage').first(),
+            'worst_performing_property': queryset.order_by('roi_percentage').first(),
+        }
+
+
+class DashboardWorkflowsView(BaseDashboardView):
+    """Dashboard view for maintenance workflows"""
+    serializer_class = PropertyMaintenanceWorkflowSerializer
+    filterset_fields = ['current_status', 'workflow_type']
+    ordering = ['-created_at']
+    
+    def get_queryset(self):
+        user = self.request.user
+        accessible_properties = user.get_accessible_properties()
+        return PropertyMaintenanceWorkflow.objects.filter(
+            maintenance_request__property__in=accessible_properties
+        ).select_related('maintenance_request')
+    
+    def list(self, request, *args, **kwargs):
+        """Enhanced workflow list with status metrics"""
+        queryset = self.get_queryset()
+        
+        # Calculate workflow metrics
+        workflow_metrics = {
+            'total_workflows': queryset.count(),
+            'active_workflows': queryset.exclude(current_status__in=['completed', 'cancelled']).count(),
+            'completed_workflows': queryset.filter(current_status='completed').count(),
+            'escalated_workflows': queryset.filter(escalation_level__gt=0).count(),
+            'average_completion_time': queryset.filter(
+                completion_time__isnull=False
+            ).aggregate(avg=Avg('completion_time'))['avg'],
+            'status_breakdown': list(queryset.values('current_status').annotate(
+                count=Count('id')
+            ).order_by('-count')),
+        }
+        
+        response = super().list(request, *args, **kwargs)
+        response.data['workflow_metrics'] = workflow_metrics
+        return response
 
 
 # -------------------------------------------------------------------------
@@ -1067,7 +1520,6 @@ class ExpenseDetailView(BaseDetailView):
 
 class PropertyAnalyticsView(APIView):
     """Property analytics dashboard"""
-    permission_classes = [drf_permissions.IsAuthenticated, CanAccessDashboard]
     
     def get(self, request, property_id=None):
         try:
@@ -1195,7 +1647,6 @@ class PropertyAnalyticsView(APIView):
 
 class ReportGenerationView(APIView):
     """Generate property management reports"""
-    permission_classes = [drf_permissions.IsAuthenticated, CanAccessDashboard]
     
     def post(self, request):
         report_type = request.data.get('report_type', 'financial')
@@ -1294,7 +1745,6 @@ class ReportGenerationView(APIView):
 class ReportListView(generics.ListAPIView):
     """List generated reports"""
     serializer_class = ReportSerializer
-    permission_classes = [drf_permissions.IsAuthenticated, CanAccessDashboard]
     filterset_fields = ['report_type', 'status']
     ordering = ['-created_at']
     
@@ -1305,7 +1755,6 @@ class ReportListView(generics.ListAPIView):
 class ReportDetailView(generics.RetrieveAPIView):
     """Retrieve specific report"""
     serializer_class = ReportSerializer
-    permission_classes = [drf_permissions.IsAuthenticated, CanAccessDashboard]
     
     def get_queryset(self):
         return Report.objects.filter(generated_by=self.request.user)
@@ -1317,7 +1766,6 @@ class ReportDetailView(generics.RetrieveAPIView):
 
 class DashboardRentalPropertiesView(APIView):
     """Dashboard view for rental properties overview"""
-    permission_classes = [drf_permissions.IsAuthenticated, CanAccessDashboard]
     
     def get(self, request):
         user = request.user
@@ -1361,7 +1809,6 @@ class DashboardRentalPropertiesView(APIView):
 
 class DashboardTenantsView(APIView):
     """Dashboard view for tenants overview"""
-    permission_classes = [drf_permissions.IsAuthenticated, CanAccessDashboard]
     
     def get(self, request):
         user = request.user
@@ -1402,7 +1849,6 @@ class DashboardTenantsView(APIView):
 
 class DashboardLeasesView(APIView):
     """Dashboard view for leases overview"""
-    permission_classes = [drf_permissions.IsAuthenticated, CanAccessDashboard]
     
     def get(self, request):
         user = request.user
@@ -1456,7 +1902,6 @@ class DashboardLeasesView(APIView):
 
 class DashboardMaintenanceView(APIView):
     """Dashboard view for maintenance requests overview"""
-    permission_classes = [drf_permissions.IsAuthenticated, CanAccessDashboard]
     
     def get(self, request):
         user = request.user
@@ -1520,7 +1965,6 @@ class DashboardMaintenanceView(APIView):
 
 class DashboardExpensesView(APIView):
     """Dashboard view for expenses overview"""
-    permission_classes = [drf_permissions.IsAuthenticated, CanAccessDashboard]
     
     def get(self, request):
         user = request.user
@@ -1590,7 +2034,6 @@ class DashboardExpensesView(APIView):
 
 class PropertyManagementAnalyticsView(APIView):
     """Comprehensive analytics view for property management"""
-    permission_classes = [drf_permissions.IsAuthenticated, CanAccessDashboard]
     
     def get(self, request):
         user = request.user
@@ -1699,7 +2142,6 @@ class PropertyManagementAnalyticsView(APIView):
 
 class AdvancedPropertyAnalyticsView(APIView):
     """Enhanced property analytics with heat maps and advanced bar charts"""
-    permission_classes = [drf_permissions.IsAuthenticated, CanAccessDashboard]
     
     def get(self, request):
         try:
@@ -1975,7 +2417,6 @@ class AdvancedPropertyAnalyticsView(APIView):
 
 class WorkerAnalyticsView(APIView):
     """Analytics for worker performance and maintenance management"""
-    permission_classes = [drf_permissions.IsAuthenticated, CanAccessDashboard]
     
     def get(self, request):
         try:
@@ -2138,7 +2579,6 @@ class WorkerAnalyticsView(APIView):
 
 class PaymentAnalyticsView(APIView):
     """Analytics for payment tracking and financial reports"""
-    permission_classes = [drf_permissions.IsAuthenticated, CanAccessDashboard]
     
     def get(self, request):
         try:
@@ -2317,23 +2757,55 @@ class PaymentAnalyticsView(APIView):
 class WorkerCategoryListCreateView(BaseListCreateView):
     queryset = WorkerCategory.objects.filter(is_active=True)
     serializer_class = WorkerCategorySerializer
-    permission_classes = [drf_permissions.IsAuthenticated, CanAccessDashboard]
     filterset_fields = ['is_active']
     search_fields = ['name', 'description']
 
 class WorkerCategoryDetailView(BaseDetailView):
     queryset = WorkerCategory.objects.all()
     serializer_class = WorkerCategorySerializer
-    permission_classes = [drf_permissions.IsAuthenticated, CanAccessDashboard]
 
 class WorkerListCreateView(BaseListCreateView):
-    queryset = Worker.objects.all()
+    queryset = Worker.objects.select_related('management_company').prefetch_related('categories', 'property_assignments__assigned_property')
     serializer_class = WorkerSerializer
-    permission_classes = [drf_permissions.IsAuthenticated, CanAccessDashboard]
     filterset_fields = ['status', 'employment_type', 'is_available', 'categories']
     search_fields = ['first_name', 'last_name', 'employee_id', 'email', 'phone']
 
 class WorkerDetailView(BaseDetailView):
-    queryset = Worker.objects.all()
+    queryset = Worker.objects.select_related('management_company').prefetch_related('categories', 'property_assignments__assigned_property')
     serializer_class = WorkerSerializer
-    permission_classes = [drf_permissions.IsAuthenticated, CanAccessDashboard]
+
+
+
+
+
+class PropertyManagementCompanyListCreateView(BaseListCreateView):
+    queryset = PropertyManagementCompany.objects.filter(is_active=True)
+    serializer_class = PropertyManagementCompanySerializer
+    permission_classes = [drf_permissions.IsAuthenticated, IsAdminUser]
+    search_fields = ['name', 'registration_number', 'city']
+
+class PropertyManagementCompanyDetailView(BaseDetailView):
+    queryset = PropertyManagementCompany.objects.prefetch_related('workers', 'managed_properties')
+    serializer_class = PropertyManagementCompanySerializer
+    permission_classes = [drf_permissions.IsAuthenticated, IsAdminUser]
+
+class WorkerPropertyAssignmentListCreateView(BaseListCreateView):
+    queryset = WorkerPropertyAssignment.objects.select_related('worker', 'worker__management_company', 'assigned_property', 'assigned_property__location')
+    serializer_class = WorkerPropertyAssignmentSerializer
+    permission_classes = [CanManageWorkers]  # Override base permission
+    filterset_fields = ['worker', 'property', 'is_active', 'status']
+
+class WorkerPropertyAssignmentDetailView(BaseDetailView):
+    queryset = WorkerPropertyAssignment.objects.select_related('worker', 'worker__management_company', 'assigned_property', 'assigned_property__location')
+    serializer_class = WorkerPropertyAssignmentSerializer
+    permission_classes = [CanManageWorkers]  # Override base permission
+
+class PropertyMaintenanceWorkflowListView(generics.ListAPIView):
+    queryset = PropertyMaintenanceWorkflow.objects.select_related('property', 'property__location', 'assigned_to', 'created_by').prefetch_related('maintenance_requests')
+    serializer_class = PropertyMaintenanceWorkflowSerializer
+    filterset_fields = ['current_status', 'workflow_type']
+
+class PropertyMaintenanceWorkflowDetailView(BaseDetailView):
+    queryset = PropertyMaintenanceWorkflow.objects.select_related('property', 'property__location', 'assigned_to', 'created_by').prefetch_related('maintenance_requests')
+    serializer_class = PropertyMaintenanceWorkflowSerializer
+    # Permission handled by BaseDashboardView

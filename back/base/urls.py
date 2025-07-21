@@ -116,5 +116,21 @@ urlpatterns = [
     path('workers/categories/<int:pk>/', views.WorkerCategoryDetailView.as_view(), name='worker-category'),
     path('workers/', views.WorkerListCreateView.as_view(), name='workers'),
     path('workers/<int:pk>/', views.WorkerDetailView.as_view(), name='worker'),
+
+
+    path('management-companies/', views.PropertyManagementCompanyListCreateView.as_view(), name='management-companies'),
+    path('management-companies/<int:pk>/', views.PropertyManagementCompanyDetailView.as_view(), name='management-company'),
+    
+    # Worker Property Assignments (missing)
+    path('worker-assignments/', views.WorkerPropertyAssignmentListCreateView.as_view(), name='worker-assignments'),
+    path('worker-assignments/<int:pk>/', views.WorkerPropertyAssignmentDetailView.as_view(), name='worker-assignment'),
+    
+    # Property Management Workflow (missing)
+    path('maintenance/workflows/', views.PropertyMaintenanceWorkflowListView.as_view(), name='maintenance-workflows'),
+    path('maintenance/workflows/<int:pk>/', views.PropertyMaintenanceWorkflowDetailView.as_view(), name='maintenance-workflow'),
+    
+    # Lease attachments and documents
+    # TODO: Implement LeaseDocumentListView
+    # path('leases/<int:lease_id>/documents/', views.LeaseDocumentListView.as_view(), name='lease-documents'),
     
 ]
