@@ -185,41 +185,40 @@
 	<meta name="description" content={$t('dashboard.description')} />
 </svelte:head>
 
-<div class="min-h-screen">
-	<div class="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
-		<!-- Header -->
-		<div class="mb-6">
-			<div class="flex flex-col sm:flex-row sm:items-center sm:justify-between">
-				<div>
-					<h1 class="text-xl font-semibold text-gray-900">
-						{$t('dashboard.title')}
-					</h1>
-					<p class="mt-1 text-sm text-gray-600">
-						{$t('dashboard.welcome', { name: $user?.first_name || $user?.email })}
-					</p>
-				</div>
+<div class="p-6">
+	<!-- Header -->
+	<div class="mb-6">
+		<div class="flex flex-col sm:flex-row sm:items-center sm:justify-between">
+			<div>
+				<h1 class="text-xl font-semibold text-gray-900 dark:text-white">
+					{$t('dashboard.title')}
+				</h1>
+				<p class="mt-1 text-sm text-gray-600 dark:text-gray-400">
+					{$t('dashboard.welcome', { name: $user?.first_name || $user?.email })}
+				</p>
+			</div>
 
-				<div class="mt-4 flex items-center space-x-3 sm:mt-0">
-					{#if $canAccessSystemDashboard}
-						<Button variant="outline" size="compact" href="/dashboard/system">
-							{$t('dashboard.systemDashboard')}
-						</Button>
-					{/if}
-
-					<Button variant="outline" size="compact" loading={refreshing} onClick={handleRefresh}>
-						{$t('common.refresh')}
+			<div class="mt-4 flex items-center space-x-3 sm:mt-0">
+				{#if $canAccessSystemDashboard}
+					<Button variant="outline" size="compact" href="/dashboard/system">
+						{$t('dashboard.systemDashboard')}
 					</Button>
-				</div>
+				{/if}
+
+				<Button variant="outline" size="compact" loading={refreshing} onClick={handleRefresh}>
+					{$t('common.refresh')}
+				</Button>
 			</div>
 		</div>
+	</div>
 
-		<!-- Error Alert -->
-		{#if error}
-			<Alert type="error" title={$t('error.title')} message={error} dismissible class="mb-6" />
-		{/if}
+	<!-- Error Alert -->
+	{#if error}
+		<Alert type="error" title={$t('error.title')} message={error} dismissible class="mb-6" />
+	{/if}
 
-		<!-- Main Dashboard Content -->
-		<div class="grid grid-cols-1 gap-6 lg:grid-cols-4">
+	<!-- Main Dashboard Content -->
+	<div class="grid grid-cols-1 gap-6 lg:grid-cols-4">
 			<!-- Stats Overview -->
 			<div class="space-y-6 lg:col-span-3">
 				<!-- Key Metrics -->
@@ -601,5 +600,4 @@
 				</div>
 			</div>
 		</div>
-	</div>
 </div>

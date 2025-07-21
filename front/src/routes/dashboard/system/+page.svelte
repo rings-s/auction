@@ -77,8 +77,7 @@
 	<title>{$t('dashboard.systemDashboard')} - {$t('app.name')}</title>
 </svelte:head>
 
-<div class="min-h-screen">
-	<div class="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
+<div class="p-6">
 		<!-- Header -->
 		<div class="mb-6">
 			<Breadcrumb items={breadcrumbItems} class="mb-4" />
@@ -318,5 +317,4 @@
 				</div>
 			</div>
 		{/if}
-	</div>
 </div>

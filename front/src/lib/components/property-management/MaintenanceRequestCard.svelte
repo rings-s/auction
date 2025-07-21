@@ -1,6 +1,6 @@
 <script>
 	import { createEventDispatcher } from 'svelte';
-	import { getTranslation } from '$lib/i18n/index.js';
+	import { t } from '$lib/i18n';
 	import { formatCurrency } from '$lib/utils/currency.js';
 	import Button from '$lib/components/ui/Button.svelte';
 
@@ -15,7 +15,6 @@
 	/** @type {boolean} */
 	export let loading = false;
 
-	$: t = getTranslation;
 	$: property = request?.property;
 	$: category = request?.category;
 	$: requestedBy = request?.requested_by;

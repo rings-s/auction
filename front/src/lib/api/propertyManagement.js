@@ -1,4 +1,4 @@
-import { apiClient } from '$lib/utils/api.js';
+import { api } from '$lib/utils/api.js';
 
 /**
  * Property Management API Service
@@ -12,32 +12,32 @@ import { apiClient } from '$lib/utils/api.js';
 export const rentalPropertyAPI = {
 	// Get all rental properties with filtering and pagination
 	getAll: async (params = {}) => {
-		return await apiClient.get('/rental-properties/', { params });
+		return await api.get('/rental-properties/', { params });
 	},
 
 	// Get specific rental property
 	get: async (id) => {
-		return await apiClient.get(`/rental-properties/${id}/`);
+		return await api.get(`/rental-properties/${id}/`);
 	},
 
 	// Create new rental property
 	create: async (data) => {
-		return await apiClient.post('/rental-properties/', data);
+		return await api.post('/rental-properties/', data);
 	},
 
 	// Update rental property
 	update: async (id, data) => {
-		return await apiClient.put(`/rental-properties/${id}/`, data);
+		return await api.put(`/rental-properties/${id}/`, data);
 	},
 
 	// Partially update rental property
 	patch: async (id, data) => {
-		return await apiClient.patch(`/rental-properties/${id}/`, data);
+		return await api.patch(`/rental-properties/${id}/`, data);
 	},
 
 	// Delete rental property
 	delete: async (id) => {
-		return await apiClient.delete(`/rental-properties/${id}/`);
+		return await api.delete(`/rental-properties/${id}/`);
 	}
 };
 
@@ -48,32 +48,32 @@ export const rentalPropertyAPI = {
 export const tenantsAPI = {
 	// Get all tenants with filtering
 	getAll: async (params = {}) => {
-		return await apiClient.get('/tenants/', { params });
+		return await api.get('/tenants/', { params });
 	},
 
 	// Get specific tenant
 	get: async (id) => {
-		return await apiClient.get(`/tenants/${id}/`);
+		return await api.get(`/tenants/${id}/`);
 	},
 
 	// Create new tenant
 	create: async (data) => {
-		return await apiClient.post('/tenants/', data);
+		return await api.post('/tenants/', data);
 	},
 
 	// Update tenant
 	update: async (id, data) => {
-		return await apiClient.put(`/tenants/${id}/`, data);
+		return await api.put(`/tenants/${id}/`, data);
 	},
 
 	// Partially update tenant
 	patch: async (id, data) => {
-		return await apiClient.patch(`/tenants/${id}/`, data);
+		return await api.patch(`/tenants/${id}/`, data);
 	},
 
 	// Delete tenant
 	delete: async (id) => {
-		return await apiClient.delete(`/tenants/${id}/`);
+		return await api.delete(`/tenants/${id}/`);
 	}
 };
 
@@ -84,32 +84,32 @@ export const tenantsAPI = {
 export const leasesAPI = {
 	// Get all leases with filtering
 	getAll: async (params = {}) => {
-		return await apiClient.get('/leases/', { params });
+		return await api.get('/leases/', { params });
 	},
 
 	// Get specific lease
 	get: async (id) => {
-		return await apiClient.get(`/leases/${id}/`);
+		return await api.get(`/leases/${id}/`);
 	},
 
 	// Create new lease
 	create: async (data) => {
-		return await apiClient.post('/leases/', data);
+		return await api.post('/leases/', data);
 	},
 
 	// Update lease
 	update: async (id, data) => {
-		return await apiClient.put(`/leases/${id}/`, data);
+		return await api.put(`/leases/${id}/`, data);
 	},
 
 	// Partially update lease
 	patch: async (id, data) => {
-		return await apiClient.patch(`/leases/${id}/`, data);
+		return await api.patch(`/leases/${id}/`, data);
 	},
 
 	// Delete lease
 	delete: async (id) => {
-		return await apiClient.delete(`/leases/${id}/`);
+		return await api.delete(`/leases/${id}/`);
 	}
 };
 
@@ -121,41 +121,41 @@ export const maintenanceAPI = {
 	// Categories
 	categories: {
 		getAll: async (params = {}) => {
-			return await apiClient.get('/maintenance/categories/', { params });
+			return await api.get('/maintenance/categories/', { params });
 		},
 		get: async (id) => {
-			return await apiClient.get(`/maintenance/categories/${id}/`);
+			return await api.get(`/maintenance/categories/${id}/`);
 		},
 		create: async (data) => {
-			return await apiClient.post('/maintenance/categories/', data);
+			return await api.post('/maintenance/categories/', data);
 		},
 		update: async (id, data) => {
-			return await apiClient.put(`/maintenance/categories/${id}/`, data);
+			return await api.put(`/maintenance/categories/${id}/`, data);
 		},
 		delete: async (id) => {
-			return await apiClient.delete(`/maintenance/categories/${id}/`);
+			return await api.delete(`/maintenance/categories/${id}/`);
 		}
 	},
 
 	// Requests
 	requests: {
 		getAll: async (params = {}) => {
-			return await apiClient.get('/maintenance/requests/', { params });
+			return await api.get('/maintenance/requests/', { params });
 		},
 		get: async (id) => {
-			return await apiClient.get(`/maintenance/requests/${id}/`);
+			return await api.get(`/maintenance/requests/${id}/`);
 		},
 		create: async (data) => {
-			return await apiClient.post('/maintenance/requests/', data);
+			return await api.post('/maintenance/requests/', data);
 		},
 		update: async (id, data) => {
-			return await apiClient.put(`/maintenance/requests/${id}/`, data);
+			return await api.put(`/maintenance/requests/${id}/`, data);
 		},
 		patch: async (id, data) => {
-			return await apiClient.patch(`/maintenance/requests/${id}/`, data);
+			return await api.patch(`/maintenance/requests/${id}/`, data);
 		},
 		delete: async (id) => {
-			return await apiClient.delete(`/maintenance/requests/${id}/`);
+			return await api.delete(`/maintenance/requests/${id}/`);
 		}
 	}
 };
@@ -168,41 +168,41 @@ export const expensesAPI = {
 	// Categories
 	categories: {
 		getAll: async (params = {}) => {
-			return await apiClient.get('/expenses/categories/', { params });
+			return await api.get('/expenses/categories/', { params });
 		},
 		get: async (id) => {
-			return await apiClient.get(`/expenses/categories/${id}/`);
+			return await api.get(`/expenses/categories/${id}/`);
 		},
 		create: async (data) => {
-			return await apiClient.post('/expenses/categories/', data);
+			return await api.post('/expenses/categories/', data);
 		},
 		update: async (id, data) => {
-			return await apiClient.put(`/expenses/categories/${id}/`, data);
+			return await api.put(`/expenses/categories/${id}/`, data);
 		},
 		delete: async (id) => {
-			return await apiClient.delete(`/expenses/categories/${id}/`);
+			return await api.delete(`/expenses/categories/${id}/`);
 		}
 	},
 
 	// Expenses
 	expenses: {
 		getAll: async (params = {}) => {
-			return await apiClient.get('/expenses/', { params });
+			return await api.get('/expenses/', { params });
 		},
 		get: async (id) => {
-			return await apiClient.get(`/expenses/${id}/`);
+			return await api.get(`/expenses/${id}/`);
 		},
 		create: async (data) => {
-			return await apiClient.post('/expenses/', data);
+			return await api.post('/expenses/', data);
 		},
 		update: async (id, data) => {
-			return await apiClient.put(`/expenses/${id}/`, data);
+			return await api.put(`/expenses/${id}/`, data);
 		},
 		patch: async (id, data) => {
-			return await apiClient.patch(`/expenses/${id}/`, data);
+			return await api.patch(`/expenses/${id}/`, data);
 		},
 		delete: async (id) => {
-			return await apiClient.delete(`/expenses/${id}/`);
+			return await api.delete(`/expenses/${id}/`);
 		}
 	}
 };
@@ -215,22 +215,22 @@ export const analyticsAPI = {
 	// Get analytics for all properties or specific property
 	getAnalytics: async (propertyId = null) => {
 		const url = propertyId ? `/analytics/${propertyId}/` : '/analytics/';
-		return await apiClient.get(url);
+		return await api.get(url);
 	},
 
 	// Generate report
 	generateReport: async (data) => {
-		return await apiClient.post('/reports/generate/', data);
+		return await api.post('/reports/generate/', data);
 	},
 
 	// Get all reports
 	getReports: async (params = {}) => {
-		return await apiClient.get('/reports/', { params });
+		return await api.get('/reports/', { params });
 	},
 
 	// Get specific report
 	getReport: async (id) => {
-		return await apiClient.get(`/reports/${id}/`);
+		return await api.get(`/reports/${id}/`);
 	}
 };
 

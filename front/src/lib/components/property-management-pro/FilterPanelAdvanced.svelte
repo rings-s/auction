@@ -1,6 +1,6 @@
 <script>
 	import { createEventDispatcher } from 'svelte';
-	import { getTranslation } from '$lib/i18n/index.js';
+	import { t } from '$lib/i18n';
 	import Button from '$lib/components/ui/Button.svelte';
 	import FormField from '$lib/components/ui/FormField.svelte';
 
@@ -9,7 +9,6 @@
 	/** @type {Object} */
 	export let activeFilters = {};
 
-	$: t = getTranslation;
 
 	// Filter state
 	let occupancyFilter = activeFilters.occupancy_status || '';

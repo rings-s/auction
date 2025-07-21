@@ -781,6 +781,10 @@ export const enTranslations = {
 		description: 'Manage your properties, auctions, and account',
 		welcome: 'Welcome back, {name}!',
 
+		// Enhanced Navigation Descriptions
+		overview: 'Overview',
+		overviewDesc: 'Dashboard overview and key metrics',
+		
 		// Stats
 		totalProperties: 'Total Properties',
 		totalAuctions: 'Total Auctions',
@@ -798,10 +802,14 @@ export const enTranslations = {
 
 		// Actions
 		quickActions: 'Quick Actions',
+		quickActionsDesc: 'Common actions and shortcuts',
 		browseProperties: 'Browse Properties',
 		viewAuctions: 'View Auctions',
 		addProperty: 'Add Property',
 		createAuction: 'Create Auction',
+		advancedActions: 'Advanced Actions',
+		createNewProperty: 'Create new property listing',
+		startNewAuction: 'Start new auction campaign',
 
 		// Activity
 		recentActivity: 'Recent Activity',
@@ -810,6 +818,7 @@ export const enTranslations = {
 		// System
 		systemDashboard: 'System Dashboard',
 		userPriority: 'User Priority',
+		priorityLevel: 'Priority Level {level}',
 
 		// Properties
 		properties: 'My Properties',
@@ -830,6 +839,36 @@ export const enTranslations = {
 		manageBids: 'View and manage your bids',
 		noBids: 'No bids found',
 		noBidsDesc: "You haven't placed any bids yet. Browse active auctions to start bidding.",
+
+		// Analytics
+		analytics: 'Analytics',
+		analyticsDesc: 'Performance insights and reports',
+
+		// Payments
+		payments: 'Payments',
+		paymentsDesc: 'Manage payment transactions',
+		totalPayments: 'Total Payments',
+		recentPayments: 'Recent Payments',
+
+		// Workers
+		workers: 'Workers',
+		workersDesc: 'Manage workers and assignments',
+		activeWorkers: 'Active Workers',
+		recentWorkers: 'Recent Workers',
+
+		// Bank Accounts
+		bankAccounts: 'Bank Accounts',
+		bankAccountsDesc: 'Manage bank account information',
+
+		// Additional Stats
+		totalRevenue: 'Total Revenue',
+		occupancyRate: 'Occupancy Rate',
+		pendingPayments: 'Pending Payments',
+		utilizationRate: 'Utilization Rate',
+		comprehensiveAnalytics: 'Comprehensive Analytics',
+		analyticsDescription: 'View detailed performance metrics',
+		activeInsights: 'active insights',
+		viewAnalytics: 'View Analytics',
 
 		// Status
 		verified: 'Verified',
@@ -987,6 +1026,39 @@ export const enTranslations = {
 		passwordVisible: 'Password is visible',
 		passwordHidden: 'Password is hidden',
 
+		// Enhanced Auth UI
+		welcomeBack: 'Welcome back!',
+		getStarted: 'Get started with your account',
+		secureLogin: 'Secure login to your dashboard',
+		joinCommunity: 'Join our growing community',
+		forgotPasswordHelp: 'Enter your email and we\'ll send you reset instructions',
+		verificationHelp: 'We sent a 6-digit code to your email address',
+		codeNotReceived: 'Didn\'t receive the code?',
+		checkSpamFolder: 'Check your spam folder or',
+		loginSuccess: 'Login successful! Redirecting...',
+		loginFailed: 'Login failed. Please check your credentials.',
+		registrationProgress: 'Creating your account...',
+		verificationProgress: 'Verifying your account...',
+		passwordResetProgress: 'Sending reset instructions...',
+
+		// Form Labels and Placeholders
+		emailPlaceholder: 'Enter your email address',
+		passwordPlaceholder: 'Enter your password',
+		firstNamePlaceholder: 'Enter your first name',
+		lastNamePlaceholder: 'Enter your last name',
+		phoneNumberPlaceholder: 'Enter your phone number',
+		confirmPasswordPlaceholder: 'Confirm your password',
+		verificationCodePlaceholder: 'Enter 6-digit code',
+		resetCodePlaceholder: 'Enter reset code',
+
+		// Role Descriptions
+		roleDescriptions: {
+			user: 'Basic account with access to browse and bid on auctions',
+			owner: 'Property owner account to list and manage properties',
+			appraiser: 'Professional appraiser account with valuation tools',
+			dataEntry: 'Data entry specialist with bulk editing capabilities'
+		},
+
 		// Account Status
 		accountStatus: {
 			active: 'Active',
@@ -1004,6 +1076,21 @@ export const enTranslations = {
 			activeSession: 'Active Sessions',
 			changePassword: 'Change Password',
 			deleteAccount: 'Delete Account'
+		},
+
+		// Step Indicators
+		steps: {
+			accountInfo: 'Account Information',
+			verification: 'Email Verification', 
+			completed: 'Setup Complete'
+		},
+
+		// Success Messages
+		successMessages: {
+			accountCreated: 'Account created successfully!',
+			emailVerified: 'Email verified successfully!',
+			passwordReset: 'Password reset successfully!',
+			profileUpdated: 'Profile updated successfully!'
 		}
 	},
 

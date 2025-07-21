@@ -1,5 +1,5 @@
 <script>
-	import { getTranslation } from '$lib/i18n/index.js';
+	import { t } from '$lib/i18n';
 	import Button from '$lib/components/ui/Button.svelte';
 
 	/** @type {Object} */
@@ -8,7 +8,6 @@
 	// Event handlers
 	let onremove = $props();
 
-	let t = $derived(getTranslation);
 
 	let toastElement = $state();
 	let isVisible = $state(false);

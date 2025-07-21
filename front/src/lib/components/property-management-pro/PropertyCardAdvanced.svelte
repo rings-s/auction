@@ -1,6 +1,6 @@
 <script>
 	import { formatCurrency } from '$lib/utils/currency.js';
-	import { getTranslation } from '$lib/i18n/index.js';
+	import { t } from '$lib/i18n';
 	import Button from '$lib/components/ui/Button.svelte';
 	import FadeInUp from '$lib/components/animations/FadeInUp.svelte';
 	import CountUp from '$lib/components/animations/CountUp.svelte';
@@ -18,7 +18,6 @@
 	/** @type {number} */
 	let index = $props(0);
 
-	let t = $derived(getTranslation);
 	let rentalInfo = $derived(property?.rental_info);
 	let occupancyStatus = $derived(rentalInfo?.occupancy_rate >= 100 ? 'occupied' : 'available');
 	let tenantCount = $derived(rentalInfo?.current_tenant_count || 0);

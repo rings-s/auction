@@ -9,7 +9,7 @@ export default defineConfig({
 		port: 5173,
 		watch: { usePolling: true, interval: 1000 },
 		cors: true,
-		allowedHosts: ['auction.pinealdevelopers.com'],
+		// allowedHosts: ['auction.pinealdevelopers.com'],
 		fs: {
 			strict: false
 		}

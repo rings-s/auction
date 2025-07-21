@@ -5,6 +5,10 @@ import re
 from django.conf import settings
 from django.utils import timezone
 from django.utils.deprecation import MiddlewareMixin
+from django.shortcuts import redirect
+from django.urls import reverse
+from django.contrib import messages
+from django.http import HttpResponseForbidden
 
 logger = logging.getLogger(__name__)
 
@@ -112,6 +116,109 @@ class LoginTrackingMiddleware(MiddlewareMixin):
                 request.user_agent = request.META.get('HTTP_USER_AGENT', 'Unknown')
             except Exception as e:
                 logger.error(f"Error setting login tracking attributes: {str(e)}")
+        
+        return None
+
+
+class SuperuserOnlyAdminMiddleware(MiddlewareMixin):
+    """
+    ✅ NEW: Middleware to ensure only superusers can access Django admin panel
+    Provides enhanced security by restricting admin access to superusers only
+    """
+    
+    def __init__(self, get_response):
+        self.get_response = get_response
+        super().__init__(get_response)
+        
+    def process_request(self, request):
+        """Process request to check admin access permissions"""
+        # Check if request is for admin panel
+        if request.path.startswith('/admin/'):
+            try:
+                # Allow admin login page and admin root page for all authenticated users
+                if request.path in ['/admin/login/', '/admin/', '/admin/logout/']:
+                    return None
+                    
+                # Allow static admin files
+                if '/admin/static/' in request.path or '/admin/jsi18n/' in request.path:
+                    return None
+                
+                # Check if user is authenticated
+                if request.user.is_authenticated:
+                    # Check if user is superuser
+                    if not request.user.is_superuser:
+                        logger.warning(
+                            f"Non-superuser {request.user.email} attempted to access admin: {request.path}"
+                        )
+                        
+                        # Create a more user-friendly error response
+                        error_html = f"""
+                        <!DOCTYPE html>
+                        <html>
+                        <head>
+                            <title>Access Denied - Admin Panel</title>
+                            <style>
+                                body {{ 
+                                    font-family: Arial, sans-serif; 
+                                    text-align: center; 
+                                    padding: 50px; 
+                                    background-color: #f8f9fa;
+                                }}
+                                .error-container {{ 
+                                    max-width: 500px; 
+                                    margin: 0 auto; 
+                                    background: white; 
+                                    padding: 30px; 
+                                    border-radius: 8px; 
+                                    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+                                }}
+                                .error-title {{ 
+                                    color: #dc3545; 
+                                    font-size: 24px; 
+                                    margin-bottom: 20px;
+                                }}
+                                .error-message {{ 
+                                    color: #6c757d; 
+                                    font-size: 16px; 
+                                    margin-bottom: 20px;
+                                }}
+                                .back-link {{ 
+                                    color: #007bff; 
+                                    text-decoration: none; 
+                                    font-size: 14px;
+                                }}
+                                .back-link:hover {{ 
+                                    text-decoration: underline; 
+                                }}
+                            </style>
+                        </head>
+                        <body>
+                            <div class="error-container">
+                                <h1 class="error-title">🚫 Access Denied</h1>
+                                <p class="error-message">
+                                    Only superusers can access the admin panel.<br>
+                                    Your account ({request.user.email}) does not have sufficient privileges.
+                                </p>
+                                <p class="error-message">
+                                    Please contact your administrator if you believe this is an error.
+                                </p>
+                                <a href="/" class="back-link">← Return to Homepage</a>
+                            </div>
+                        </body>
+                        </html>
+                        """
+                        
+                        return HttpResponseForbidden(error_html)
+                        
+                # Redirect unauthenticated users to admin login
+                else:
+                    logger.info(f"Unauthenticated user redirected to admin login from: {request.path}")
+                    return redirect('admin:login')
+                    
+            except Exception as e:
+                logger.error(f"Error in SuperuserOnlyAdminMiddleware: {str(e)}")
+                # In case of error, allow the request to proceed (fail open for safety)
+                return None
         
         return None
 

@@ -1,12 +1,11 @@
 <script>
 	import { onMount } from 'svelte';
 	import { goto } from '$app/navigation';
-	import { getTranslation } from '$lib/i18n/index.js';
+	import { t } from '$lib/i18n';
 	import { userStore } from '$lib/stores/user.js';
 	import RentalPropertyList from '$lib/components/property-management/RentalPropertyList.svelte';
 	import Alert from '$lib/components/ui/Alert.svelte';
 
-	$: t = getTranslation;
 	$: user = $userStore;
 
 	// Check if user has permission to access property management

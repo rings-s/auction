@@ -1,6 +1,6 @@
 <script>
 	import { createEventDispatcher, onMount } from 'svelte';
-	import { getTranslation } from '$lib/i18n/index.js';
+	import { t } from '$lib/i18n';
 	import Button from '$lib/components/ui/Button.svelte';
 
 	const dispatch = createEventDispatcher();
@@ -12,7 +12,6 @@
 	/** @type {boolean} */
 	export let showSuggestions = true;
 
-	$: t = getTranslation;
 
 	let searchInput = '';
 	let searchInputElement;

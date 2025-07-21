@@ -2,7 +2,7 @@
 	import { onMount } from 'svelte';
 	import { goto } from '$app/navigation';
 	import { page } from '$app/stores';
-	import { getTranslation } from '$lib/i18n/index.js';
+	import { t } from '$lib/i18n';
 	import { userStore } from '$lib/stores/user.js';
 	import Button from '$lib/components/ui/Button.svelte';
 	import StatCard from '$lib/components/dashboard/StatCard.svelte';
@@ -30,8 +30,7 @@
 		monthlyRevenue: 0
 	};
 
-	$: t = getTranslation;
-	$: user = $userStore;
+		$: user = $userStore;
 
 	// Check if user has permission to access property management
 	$: hasAccess =

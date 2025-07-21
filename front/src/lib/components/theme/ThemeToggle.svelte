@@ -1,5 +1,5 @@
 <script>
-	import { getTranslation } from '$lib/i18n/index.js';
+	import { t } from '$lib/i18n';
 	import { theme, effectiveTheme, systemTheme } from './ThemeProvider.svelte';
 	import Button from '$lib/components/ui/Button.svelte';
 	import FadeInUp from '$lib/components/animations/FadeInUp.svelte';
@@ -15,7 +15,6 @@
 	/** @type {boolean} */
 	let animate = $props(true);
 
-	let t = $derived(getTranslation);
 
 	let showDropdown = $state(false);
 

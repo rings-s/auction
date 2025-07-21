@@ -1,87 +1,68 @@
 #!/bin/bash
 
-# Exit on any error
-set -e
-
 echo "🚀 Starting Django application..."
 
-# Wait for database to be ready with exponential backoff
-echo "⏳ Waiting for database..."
-wait_for_service() {
-    local host=$1
-    local port=$2
-    local service_name=$3
-    local max_attempts=30
-    local attempt=1
-    local sleep_time=1
+# Wait for PostgreSQL to be ready
+echo "⏳ Waiting for PostgreSQL..."
+while ! nc -z db 5432; do
+  echo "PostgreSQL is unavailable - sleeping"
+  sleep 1
+done
+echo "✅ PostgreSQL is up and running!"
 
-    while [ $attempt -le $max_attempts ]; do
-        if nc -z $host $port; then
-            echo "✅ $service_name is ready!"
-            return 0
-        fi
-        echo "⏳ Waiting for $service_name... (attempt $attempt/$max_attempts)"
-        sleep $sleep_time
-        attempt=$((attempt + 1))
-        sleep_time=$((sleep_time > 8 ? 8 : sleep_time * 2))
-    done
-    
-    echo "❌ Failed to connect to $service_name after $max_attempts attempts"
-    exit 1
-}
+# Wait for Redis to be ready
+echo "⏳ Waiting for Redis..."
+while ! nc -z redis 6379; do
+  echo "Redis is unavailable - sleeping"
+  sleep 1
+done
+echo "✅ Redis is up and running!"
 
-wait_for_service "db" "5432" "database"
-wait_for_service "redis" "6379" "Redis"
+# Create cache table for database cache
+echo "📦 Creating cache table..."
+python manage.py createcachetable || echo "Cache table already exists or using Redis cache"
 
-# Run migrations only if needed
-echo "📊 Checking database migrations..."
-if python manage.py showmigrations --plan | grep -q '\[ \]'; then
-    echo "📊 Running database migrations..."
-    python manage.py makemigrations
-    python manage.py migrate
-else
-    echo "✅ Database migrations up to date"
-fi
+# Run database migrations
+echo "🔄 Running database migrations..."
+python manage.py makemigrations
+python manage.py migrate
 
-# Create cache table for database cache backend
-echo "🗄️ Creating cache table..."
-python manage.py createcachetable cache_table || echo "Cache table already exists or using different cache backend"
+# Collect static files
+echo "📦 Collecting static files..."
+python manage.py collectstatic --noinput
 
-# Collect static files only if needed
-echo "📦 Checking static files..."
-if [ ! -d "/app/staticfiles" ] || [ -z "$(ls -A /app/staticfiles)" ]; then
-    echo "📦 Collecting static files..."
-    python manage.py collectstatic --noinput
-else
-    echo "✅ Static files already collected"
-fi
-
-# Create superuser if it doesn't exist using environment variables
-echo "👑 Creating superuser..."
-python manage.py shell << EOF
+# Create superuser if it doesn't exist
+echo "👤 Creating superuser..."
+python manage.py shell << 'EOF'
 from django.contrib.auth import get_user_model
 import os
 
 User = get_user_model()
-admin_email = os.getenv('ADMIN_EMAIL', 'admin@auction.com')
-admin_password = os.getenv('ADMIN_PASSWORD', 'admin123')
 
-if not User.objects.filter(email=admin_email).exists():
+# Create superuser with environment variables or defaults
+superuser_email = os.getenv('DJANGO_SUPERUSER_EMAIL', 'admin@auction.com')
+superuser_password = os.getenv('DJANGO_SUPERUSER_PASSWORD', 'SecurePass123!')
+superuser_first_name = os.getenv('DJANGO_SUPERUSER_FIRST_NAME', 'Admin')
+superuser_last_name = os.getenv('DJANGO_SUPERUSER_LAST_NAME', 'User')
+
+if not User.objects.filter(email=superuser_email).exists():
     User.objects.create_superuser(
-        email=admin_email,
-        password=admin_password,
-        first_name='Admin',
-        last_name='User'
+        email=superuser_email,
+        password=superuser_password,
+        first_name=superuser_first_name,
+        last_name=superuser_last_name,
+        is_staff=True,
+        is_superuser=True
     )
-    print(f'✅ Superuser created: {admin_email}')
+    print(f"✅ Superuser created: {superuser_email}")
 else:
-    print(f'✅ Superuser already exists: {admin_email}')
+    print(f"✅ Superuser already exists: {superuser_email}")
 EOF
 
-# Start the application
-echo "🌟 Starting Django development server..."
+# Start the Django development server
+echo "🔥 Starting Django server..."
 if [ "$DEBUG" = "true" ]; then
-    echo "🔥 Running in DEBUG mode"
+    echo "🛠️  Running in DEBUG mode"
     python manage.py runserver 0.0.0.0:8000
 else
     echo "🚀 Running in PRODUCTION mode with Gunicorn"

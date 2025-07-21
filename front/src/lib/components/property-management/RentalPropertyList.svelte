@@ -1,7 +1,7 @@
 <script>
 	import { onMount, createEventDispatcher } from 'svelte';
 	import { rentalPropertyAPI } from '$lib/api/propertyManagement.js';
-	import { getTranslation } from '$lib/i18n/index.js';
+	import { t } from '$lib/i18n';
 	import RentalPropertyCard from './RentalPropertyCard.svelte';
 	import LoadingSkeleton from '$lib/components/ui/LoadingSkeleton.svelte';
 	import EmptyState from '$lib/components/ui/EmptyState.svelte';
@@ -37,8 +37,7 @@
 	let totalCount = 0;
 	let totalPages = 0;
 
-	$: t = getTranslation;
-	$: hasFilters = searchQuery || occupancyFilter || propertyTypeFilter || minRent || maxRent;
+		$: hasFilters = searchQuery || occupancyFilter || propertyTypeFilter || minRent || maxRent;
 
 	onMount(() => {
 		loadProperties();

@@ -1,7 +1,7 @@
 <script>
 	import { onMount, createEventDispatcher } from 'svelte';
 	import { rentalPropertyAPI } from '$lib/api/propertyManagement.js';
-	import { getTranslation } from '$lib/i18n/index.js';
+	import { t } from '$lib/i18n';
 	import PropertyCardAdvanced from './PropertyCardAdvanced.svelte';
 	import FilterPanelAdvanced from './FilterPanelAdvanced.svelte';
 	import SearchBarAdvanced from './SearchBarAdvanced.svelte';
@@ -44,7 +44,6 @@
 	let searchTimeout;
 	let lastSearchQuery = '';
 
-	$: t = getTranslation;
 	$: hasActiveFilters = Object.keys(activeFilters).length > 0 || searchQuery;
 	$: gridClasses = getGridClasses(viewMode);
 

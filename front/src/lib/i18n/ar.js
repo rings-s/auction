@@ -1027,6 +1027,39 @@ export const arTranslations = {
 		passwordVisible: 'كلمة المرور مرئية',
 		passwordHidden: 'كلمة المرور مخفية',
 
+		// Enhanced Auth UI
+		welcomeBack: 'مرحباً بعودتك!',
+		getStarted: 'ابدأ مع حسابك',
+		secureLogin: 'تسجيل دخول آمن إلى لوحة التحكم',
+		joinCommunity: 'انضم إلى مجتمعنا المتنامي',
+		forgotPasswordHelp: 'أدخل بريدك الإلكتروني وسنرسل لك تعليمات إعادة التعيين',
+		verificationHelp: 'أرسلنا رمزاً مكوناً من 6 أرقام إلى عنوان بريدك الإلكتروني',
+		codeNotReceived: 'لم تستلم الرمز؟',
+		checkSpamFolder: 'تحقق من مجلد الرسائل المزعجة أو',
+		loginSuccess: 'تم تسجيل الدخول بنجاح! جاري التوجيه...',
+		loginFailed: 'فشل تسجيل الدخول. يرجى التحقق من بياناتك.',
+		registrationProgress: 'جاري إنشاء حسابك...',
+		verificationProgress: 'جاري التحقق من حسابك...',
+		passwordResetProgress: 'جاري إرسال تعليمات إعادة التعيين...',
+
+		// Form Labels and Placeholders
+		emailPlaceholder: 'أدخل عنوان بريدك الإلكتروني',
+		passwordPlaceholder: 'أدخل كلمة المرور',
+		firstNamePlaceholder: 'أدخل اسمك الأول',
+		lastNamePlaceholder: 'أدخل اسم العائلة',
+		phoneNumberPlaceholder: 'أدخل رقم هاتفك',
+		confirmPasswordPlaceholder: 'تأكيد كلمة المرور',
+		verificationCodePlaceholder: 'أدخل الرمز المكون من 6 أرقام',
+		resetCodePlaceholder: 'أدخل رمز إعادة التعيين',
+
+		// Role Descriptions
+		roleDescriptions: {
+			user: 'حساب أساسي مع إمكانية التصفح والمزايدة في المزادات',
+			owner: 'حساب مالك عقار لإدراج وإدارة العقارات',
+			appraiser: 'حساب مقيم عقاري مهني مع أدوات التقييم',
+			dataEntry: 'أخصائي إدخال بيانات مع قدرات التحرير المجمع'
+		},
+
 		// Account Status
 		accountStatus: {
 			active: 'نشط',
@@ -1054,6 +1087,21 @@ export const arTranslations = {
 			activeSession: 'الجلسات النشطة',
 			changePassword: 'تغيير كلمة المرور',
 			deleteAccount: 'حذف الحساب'
+		},
+
+		// Step Indicators
+		steps: {
+			accountInfo: 'معلومات الحساب',
+			verification: 'التحقق من البريد الإلكتروني',
+			completed: 'اكتمال الإعداد'
+		},
+
+		// Success Messages
+		successMessages: {
+			accountCreated: 'تم إنشاء الحساب بنجاح!',
+			emailVerified: 'تم التحقق من البريد الإلكتروني بنجاح!',
+			passwordReset: 'تم إعادة تعيين كلمة المرور بنجاح!',
+			profileUpdated: 'تم تحديث الملف الشخصي بنجاح!'
 		}
 	},
 
@@ -1168,6 +1216,10 @@ export const arTranslations = {
 		description: 'إدارة العقارات والمزادات والحساب',
 		welcome: 'مرحباً بعودتك، {name}!',
 
+		// Enhanced Navigation Descriptions
+		overview: 'نظرة عامة',
+		overviewDesc: 'نظرة عامة على لوحة التحكم والمقاييس الرئيسية',
+		
 		// Stats
 		totalProperties: 'إجمالي العقارات',
 		totalAuctions: 'إجمالي المزادات',
@@ -1185,11 +1237,14 @@ export const arTranslations = {
 
 		// Actions
 		quickActions: 'إجراءات سريعة',
+		quickActionsDesc: 'الإجراءات الشائعة والاختصارات',
 		browseProperties: 'تصفح العقارات',
 		viewAuctions: 'عرض المزادات',
 		addProperty: 'إضافة عقار',
-
 		createAuction: 'إنشاء مزاد',
+		advancedActions: 'إجراءات متقدمة',
+		createNewProperty: 'إنشاء قائمة عقار جديدة',
+		startNewAuction: 'بدء حملة مزاد جديدة',
 
 		// Activity
 		recentActivity: 'النشاط الأخير',
@@ -1200,6 +1255,7 @@ export const arTranslations = {
 		// System
 		systemDashboard: 'لوحة تحكم النظام',
 		userPriority: 'أولوية المستخدم',
+		priorityLevel: 'مستوى الأولوية {level}',
 
 		// Properties
 		properties: 'عقاراتي',
@@ -1218,6 +1274,36 @@ export const arTranslations = {
 		manageBids: 'عرض وإدارة مزايداتك',
 		noBids: 'لم يتم العثور على مزايدات',
 		noBidsDesc: 'لم تقم بتقديم أي مزايدات بعد. تصفح المزادات النشطة لبدء المزايدة.',
+
+		// Analytics
+		analytics: 'التحليلات',
+		analyticsDesc: 'رؤى الأداء والتقارير',
+
+		// Payments
+		payments: 'المدفوعات',
+		paymentsDesc: 'إدارة معاملات الدفع',
+		totalPayments: 'إجمالي المدفوعات',
+		recentPayments: 'المدفوعات الأخيرة',
+
+		// Workers
+		workers: 'العمال',
+		workersDesc: 'إدارة العمال والمهام',
+		activeWorkers: 'العمال النشطون',
+		recentWorkers: 'العمال الجدد',
+
+		// Bank Accounts
+		bankAccounts: 'الحسابات البنكية',
+		bankAccountsDesc: 'إدارة معلومات الحسابات البنكية',
+
+		// Additional Stats
+		totalRevenue: 'إجمالي الإيرادات',
+		occupancyRate: 'معدل الإشغال',
+		pendingPayments: 'المدفوعات المعلقة',
+		utilizationRate: 'معدل الاستغلال',
+		comprehensiveAnalytics: 'التحليلات الشاملة',
+		analyticsDescription: 'عرض مقاييس الأداء التفصيلية',
+		activeInsights: 'رؤى نشطة',
+		viewAnalytics: 'عرض التحليلات',
 
 		// Status
 		verified: 'موثق',

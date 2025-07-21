@@ -1,7 +1,7 @@
 <script>
 	import { onMount, onDestroy } from 'svelte';
 	import { analyticsAPI } from '$lib/api/propertyManagement.js';
-	import { getTranslation } from '$lib/i18n/index.js';
+	import { t } from '$lib/i18n';
 	import { formatCurrency } from '$lib/utils/currency.js';
 	import LoadingSkeleton from '$lib/components/ui/LoadingSkeleton.svelte';
 	import Alert from '$lib/components/ui/Alert.svelte';
@@ -26,8 +26,7 @@
 	let occupancyChart;
 	let roiChart;
 
-	$: t = getTranslation;
-	$: pageTitle =
+		$: pageTitle =
 		title || (propertyId ? $t('analytics.propertyAnalytics') : $t('analytics.portfolioAnalytics'));
 
 	onMount(() => {

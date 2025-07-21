@@ -70,21 +70,21 @@ print(f"🔥 ALLOWED_HOSTS: {ALLOWED_HOSTS}")
 
 # DATABASE CONFIGURATION
 # ======================
-# def get_database_config():
-    # """Get database configuration based on environment"""
+def get_database_config():
+    """Get database configuration based on environment"""
     
-    # # Default values for local development
-    # default_config = {
-    #     'ENGINE': 'django.db.backends.postgresql',
-    #     'NAME': os.getenv('DB_NAME', 'auction'),
-    #     'USER': os.getenv('DB_USER', 'postgres'),
-    #     'PASSWORD': os.getenv('DB_PASSWORD', 'postgres'),
-    #     'PORT': os.getenv('DB_PORT', '5432'),
-    #     'CONN_MAX_AGE': 60,
-    #     'OPTIONS': {
-    #         'connect_timeout': 10,
-    #     }
-    # }
+    # Default values for local development
+    default_config = {
+        'ENGINE': 'django.db.backends.postgresql',
+        'NAME': os.getenv('DB_NAME', 'auction'),
+        'USER': os.getenv('DB_USER', 'postgres'),
+        'PASSWORD': os.getenv('DB_PASSWORD', 'postgres'),
+        'PORT': os.getenv('DB_PORT', '5432'),
+        'CONN_MAX_AGE': 60,
+        'OPTIONS': {
+            'connect_timeout': 10,
+        }
+    }
     
 
 def get_database_config():
@@ -223,6 +223,7 @@ INSTALLED_APPS = [
     'base',
 ]
 
+# Add to MIDDLEWARE in back/back/settings.py
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
     'corsheaders.middleware.CorsMiddleware',
@@ -235,6 +236,7 @@ MIDDLEWARE = [
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
     'accounts.middleware.RequestLogMiddleware',
     'accounts.middleware.LoginTrackingMiddleware',
+    'accounts.middleware.SuperuserOnlyAdminMiddleware',  # ✅ NEW: Superuser only admin access
 ]
 
 ROOT_URLCONF = 'back.urls'

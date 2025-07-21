@@ -1,6 +1,7 @@
 <script>
 	import '../app.css';
 	import { onMount } from 'svelte';
+	import { page } from '$app/stores';
 	import { theme } from '$lib/stores/theme';
 	import { locale } from '$lib/i18n';
 	import { user } from '$lib/stores/user';
@@ -15,6 +16,7 @@
 	// Reactive variables
 	$: currentLocale = $locale;
 	$: isArabic = currentLocale === 'ar';
+	$: isDashboardPage = $page.url.pathname.startsWith('/dashboard');
 
 	let loading = true;
 	let error = null;
@@ -75,7 +77,7 @@
 	<title>Real Estate Auction Platform</title>
 </svelte:head>
 
-<div class="flex min-h-screen flex-col transition-colors duration-200 dark:bg-gray-800">
+<div class="{isDashboardPage ? 'min-h-screen transition-colors duration-200 dark:bg-gray-800' : 'flex min-h-screen flex-col transition-colors duration-200 dark:bg-gray-800'}">
 	{#if error}
 		<div class="flex min-h-screen items-center justify-center bg-red-50 dark:bg-red-900/20">
 			<div class="p-8 text-center">
@@ -98,13 +100,17 @@
 			></div>
 		</div>
 	{:else}
-		<Navbar />
+		{#if !isDashboardPage}
+			<Navbar />
+		{/if}
 
-		<main class="flex-grow">
+		<main class="flex-grow {isDashboardPage ? '' : ''}">
 			<slot />
 		</main>
 
-		<Footer />
+		{#if !isDashboardPage}
+			<Footer />
+		{/if}
 
 		<ToastContainer />
 	{/if}

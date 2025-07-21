@@ -2,7 +2,6 @@
 <script>
 	import { onMount } from 'svelte';
 	import { t } from '$lib/i18n';
-	import DashboardLayout from '$lib/components/dashboard/DashboardLayout.svelte';
 	import AnalyticsDashboard from '$lib/components/analytics/AnalyticsDashboard.svelte';
 	import Breadcrumb from '$lib/components/ui/Breadcrumb.svelte';
 
@@ -19,12 +18,10 @@
 	<meta name="description" content={$t('analytics.dashboardDescription')} />
 </svelte:head>
 
-<DashboardLayout>
-	<div class="space-y-6">
-		<!-- Breadcrumb -->
-		<Breadcrumb items={breadcrumbItems} />
-		
-		<!-- Analytics Dashboard -->
-		<AnalyticsDashboard />
-	</div>
-</DashboardLayout>
+<div class="p-6 space-y-6">
+	<!-- Breadcrumb -->
+	<Breadcrumb items={breadcrumbItems} />
+	
+	<!-- Analytics Dashboard -->
+	<AnalyticsDashboard />
+</div>

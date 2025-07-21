@@ -1,7 +1,7 @@
 <script>
 	import { onMount, createEventDispatcher } from 'svelte';
 	import { rentalPropertyAPI } from '$lib/api/propertyManagement.js';
-	import { getTranslation } from '$lib/i18n/index.js';
+	import { t } from '$lib/i18n';
 	import { toast } from '$lib/stores/toastStore.svelte.js';
 
 	// Responsive components
@@ -51,7 +51,6 @@
 	let intersectionObserver;
 	let loadMoreElement;
 
-	$: t = getTranslation;
 	$: hasActiveFilters = Object.keys(activeFilters).length > 0 || searchQuery;
 	$: filteredProperties = filterAndSortProperties(
 		properties,

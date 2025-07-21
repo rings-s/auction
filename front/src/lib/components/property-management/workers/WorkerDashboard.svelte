@@ -35,10 +35,11 @@
 	let utilizationRate = $derived(
 		totalCapacity > 0 ? ((totalActiveJobs / totalCapacity) * 100).toFixed(1) : 0
 	);
-	let averageRating = $derived(() => {
-		const workersWithRating = workers.filter(w => w.rating && w.rating > 0);
-		if (workersWithRating.length === 0) return 0;
-		return (workersWithRating.reduce((sum, w) => sum + w.rating, 0) / workersWithRating.length).toFixed(1);
+	let averageRating = $derived.by(() => {
+		const workersWithRating = workers.filter(w => w.rating && typeof w.rating === 'number' && w.rating > 0);
+		if (workersWithRating.length === 0) return '0.0';
+		const average = workersWithRating.reduce((sum, w) => sum + w.rating, 0) / workersWithRating.length;
+		return average.toFixed(1);
 	});
 
 	// Filter options
