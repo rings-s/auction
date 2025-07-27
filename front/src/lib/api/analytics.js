@@ -438,12 +438,12 @@ export function calculatePropertyPerformance(property) {
 
 	// Maintenance efficiency (0-10 points)
 	if (property.maintenance_requests !== undefined) {
-		const maintenanceScore = Math.max(0, 10 - (property.maintenance_requests * 2));
+		const maintenanceScore = Math.max(0, 10 - property.maintenance_requests * 2);
 		score += maintenanceScore;
 		factors++;
 	}
 
-	return factors > 0 ? Math.round(score / factors * (100 / 100)) : 0;
+	return factors > 0 ? Math.round((score / factors) * (100 / 100)) : 0;
 }
 
 /**
@@ -479,7 +479,7 @@ export function calculateWorkerPerformanceScore(worker) {
 		factors++;
 	}
 
-	return factors > 0 ? Math.round(score / factors * (100 / 100)) : 0;
+	return factors > 0 ? Math.round((score / factors) * (100 / 100)) : 0;
 }
 
 /**
@@ -508,16 +508,16 @@ export function generateAnalyticsExport(analyticsData, format = 'json') {
  */
 function convertToCSV(data) {
 	const csvRows = [];
-	
+
 	// Add headers
 	csvRows.push(['Metric', 'Value', 'Category'].join(','));
-	
+
 	// Add summary data
 	if (data.summary) {
 		Object.entries(data.summary).forEach(([key, value]) => {
 			csvRows.push([key, value, 'Summary'].join(','));
 		});
 	}
-	
+
 	return csvRows.join('\n');
 }

@@ -3,7 +3,7 @@
 	import { onMount, createEventDispatcher } from 'svelte';
 	import { t, locale } from '$lib/i18n'; // Fixed import path
 	import { getProperties } from '$lib/api/property';
-	import { user } from '$lib/stores/user';
+	import { user } from '$lib/stores/user.svelte.js';
 	import Button from '$lib/components/ui/Button.svelte';
 
 	export let selectedPropertyId = null;

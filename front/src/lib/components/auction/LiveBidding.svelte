@@ -1,7 +1,7 @@
 <!-- front/src/lib/components/auction/LiveBidding.svelte -->
 <script>
 	import { onMount, onDestroy, createEventDispatcher } from 'svelte';
-	import { user } from '$lib/stores/user';
+	import { user } from '$lib/stores/user.svelte.js';
 	import { t } from '$lib/i18n';
 	import { fetchAuctionBids, placeBid } from '$lib/api/auction';
 	import Button from '$lib/components/ui/Button.svelte';

@@ -6,6 +6,7 @@ from django.contrib.contenttypes.fields import GenericForeignKey, GenericRelatio
 from django.contrib.contenttypes.models import ContentType
 from django.utils.translation import gettext_lazy as _
 from django.core.cache import cache
+from django.core.validators import RegexValidator, MinValueValidator
 import uuid
 import os
 import random
@@ -1079,6 +1080,24 @@ class DashboardMetrics(BaseModel):
         """Check if metrics cache is expired"""
         return self.expires_at and timezone.now() > self.expires_at
     
+    @staticmethod
+    def _convert_decimals_to_floats(data):
+        """Recursively convert Decimal and datetime objects for JSON serialization"""
+        from decimal import Decimal
+        from datetime import datetime, date
+        if isinstance(data, dict):
+            return {key: DashboardMetrics._convert_decimals_to_floats(value) for key, value in data.items()}
+        elif isinstance(data, list):
+            return [DashboardMetrics._convert_decimals_to_floats(item) for item in data]
+        elif isinstance(data, Decimal):
+            return float(data)
+        elif isinstance(data, datetime):
+            return data.isoformat()
+        elif isinstance(data, date):
+            return data.isoformat()
+        else:
+            return data
+    
     @classmethod
     def get_or_calculate(cls, user, metric_type, cache_key='default', calculator_func=None, expires_in_hours=1):
         """Get cached metrics or calculate new ones"""
@@ -1095,18 +1114,21 @@ class DashboardMetrics(BaseModel):
             data = calculator_func(user)
             calculation_time = timezone.now() - start_time
             
+            # Convert Decimals to floats before caching
+            converted_data = cls._convert_decimals_to_floats(data)
+            
             # Cache the results
             cls.objects.update_or_create(
                 user=user,
                 metric_type=metric_type,
                 cache_key=cache_key,
                 defaults={
-                    'metric_data': data,
+                    'metric_data': converted_data,
                     'expires_at': timezone.now() + timedelta(hours=expires_in_hours),
                     'calculation_time': calculation_time,
                 }
             )
-            return data
+            return converted_data
         return {}
 
 
@@ -2765,7 +2787,7 @@ class Expense(BaseModel):
     payment_date = models.DateField(_('تاريخ الدفع'), null=True, blank=True)
     payment_reference = models.CharField(_('مرجع الدفعة'), max_length=100, blank=True)
     bank_account = models.ForeignKey(
-        'accounts.BankAccount',
+        'BankAccount',
         on_delete=models.SET_NULL,
         null=True,
         blank=True,
@@ -2867,8 +2889,10 @@ class Expense(BaseModel):
 
     def clean(self):
         super().clean()
-        if self.minimum_bid and self.market_value and self.minimum_bid > self.market_value:
-            raise ValidationError(_('Minimum bid cannot be higher than market value'))
+        # Only apply property-specific validation if this is a model with these fields
+        if hasattr(self, 'minimum_bid') and hasattr(self, 'market_value'):
+            if self.minimum_bid and self.market_value and self.minimum_bid > self.market_value:
+                raise ValidationError(_('Minimum bid cannot be higher than market value'))
     
     def save(self, *args, **kwargs):
         self.full_clean()
@@ -3282,4 +3306,218 @@ class PropertyManagementCompany(BaseModel):
             'total_workers': self.total_workers,
             'services_offered': self.services_offered,
             'service_areas': self.service_areas,
+        }
+
+
+# -------------------------------------------------------------------------
+# Bank Account Model
+# -------------------------------------------------------------------------
+
+class BankAccount(models.Model):
+    """Bank account information for users"""
+    
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL, 
+        on_delete=models.CASCADE, 
+        related_name='bank_accounts',
+        verbose_name=_('المستخدم')
+    )
+    bank_account_name = models.CharField(max_length=200, verbose_name=_('اسم صاحب الحساب'))
+    bank_name = models.CharField(max_length=200, verbose_name=_('اسم البنك'))
+    iban_number = models.CharField(
+        max_length=34, 
+        validators=[
+            RegexValidator(
+                regex=r'^[A-Z]{2}[0-9]{2}[A-Z0-9]{1,30}$',
+                message=_('رقم IBAN غير صحيح. يجب أن يبدأ برمز البلد ويتبع التنسيق الدولي')
+            )
+        ],
+        verbose_name=_('رقم الآيبان')
+    )
+    account_number = models.CharField(max_length=50, blank=True, verbose_name=_('رقم الحساب'))
+    swift_code = models.CharField(max_length=11, blank=True, verbose_name=_('رمز السويفت'))
+    is_primary = models.BooleanField(default=False, verbose_name=_('الحساب الرئيسي'))
+    is_verified = models.BooleanField(default=False, verbose_name=_('موثق'))
+    notes = models.TextField(blank=True, verbose_name=_('ملاحظات'))
+    
+    # Timestamps
+    created_at = models.DateTimeField(auto_now_add=True, verbose_name=_('تاريخ الإنشاء'))
+    updated_at = models.DateTimeField(auto_now=True, verbose_name=_('تاريخ التحديث'))
+    
+    class Meta:
+        verbose_name = _('حساب بنكي')
+        verbose_name_plural = _('الحسابات البنكية')
+        indexes = [
+            models.Index(fields=['user', 'is_primary']),
+            models.Index(fields=['iban_number']),
+        ]
+    
+    def __str__(self):
+        return f"{self.bank_account_name} - {self.bank_name}"
+    
+    def save(self, *args, **kwargs):
+        # Ensure only one primary account per user
+        if self.is_primary:
+            BankAccount.objects.filter(user=self.user, is_primary=True).exclude(pk=self.pk).update(is_primary=False)
+        super().save(*args, **kwargs)
+    
+    def to_dict(self):
+        """Return dictionary representation for API responses"""
+        return {
+            'id': self.id,
+            'bank_account_name': self.bank_account_name,
+            'bank_name': self.bank_name,
+            'iban_number': self.iban_number,
+            'account_number': self.account_number,
+            'swift_code': self.swift_code,
+            'is_primary': self.is_primary,
+            'is_verified': self.is_verified,
+            'created_at': self.created_at.isoformat() if self.created_at else None,
+        }
+
+
+# -------------------------------------------------------------------------
+# Payment Model for Reports
+# -------------------------------------------------------------------------
+
+class Payment(models.Model):
+    """Payment tracking model for reports (no payment gateway integration)"""
+    
+    PAYMENT_TYPE_CHOICES = [
+        ('rent', _('إيجار')),
+        ('property', _('عقارات')),
+        ('deposit', _('تأمين')),
+        ('maintenance', _('صيانة')),
+        ('utility', _('مرافق')),
+        ('fee', _('رسوم')),
+        ('auction', _('مزاد')),
+        ('other', _('أخرى')),
+    ]
+    
+    STATUS_CHOICES = [
+        ('pending', _('قيد الانتظار')),
+        ('paid', _('مدفوع')),
+        ('overdue', _('متأخر')),
+        ('partial', _('مدفوع جزئياً')),
+        ('cancelled', _('ملغي')),
+    ]
+    
+    # Basic Information
+    payment_id = models.CharField(max_length=50, unique=True, verbose_name=_('رقم الدفعة'))
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name='payments',
+        verbose_name=_('المستخدم')
+    )
+    
+    # Payment Details
+    amount = models.DecimalField(max_digits=12, decimal_places=2, verbose_name=_('المبلغ'))
+    currency = models.CharField(max_length=3, default='SAR', verbose_name=_('العملة'))
+    payment_type = models.CharField(max_length=20, choices=PAYMENT_TYPE_CHOICES, verbose_name=_('نوع الدفعة'))
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='pending', verbose_name=_('الحالة'))
+    
+    # References
+    property_reference = models.ForeignKey(
+        'Property',
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='payments',
+        verbose_name=_('العقار المرتبط')
+    )
+    tenant_reference = models.ForeignKey(
+        'Tenant',
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='payments',
+        verbose_name=_('المستأجر المرتبط')
+    )
+    
+    # Dates
+    payment_date = models.DateField(verbose_name=_('تاريخ الدفع'))
+    due_date = models.DateField(null=True, blank=True, verbose_name=_('تاريخ الاستحقاق'))
+    
+    # Description and Notes
+    description = models.TextField(verbose_name=_('الوصف'))
+    notes = models.TextField(blank=True, verbose_name=_('ملاحظات'))
+    
+    # Bank Account Reference
+    bank_account = models.ForeignKey(
+        BankAccount,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        verbose_name=_('الحساب البنكي')
+    )
+    
+    # Timestamps
+    created_at = models.DateTimeField(auto_now_add=True, verbose_name=_('تاريخ الإنشاء'))
+    updated_at = models.DateTimeField(auto_now=True, verbose_name=_('تاريخ التحديث'))
+    
+    class Meta:
+        verbose_name = _('دفعة')
+        verbose_name_plural = _('الدفعات')
+        ordering = ['-payment_date', '-created_at']
+        indexes = [
+            models.Index(fields=['payment_id']),
+            models.Index(fields=['user', 'status']),
+            models.Index(fields=['payment_date']),
+            models.Index(fields=['due_date']),
+            models.Index(fields=['property_reference']),
+            models.Index(fields=['tenant_reference']),
+        ]
+    
+    def __str__(self):
+        return f"Payment {self.payment_id} - {self.amount} {self.currency}"
+    
+    def save(self, *args, **kwargs):
+        # Auto-generate payment ID if not provided
+        if not self.payment_id:
+            timestamp = timezone.now().strftime('%Y%m%d%H%M%S')
+            random_num = random.randint(1000, 9999)
+            self.payment_id = f"PAY-{timestamp}-{random_num}"
+        super().save(*args, **kwargs)
+    
+    @property
+    def is_overdue(self):
+        """Check if payment is overdue"""
+        if self.due_date and self.status in ['pending', 'partial']:
+            return timezone.now().date() > self.due_date
+        return False
+    
+    @property
+    def days_overdue(self):
+        """Calculate days overdue"""
+        if self.is_overdue:
+            return (timezone.now().date() - self.due_date).days
+        return 0
+    
+    def to_dict(self):
+        """Return dictionary representation for API responses"""
+        return {
+            'id': self.id,
+            'payment_id': self.payment_id,
+            'amount': float(self.amount),
+            'currency': self.currency,
+            'payment_type': self.payment_type,
+            'payment_type_display': self.get_payment_type_display(),
+            'status': self.status,
+            'status_display': self.get_status_display(),
+            'payment_date': self.payment_date.isoformat() if self.payment_date else None,
+            'due_date': self.due_date.isoformat() if self.due_date else None,
+            'description': self.description,
+            'property_reference': {
+                'id': self.property_reference.id,
+                'title': self.property_reference.title,
+            } if self.property_reference else None,
+            'tenant_reference': {
+                'id': self.tenant_reference.id,
+                'full_name': self.tenant_reference.full_name,
+            } if self.tenant_reference else None,
+            'bank_account': self.bank_account.to_dict() if self.bank_account else None,
+            'is_overdue': self.is_overdue,
+            'days_overdue': self.days_overdue,
+            'created_at': self.created_at.isoformat() if self.created_at else None,
         }

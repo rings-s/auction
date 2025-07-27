@@ -3,9 +3,9 @@
 	import { onMount } from 'svelte';
 	import { goto } from '$app/navigation';
 	import { t } from '$lib/i18n';
-	import { 
-		createPayment, 
-		updatePayment, 
+	import {
+		createPayment,
+		updatePayment,
 		getPayment,
 		validatePaymentData,
 		getPaymentTypes,
@@ -54,7 +54,7 @@
 	let paymentTypes = $derived(getPaymentTypes());
 	let paymentStatuses = $derived(getPaymentStatuses());
 	let selectedProperty = $derived(
-		properties.find(p => p.id === parseInt(formData.property_reference))
+		properties.find((p) => p.id === parseInt(formData.property_reference))
 	);
 
 	// Tab configuration
@@ -79,14 +79,14 @@
 	// Load data on mount
 	onMount(async () => {
 		await loadInitialData();
-		
+
 		if (isEditing) {
 			await loadPaymentData();
 		} else {
 			// Generate payment ID for new payments
 			formData.payment_id = generatePaymentId();
 		}
-		
+
 		validateForm();
 	});
 
@@ -108,7 +108,7 @@
 			loading = true;
 			error = null;
 			const payment = await getPayment(paymentId);
-			
+
 			// Populate form data
 			formData = {
 				payment_id: payment.payment_id || '',
@@ -148,18 +148,18 @@
 	// Handle form field changes
 	function handleFieldChange(field, value) {
 		formData[field] = value;
-		
+
 		// Clear specific field error
 		if (validationErrors[field]) {
 			delete validationErrors[field];
 			validationErrors = { ...validationErrors };
 		}
-		
+
 		// Auto-save if enabled
 		if (autoSaveEnabled && isEditing) {
 			scheduleAutoSave();
 		}
-		
+
 		// Re-validate form
 		validateForm();
 	}
@@ -169,7 +169,7 @@
 		if (autoSaveTimer) {
 			clearTimeout(autoSaveTimer);
 		}
-		
+
 		autoSaveTimer = setTimeout(() => {
 			if (validateForm()) {
 				savePayment(true); // Silent save
@@ -189,15 +189,17 @@
 		try {
 			saving = true;
 			error = null;
-			
+
 			// Prepare data for API
 			const paymentData = {
 				...formData,
 				amount: parseFloat(formData.amount),
-				property_reference: formData.property_reference ? parseInt(formData.property_reference) : null,
+				property_reference: formData.property_reference
+					? parseInt(formData.property_reference)
+					: null,
 				tenant_reference: formData.tenant_reference ? parseInt(formData.tenant_reference) : null
 			};
-			
+
 			let result;
 			if (isEditing) {
 				result = await updatePayment(paymentId, paymentData);
@@ -208,17 +210,17 @@
 				result = await createPayment(paymentData);
 				toast.success($t('payment.createSuccess'));
 			}
-			
+
 			// Call success callback if provided
 			if (onSuccess) {
 				onSuccess(result);
 			}
-			
+
 			// Redirect if not embedded
 			if (!embedded && !isEditing) {
 				goto('/dashboard/payments');
 			}
-			
+
 			return true;
 		} catch (err) {
 			error = err.message;
@@ -273,7 +275,7 @@
 			handleFieldChange('amount', formData.amount);
 		}
 	}
-	
+
 	// Watch for property and type changes to auto-calculate amount
 	$effect(() => {
 		if (formData.property_reference && formData.payment_type === 'rent') {
@@ -288,7 +290,7 @@
 	</title>
 </svelte:head>
 
-<div class="max-w-4xl mx-auto space-y-6">
+<div class="mx-auto max-w-4xl space-y-6">
 	<!-- Header -->
 	{#if !embedded}
 		<div class="border-b border-gray-200 pb-5 dark:border-gray-700">
@@ -304,30 +306,32 @@
 	<!-- Loading State -->
 	{#if loading}
 		<LoadingSkeleton type="rect" height="400px" />
-	
-	<!-- Error Alert -->
+
+		<!-- Error Alert -->
 	{:else if error}
 		<Alert type="error" title={$t('error.title')} message={error} dismissible />
-	
-	<!-- Form -->
+
+		<!-- Form -->
 	{:else}
-		<div class="bg-white dark:bg-gray-800 shadow-sm rounded-lg overflow-hidden">
+		<div class="overflow-hidden rounded-lg bg-white shadow-sm dark:bg-gray-800">
 			<!-- Progress Steps -->
-			<div class="px-6 py-4 border-b border-gray-200 dark:border-gray-700">
-				<Tabs 
-					bind:activeTab={currentStep}
-					{tabs}
-					variant="pills"
-					on:change={handleTabChange}
-				/>
+			<div class="border-b border-gray-200 px-6 py-4 dark:border-gray-700">
+				<Tabs bind:activeTab={currentStep} {tabs} variant="pills" on:change={handleTabChange} />
 			</div>
 
 			<!-- Auto-save indicator -->
 			{#if autoSaveEnabled && isEditing}
-				<div class="px-6 py-2 bg-blue-50 dark:bg-blue-900/20 border-b border-blue-200 dark:border-blue-800">
+				<div
+					class="border-b border-blue-200 bg-blue-50 px-6 py-2 dark:border-blue-800 dark:bg-blue-900/20"
+				>
 					<div class="flex items-center text-sm text-blue-700 dark:text-blue-300">
 						<svg class="mr-2 h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-							<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
+							<path
+								stroke-linecap="round"
+								stroke-linejoin="round"
+								stroke-width="2"
+								d="M13 10V3L4 14h7v7l9-11h-7z"
+							/>
 						</svg>
 						{$t('common.autoSaveEnabled')}
 					</div>
@@ -342,11 +346,14 @@
 						<h3 class="text-lg font-medium text-gray-900 dark:text-white">
 							{$t('payment.basicInfo')}
 						</h3>
-						
+
 						<div class="grid grid-cols-1 gap-6 sm:grid-cols-2">
 							<!-- Payment ID -->
 							<div>
-								<label for="payment_id" class="block text-sm font-medium text-gray-700 dark:text-gray-300">
+								<label
+									for="payment_id"
+									class="block text-sm font-medium text-gray-700 dark:text-gray-300"
+								>
 									{$t('payment.id')} *
 								</label>
 								<input
@@ -354,7 +361,7 @@
 									id="payment_id"
 									value={formData.payment_id}
 									oninput={(e) => handleFieldChange('payment_id', e.target.value)}
-									class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white sm:text-sm font-mono"
+									class="focus:border-primary-500 focus:ring-primary-500 mt-1 block w-full rounded-md border-gray-300 font-mono shadow-sm sm:text-sm dark:border-gray-600 dark:bg-gray-700 dark:text-white"
 									class:border-red-500={validationErrors.payment_id}
 									placeholder="PAY-123456-ABCD"
 								/>
@@ -365,7 +372,10 @@
 
 							<!-- Amount -->
 							<div>
-								<label for="amount" class="block text-sm font-medium text-gray-700 dark:text-gray-300">
+								<label
+									for="amount"
+									class="block text-sm font-medium text-gray-700 dark:text-gray-300"
+								>
 									{$t('common.amount')} *
 								</label>
 								<div class="relative mt-1 rounded-md shadow-sm">
@@ -379,7 +389,7 @@
 										min="0"
 										value={formData.amount}
 										oninput={(e) => handleFieldChange('amount', e.target.value)}
-										class="block w-full rounded-md border-gray-300 pl-7 shadow-sm focus:border-primary-500 focus:ring-primary-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white sm:text-sm"
+										class="focus:border-primary-500 focus:ring-primary-500 block w-full rounded-md border-gray-300 pl-7 shadow-sm sm:text-sm dark:border-gray-600 dark:bg-gray-700 dark:text-white"
 										class:border-red-500={validationErrors.amount}
 										placeholder="0.00"
 									/>
@@ -391,14 +401,17 @@
 
 							<!-- Payment Type -->
 							<div>
-								<label for="payment_type" class="block text-sm font-medium text-gray-700 dark:text-gray-300">
+								<label
+									for="payment_type"
+									class="block text-sm font-medium text-gray-700 dark:text-gray-300"
+								>
 									{$t('payment.type')} *
 								</label>
 								<select
 									id="payment_type"
 									bind:value={formData.payment_type}
 									onchange={(e) => handleFieldChange('payment_type', e.target.value)}
-									class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white sm:text-sm"
+									class="focus:border-primary-500 focus:ring-primary-500 mt-1 block w-full rounded-md border-gray-300 shadow-sm sm:text-sm dark:border-gray-600 dark:bg-gray-700 dark:text-white"
 								>
 									{#each paymentTypes as type}
 										<option value={type.value}>{type.label}</option>
@@ -408,14 +421,17 @@
 
 							<!-- Status -->
 							<div>
-								<label for="status" class="block text-sm font-medium text-gray-700 dark:text-gray-300">
+								<label
+									for="status"
+									class="block text-sm font-medium text-gray-700 dark:text-gray-300"
+								>
 									{$t('common.status')}
 								</label>
 								<select
 									id="status"
 									bind:value={formData.status}
 									onchange={(e) => handleFieldChange('status', e.target.value)}
-									class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white sm:text-sm"
+									class="focus:border-primary-500 focus:ring-primary-500 mt-1 block w-full rounded-md border-gray-300 shadow-sm sm:text-sm dark:border-gray-600 dark:bg-gray-700 dark:text-white"
 								>
 									{#each paymentStatuses as status}
 										<option value={status.value}>{status.label}</option>
@@ -426,7 +442,10 @@
 
 						<!-- Description -->
 						<div>
-							<label for="description" class="block text-sm font-medium text-gray-700 dark:text-gray-300">
+							<label
+								for="description"
+								class="block text-sm font-medium text-gray-700 dark:text-gray-300"
+							>
 								{$t('common.description')}
 							</label>
 							<textarea
@@ -434,29 +453,32 @@
 								rows="3"
 								value={formData.description}
 								oninput={(e) => handleFieldChange('description', e.target.value)}
-								class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white sm:text-sm"
+								class="focus:border-primary-500 focus:ring-primary-500 mt-1 block w-full rounded-md border-gray-300 shadow-sm sm:text-sm dark:border-gray-600 dark:bg-gray-700 dark:text-white"
 								placeholder={$t('payment.descriptionPlaceholder')}
 							></textarea>
 						</div>
 					</div>
-				
-				<!-- Step 2: References -->
+
+					<!-- Step 2: References -->
 				{:else if currentStep === 2}
 					<div class="space-y-6">
 						<h3 class="text-lg font-medium text-gray-900 dark:text-white">
 							{$t('payment.references')}
 						</h3>
-						
+
 						<!-- Property Reference -->
 						<div>
-							<label for="property_reference" class="block text-sm font-medium text-gray-700 dark:text-gray-300">
+							<label
+								for="property_reference"
+								class="block text-sm font-medium text-gray-700 dark:text-gray-300"
+							>
 								{$t('payment.propertyReference')}
 							</label>
 							<select
 								id="property_reference"
 								bind:value={formData.property_reference}
 								onchange={(e) => handleFieldChange('property_reference', e.target.value)}
-								class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white sm:text-sm"
+								class="focus:border-primary-500 focus:ring-primary-500 mt-1 block w-full rounded-md border-gray-300 shadow-sm sm:text-sm dark:border-gray-600 dark:bg-gray-700 dark:text-white"
 							>
 								<option value="">{$t('common.selectProperty')}</option>
 								{#each properties as property}
@@ -473,19 +495,22 @@
 						<!-- Selected Property Info -->
 						{#if selectedProperty}
 							<div class="rounded-lg bg-blue-50 p-4 dark:bg-blue-900/20">
-								<h4 class="text-sm font-medium text-blue-800 dark:text-blue-200 mb-2">
+								<h4 class="mb-2 text-sm font-medium text-blue-800 dark:text-blue-200">
 									{$t('payment.selectedProperty')}
 								</h4>
 								<div class="text-sm text-blue-700 dark:text-blue-300">
 									<p><strong>{$t('property.title')}:</strong> {selectedProperty.title}</p>
 									<p><strong>{$t('property.address')}:</strong> {selectedProperty.address}</p>
 									{#if selectedProperty.monthly_rent}
-										<p><strong>{$t('property.monthlyRent')}:</strong> {formatCurrency(selectedProperty.monthly_rent)}</p>
+										<p>
+											<strong>{$t('property.monthlyRent')}:</strong>
+											{formatCurrency(selectedProperty.monthly_rent)}
+										</p>
 									{/if}
 								</div>
-								
+
 								{#if selectedProperty.monthly_rent && formData.payment_type === 'rent'}
-									<Button 
+									<Button
 										onClick={calculateRentAmount}
 										variant="outline"
 										size="compact"
@@ -499,7 +524,10 @@
 
 						<!-- Tenant Reference -->
 						<div>
-							<label for="tenant_reference" class="block text-sm font-medium text-gray-700 dark:text-gray-300">
+							<label
+								for="tenant_reference"
+								class="block text-sm font-medium text-gray-700 dark:text-gray-300"
+							>
 								{$t('payment.tenantReference')}
 							</label>
 							<input
@@ -507,7 +535,7 @@
 								id="tenant_reference"
 								value={formData.tenant_reference}
 								oninput={(e) => handleFieldChange('tenant_reference', e.target.value)}
-								class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white sm:text-sm"
+								class="focus:border-primary-500 focus:ring-primary-500 mt-1 block w-full rounded-md border-gray-300 shadow-sm sm:text-sm dark:border-gray-600 dark:bg-gray-700 dark:text-white"
 								placeholder={$t('payment.tenantPlaceholder')}
 							/>
 							<p class="mt-1 text-xs text-gray-500">
@@ -515,18 +543,21 @@
 							</p>
 						</div>
 					</div>
-				
-				<!-- Step 3: Schedule -->
+
+					<!-- Step 3: Schedule -->
 				{:else if currentStep === 3}
 					<div class="space-y-6">
 						<h3 class="text-lg font-medium text-gray-900 dark:text-white">
 							{$t('payment.schedule')}
 						</h3>
-						
+
 						<div class="grid grid-cols-1 gap-6 sm:grid-cols-2">
 							<!-- Due Date -->
 							<div>
-								<label for="due_date" class="block text-sm font-medium text-gray-700 dark:text-gray-300">
+								<label
+									for="due_date"
+									class="block text-sm font-medium text-gray-700 dark:text-gray-300"
+								>
 									{$t('payment.dueDate')}
 								</label>
 								<input
@@ -535,7 +566,7 @@
 									value={formData.due_date}
 									oninput={(e) => handleFieldChange('due_date', e.target.value)}
 									min={getTodayDate()}
-									class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white sm:text-sm"
+									class="focus:border-primary-500 focus:ring-primary-500 mt-1 block w-full rounded-md border-gray-300 shadow-sm sm:text-sm dark:border-gray-600 dark:bg-gray-700 dark:text-white"
 									class:border-red-500={validationErrors.due_date}
 								/>
 								{#if validationErrors.due_date}
@@ -545,7 +576,10 @@
 
 							<!-- Payment Date -->
 							<div>
-								<label for="payment_date" class="block text-sm font-medium text-gray-700 dark:text-gray-300">
+								<label
+									for="payment_date"
+									class="block text-sm font-medium text-gray-700 dark:text-gray-300"
+								>
 									{$t('payment.paymentDate')}
 								</label>
 								<input
@@ -554,7 +588,7 @@
 									value={formData.payment_date}
 									oninput={(e) => handleFieldChange('payment_date', e.target.value)}
 									max={getTodayDate()}
-									class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white sm:text-sm"
+									class="focus:border-primary-500 focus:ring-primary-500 mt-1 block w-full rounded-md border-gray-300 shadow-sm sm:text-sm dark:border-gray-600 dark:bg-gray-700 dark:text-white"
 									class:border-red-500={validationErrors.payment_date}
 								/>
 								{#if validationErrors.payment_date}
@@ -576,20 +610,22 @@
 								rows="4"
 								value={formData.notes}
 								oninput={(e) => handleFieldChange('notes', e.target.value)}
-								class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white sm:text-sm"
+								class="focus:border-primary-500 focus:ring-primary-500 mt-1 block w-full rounded-md border-gray-300 shadow-sm sm:text-sm dark:border-gray-600 dark:bg-gray-700 dark:text-white"
 								placeholder={$t('payment.notesPlaceholder')}
 							></textarea>
 						</div>
 
 						<!-- Payment Summary -->
 						<div class="rounded-lg bg-gray-50 p-4 dark:bg-gray-700">
-							<h4 class="text-sm font-medium text-gray-900 dark:text-white mb-3">
+							<h4 class="mb-3 text-sm font-medium text-gray-900 dark:text-white">
 								{$t('payment.summary')}
 							</h4>
 							<dl class="space-y-2">
 								<div class="flex justify-between">
 									<dt class="text-sm text-gray-600 dark:text-gray-400">{$t('payment.id')}:</dt>
-									<dd class="text-sm font-mono text-gray-900 dark:text-white">{formData.payment_id}</dd>
+									<dd class="font-mono text-sm text-gray-900 dark:text-white">
+										{formData.payment_id}
+									</dd>
 								</div>
 								<div class="flex justify-between">
 									<dt class="text-sm text-gray-600 dark:text-gray-400">{$t('common.amount')}:</dt>
@@ -600,18 +636,20 @@
 								<div class="flex justify-between">
 									<dt class="text-sm text-gray-600 dark:text-gray-400">{$t('payment.type')}:</dt>
 									<dd class="text-sm text-gray-900 dark:text-white">
-										{paymentTypes.find(t => t.value === formData.payment_type)?.label}
+										{paymentTypes.find((t) => t.value === formData.payment_type)?.label}
 									</dd>
 								</div>
 								<div class="flex justify-between">
 									<dt class="text-sm text-gray-600 dark:text-gray-400">{$t('common.status')}:</dt>
 									<dd class="text-sm text-gray-900 dark:text-white">
-										{paymentStatuses.find(s => s.value === formData.status)?.label}
+										{paymentStatuses.find((s) => s.value === formData.status)?.label}
 									</dd>
 								</div>
 								{#if formData.due_date}
 									<div class="flex justify-between">
-										<dt class="text-sm text-gray-600 dark:text-gray-400">{$t('payment.dueDate')}:</dt>
+										<dt class="text-sm text-gray-600 dark:text-gray-400">
+											{$t('payment.dueDate')}:
+										</dt>
 										<dd class="text-sm text-gray-900 dark:text-white">
 											{new Date(formData.due_date).toLocaleDateString()}
 										</dd>
@@ -619,7 +657,9 @@
 								{/if}
 								{#if selectedProperty}
 									<div class="flex justify-between">
-										<dt class="text-sm text-gray-600 dark:text-gray-400">{$t('payment.property')}:</dt>
+										<dt class="text-sm text-gray-600 dark:text-gray-400">
+											{$t('payment.property')}:
+										</dt>
 										<dd class="text-sm text-gray-900 dark:text-white">{selectedProperty.title}</dd>
 									</div>
 								{/if}
@@ -630,7 +670,9 @@
 			</div>
 
 			<!-- Form Actions -->
-			<div class="bg-gray-50 px-6 py-3 text-right dark:bg-gray-700 border-t border-gray-200 dark:border-gray-600">
+			<div
+				class="border-t border-gray-200 bg-gray-50 px-6 py-3 text-right dark:border-gray-600 dark:bg-gray-700"
+			>
 				<div class="flex justify-between">
 					<div>
 						{#if currentStep > 1}
@@ -650,9 +692,9 @@
 								{$t('common.next')}
 							</Button>
 						{:else}
-							<Button 
-								onClick={() => savePayment()} 
-								variant="primary" 
+							<Button
+								onClick={() => savePayment()}
+								variant="primary"
 								loading={saving}
 								disabled={!canProceed}
 							>

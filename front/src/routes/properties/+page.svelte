@@ -3,9 +3,9 @@
 	import { onMount, onDestroy } from 'svelte';
 	import { fade, slide, fly } from 'svelte/transition';
 	import { t, locale } from '$lib/i18n';
-	import { user } from '$lib/stores/user';
+	import { user } from '$lib/stores/user.svelte.js';
 	import { getProperties } from '$lib/api/property';
-	import { properties as propertiesStore } from '$lib/stores/properties';
+	import { properties as propertiesStore } from '$lib/stores/properties.svelte.js';
 
 	// Components
 	import PropertyCard from '$lib/components/properties/PropertyCard.svelte';
@@ -14,19 +14,19 @@
 	import LoadingSkeleton from '$lib/components/ui/LoadingSkeleton.svelte';
 	import EmptyState from '$lib/components/ui/EmptyState.svelte';
 
-	// State
-	let properties = [];
-	let loading = true;
-	let error = null;
-	let currentPage = 1;
-	let totalPages = 1;
-	let totalCount = 0;
-	let loadingMore = false;
+	// State using Svelte 5 runes
+	let properties = $state([]);
+	let loading = $state(true);
+	let error = $state(null);
+	let currentPage = $state(1);
+	let totalPages = $state(1);
+	let totalCount = $state(0);
+	let loadingMore = $state(false);
 	let debounceTimer;
-	let showMobileFilters = false;
+	let showMobileFilters = $state(false);
 
-	// Search parameters
-	let searchParams = {
+	// Search parameters using $state
+	let searchParams = $state({
 		query: '',
 		propertyType: '',
 		minPrice: '',
@@ -35,25 +35,27 @@
 		minSize: '',
 		maxSize: '',
 		sort: 'newest'
-	};
+	});
 
 	// Computed value for RTL mode
-	$: isRTL = $locale === 'ar';
+	let isRTL = $derived($locale === 'ar');
 
 	// Check permissions for creating properties
-	$: canCreateProperty =
+	let canCreateProperty = $derived(
 		$user &&
-		($user.role === 'owner' || $user.role === 'appraiser' || $user.is_staff || $user.is_superuser);
+			($user.role === 'owner' || $user.role === 'appraiser' || $user.is_staff || $user.is_superuser)
+	);
 
-	// Display only first 3 properties
-	$: displayedProperties = properties.slice(0, 3);
+	// Display all loaded properties
+	let displayedProperties = $derived(properties);
 
 	// Calculate statistics
-	$: featuredCount = properties.filter((p) => p.is_featured).length;
-	$: averagePrice =
+	let featuredCount = $derived(properties.filter((p) => p.is_featured).length);
+	let averagePrice = $derived(
 		properties.length > 0
 			? properties.reduce((sum, p) => sum + (p.market_value || 0), 0) / properties.length
-			: 0;
+			: 0
+	);
 
 	// Format currency
 	function formatCurrency(value) {
@@ -272,7 +274,7 @@
 			<div class="mt-6 md:hidden">
 				<button
 					type="button"
-					on:click={toggleMobileFilters}
+					onclick={toggleMobileFilters}
 					class="flex items-center justify-center rounded-full border border-white/30 bg-white/20 px-4 py-2 text-sm font-medium text-white shadow-sm backdrop-blur-sm transition-colors hover:bg-white/30"
 				>
 					<svg
@@ -298,7 +300,7 @@
 	<div class="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
 		<!-- Search Filters - Desktop (Using PropertySearch component) -->
 		<div class="mb-8 hidden md:block">
-			<PropertySearch {searchParams} on:search={handleSearch} />
+			<PropertySearch {searchParams} onsearch={handleSearch} />
 		</div>
 
 		<!-- Content Area -->
@@ -341,7 +343,7 @@
 						<div class="mt-6 flex flex-wrap gap-3">
 							<Button
 								variant="outline"
-								onClick={() => {
+								onclick={() => {
 									searchParams = {
 										query: '',
 										propertyType: '',
@@ -375,7 +377,7 @@
 
 							<Button
 								variant="primary"
-								onClick={() => loadProperties()}
+								onclick={() => loadProperties()}
 								size="default"
 								class="w-full sm:w-auto"
 							>
@@ -423,17 +425,18 @@
 			</div>
 
 			<!-- Load More Button -->
-			{#if properties.length > 3}
+			{#if currentPage < totalPages && !loadingMore}
 				<div class="mt-10 flex justify-center">
 					<Button
 						variant="outline"
-						onClick={loadMore}
+						onclick={loadMore}
 						size="large"
 						class="rounded-full px-8 py-3 transition-all hover:bg-gray-50 dark:hover:bg-gray-700"
 					>
 						<div class="flex items-center">
 							<span
-								>{$t('properties.viewMore')} ({properties.length - 3} {$t('properties.more')})</span
+								>{$t('properties.viewMore')} ({totalCount - properties.length}
+								{$t('properties.more')})</span
 							>
 							<svg
 								class="{isRTL ? 'mr-2' : 'ml-2'} h-4 w-4"
@@ -531,8 +534,8 @@
 			<!-- Backdrop -->
 			<div
 				class="bg-opacity-50 fixed inset-0 bg-black backdrop-blur-sm"
-				on:click={toggleMobileFilters}
-				on:keydown={(e) => {
+				onclick={toggleMobileFilters}
+				onkeydown={(e) => {
 					if (e.key === 'Enter' || e.key === ' ') toggleMobileFilters();
 				}}
 				role="button"
@@ -570,7 +573,7 @@
 					<button
 						type="button"
 						class="rounded-full p-2 text-gray-400 hover:bg-gray-100 hover:text-gray-500 dark:text-gray-300 dark:hover:bg-gray-700 dark:hover:text-white"
-						on:click={toggleMobileFilters}
+						onclick={toggleMobileFilters}
 						aria-label="Close filter panel"
 					>
 						<svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -588,7 +591,7 @@
 				<div class="flex-1 p-4">
 					<PropertySearch
 						{searchParams}
-						on:search={(e) => {
+						onsearch={(e) => {
 							handleSearch(e);
 							toggleMobileFilters();
 						}}

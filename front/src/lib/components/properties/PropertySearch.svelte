@@ -1,23 +1,23 @@
 <!-- PropertySearch.svelte - Advanced property search component with filters -->
 <script>
-	import { createEventDispatcher } from 'svelte';
 	import { t, locale } from '$lib/i18n';
 	import { fade, fly } from 'svelte/transition';
 	import { clickOutside } from '$lib/actions/clickOutside';
 
 	// Default search parameters
-	export let searchParams = {
-		query: '',
-		propertyType: '',
-		minPrice: '',
-		maxPrice: '',
-		city: '',
-		minSize: '',
-		maxSize: '',
-		sort: 'newest'
-	};
-
-	const dispatch = createEventDispatcher();
+	let {
+		searchParams = {
+			query: '',
+			propertyType: '',
+			minPrice: '',
+			maxPrice: '',
+			city: '',
+			minSize: '',
+			maxSize: '',
+			sort: 'newest'
+		},
+		onsearch
+	} = $props();
 
 	// Property types with i18n support
 	const propertyTypes = [
@@ -39,7 +39,7 @@
 
 	// Handle search submission
 	function handleSearch() {
-		dispatch('search', searchParams);
+		onsearch?.({ detail: searchParams });
 	}
 
 	// Clear all filters
@@ -54,12 +54,12 @@
 			maxSize: '',
 			sort: 'newest'
 		};
-		dispatch('search', searchParams);
+		onsearch?.({ detail: searchParams });
 	}
 
 	// Dropdown management
-	let showFilterDropdown = { sort: false, price: false, type: false, size: false };
-	let showMobileFilters = false; // For mobile view toggle
+	let showFilterDropdown = $state({ sort: false, price: false, type: false, size: false });
+	let showMobileFilters = $state(false); // For mobile view toggle
 
 	// Toggle dropdown visibility
 	function toggleDropdown(name) {
@@ -83,19 +83,21 @@
 	}
 
 	// Computed value for RTL mode
-	$: isRTL = $locale === 'ar';
+	let isRTL = $derived($locale === 'ar');
 
 	// Calculate active filters count
-	$: activeFiltersCount = [
-		searchParams.query,
-		searchParams.propertyType,
-		searchParams.city,
-		searchParams.minPrice,
-		searchParams.maxPrice,
-		searchParams.minSize,
-		searchParams.maxSize,
-		searchParams.sort !== 'newest' ? searchParams.sort : ''
-	].filter(Boolean).length;
+	let activeFiltersCount = $derived(
+		[
+			searchParams.query,
+			searchParams.propertyType,
+			searchParams.city,
+			searchParams.minPrice,
+			searchParams.maxPrice,
+			searchParams.minSize,
+			searchParams.maxSize,
+			searchParams.sort !== 'newest' ? searchParams.sort : ''
+		].filter(Boolean).length
+	);
 
 	// Format price for display
 	function formatPrice(value) {
@@ -116,9 +118,15 @@
 <div
 	class="search-container rounded-xl bg-white shadow-lg transition-all duration-300 hover:shadow-xl dark:bg-gray-800"
 >
-	<div use:clickOutside on:clickoutside={handleClickOutside} class="relative">
+	<div use:clickOutside onclickoutside={handleClickOutside} class="relative">
 		<div class="p-6 md:p-8">
-			<form on:submit|preventDefault={handleSearch} class="space-y-6">
+			<form
+				onsubmit={(e) => {
+					e.preventDefault();
+					handleSearch();
+				}}
+				class="space-y-6"
+			>
 				<!-- Main Search Area: Keyword search and primary filters -->
 				<div class="grid grid-cols-1 gap-4 md:grid-cols-12">
 					<!-- Keyword Search -->
@@ -146,7 +154,7 @@
 							<input
 								type="text"
 								bind:value={searchParams.query}
-								on:input={() => debounceSearch()}
+								oninput={() => debounceSearch()}
 								placeholder={$t('search.keywordPlaceholder')}
 								class="block w-full {isRTL
 									? 'pr-12'
@@ -159,7 +167,7 @@
 									class="absolute inset-y-0 {isRTL
 										? 'left-0 pl-4'
 										: 'right-0 pr-4'} flex items-center text-gray-400 transition-colors hover:text-gray-600 dark:hover:text-gray-300"
-									on:click={() => {
+									onclick={() => {
 										searchParams.query = '';
 										debounceSearch(0);
 									}}
@@ -182,7 +190,7 @@
 					<div class="relative md:col-span-3">
 						<button
 							type="button"
-							on:click={() => toggleDropdown('type')}
+							onclick={() => toggleDropdown('type')}
 							class="relative inline-flex min-h-[44px]
                   w-full transform cursor-pointer
                   items-center
@@ -249,7 +257,7 @@
 										class="w-full px-5 py-2.5 text-start text-sm {!searchParams.propertyType
 											? 'bg-primary-50 dark:bg-primary-900/20 text-primary-700 dark:text-primary-300 font-medium'
 											: 'text-gray-700 hover:bg-gray-50 dark:text-gray-200 dark:hover:bg-gray-700'} transition-colors"
-										on:click={() => {
+										onclick={() => {
 											searchParams.propertyType = '';
 											toggleDropdown('type');
 											handleSearch();
@@ -264,7 +272,7 @@
 											type.value
 												? 'bg-primary-50 dark:bg-primary-900/20 text-primary-700 dark:text-primary-300 font-medium'
 												: 'text-gray-700 hover:bg-gray-50 dark:text-gray-200 dark:hover:bg-gray-700'} transition-colors"
-											on:click={() => {
+											onclick={() => {
 												searchParams.propertyType = type.value;
 												toggleDropdown('type');
 												handleSearch();
@@ -284,7 +292,7 @@
 							<input
 								type="text"
 								bind:value={searchParams.city}
-								on:input={() => debounceSearch()}
+								oninput={() => debounceSearch()}
 								placeholder={$t('search.cityPlaceholder')}
 								class="focus:border-primary-400 focus:ring-primary-200 focus:ring-opacity-50 block w-full rounded-full border-gray-200 px-4 py-3 text-sm shadow-sm transition-all focus:ring dark:border-gray-600 dark:bg-gray-700 dark:text-white"
 								aria-label={$t('search.city')}
@@ -295,7 +303,7 @@
 									class="absolute inset-y-0 {isRTL
 										? 'left-0 pl-4'
 										: 'right-0 pr-4'} flex items-center text-gray-400 transition-colors hover:text-gray-600 dark:hover:text-gray-300"
-									on:click={() => {
+									onclick={() => {
 										searchParams.city = '';
 										debounceSearch(0);
 									}}
@@ -342,7 +350,7 @@
 				<div class="mb-2 md:hidden">
 					<button
 						type="button"
-						on:click={toggleMobileFilters}
+						onclick={toggleMobileFilters}
 						class="flex w-full items-center justify-between rounded-full border border-gray-200 bg-gray-50 px-4 py-3 text-sm font-medium transition-colors hover:bg-gray-100 dark:border-gray-600 dark:bg-gray-700 dark:hover:bg-gray-600"
 					>
 						<span class="flex items-center">
@@ -390,7 +398,7 @@
 					<div class="relative md:col-span-4">
 						<button
 							type="button"
-							on:click={() => toggleDropdown('price')}
+							onclick={() => toggleDropdown('price')}
 							class="inline-flex w-full items-center justify-between rounded-full border border-gray-200 bg-white px-5 py-3 text-sm font-medium text-gray-700 shadow-sm transition-all hover:bg-gray-50 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 dark:hover:bg-gray-600 {searchParams.minPrice ||
 							searchParams.maxPrice
 								? 'border-primary-300 dark:border-primary-600 ring-primary-100 dark:ring-primary-900 ring-2'
@@ -503,7 +511,7 @@
 									<button
 										type="button"
 										class="bg-primary-600 hover:bg-primary-700 mt-3 w-full transform rounded-lg px-4 py-2.5 text-sm font-medium text-white transition-all hover:scale-[1.02] active:scale-[0.98]"
-										on:click={() => {
+										onclick={() => {
 											toggleDropdown('price');
 											handleSearch();
 										}}
@@ -519,7 +527,7 @@
 					<div class="relative md:col-span-4">
 						<button
 							type="button"
-							on:click={() => toggleDropdown('size')}
+							onclick={() => toggleDropdown('size')}
 							class="inline-flex w-full items-center justify-between rounded-full border border-gray-200 bg-white px-5 py-3 text-sm font-medium text-gray-700 shadow-sm transition-all hover:bg-gray-50 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 dark:hover:bg-gray-600 {searchParams.minSize ||
 							searchParams.maxSize
 								? 'border-primary-300 dark:border-primary-600 ring-primary-100 dark:ring-primary-900 ring-2'
@@ -612,7 +620,7 @@
 									<button
 										type="button"
 										class="bg-primary-600 hover:bg-primary-700 mt-3 w-full transform rounded-lg px-4 py-2.5 text-sm font-medium text-white transition-all hover:scale-[1.02] active:scale-[0.98]"
-										on:click={() => {
+										onclick={() => {
 											toggleDropdown('size');
 											handleSearch();
 										}}
@@ -628,7 +636,7 @@
 					<div class="relative md:col-span-2">
 						<button
 							type="button"
-							on:click={() => toggleDropdown('sort')}
+							onclick={() => toggleDropdown('sort')}
 							class="inline-flex w-full items-center justify-between rounded-full border border-gray-200 bg-white px-5 py-3 text-sm font-medium text-gray-700 shadow-sm transition-all hover:bg-gray-50 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 dark:hover:bg-gray-600 {searchParams.sort !==
 							'newest'
 								? 'border-primary-300 dark:border-primary-600 ring-primary-100 dark:ring-primary-900 ring-2'
@@ -682,7 +690,7 @@
 											option.value
 												? 'bg-primary-50 dark:bg-primary-900/20 text-primary-700 dark:text-primary-300 font-medium'
 												: 'text-gray-700 hover:bg-gray-50 dark:text-gray-200 dark:hover:bg-gray-700'} transition-colors"
-											on:click={() => {
+											onclick={() => {
 												searchParams.sort = option.value;
 												toggleDropdown('sort');
 												handleSearch();
@@ -700,7 +708,7 @@
 					<div class="md:col-span-2">
 						<button
 							type="button"
-							on:click={clearFilters}
+							onclick={clearFilters}
 							disabled={activeFiltersCount === 0}
 							class="inline-flex w-full items-center justify-center rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm transition-colors hover:bg-gray-50 focus:ring-2 focus:ring-gray-500 focus:ring-offset-2 focus:outline-none disabled:cursor-not-allowed disabled:opacity-50 dark:bg-gray-700 dark:text-gray-200 dark:hover:bg-gray-600"
 						>
@@ -748,7 +756,7 @@
 						>
 						<button
 							class="ml-1.5 text-teal-500 hover:text-teal-700 dark:text-teal-400 dark:hover:text-teal-200"
-							on:click={() => {
+							onclick={() => {
 								searchParams.propertyType = '';
 								handleSearch();
 							}}
@@ -774,7 +782,7 @@
 						<span>{searchParams.city}</span>
 						<button
 							class="ml-1.5 text-cyan-500 hover:text-cyan-700 dark:text-cyan-400 dark:hover:text-cyan-200"
-							on:click={() => {
+							onclick={() => {
 								searchParams.city = '';
 								handleSearch();
 							}}
@@ -800,7 +808,7 @@
 						<span>${searchParams.minPrice || '0'} - ${searchParams.maxPrice || '∞'}</span>
 						<button
 							class="ml-1.5 text-purple-500 hover:text-purple-700 dark:text-purple-400 dark:hover:text-purple-200"
-							on:click={() => {
+							onclick={() => {
 								searchParams.minPrice = '';
 								searchParams.maxPrice = '';
 								handleSearch();
@@ -827,7 +835,7 @@
 						<span>{searchParams.minSize || '0'} - {searchParams.maxSize || '∞'} m²</span>
 						<button
 							class="ml-1.5 text-amber-500 hover:text-amber-700 dark:text-amber-400 dark:hover:text-amber-200"
-							on:click={() => {
+							onclick={() => {
 								searchParams.minSize = '';
 								searchParams.maxSize = '';
 								handleSearch();
@@ -854,7 +862,7 @@
 						<span>"{searchParams.query}"</span>
 						<button
 							class="ml-1.5 text-indigo-500 hover:text-indigo-700 dark:text-indigo-400 dark:hover:text-indigo-200"
-							on:click={() => {
+							onclick={() => {
 								searchParams.query = '';
 								handleSearch();
 							}}
@@ -880,7 +888,7 @@
 						<span>{$t(sortOptions.find((o) => o.value === searchParams.sort)?.label)}</span>
 						<button
 							class="ml-1.5 text-red-500 hover:text-red-700 dark:text-red-400 dark:hover:text-red-200"
-							on:click={() => {
+							onclick={() => {
 								searchParams.sort = 'newest';
 								handleSearch();
 							}}

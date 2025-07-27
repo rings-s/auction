@@ -3,7 +3,7 @@
 	import { goto } from '$app/navigation';
 	import { fade, slide, scale } from 'svelte/transition';
 	import { t, locale } from '$lib/i18n';
-	import { user } from '$lib/stores/user';
+	import { user } from '$lib/stores/user.svelte.js';
 	import { sendMessage, replyToMessage, getMessage } from '$lib/api/messages';
 	import { toast } from '$lib/stores/toastStore.svelte.js';
 	import Button from '$lib/components/ui/Button.svelte';

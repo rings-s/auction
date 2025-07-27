@@ -1,0 +1,191 @@
+{
+  "summary": {
+    "total_tests": 18,
+    "passed": 13,
+    "failed": 1,
+    "warnings": 4,
+    "success_rate": 72.2
+  },
+  "results": [
+    {
+      "test": "User Model Creation",
+      "status": "PASS",
+      "message": "Created user with Arabic name and profile",
+      "details": [
+        "User ID: 22",
+        "Profile ID: 22",
+        "Role: owner"
+      ],
+      "timestamp": "2025-07-22 12:21:22.127095"
+    },
+    {
+      "test": "Location Model Creation",
+      "status": "PASS",
+      "message": "Created location with Arabic text and coordinates",
+      "details": [
+        "Location: الرياض التجريبية, منطقة الرياض التجريبية, المملكة العربية السعودية",
+        "Coordinates: (24.7136, 46.6753)"
+      ],
+      "timestamp": "2025-07-22 12:21:22.235100"
+    },
+    {
+      "test": "Property Model Creation",
+      "status": "PASS",
+      "message": "Created property with Arabic content and JSON fields",
+      "details": [
+        "Property: فيلا تجريبية فاخرة",
+        "Value: 1500000.00 SAR",
+        "Features: 4 items"
+      ],
+      "timestamp": "2025-07-22 12:21:22.351367"
+    },
+    {
+      "test": "Auction Model Creation",
+      "status": "PASS",
+      "message": "Created auction with Arabic content and relationships",
+      "details": [
+        "Auction: مزاد الفيلا التجريبية",
+        "Starting bid: 1000000.00 SAR",
+        "Status: upcoming"
+      ],
+      "timestamp": "2025-07-22 12:21:22.506727"
+    },
+    {
+      "test": "Bid Model Creation",
+      "status": "PASS",
+      "message": "Created bid with relationships and Arabic notes",
+      "details": [
+        "Bid amount: 1100000.00 SAR",
+        "Bidder: محمد المزايد",
+        "Status: active"
+      ],
+      "timestamp": "2025-07-22 12:21:23.629833"
+    },
+    {
+      "test": "Authentication - admin@email.com",
+      "status": "PASS",
+      "message": "Authentication successful",
+      "details": [
+        "User: admin user",
+        "Role: user",
+        "Verified: True"
+      ],
+      "timestamp": "2025-07-22 12:21:24.378868"
+    },
+    {
+      "test": "Authentication - rings9619@gmail.com",
+      "status": "PASS",
+      "message": "Authentication successful",
+      "details": [
+        "User: Ahmed Bashir",
+        "Role: appraiser",
+        "Verified: True"
+      ],
+      "timestamp": "2025-07-22 12:21:25.118761"
+    },
+    {
+      "test": "Authentication - rings9619@gmail.com",
+      "status": "FAIL",
+      "message": "Authentication failed or user inactive",
+      "details": null,
+      "timestamp": "2025-07-22 12:21:25.849074"
+    },
+    {
+      "test": "Overall Authentication",
+      "status": "PASS",
+      "message": "2/3 credentials successful",
+      "details": null,
+      "timestamp": "2025-07-22 12:21:25.849086"
+    },
+    {
+      "test": "Admin Model Registration",
+      "status": "PASS",
+      "message": "10/10 models registered",
+      "details": [
+        "CustomUser",
+        "UserProfile",
+        "Property",
+        "Location",
+        "Auction",
+        "Bid",
+        "Room",
+        "RentalProperty",
+        "Worker",
+        "MaintenanceCategory"
+      ],
+      "timestamp": "2025-07-22 12:21:25.849128"
+    },
+    {
+      "test": "Arabic Data Visibility",
+      "status": "PASS",
+      "message": "Arabic data properly stored and accessible",
+      "details": [
+        "Arabic users: 18",
+        "Arabic properties: 79"
+      ],
+      "timestamp": "2025-07-22 12:21:25.881401"
+    },
+    {
+      "test": "API Endpoint - Properties API",
+      "status": "WARN",
+      "message": "Unexpected response (HTTP 400)",
+      "details": null,
+      "timestamp": "2025-07-22 12:21:27.726005"
+    },
+    {
+      "test": "API Endpoint - Auctions API",
+      "status": "WARN",
+      "message": "Unexpected response (HTTP 400)",
+      "details": null,
+      "timestamp": "2025-07-22 12:21:27.746712"
+    },
+    {
+      "test": "API Endpoint - Login API",
+      "status": "WARN",
+      "message": "Unexpected response (HTTP 400)",
+      "details": null,
+      "timestamp": "2025-07-22 12:21:27.771669"
+    },
+    {
+      "test": "API Endpoint - Admin Panel",
+      "status": "WARN",
+      "message": "Unexpected response (HTTP 400)",
+      "details": null,
+      "timestamp": "2025-07-22 12:21:27.789201"
+    },
+    {
+      "test": "Model Relationships",
+      "status": "PASS",
+      "message": "All key relationships working correctly",
+      "details": [
+        "Properties with owners: 80",
+        "Auctions with properties: 41",
+        "Complete bid chains: 176",
+        "Users with profiles: 22"
+      ],
+      "timestamp": "2025-07-22 12:21:27.790749"
+    },
+    {
+      "test": "Arabic Data Storage",
+      "status": "PASS",
+      "message": "Arabic text properly stored and searchable",
+      "details": [
+        "Users with Arabic names: 18",
+        "Properties with Arabic titles: 79",
+        "Cities with Arabic names: 11"
+      ],
+      "timestamp": "2025-07-22 12:21:27.796861"
+    },
+    {
+      "test": "Arabic Search Functionality",
+      "status": "PASS",
+      "message": "Arabic text search working",
+      "details": [
+        "Villa search results: 12",
+        "Riyadh search results: 2"
+      ],
+      "timestamp": "2025-07-22 12:21:27.797945"
+    }
+  ],
+  "timestamp": "2025-07-22T12:21:27.801091"
+}

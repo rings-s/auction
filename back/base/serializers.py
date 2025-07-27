@@ -738,9 +738,9 @@ class TenantSerializer(serializers.ModelSerializer):
         current_property = obj.current_property
         if current_property:
             return {
-                'id': current_property.property.id,
-                'title': current_property.property.title,
-                'address': current_property.property.address,
+                'id': current_property.base_property.id,
+                'title': current_property.base_property.title,
+                'address': current_property.base_property.address,
             }
         return None
         
@@ -1195,3 +1195,119 @@ class PropertyMaintenanceWorkflowSerializer(serializers.ModelSerializer):
         model = PropertyMaintenanceWorkflow
         fields = '__all__'
         read_only_fields = ['created_at', 'updated_at']
+
+
+# -------------------------------------------------------------------------
+# Bank Account Serializers
+# -------------------------------------------------------------------------
+
+class BankAccountSerializer(serializers.ModelSerializer):
+    user_name = serializers.SerializerMethodField()
+    
+    class Meta:
+        model = BankAccount
+        fields = [
+            'id', 'user', 'user_name', 'bank_account_name', 'bank_name', 
+            'iban_number', 'account_number', 'swift_code', 'is_primary', 
+            'is_verified', 'notes', 'created_at', 'updated_at'
+        ]
+        read_only_fields = ['id', 'user', 'created_at', 'updated_at']
+    
+    def get_user_name(self, obj):
+        return f"{obj.user.first_name} {obj.user.last_name}".strip() or obj.user.email
+
+class BankAccountCreateSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = BankAccount
+        fields = [
+            'bank_account_name', 'bank_name', 'iban_number', 'account_number', 
+            'swift_code', 'is_primary', 'notes'
+        ]
+    
+    def create(self, validated_data):
+        validated_data['user'] = self.context['request'].user
+        return super().create(validated_data)
+
+class BankAccountUpdateSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = BankAccount
+        fields = [
+            'bank_account_name', 'bank_name', 'iban_number', 'account_number', 
+            'swift_code', 'is_primary', 'notes'
+        ]
+
+class BankAccountBriefSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = BankAccount
+        fields = ['id', 'bank_account_name', 'bank_name', 'iban_number', 'is_primary']
+
+
+# -------------------------------------------------------------------------
+# Payment Serializers  
+# -------------------------------------------------------------------------
+
+class PaymentSerializer(serializers.ModelSerializer):
+    user_name = serializers.SerializerMethodField()
+    property_title = serializers.SerializerMethodField()
+    tenant_name = serializers.SerializerMethodField()
+    bank_account_name = serializers.SerializerMethodField()
+    payment_type_display = serializers.CharField(source='get_payment_type_display', read_only=True)
+    status_display = serializers.CharField(source='get_status_display', read_only=True)
+    is_overdue = serializers.BooleanField(read_only=True)
+    days_overdue = serializers.IntegerField(read_only=True)
+    
+    class Meta:
+        model = Payment
+        fields = [
+            'id', 'payment_id', 'user', 'user_name', 'amount', 'currency', 
+            'payment_type', 'payment_type_display', 'status', 'status_display',
+            'property_reference', 'property_title', 'tenant_reference', 'tenant_name',
+            'payment_date', 'due_date', 'description', 'notes', 'bank_account',
+            'bank_account_name', 'is_overdue', 'days_overdue', 'created_at', 'updated_at'
+        ]
+        read_only_fields = ['id', 'payment_id', 'user', 'created_at', 'updated_at']
+    
+    def get_user_name(self, obj):
+        return f"{obj.user.first_name} {obj.user.last_name}".strip() or obj.user.email
+    
+    def get_property_title(self, obj):
+        return obj.property_reference.title if obj.property_reference else None
+    
+    def get_tenant_name(self, obj):
+        return obj.tenant_reference.full_name if obj.tenant_reference else None
+    
+    def get_bank_account_name(self, obj):
+        return obj.bank_account.bank_account_name if obj.bank_account else None
+
+class PaymentCreateSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Payment
+        fields = [
+            'amount', 'currency', 'payment_type', 'status', 'property_reference', 
+            'tenant_reference', 'payment_date', 'due_date', 'description', 
+            'notes', 'bank_account'
+        ]
+    
+    def create(self, validated_data):
+        validated_data['user'] = self.context['request'].user
+        return super().create(validated_data)
+
+class PaymentUpdateSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Payment
+        fields = [
+            'amount', 'currency', 'payment_type', 'status', 'property_reference', 
+            'tenant_reference', 'payment_date', 'due_date', 'description', 
+            'notes', 'bank_account'
+        ]
+
+class PaymentBriefSerializer(serializers.ModelSerializer):
+    payment_type_display = serializers.CharField(source='get_payment_type_display', read_only=True)
+    status_display = serializers.CharField(source='get_status_display', read_only=True)
+    
+    class Meta:
+        model = Payment
+        fields = [
+            'id', 'payment_id', 'amount', 'currency', 'payment_type', 
+            'payment_type_display', 'status', 'status_display', 'payment_date'
+        ]

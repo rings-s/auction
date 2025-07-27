@@ -35,9 +35,14 @@ if not os.getenv('ENVIRONMENT'):
     else:
         ENVIRONMENT = 'development'
 
+# Force development settings when not in production
+if not RUNNING_IN_DOCKER and ENVIRONMENT == 'development':
+    DEBUG = True
+
 print(f"🔥 ENVIRONMENT: {ENVIRONMENT}")
 print(f"🔥 DEBUG MODE: {DEBUG}")
 print(f"🔥 RUNNING IN DOCKER: {RUNNING_IN_DOCKER}")
+print(f"🔥 SQLite Development Mode: {ENVIRONMENT == 'development' and not os.getenv('USE_POSTGRESQL', 'False').lower() == 'true'}")
 
 # SECURITY
 # ========
@@ -73,30 +78,17 @@ print(f"🔥 ALLOWED_HOSTS: {ALLOWED_HOSTS}")
 def get_database_config():
     """Get database configuration based on environment"""
     
-    # Default values for local development
-    default_config = {
-        'ENGINE': 'django.db.backends.postgresql',
-        'NAME': os.getenv('DB_NAME', 'auction'),
-        'USER': os.getenv('DB_USER', 'postgres'),
-        'PASSWORD': os.getenv('DB_PASSWORD', 'postgres'),
-        'PORT': os.getenv('DB_PORT', '5432'),
-        'CONN_MAX_AGE': 60,
-        'OPTIONS': {
-            'connect_timeout': 10,
-        }
-    }
-    
-
-def get_database_config():
-    """Get database configuration based on environment"""
-    
-    # Default to SQLite for simplicity and reliability
+    # Default to SQLite for development simplicity and reliability
     sqlite_config = {
         'ENGINE': 'django.db.backends.sqlite3',
         'NAME': BASE_DIR / 'db.sqlite3',
+        'OPTIONS': {
+            'timeout': 30,  # Timeout for database operations
+            'check_same_thread': False,  # Allow multi-threading
+        }
     }
     
-    # Only use PostgreSQL if explicitly requested
+    # Only use PostgreSQL if explicitly requested via environment variable
     if os.getenv('USE_POSTGRESQL', 'False').lower() == 'true':
         print(f"🔥 DATABASE: Using PostgreSQL (explicitly requested)")
         postgresql_config = {
@@ -121,10 +113,23 @@ def get_database_config():
         
         return postgresql_config
     
-    print(f"🔥 DATABASE: Using SQLite (default)")
+    print(f"🔥 DATABASE: Using SQLite (default for development)")
     return sqlite_config
 
 DATABASES = {'default': get_database_config()}
+
+# SQLite-specific optimizations
+if DATABASES['default']['ENGINE'] == 'django.db.backends.sqlite3':
+    # Enable WAL mode for better concurrent access
+    DATABASES['default'].setdefault('OPTIONS', {}).update({
+        'init_command': '''
+            PRAGMA journal_mode=WAL;
+            PRAGMA synchronous=NORMAL;
+            PRAGMA cache_size=1000;
+            PRAGMA temp_store=MEMORY;
+            PRAGMA foreign_keys=ON;
+        '''.strip()
+    })
 
 # REDIS CONFIGURATION
 # ===================
@@ -338,7 +343,7 @@ SIMPLE_JWT = {
     'ALGORITHM': 'HS256',
     'SIGNING_KEY': SECRET_KEY,
     'AUTH_HEADER_TYPES': ('Bearer',),
-    'USER_ID_FIELD': 'id',
+    'USER_ID_FIELD': 'uuid',
     'USER_ID_CLAIM': 'user_id',
 }
 

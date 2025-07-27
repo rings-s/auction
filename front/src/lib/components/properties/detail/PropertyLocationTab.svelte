@@ -50,8 +50,8 @@
 	function createMap() {
 		if (!mapElement || !property?.location) return;
 
-		const lat = property.location.latitude || 0;
-		const lng = property.location.longitude || 0;
+		const lat = parseFloat(property.location.latitude) || 0;
+		const lng = parseFloat(property.location.longitude) || 0;
 
 		if (!lat || !lng) return;
 

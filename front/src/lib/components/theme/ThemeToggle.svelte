@@ -15,7 +15,6 @@
 	/** @type {boolean} */
 	let animate = $props(true);
 
-
 	let showDropdown = $state(false);
 
 	let themeOptions = $derived([

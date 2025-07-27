@@ -2,6 +2,66 @@
 
 import { refreshToken } from '$lib/api/auth';
 import { goto } from '$app/navigation';
+import { API_BASE_URL } from '$lib/constants';
+
+/**
+ * Type guard to check if an error is an Error object
+ * @param {unknown} error - The error to check
+ * @returns {error is Error} True if the error is an Error object
+ */
+function isError(error) {
+	return error instanceof Error;
+}
+
+/**
+ * Safely extracts error message from unknown error type
+ * @param {unknown} error - The error to extract message from
+ * @param {string} defaultMessage - Default message if no message can be extracted
+ * @returns {string} The error message
+ */
+export function getErrorMessage(error, defaultMessage = 'An unknown error occurred') {
+	if (isError(error)) {
+		return error.message;
+	}
+	if (typeof error === 'string') {
+		return error;
+	}
+	if (
+		error &&
+		typeof error === 'object' &&
+		'message' in error &&
+		typeof error.message === 'string'
+	) {
+		return error.message;
+	}
+	return defaultMessage;
+}
+
+/**
+ * Safely extracts error stack from unknown error type
+ * @param {unknown} error - The error to extract stack from
+ * @returns {string|undefined} The error stack if available
+ */
+export function getErrorStack(error) {
+	if (isError(error)) {
+		return error.stack;
+	}
+	if (error && typeof error === 'object' && 'stack' in error && typeof error.stack === 'string') {
+		return error.stack;
+	}
+	return undefined;
+}
+
+/**
+ * Checks if error message contains specific text (case insensitive)
+ * @param {unknown} error - The error to check
+ * @param {string} text - The text to search for
+ * @returns {boolean} True if the error message contains the text
+ */
+export function errorContains(error, text) {
+	const message = getErrorMessage(error, '').toLowerCase();
+	return message.includes(text.toLowerCase());
+}
 
 /**
  * Performs an authenticated fetch request.
@@ -38,14 +98,16 @@ async function authenticatedFetch(url, options = {}) {
 	}
 
 	try {
-		let response = await fetch(url, { ...options, headers: finalHeaders });
+		// Build full URL if relative path is provided
+		const fullUrl = url.startsWith('http') ? url : `${API_BASE_URL}${url}`;
+		let response = await fetch(fullUrl, { ...options, headers: finalHeaders });
 
 		if (response.status === 401) {
 			// Try token refresh
 			try {
 				const newToken = await refreshToken();
 				finalHeaders.Authorization = `Bearer ${newToken}`;
-				response = await fetch(url, { ...options, headers: finalHeaders });
+				response = await fetch(fullUrl, { ...options, headers: finalHeaders });
 
 				if (!response.ok) {
 					// Token refresh succeeded but subsequent request failed

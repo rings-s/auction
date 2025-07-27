@@ -25,7 +25,9 @@
 		? tags.filter((tag) => tag.toLowerCase().includes(searchQuery.toLowerCase()))
 		: tags;
 
-	$: hasSelectedTags = selectedTags.length > 0;
+	// Ensure selectedTags is always an array
+	$: safeSelectedTags = Array.isArray(selectedTags) ? selectedTags : [];
+	$: hasSelectedTags = safeSelectedTags.length > 0;
 
 	const sizeClasses = {
 		small: 'px-2 py-1 text-xs',
@@ -42,10 +44,12 @@
 	function toggleTag(tag) {
 		if (readonly) return;
 
-		if (selectedTags.includes(tag)) {
-			selectedTags = selectedTags.filter((t) => t !== tag);
+		const currentTags = Array.isArray(selectedTags) ? selectedTags : [];
+
+		if (currentTags.includes(tag)) {
+			selectedTags = currentTags.filter((t) => t !== tag);
 		} else {
-			selectedTags = [...selectedTags, tag];
+			selectedTags = [...currentTags, tag];
 		}
 
 		dispatch('change', selectedTags);

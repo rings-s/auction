@@ -4,7 +4,7 @@
 	import { goto } from '$app/navigation';
 	import { login } from '$lib/api/auth';
 	import { t } from '$lib/i18n';
-	import { user } from '$lib/stores/user';
+	import { user } from '$lib/stores/user.svelte.js';
 	import { page } from '$app/stores';
 	import LoginForm from '$lib/components/auth/LoginForm.svelte';
 

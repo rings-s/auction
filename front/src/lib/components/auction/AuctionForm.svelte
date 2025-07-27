@@ -4,7 +4,7 @@
 	import { t } from '$lib/i18n';
 	import { getProperties } from '$lib/api/property';
 	import { uploadMultipleMedia, deleteMedia, updateMedia } from '$lib/api/media';
-	import { user } from '$lib/stores/user';
+	import { user } from '$lib/stores/user.svelte.js';
 	import Tabs from '$lib/components/ui/Tabs.svelte';
 	import FormField from '$lib/components/ui/FormField.svelte';
 	import Switch from '$lib/components/ui/Switch.svelte';

@@ -2,7 +2,7 @@
 	import { onMount, onDestroy } from 'svelte';
 	import { page } from '$app/stores';
 	import { t } from '$lib/i18n';
-	import { user } from '$lib/stores/user';
+	import { user } from '$lib/stores/user.svelte.js';
 	import {
 		fetchAuctionBySlug,
 		fetchAuctionBidsBySlug,

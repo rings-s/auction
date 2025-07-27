@@ -16,10 +16,20 @@
 	/** @type {boolean} */
 	export let loading = false;
 
-	$: rentalInfo = property?.rental_info;
-	$: occupancyStatus = rentalInfo?.occupancy_rate >= 100 ? 'occupied' : 'available';
-	$: tenantCount = rentalInfo?.current_tenant_count || 0;
-	$: maxTenants = rentalInfo?.max_tenants || 1;
+	// Map actual property data structure from backend API
+	$: primaryImage = property?.media?.find((m) => m.is_primary)?.file || property?.media?.[0]?.file;
+	$: propertyAddress = property?.location_data
+		? `${property.location_data.city}, ${property.location_data.state}`
+		: property?.address || '-';
+	$: propertyArea = property?.size_sqm || property?.area || 0;
+	$: propertyRooms = property?.rooms || [];
+	$: estimatedRent = property?.market_value ? Math.round((property.market_value * 0.08) / 12) : 0;
+
+	// Rental status - derived from property status or defaults
+	$: occupancyStatus =
+		property?.status === 'rented' || property?.is_occupied ? 'occupied' : 'available';
+	$: tenantCount = property?.current_tenants || 0;
+	$: maxTenants = Math.max(1, Math.floor(propertyRooms.length / 2)) || 1;
 
 	function handleViewDetails() {
 		dispatch('view', { property });
@@ -69,9 +79,9 @@
 >
 	<!-- Property Image -->
 	<div class="relative h-48 overflow-hidden rounded-t-lg">
-		{#if property.featured_image}
+		{#if primaryImage}
 			<img
-				src={property.featured_image}
+				src={primaryImage}
 				alt={property.title}
 				class="h-full w-full object-cover"
 				loading="lazy"
@@ -112,56 +122,53 @@
 				{property.title}
 			</h3>
 			<p class="line-clamp-1 text-sm text-gray-600">
-				📍 {property.address}
+				📍 {propertyAddress}
 			</p>
 		</div>
 
-		<!-- Rental Information Grid -->
-		{#if rentalInfo}
-			<div class="mb-4 grid grid-cols-2 gap-3">
-				<!-- Monthly Rent -->
-				<div class="rounded-lg bg-green-50 p-2">
-					<p class="text-xs font-medium text-green-700">{$t('rental.monthlyRent')}</p>
-					<p class="text-sm font-bold text-green-800">
-						{formatCurrency(rentalInfo.monthly_rent)}
-					</p>
-				</div>
-
-				<!-- Occupancy Rate -->
-				<div class="rounded-lg bg-blue-50 p-2">
-					<p class="text-xs font-medium text-blue-700">{$t('rental.occupancy')}</p>
-					<p class="text-sm font-bold text-blue-800">
-						{Math.round(rentalInfo.occupancy_rate)}%
-					</p>
-				</div>
-
-				<!-- Tenant Count -->
-				<div class="rounded-lg bg-purple-50 p-2">
-					<p class="text-xs font-medium text-purple-700">{$t('rental.tenants')}</p>
-					<p class="text-sm font-bold text-purple-800">
-						{tenantCount}/{maxTenants}
-					</p>
-				</div>
-
-				<!-- Annual Income -->
-				<div class="rounded-lg bg-orange-50 p-2">
-					<p class="text-xs font-medium text-orange-700">{$t('rental.annualIncome')}</p>
-					<p class="text-sm font-bold text-orange-800">
-						{formatCurrency(rentalInfo.monthly_rent * 12)}
-					</p>
-				</div>
+		<!-- Property Information Grid -->
+		<div class="mb-4 grid grid-cols-2 gap-3">
+			<!-- Market Value -->
+			<div class="rounded-lg bg-green-50 p-2">
+				<p class="text-xs font-medium text-green-700">{$t('property.marketValue')}</p>
+				<p class="text-sm font-bold text-green-800">
+					{formatCurrency(property.market_value || 0)}
+				</p>
 			</div>
-		{:else}
-			<Alert type="warning" message={$t('rental.noRentalInfo')} class="mb-4" />
-		{/if}
+
+			<!-- Estimated Monthly Rent -->
+			<div class="rounded-lg bg-blue-50 p-2">
+				<p class="text-xs font-medium text-blue-700">{$t('rental.estimatedRent')}</p>
+				<p class="text-sm font-bold text-blue-800">
+					{formatCurrency(estimatedRent)}
+				</p>
+			</div>
+
+			<!-- Occupancy Status -->
+			<div class="rounded-lg bg-purple-50 p-2">
+				<p class="text-xs font-medium text-purple-700">{$t('property.status')}</p>
+				<p class="text-sm font-bold text-purple-800">
+					{$t(`property.occupancy.${occupancyStatus}`)}
+				</p>
+			</div>
+
+			<!-- Property Area -->
+			<div class="rounded-lg bg-orange-50 p-2">
+				<p class="text-xs font-medium text-orange-700">{$t('property.area')}</p>
+				<p class="text-sm font-bold text-orange-800">
+					{propertyArea}
+					{$t('property.sqm')}
+				</p>
+			</div>
+		</div>
 
 		<!-- Property Stats -->
 		<div class="mb-4 flex items-center gap-4 text-sm text-gray-600">
-			{#if property.rooms?.length}
-				<span>🛏️ {property.rooms.length} {$t('property.rooms')}</span>
+			{#if propertyRooms.length}
+				<span>🛏️ {propertyRooms.length} {$t('property.rooms')}</span>
 			{/if}
-			{#if property.area}
-				<span>📐 {property.area} {$t('property.sqm')}</span>
+			{#if property.floors}
+				<span>🏢 {property.floors} {$t('property.floors')}</span>
 			{/if}
 			{#if property.year_built}
 				<span>📅 {property.year_built}</span>
@@ -179,19 +186,17 @@
 					{$t('common.edit')}
 				</Button>
 
-				{#if rentalInfo}
-					<Button variant="ghost" size="sm" on:click={handleViewTenants}>
-						👥 {$t('rental.tenants')}
-					</Button>
+				<Button variant="ghost" size="sm" on:click={handleViewTenants}>
+					👥 {$t('rental.tenants')}
+				</Button>
 
-					<Button variant="ghost" size="sm" on:click={handleViewMaintenance}>
-						🔧 {$t('maintenance.title')}
-					</Button>
+				<Button variant="ghost" size="sm" on:click={handleViewMaintenance}>
+					🔧 {$t('maintenance.title')}
+				</Button>
 
-					<Button variant="ghost" size="sm" on:click={handleViewExpenses}>
-						💰 {$t('expenses.title')}
-					</Button>
-				{/if}
+				<Button variant="ghost" size="sm" on:click={handleViewExpenses}>
+					💰 {$t('expenses.title')}
+				</Button>
 			</div>
 		{/if}
 	</div>

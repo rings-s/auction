@@ -147,7 +147,6 @@ class CanSendMessages(BasePermission):
 
 
 
-# these new permission classes is four the dashboard 
 
 class CanAccessDashboard(BasePermission):
     message = _('You need appropriate permissions to access dashboard features.')

@@ -3,9 +3,9 @@
 	import { onMount } from 'svelte';
 	import { goto } from '$app/navigation';
 	import { t } from '$lib/i18n';
-	import { 
-		createBankAccount, 
-		updateBankAccount, 
+	import {
+		createBankAccount,
+		updateBankAccount,
 		getBankAccount,
 		validateBankAccountData,
 		validateIBAN,
@@ -83,7 +83,7 @@
 			loading = true;
 			error = null;
 			const account = await getBankAccount(accountId);
-			
+
 			// Populate form data
 			formData = {
 				bank_account_name: account.bank_account_name || '',
@@ -113,7 +113,7 @@
 	// Handle form field changes
 	function handleFieldChange(field, value) {
 		formData[field] = value;
-		
+
 		// Special handling for IBAN formatting
 		if (field === 'iban_number') {
 			const ibanValidation = validateIBAN(value);
@@ -121,18 +121,18 @@
 				formData.iban_number = ibanValidation.cleanIban;
 			}
 		}
-		
+
 		// Clear specific field error
 		if (validationErrors[field]) {
 			delete validationErrors[field];
 			validationErrors = { ...validationErrors };
 		}
-		
+
 		// Auto-save if enabled
 		if (autoSaveEnabled && isEditing) {
 			scheduleAutoSave();
 		}
-		
+
 		// Re-validate form
 		validateForm();
 	}
@@ -142,7 +142,7 @@
 		if (autoSaveTimer) {
 			clearTimeout(autoSaveTimer);
 		}
-		
+
 		autoSaveTimer = setTimeout(() => {
 			if (validateForm()) {
 				saveAccount(true); // Silent save
@@ -162,7 +162,7 @@
 		try {
 			saving = true;
 			error = null;
-			
+
 			let result;
 			if (isEditing) {
 				result = await updateBankAccount(accountId, formData);
@@ -173,17 +173,17 @@
 				result = await createBankAccount(formData);
 				toast.success($t('bankAccount.createSuccess'));
 			}
-			
+
 			// Call success callback if provided
 			if (onSuccess) {
 				onSuccess(result);
 			}
-			
+
 			// Redirect if not embedded
 			if (!embedded && !isEditing) {
 				goto('/dashboard/bank-accounts');
 			}
-			
+
 			return true;
 		} catch (err) {
 			error = err.message;
@@ -233,7 +233,7 @@
 	</title>
 </svelte:head>
 
-<div class="max-w-4xl mx-auto space-y-6">
+<div class="mx-auto max-w-4xl space-y-6">
 	<!-- Header -->
 	{#if !embedded}
 		<div class="border-b border-gray-200 pb-5 dark:border-gray-700">
@@ -249,30 +249,32 @@
 	<!-- Loading State -->
 	{#if loading}
 		<LoadingSkeleton type="rect" height="400px" />
-	
-	<!-- Error Alert -->
+
+		<!-- Error Alert -->
 	{:else if error}
 		<Alert type="error" title={$t('error.title')} message={error} dismissible />
-	
-	<!-- Form -->
+
+		<!-- Form -->
 	{:else}
-		<div class="bg-white dark:bg-gray-800 shadow-sm rounded-lg overflow-hidden">
+		<div class="overflow-hidden rounded-lg bg-white shadow-sm dark:bg-gray-800">
 			<!-- Progress Steps -->
-			<div class="px-6 py-4 border-b border-gray-200 dark:border-gray-700">
-				<Tabs 
-					bind:activeTab={currentStep}
-					{tabs}
-					variant="pills"
-					on:change={handleTabChange}
-				/>
+			<div class="border-b border-gray-200 px-6 py-4 dark:border-gray-700">
+				<Tabs bind:activeTab={currentStep} {tabs} variant="pills" on:change={handleTabChange} />
 			</div>
 
 			<!-- Auto-save indicator -->
 			{#if autoSaveEnabled && isEditing}
-				<div class="px-6 py-2 bg-blue-50 dark:bg-blue-900/20 border-b border-blue-200 dark:border-blue-800">
+				<div
+					class="border-b border-blue-200 bg-blue-50 px-6 py-2 dark:border-blue-800 dark:bg-blue-900/20"
+				>
 					<div class="flex items-center text-sm text-blue-700 dark:text-blue-300">
 						<svg class="mr-2 h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-							<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
+							<path
+								stroke-linecap="round"
+								stroke-linejoin="round"
+								stroke-width="2"
+								d="M13 10V3L4 14h7v7l9-11h-7z"
+							/>
 						</svg>
 						{$t('common.autoSaveEnabled')}
 					</div>
@@ -287,11 +289,14 @@
 						<h3 class="text-lg font-medium text-gray-900 dark:text-white">
 							{$t('bankAccount.basicInfo')}
 						</h3>
-						
+
 						<div class="grid grid-cols-1 gap-6 sm:grid-cols-2">
 							<!-- Account Holder Name -->
 							<div>
-								<label for="bank_account_name" class="block text-sm font-medium text-gray-700 dark:text-gray-300">
+								<label
+									for="bank_account_name"
+									class="block text-sm font-medium text-gray-700 dark:text-gray-300"
+								>
 									{$t('bankAccount.accountHolderName')} *
 								</label>
 								<input
@@ -299,7 +304,7 @@
 									id="bank_account_name"
 									value={formData.bank_account_name}
 									oninput={(e) => handleFieldChange('bank_account_name', e.target.value)}
-									class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white sm:text-sm"
+									class="focus:border-primary-500 focus:ring-primary-500 mt-1 block w-full rounded-md border-gray-300 shadow-sm sm:text-sm dark:border-gray-600 dark:bg-gray-700 dark:text-white"
 									class:border-red-500={validationErrors.bank_account_name}
 									placeholder={$t('bankAccount.accountHolderPlaceholder')}
 								/>
@@ -310,14 +315,17 @@
 
 							<!-- Account Type -->
 							<div>
-								<label for="account_type" class="block text-sm font-medium text-gray-700 dark:text-gray-300">
+								<label
+									for="account_type"
+									class="block text-sm font-medium text-gray-700 dark:text-gray-300"
+								>
 									{$t('bankAccount.accountType')}
 								</label>
 								<select
 									id="account_type"
 									bind:value={formData.account_type}
 									onchange={(e) => handleFieldChange('account_type', e.target.value)}
-									class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white sm:text-sm"
+									class="focus:border-primary-500 focus:ring-primary-500 mt-1 block w-full rounded-md border-gray-300 shadow-sm sm:text-sm dark:border-gray-600 dark:bg-gray-700 dark:text-white"
 								>
 									{#each accountTypes as type}
 										<option value={type.value}>{type.label}</option>
@@ -334,7 +342,7 @@
 									type="checkbox"
 									bind:checked={formData.is_primary}
 									onchange={(e) => handleFieldChange('is_primary', e.target.checked)}
-									class="h-4 w-4 rounded border-gray-300 text-primary-600 focus:ring-primary-500 dark:border-gray-600 dark:bg-gray-700"
+									class="text-primary-600 focus:ring-primary-500 h-4 w-4 rounded border-gray-300 dark:border-gray-600 dark:bg-gray-700"
 								/>
 							</div>
 							<div class="ml-3 text-sm">
@@ -347,18 +355,21 @@
 							</div>
 						</div>
 					</div>
-				
-				<!-- Step 2: Bank Details -->
+
+					<!-- Step 2: Bank Details -->
 				{:else if currentStep === 2}
 					<div class="space-y-6">
 						<h3 class="text-lg font-medium text-gray-900 dark:text-white">
 							{$t('bankAccount.bankDetails')}
 						</h3>
-						
+
 						<div class="space-y-6">
 							<!-- Bank Name -->
 							<div>
-								<label for="bank_name" class="block text-sm font-medium text-gray-700 dark:text-gray-300">
+								<label
+									for="bank_name"
+									class="block text-sm font-medium text-gray-700 dark:text-gray-300"
+								>
 									{$t('bankAccount.bankName')} *
 								</label>
 								<input
@@ -366,7 +377,7 @@
 									id="bank_name"
 									value={formData.bank_name}
 									oninput={(e) => handleFieldChange('bank_name', e.target.value)}
-									class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white sm:text-sm"
+									class="focus:border-primary-500 focus:ring-primary-500 mt-1 block w-full rounded-md border-gray-300 shadow-sm sm:text-sm dark:border-gray-600 dark:bg-gray-700 dark:text-white"
 									class:border-red-500={validationErrors.bank_name}
 									placeholder={$t('bankAccount.bankNamePlaceholder')}
 								/>
@@ -377,7 +388,10 @@
 
 							<!-- IBAN Number -->
 							<div>
-								<label for="iban_number" class="block text-sm font-medium text-gray-700 dark:text-gray-300">
+								<label
+									for="iban_number"
+									class="block text-sm font-medium text-gray-700 dark:text-gray-300"
+								>
 									{$t('bankAccount.iban')} *
 								</label>
 								<input
@@ -385,13 +399,13 @@
 									id="iban_number"
 									value={formData.iban_number}
 									oninput={(e) => handleFieldChange('iban_number', e.target.value)}
-									class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white sm:text-sm font-mono"
+									class="focus:border-primary-500 focus:ring-primary-500 mt-1 block w-full rounded-md border-gray-300 font-mono shadow-sm sm:text-sm dark:border-gray-600 dark:bg-gray-700 dark:text-white"
 									class:border-red-500={validationErrors.iban_number}
 									placeholder="SA0000000000000000000000"
 									maxlength="34"
 								/>
 								{#if formattedIBAN && !validationErrors.iban_number}
-									<p class="mt-1 text-sm text-gray-500 font-mono">{formattedIBAN}</p>
+									<p class="mt-1 font-mono text-sm text-gray-500">{formattedIBAN}</p>
 								{/if}
 								{#if validationErrors.iban_number}
 									<p class="mt-1 text-sm text-red-600">{validationErrors.iban_number}</p>
@@ -403,7 +417,10 @@
 
 							<!-- Account Number (Optional) -->
 							<div>
-								<label for="account_number" class="block text-sm font-medium text-gray-700 dark:text-gray-300">
+								<label
+									for="account_number"
+									class="block text-sm font-medium text-gray-700 dark:text-gray-300"
+								>
 									{$t('bankAccount.accountNumber')}
 								</label>
 								<input
@@ -411,7 +428,7 @@
 									id="account_number"
 									value={formData.account_number}
 									oninput={(e) => handleFieldChange('account_number', e.target.value)}
-									class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white sm:text-sm"
+									class="focus:border-primary-500 focus:ring-primary-500 mt-1 block w-full rounded-md border-gray-300 shadow-sm sm:text-sm dark:border-gray-600 dark:bg-gray-700 dark:text-white"
 									class:border-red-500={validationErrors.account_number}
 									placeholder={$t('bankAccount.accountNumberPlaceholder')}
 								/>
@@ -422,7 +439,10 @@
 
 							<!-- SWIFT Code (Optional) -->
 							<div>
-								<label for="swift_code" class="block text-sm font-medium text-gray-700 dark:text-gray-300">
+								<label
+									for="swift_code"
+									class="block text-sm font-medium text-gray-700 dark:text-gray-300"
+								>
 									{$t('bankAccount.swiftCode')}
 								</label>
 								<input
@@ -430,7 +450,7 @@
 									id="swift_code"
 									value={formData.swift_code}
 									oninput={(e) => handleFieldChange('swift_code', e.target.value)}
-									class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white sm:text-sm font-mono"
+									class="focus:border-primary-500 focus:ring-primary-500 mt-1 block w-full rounded-md border-gray-300 font-mono shadow-sm sm:text-sm dark:border-gray-600 dark:bg-gray-700 dark:text-white"
 									class:border-red-500={validationErrors.swift_code}
 									placeholder="RIBLSARI"
 									maxlength="11"
@@ -444,54 +464,76 @@
 							</div>
 						</div>
 					</div>
-				
-				<!-- Step 3: Verification & Notes -->
+
+					<!-- Step 3: Verification & Notes -->
 				{:else if currentStep === 3}
 					<div class="space-y-6">
 						<h3 class="text-lg font-medium text-gray-900 dark:text-white">
 							{$t('bankAccount.verification')}
 						</h3>
-						
+
 						<!-- Account Summary -->
 						<div class="rounded-lg bg-gray-50 p-4 dark:bg-gray-700">
-							<h4 class="text-sm font-medium text-gray-900 dark:text-white mb-3">
+							<h4 class="mb-3 text-sm font-medium text-gray-900 dark:text-white">
 								{$t('bankAccount.summary')}
 							</h4>
 							<dl class="space-y-2">
 								<div class="flex justify-between">
-									<dt class="text-sm text-gray-600 dark:text-gray-400">{$t('bankAccount.accountHolderName')}:</dt>
-									<dd class="text-sm font-medium text-gray-900 dark:text-white">{formData.bank_account_name}</dd>
+									<dt class="text-sm text-gray-600 dark:text-gray-400">
+										{$t('bankAccount.accountHolderName')}:
+									</dt>
+									<dd class="text-sm font-medium text-gray-900 dark:text-white">
+										{formData.bank_account_name}
+									</dd>
 								</div>
 								<div class="flex justify-between">
-									<dt class="text-sm text-gray-600 dark:text-gray-400">{$t('bankAccount.bankName')}:</dt>
-									<dd class="text-sm font-medium text-gray-900 dark:text-white">{formData.bank_name}</dd>
+									<dt class="text-sm text-gray-600 dark:text-gray-400">
+										{$t('bankAccount.bankName')}:
+									</dt>
+									<dd class="text-sm font-medium text-gray-900 dark:text-white">
+										{formData.bank_name}
+									</dd>
 								</div>
 								<div class="flex justify-between">
-									<dt class="text-sm text-gray-600 dark:text-gray-400">{$t('bankAccount.iban')}:</dt>
-									<dd class="text-sm font-mono text-gray-900 dark:text-white">{formattedIBAN}</dd>
+									<dt class="text-sm text-gray-600 dark:text-gray-400">
+										{$t('bankAccount.iban')}:
+									</dt>
+									<dd class="font-mono text-sm text-gray-900 dark:text-white">{formattedIBAN}</dd>
 								</div>
 								{#if formData.account_number}
 									<div class="flex justify-between">
-										<dt class="text-sm text-gray-600 dark:text-gray-400">{$t('bankAccount.accountNumber')}:</dt>
-										<dd class="text-sm font-mono text-gray-900 dark:text-white">{formData.account_number}</dd>
+										<dt class="text-sm text-gray-600 dark:text-gray-400">
+											{$t('bankAccount.accountNumber')}:
+										</dt>
+										<dd class="font-mono text-sm text-gray-900 dark:text-white">
+											{formData.account_number}
+										</dd>
 									</div>
 								{/if}
 								{#if formData.swift_code}
 									<div class="flex justify-between">
-										<dt class="text-sm text-gray-600 dark:text-gray-400">{$t('bankAccount.swiftCode')}:</dt>
-										<dd class="text-sm font-mono text-gray-900 dark:text-white">{formData.swift_code}</dd>
+										<dt class="text-sm text-gray-600 dark:text-gray-400">
+											{$t('bankAccount.swiftCode')}:
+										</dt>
+										<dd class="font-mono text-sm text-gray-900 dark:text-white">
+											{formData.swift_code}
+										</dd>
 									</div>
 								{/if}
 								<div class="flex justify-between">
-									<dt class="text-sm text-gray-600 dark:text-gray-400">{$t('bankAccount.accountType')}:</dt>
+									<dt class="text-sm text-gray-600 dark:text-gray-400">
+										{$t('bankAccount.accountType')}:
+									</dt>
 									<dd class="text-sm text-gray-900 dark:text-white">
-										{accountTypes.find(t => t.value === formData.account_type)?.label}
+										{accountTypes.find((t) => t.value === formData.account_type)?.label}
 									</dd>
 								</div>
 								{#if formData.is_primary}
 									<div class="flex justify-between">
-										<dt class="text-sm text-gray-600 dark:text-gray-400">{$t('bankAccount.primary')}:</dt>
-										<dd class="text-sm font-medium text-primary-600 dark:text-primary-400">
+										<dt class="text-sm text-gray-600 dark:text-gray-400">
+											{$t('bankAccount.primary')}:
+										</dt>
+										<dd class="text-primary-600 dark:text-primary-400 text-sm font-medium">
 											{$t('common.yes')}
 										</dd>
 									</div>
@@ -509,7 +551,7 @@
 								rows="3"
 								value={formData.notes}
 								oninput={(e) => handleFieldChange('notes', e.target.value)}
-								class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white sm:text-sm"
+								class="focus:border-primary-500 focus:ring-primary-500 mt-1 block w-full rounded-md border-gray-300 shadow-sm sm:text-sm dark:border-gray-600 dark:bg-gray-700 dark:text-white"
 								placeholder={$t('bankAccount.notesPlaceholder')}
 							></textarea>
 						</div>
@@ -519,7 +561,11 @@
 							<div class="flex">
 								<div class="flex-shrink-0">
 									<svg class="h-5 w-5 text-blue-400" fill="currentColor" viewBox="0 0 20 20">
-										<path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd" />
+										<path
+											fill-rule="evenodd"
+											d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z"
+											clip-rule="evenodd"
+										/>
 									</svg>
 								</div>
 								<div class="ml-3">
@@ -537,7 +583,9 @@
 			</div>
 
 			<!-- Form Actions -->
-			<div class="bg-gray-50 px-6 py-3 text-right dark:bg-gray-700 border-t border-gray-200 dark:border-gray-600">
+			<div
+				class="border-t border-gray-200 bg-gray-50 px-6 py-3 text-right dark:border-gray-600 dark:bg-gray-700"
+			>
 				<div class="flex justify-between">
 					<div>
 						{#if currentStep > 1}
@@ -557,9 +605,9 @@
 								{$t('common.next')}
 							</Button>
 						{:else}
-							<Button 
-								onClick={() => saveAccount()} 
-								variant="primary" 
+							<Button
+								onClick={() => saveAccount()}
+								variant="primary"
 								loading={saving}
 								disabled={!canProceed}
 							>

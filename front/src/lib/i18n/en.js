@@ -41,7 +41,21 @@ export const enTranslations = {
 		all: 'All',
 		search: 'Search',
 		clear: 'Clear',
-		clearAll: 'Clear All'
+		clearAll: 'Clear All',
+		clearFilters: 'Clear Filters',
+		retry: 'Retry',
+		saving: 'Saving...',
+		saveChanges: 'Save Changes',
+		creating: 'Creating...',
+		unsavedChanges: 'Unsaved Changes',
+		unsavedChangesMessage: 'You have unsaved changes. Are you sure you want to leave?',
+		keepEditing: 'Keep Editing',
+		discardChanges: 'Discard Changes',
+		selectOption: 'Select an option',
+		dateCreated: 'Date Created',
+		showingResults: 'Showing {count} of {total} results',
+		confirmDelete: 'Are you sure you want to delete this item?',
+		pageOf: 'Page {current} of {total}'
 	},
 
 	nav: {
@@ -130,7 +144,13 @@ export const enTranslations = {
 		passwordRequired: 'Password is required',
 		passwordInvalid: 'Password is invalid',
 		passwordMinLength: 'Password must be at least 8 characters long',
-		codeRequired: ''
+		codeRequired: 'Verification code is required',
+		required: 'This field is required',
+		invalidEmail: 'Please enter a valid email address',
+		invalidPhone: 'Please enter a valid phone number',
+		mustBePositive: 'Value must be positive',
+		endDateAfterStart: 'End date must be after start date',
+		dateCannotBeFuture: 'Date cannot be in the future'
 	},
 
 	fileUpload: {
@@ -141,6 +161,21 @@ export const enTranslations = {
 		fileTooLarge: 'File too large (max {size}MB)',
 		tooManyFiles: 'Too many files (max {max})',
 		removeFile: 'Remove file {name}'
+	},
+
+	fileUploader: {
+		clickToUpload: 'Click to upload files',
+		dropFiles: 'Drop files here to upload',
+		orDragDrop: 'or drag and drop files here',
+		acceptedTypes: 'Accepted types',
+		maxSize: 'Max file size',
+		maxFiles: 'Max files',
+		uploadedFiles: 'Uploaded Files',
+		removeFile: 'Remove file',
+		invalidType: 'File type not supported',
+		fileTooLarge: 'File is too large. Maximum size is {maxSize}',
+		singleFileOnly: 'Only one file is allowed',
+		tooManyFiles: 'Too many files. Maximum is {maxFiles}'
 	},
 
 	mediaUploader: {
@@ -301,12 +336,69 @@ export const enTranslations = {
 		create: 'Create',
 		keyDetails: 'Key Details',
 
+		// Additional property fields for rental management
+		occupancy: {
+			occupied: 'Occupied',
+			available: 'Available',
+			maintenance: 'Under Maintenance'
+		},
+
+		type: {
+			apartment: 'Apartment',
+			villa: 'Villa',
+			commercial: 'Commercial',
+			land: 'Land',
+			warehouse: 'Warehouse',
+			residential: 'Residential',
+			industrial: 'Industrial'
+		},
+
+		estimatedRevenue: 'Estimated Revenue',
+		properties: 'Properties',
+
 		tab: {
 			overview: 'Overview',
 			rooms: 'Rooms & Features',
 			location: 'Location',
 			gallery: 'Gallery',
-			auctions: 'Auctions'
+			auctions: 'Auctions',
+			management: 'Property Management'
+		},
+
+		management: {
+			title: 'Property Management',
+			description: 'Manage rental properties, tenants, and maintenance requests',
+			rentalProperty: 'Rental Property',
+			monthlyRent: 'Monthly Rent',
+			securityDeposit: 'Security Deposit',
+			rentalType: 'Rental Type',
+			currentTenant: 'Current Tenant',
+			noRentalInfo: 'Not configured for rental',
+			createRentalDescription:
+				'Convert this property to a rental property to enable tenant management, rent collection, and maintenance tracking.',
+			setupRental: 'Setup as Rental Property',
+			convertToRental: 'Convert to Rental',
+			payments: 'Payment Management',
+			managePayments: 'Track rent payments and expenses',
+			maintenance: 'Maintenance Requests',
+			scheduleMaintenance: 'Schedule and track maintenance',
+			analytics: 'Property Analytics',
+			viewAnalytics: 'View financial performance',
+			accessDenied: 'Access Denied',
+			accessDeniedMessage:
+				'You do not have permission to manage this property. Only property owners, administrators, and property managers can access this section.',
+			status: {
+				available: 'Available',
+				rented: 'Rented',
+				maintenance: 'Under Maintenance',
+				unavailable: 'Unavailable'
+			},
+			rentalTypes: {
+				monthly: 'Monthly',
+				yearly: 'Yearly',
+				weekly: 'Weekly',
+				daily: 'Daily'
+			}
 		},
 
 		galleryTabs: {
@@ -784,7 +876,7 @@ export const enTranslations = {
 		// Enhanced Navigation Descriptions
 		overview: 'Overview',
 		overviewDesc: 'Dashboard overview and key metrics',
-		
+
 		// Stats
 		totalProperties: 'Total Properties',
 		totalAuctions: 'Total Auctions',
@@ -1031,9 +1123,9 @@ export const enTranslations = {
 		getStarted: 'Get started with your account',
 		secureLogin: 'Secure login to your dashboard',
 		joinCommunity: 'Join our growing community',
-		forgotPasswordHelp: 'Enter your email and we\'ll send you reset instructions',
+		forgotPasswordHelp: "Enter your email and we'll send you reset instructions",
 		verificationHelp: 'We sent a 6-digit code to your email address',
-		codeNotReceived: 'Didn\'t receive the code?',
+		codeNotReceived: "Didn't receive the code?",
 		checkSpamFolder: 'Check your spam folder or',
 		loginSuccess: 'Login successful! Redirecting...',
 		loginFailed: 'Login failed. Please check your credentials.',
@@ -1081,7 +1173,7 @@ export const enTranslations = {
 		// Step Indicators
 		steps: {
 			accountInfo: 'Account Information',
-			verification: 'Email Verification', 
+			verification: 'Email Verification',
 			completed: 'Setup Complete'
 		},
 
@@ -1158,7 +1250,13 @@ export const enTranslations = {
 		resetFailed: 'Failed to reset password',
 		verificationFailed: 'Verification failed',
 		resendVerificationFailed: 'Failed to resend verification code',
-		sendingFailed: 'Failed to Send Message'
+		sendingFailed: 'Failed to Send Message',
+		saveFailed: 'Failed to save data',
+		loadingFailed: 'Failed to load data',
+		accessDenied: 'Access Denied',
+		insufficientPermissions: 'You do not have sufficient permissions to access this resource',
+		deleteFailed: 'Failed to delete item',
+		updateFailed: 'Failed to update item'
 	},
 
 	footer: {
@@ -1234,25 +1332,74 @@ export const enTranslations = {
 		maxRent: 'Max Rent',
 		noResultsFound: 'No properties found',
 		tryDifferentFilters: 'Try adjusting your search filters',
-		addFirstProperty: 'Add your first rental property to get started'
+		addFirstProperty: 'Add your first rental property to get started',
+		estimatedRent: 'Estimated Rent'
 	},
 
 	tenant: {
 		title: 'Tenants',
 		subtitle: 'Manage your tenant relationships',
+		description: 'Manage tenant information and relationships',
+		management: 'Tenant Management',
 		add: 'Add Tenant',
+		create: 'Create Tenant',
+		createDescription: 'Add a new tenant to your property management system',
+		createSuccess: 'Tenant created successfully!',
+		createError: 'Failed to create tenant. Please try again.',
 		addFirst: 'Add Your First Tenant',
+		createFirst: 'Create First Tenant',
+		personalInfo: 'Personal Information',
+		personalInfoDesc: 'Basic personal details and contact information',
+		leaseInfo: 'Lease Information',
+		leaseInfoDesc: 'Property assignment and lease details',
+		additionalInfo: 'Additional Information',
+		additionalInfoDesc: 'Emergency contacts and additional notes',
+		searchPlaceholder: 'Search tenants by name, email, or property...',
+		noTenants: 'No tenants found',
+		noTenantsDesc: 'Start by adding your first tenant',
+		name: 'Name',
+		namePlaceholder: 'Enter tenant name',
+		firstName: 'First Name',
+		firstNamePlaceholder: 'Enter first name',
+		lastName: 'Last Name',
+		lastNamePlaceholder: 'Enter last name',
+		email: 'Email',
+		emailPlaceholder: 'Enter tenant email',
+		phone: 'Phone',
+		phonePlaceholder: 'Enter phone number',
+		property: 'Property',
+		selectProperty: 'Select a property',
+		monthlyRent: 'Monthly Rent',
+		securityDeposit: 'Security Deposit',
+		leaseStart: 'Lease Start Date',
+		leaseEnd: 'Lease End Date',
+		status: 'Status',
+		nationalId: 'National ID',
+		nationalIdPlaceholder: 'Enter national ID number',
+		currentAddress: 'Current Address',
+		currentAddressPlaceholder: 'Enter current address',
+		emergencyContact: 'Emergency Contact',
+		emergencyContactPlaceholder: 'Enter emergency contact',
+		emergencyContactName: 'Emergency Contact Name',
+		emergencyContactNamePlaceholder: 'Enter emergency contact name',
+		emergencyContactPhone: 'Emergency Contact Phone',
+		emergencyContactPhonePlaceholder: 'Enter emergency contact phone',
+		occupation: 'Occupation',
+		occupationPlaceholder: 'Enter occupation',
+		employer: 'Employer',
+		employerPlaceholder: 'Enter employer name',
+		notes: 'Notes',
+		notesPlaceholder: 'Additional notes about the tenant...',
 		status: {
 			active: 'Active',
 			inactive: 'Inactive',
-			suspended: 'Suspended',
+			blacklisted: 'Blacklisted',
+			former: 'Former',
 			pending: 'Pending'
 		},
 		currentLease: 'Current Lease',
 		noActiveLease: 'No active lease',
 		moveInDate: 'Move-in Date',
-		emergencyContact: 'Emergency Contact',
-		nationalId: 'National ID',
 		creditScore: 'Credit Score',
 		leases: 'Leases',
 		payments: 'Payments'
@@ -1301,7 +1448,137 @@ export const enTranslations = {
 
 	expenses: {
 		title: 'Expenses',
-		subtitle: 'Track property-related expenses and costs'
+		description: 'Track and manage all property-related expenses',
+		subtitle: 'Track property-related expenses and costs',
+		manageExpenses: 'Manage Expenses',
+		backToExpenses: 'Back to Expenses',
+		createTitle: 'Create New Expense',
+		createSubtitle: 'Add a new expense record to track property costs',
+		createDescription: 'Create and manage property-related expenses',
+		expenseCreated: 'Expense Created Successfully!',
+		expenseCreatedMessage: 'Your expense has been recorded and added to the system.',
+		createAnother: 'Create Another',
+		viewExpenses: 'View All Expenses',
+		createExpense: 'Create Expense',
+
+		// Form fields
+		title: 'Expense Title',
+		titlePlaceholder: 'Enter expense title (e.g., Plumbing repair)',
+		description: 'Description',
+		descriptionPlaceholder: 'Provide details about this expense...',
+		amount: 'Amount',
+		currency: 'Currency',
+		date: 'Expense Date',
+		category: 'Category',
+		property: 'Property',
+		vendorName: 'Vendor/Supplier Name',
+		vendorNamePlaceholder: 'Enter vendor or supplier name',
+		referenceNumber: 'Reference Number',
+		referenceNumberPlaceholder: 'Invoice or receipt number',
+		paymentMethod: 'Payment Method',
+		notes: 'Additional Notes',
+		notesPlaceholder: 'Add any additional information about this expense...',
+
+		// Categories
+		'category.maintenance': 'Maintenance & Repairs',
+		'category.utilities': 'Utilities',
+		'category.insurance': 'Insurance',
+		'category.taxes': 'Property Taxes',
+		'category.legal': 'Legal & Professional',
+		'category.marketing': 'Marketing & Advertising',
+		'category.management': 'Property Management',
+		'category.improvement': 'Capital Improvements',
+		'category.other': 'Other Expenses',
+
+		// Payment methods
+		'payment.cash': 'Cash',
+		'payment.bankTransfer': 'Bank Transfer',
+		'payment.creditCard': 'Credit Card',
+		'payment.check': 'Check',
+		'payment.online': 'Online Payment',
+
+		// Recurring options
+		recurringExpense: 'Recurring Expense',
+		recurringExpenseDesc: 'This expense occurs regularly',
+		recurringFrequency: 'Frequency',
+		'recurring.monthly': 'Monthly',
+		'recurring.quarterly': 'Quarterly',
+		'recurring.yearly': 'Yearly',
+
+		// Tax information
+		taxDeductible: 'Tax Deductible',
+		taxDeductibleDesc: 'This expense can be deducted for tax purposes',
+		taxCategory: 'Tax Category',
+		'tax.deductible': 'Fully Deductible',
+		'tax.nonDeductible': 'Non-Deductible',
+		'tax.partial': 'Partially Deductible',
+		'tax.capital': 'Capital Expense',
+		taxNoticeTitle: 'Tax Information Notice',
+		taxNoticeText:
+			'Please consult with a tax professional to ensure proper categorization of tax-deductible expenses.',
+
+		// Status
+		approvalStatus: 'Approval Status',
+		'status.pending': 'Pending Review',
+		'status.approved': 'Approved',
+		'status.rejected': 'Rejected',
+
+		// Documents
+		receiptFiles: 'Receipt Files',
+		receiptFilesPlaceholder: 'Upload receipt images or PDFs',
+		supportingDocuments: 'Supporting Documents',
+		supportingDocumentsPlaceholder: 'Upload contracts, invoices, or other documents',
+		uploadGuidelines: 'Upload Guidelines',
+		uploadGuideline1: 'Maximum file size: 10MB per file',
+		uploadGuideline2: 'Accepted formats: PDF, JPG, PNG, DOC, XLS',
+		uploadGuideline3: 'Include clear images of receipts and invoices',
+		uploadGuideline4: 'Keep file names descriptive and organized',
+
+		// Steps
+		steps: {
+			basic: 'Basic Information',
+			basicDesc: 'Expense details',
+			category: 'Category & Property',
+			categoryDesc: 'Classification',
+			details: 'Vendor Details',
+			detailsDesc: 'Payment info',
+			tax: 'Tax Information',
+			taxDesc: 'Deduction details',
+			documents: 'Documentation',
+			documentsDesc: 'Upload files'
+		},
+
+		// Summary
+		expenseSummary: 'Expense Summary',
+
+		// Additional required translations
+		management: 'Expense Management',
+		expense: {
+			title: 'Expense',
+			status: {
+				pending: 'Pending',
+				paid: 'Paid',
+				overdue: 'Overdue'
+			}
+		},
+		create: 'Create Expense',
+		total: 'Total Expenses',
+		paid: 'Paid',
+		pending: 'Pending',
+		overdue: 'Overdue',
+		noExpenses: 'No Expenses Found',
+		noExpensesDesc: 'Start by creating your first expense record',
+		createFirst: 'Create First Expense',
+		searchPlaceholder: 'Search expenses...',
+		allCategories: 'All Categories',
+		allStatuses: 'All Statuses',
+		vendor: 'Vendor',
+		'category.title': 'Category',
+		'category.supplies': 'Supplies',
+		'category.services': 'Services',
+		'status.paid': 'Paid',
+		'status.overdue': 'Overdue',
+		markPaid: 'Mark as Paid'
 	},
 
 	analytics: {
@@ -1331,6 +1608,76 @@ export const enTranslations = {
 
 	reports: {
 		title: 'Reports',
-		generate: 'Generate Report'
+		description: 'Generate comprehensive reports for your property management operations',
+		management: 'Reports Management',
+		subtitle: 'Generate and manage property reports',
+		backToAnalytics: 'Back to Analytics',
+		generate: 'Generate Report',
+		generating: 'Generating...',
+		generateNew: 'Generate New Report',
+		generateFirst: 'Generate Your First Report',
+		download: 'Download',
+
+		// Quick Templates
+		quickTemplates: 'Quick Report Templates',
+		monthlyFinancial: 'Monthly Financial',
+		monthlyFinancialDesc: 'Income and expenses overview',
+		occupancyReport: 'Occupancy Report',
+		occupancyReportDesc: 'Tenant occupancy analysis',
+		maintenanceReport: 'Maintenance Report',
+		maintenanceReportDesc: 'Maintenance requests and costs',
+		tenantReport: 'Tenant Report',
+		tenantReportDesc: 'Tenant information and history',
+
+		// Generated Reports
+		generatedReports: 'Generated Reports',
+		generatedReportsDesc: 'View and download your previously generated reports',
+		noReports: 'No Reports Generated',
+		noReportsDesc:
+			"You haven't generated any reports yet. Create your first report to get started.",
+
+		// Report Types
+		reportType: 'Report Type',
+		type: {
+			financial: 'Financial Report',
+			occupancy: 'Occupancy Report',
+			maintenance: 'Maintenance Report',
+			tenant: 'Tenant Report',
+			expense: 'Expense Report'
+		},
+
+		// Time Periods
+		period: {
+			title: 'Time Period',
+			week: 'This Week',
+			month: 'This Month',
+			quarter: 'This Quarter',
+			year: 'This Year',
+			custom: 'Custom Range'
+		},
+
+		// Date Range
+		startDate: 'Start Date',
+		endDate: 'End Date',
+
+		// Format Options
+		format: 'Output Format',
+
+		// Report Options
+		options: 'Report Options',
+		includeCharts: 'Include Charts and Graphs',
+		includeSummary: 'Include Executive Summary',
+
+		// Status
+		status: {
+			pending: 'Pending',
+			generating: 'Generating',
+			completed: 'Completed',
+			failed: 'Failed'
+		},
+
+		// Error Messages
+		generateError: 'Failed to generate report. Please try again.',
+		downloadError: 'Failed to download report. Please try again.'
 	}
 };

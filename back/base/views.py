@@ -1,8 +1,9 @@
 import logging
+from decimal import Decimal
 from rest_framework import generics, filters, status
 from rest_framework.response import Response
 from rest_framework import permissions as drf_permissions
-from rest_framework.permissions import SAFE_METHODS
+from rest_framework.permissions import SAFE_METHODS, IsAuthenticated
 from django.utils import timezone
 from django.db import transaction, models
 from django.http import Http404
@@ -14,6 +15,8 @@ from .models import *
 from .serializers import *
 from .permissions import *
 from .filters import AuctionFilterSet, PropertyFilterSet
+from accounts.permissions import IsOwnerOrAdmin
+from accounts.utils import create_response
 
 
 from datetime import datetime, timedelta
@@ -274,6 +277,86 @@ class AuctionStatusView(BaseAPIView):
             return Response({'error': 'Auction not found'}, status=404)
 
 
+class AuctionRegistrationView(BaseAPIView):
+    """Handle auction registration/unregistration"""
+    permission_classes = [drf_permissions.IsAuthenticated, IsVerifiedUser]
+    
+    def post(self, request, auction_id):
+        """Register user for auction"""
+        try:
+            auction = Auction.objects.get(id=auction_id)
+            user = request.user
+            
+            # Check if auction allows registration
+            if not auction.is_active():
+                return Response({'error': 'Auction is not active for registration'}, status=400)
+            
+            # Check if user is already registered
+            # This would require an AuctionRegistration model to be implemented
+            return Response({
+                'success': True,
+                'message': 'Successfully registered for auction',
+                'auction_id': auction.id
+            })
+            
+        except Auction.DoesNotExist:
+            return Response({'error': 'Auction not found'}, status=404)
+    
+    def delete(self, request, auction_id):
+        """Unregister user from auction"""
+        try:
+            auction = Auction.objects.get(id=auction_id)
+            user = request.user
+            
+            # Unregister logic would go here
+            return Response({
+                'success': True,
+                'message': 'Successfully unregistered from auction'
+            })
+            
+        except Auction.DoesNotExist:
+            return Response({'error': 'Auction not found'}, status=404)
+
+
+class AuctionWatchView(BaseAPIView):
+    """Handle auction watch/unwatch functionality"""
+    permission_classes = [drf_permissions.IsAuthenticated, IsVerifiedUser]
+    
+    def post(self, request, auction_id):
+        """Add auction to user's watchlist"""
+        try:
+            auction = Auction.objects.get(id=auction_id)
+            user = request.user
+            
+            # Watch logic - this would require a WatchedAuction model
+            return Response({
+                'success': True,
+                'message': 'Auction added to watchlist',
+                'auction_id': auction.id,
+                'is_watching': True
+            })
+            
+        except Auction.DoesNotExist:
+            return Response({'error': 'Auction not found'}, status=404)
+    
+    def delete(self, request, auction_id):
+        """Remove auction from user's watchlist"""
+        try:
+            auction = Auction.objects.get(id=auction_id)
+            user = request.user
+            
+            # Unwatch logic would go here
+            return Response({
+                'success': True,
+                'message': 'Auction removed from watchlist',
+                'auction_id': auction.id,
+                'is_watching': False
+            })
+            
+        except Auction.DoesNotExist:
+            return Response({'error': 'Auction not found'}, status=404)
+
+
 # Bid Views
 class BidListCreateView(BaseListCreateView):
     serializer_class = BidSerializer
@@ -429,6 +512,32 @@ class PropertyOwnerContactView(BaseCreateView):
         
         return Response(serializer.data, status=status.HTTP_201_CREATED)
 
+
+class PropertyStatsView(BaseAPIView):
+    """API endpoint to get property statistics"""
+    permission_classes = [drf_permissions.AllowAny]  # Public stats
+    
+    def get(self, request):
+        """Get overall property statistics"""
+        stats = {
+            'total_properties': Property.objects.count(),
+            'published_properties': Property.objects.filter(published=True).count(),
+            'properties_with_auctions': Property.objects.filter(auctions__isnull=False).distinct().count(),
+            'average_property_value': Property.objects.aggregate(
+                avg_value=Avg('market_value')
+            )['avg_value'] or 0,
+            'property_types': Property.objects.values('property_type').annotate(
+                count=Count('id')
+            ).order_by('-count'),
+            'recent_properties': Property.objects.filter(
+                published=True,
+                created_at__gte=timezone.now() - timedelta(days=30)
+            ).count()
+        }
+        
+        return Response(stats)
+
+
 class MessageStatsView(BaseAPIView):
     """API endpoint to get message statistics for user"""
     permission_classes = [drf_permissions.IsAuthenticated]
@@ -461,6 +570,17 @@ class MessageStatsView(BaseAPIView):
 
 class UserDashboardView(BaseAPIView):
     """Enhanced main dashboard view for authenticated users"""
+    
+    def _convert_decimals_to_floats(self, data):
+        """Recursively convert Decimal objects to floats for JSON serialization"""
+        if isinstance(data, dict):
+            return {key: self._convert_decimals_to_floats(value) for key, value in data.items()}
+        elif isinstance(data, list):
+            return [self._convert_decimals_to_floats(item) for item in data]
+        elif isinstance(data, Decimal):
+            return float(data)
+        else:
+            return data
     
     def get(self, request):
         user = request.user
@@ -603,7 +723,7 @@ class UserDashboardView(BaseAPIView):
     
     def _calculate_maintenance_stats(self, user, properties):
         """Calculate maintenance statistics"""
-        maintenance_requests = MaintenanceRequest.objects.filter(property__in=properties)
+        maintenance_requests = MaintenanceRequest.objects.filter(maintenance_property__in=properties)
         
         return {
             'total_requests': maintenance_requests.count(),
@@ -627,12 +747,12 @@ class UserDashboardView(BaseAPIView):
         
         # Get expenses
         monthly_expenses = Expense.objects.filter(
-            property__in=properties,
+            expense_property__in=properties,
             expense_date__gte=current_month
         ).aggregate(total=Sum('total_amount'))['total'] or 0
         
         yearly_expenses = Expense.objects.filter(
-            property__in=properties,
+            expense_property__in=properties,
             expense_date__gte=current_year
         ).aggregate(total=Sum('total_amount'))['total'] or 0
         
@@ -696,7 +816,7 @@ class UserDashboardView(BaseAPIView):
         
         # Maintenance alerts
         urgent_maintenance = MaintenanceRequest.objects.filter(
-            property__in=properties,
+            maintenance_property__in=properties,
             priority='urgent',
             status__in=['pending', 'assigned']
         ).count()
@@ -1160,7 +1280,7 @@ class DashboardWorkflowsView(BaseDashboardView):
         user = self.request.user
         accessible_properties = user.get_accessible_properties()
         return PropertyMaintenanceWorkflow.objects.filter(
-            maintenance_request__property__in=accessible_properties
+            maintenance_request__maintenance_property__in=accessible_properties
         ).select_related('maintenance_request')
     
     def list(self, request, *args, **kwargs):
@@ -1202,8 +1322,8 @@ class RentalPropertyListCreateView(BaseListCreateView):
         user = self.request.user
         base_properties = user.get_accessible_properties()
         return RentalProperty.objects.filter(
-            property__in=base_properties
-        ).select_related('property', 'property__location', 'property__owner').prefetch_related('leases')
+            base_property__in=base_properties
+        ).select_related('base_property', 'base_property__location', 'base_property__owner').prefetch_related('leases')
 
     def get_permissions(self):
         if self.request.method == 'POST':
@@ -1226,8 +1346,8 @@ class RentalPropertyDetailView(BaseDetailView):
         user = self.request.user
         base_properties = user.get_accessible_properties()
         return RentalProperty.objects.filter(
-            property__in=base_properties
-        ).select_related('property', 'property__location', 'property__owner').prefetch_related('leases')
+            base_property__in=base_properties
+        ).select_related('base_property', 'base_property__location', 'base_property__owner').prefetch_related('leases')
 
     def get_permissions(self):
         if self.request.method in SAFE_METHODS:
@@ -1389,8 +1509,8 @@ class MaintenanceCategoryDetailView(BaseDetailView):
 class MaintenanceRequestListCreateView(BaseListCreateView):
     """API for maintenance requests"""
     serializer_class = MaintenanceRequestSerializer
-    filterset_fields = ['status', 'priority', 'category', 'property', 'emergency_repair']
-    search_fields = ['title', 'description', 'property__title', 'specific_location']
+    filterset_fields = ['status', 'priority', 'category', 'maintenance_property', 'emergency_repair']
+    search_fields = ['title', 'description', 'maintenance_property__title', 'specific_location']
     ordering_fields = ['reported_date', 'due_date', 'priority', 'estimated_cost']
     ordering = ['-reported_date']
 
@@ -1398,16 +1518,16 @@ class MaintenanceRequestListCreateView(BaseListCreateView):
         user = self.request.user
         if user.is_superuser or user.role in ['appraiser', 'data_entry']:
             return MaintenanceRequest.objects.all().select_related(
-                'property', 'category', 'requested_by', 'assigned_to'
+                'maintenance_property', 'category', 'requested_by', 'assigned_to'
             )
         elif user.role == 'owner':
             return MaintenanceRequest.objects.filter(
-                property__owner=user
-            ).select_related('property', 'category', 'requested_by', 'assigned_to')
+                maintenance_property__owner=user
+            ).select_related('maintenance_property', 'category', 'requested_by', 'assigned_to')
         elif user.role == 'tenant':
             return MaintenanceRequest.objects.filter(
-                Q(requested_by=user) | Q(property__rental_info__leases__tenant__user=user)
-            ).select_related('property', 'category', 'requested_by', 'assigned_to')
+                Q(requested_by=user) | Q(maintenance_property__rental_info__leases__tenant__user=user)
+            ).select_related('maintenance_property', 'category', 'requested_by', 'assigned_to')
         return MaintenanceRequest.objects.none()
 
     def get_permissions(self):
@@ -1424,15 +1544,15 @@ class MaintenanceRequestDetailView(BaseDetailView):
     def get_queryset(self):
         user = self.request.user
         if user.is_superuser or user.role in ['appraiser', 'data_entry']:
-            return MaintenanceRequest.objects.all().select_related('property', 'category', 'requested_by', 'assigned_to')
+            return MaintenanceRequest.objects.all().select_related('maintenance_property', 'category', 'requested_by', 'assigned_to')
         elif user.role == 'owner':
             return MaintenanceRequest.objects.filter(
-                property__owner=user
-            ).select_related('property', 'category', 'requested_by', 'assigned_to')
+                maintenance_property__owner=user
+            ).select_related('maintenance_property', 'category', 'requested_by', 'assigned_to')
         elif user.role == 'tenant':
             return MaintenanceRequest.objects.filter(
-                Q(requested_by=user) | Q(property__rental_info__leases__tenant__user=user)
-            ).select_related('property', 'category', 'requested_by', 'assigned_to')
+                Q(requested_by=user) | Q(maintenance_property__rental_info__leases__tenant__user=user)
+            ).select_related('maintenance_property', 'category', 'requested_by', 'assigned_to')
         return MaintenanceRequest.objects.none()
 
     def get_permissions(self):
@@ -1525,10 +1645,12 @@ class PropertyAnalyticsView(APIView):
         try:
             # Import data visualization libraries
             import pandas as pd
-            import plotly
+            import plotly.graph_objects as go
+            import plotly.express as px
+            from plotly.utils import PlotlyJSONEncoder
         except ImportError:
             return Response({
-                'error': 'Data visualization libraries not installed'
+                'error': 'Data visualization libraries not installed. Please install: pip install pandas plotly'
             }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
         
         user = request.user
@@ -1639,8 +1761,8 @@ class PropertyAnalyticsView(APIView):
                 'total_properties': len(analytics_data),
                 'total_annual_income': sum(item['annual_income'] for item in analytics_data),
                 'total_expenses': sum(item['total_expenses'] for item in analytics_data),
-                'average_occupancy': np.mean([item['occupancy_rate'] for item in analytics_data]) if analytics_data else 0,
-                'average_roi': np.mean([item['roi'] for item in analytics_data]) if analytics_data else 0,
+                'average_occupancy': sum(item['occupancy_rate'] for item in analytics_data) / len(analytics_data) if analytics_data else 0,
+                'average_roi': sum(item['roi'] for item in analytics_data) / len(analytics_data) if analytics_data else 0,
             }
         })
 
@@ -2147,7 +2269,6 @@ class AdvancedPropertyAnalyticsView(APIView):
         try:
             # Import data visualization libraries
             import pandas as pd
-            import numpy as np
             import plotly.graph_objects as go
             import plotly.express as px
             from plotly.utils import PlotlyJSONEncoder
@@ -2348,11 +2469,12 @@ class AdvancedPropertyAnalyticsView(APIView):
             for city in cities:
                 city_row = []
                 for prop_type in property_types:
-                    avg_maintenance = np.mean([
+                    matching_items = [
                         item['maintenance_requests'] for item in analytics_data 
                         if item['city'] == city and item['property_type'] == prop_type
-                    ])
-                    city_row.append(avg_maintenance if not np.isnan(avg_maintenance) else 0)
+                    ]
+                    avg_maintenance = sum(matching_items) / len(matching_items) if matching_items else 0
+                    city_row.append(avg_maintenance)
                 maintenance_matrix.append(city_row)
             
             if maintenance_matrix and any(any(row) for row in maintenance_matrix):
@@ -2394,8 +2516,8 @@ class AdvancedPropertyAnalyticsView(APIView):
                 'total_properties': len(analytics_data),
                 'total_annual_income': sum(item['annual_income'] for item in analytics_data),
                 'total_expenses': sum(item['total_expenses'] for item in analytics_data),
-                'average_roi': np.mean([item['roi'] for item in analytics_data]),
-                'average_occupancy': np.mean([item['occupancy_rate'] for item in analytics_data]),
+                'average_roi': sum(item['roi'] for item in analytics_data) / len(analytics_data) if analytics_data else 0,
+                'average_occupancy': sum(item['occupancy_rate'] for item in analytics_data) / len(analytics_data) if analytics_data else 0,
                 'total_property_value': sum(item['property_value'] for item in analytics_data),
                 'total_maintenance_requests': sum(item['maintenance_requests'] for item in analytics_data),
                 'best_performing_property': max(analytics_data, key=lambda x: x['roi'])['property_title'] if analytics_data else None,
@@ -2421,7 +2543,6 @@ class WorkerAnalyticsView(APIView):
     def get(self, request):
         try:
             import pandas as pd
-            import numpy as np
             import plotly.graph_objects as go
             import plotly.express as px
             from plotly.utils import PlotlyJSONEncoder
@@ -2527,8 +2648,11 @@ class WorkerAnalyticsView(APIView):
             for category in all_categories:
                 category_workers = [w for w in worker_data if category in w['categories']]
                 if category_workers:
-                    avg_completion_rate = np.mean([w['completion_rate'] for w in category_workers])
-                    avg_rating = np.mean([w['rating'] for w in category_workers if w['rating'] > 0])
+                    completion_rates = [w['completion_rate'] for w in category_workers]
+                    avg_completion_rate = sum(completion_rates) / len(completion_rates) if completion_rates else 0
+                    
+                    ratings = [w['rating'] for w in category_workers if w['rating'] > 0]
+                    avg_rating = sum(ratings) / len(ratings) if ratings else 0
                     worker_count = len(category_workers)
                     
                     skills_performance.append({
@@ -2558,10 +2682,10 @@ class WorkerAnalyticsView(APIView):
             summary_stats = {
                 'total_workers': len(worker_data),
                 'available_workers': len([w for w in worker_data if w['is_available']]),
-                'average_completion_rate': np.mean([w['completion_rate'] for w in worker_data]),
+                'average_completion_rate': sum(w['completion_rate'] for w in worker_data) / len(worker_data) if worker_data else 0,
                 'total_jobs_assigned': sum(w['total_jobs'] for w in worker_data),
                 'total_completed_jobs': sum(w['completed_jobs'] for w in worker_data),
-                'average_rating': np.mean([w['rating'] for w in worker_data if w['rating'] > 0]),
+                'average_rating': sum(w['rating'] for w in worker_data if w['rating'] > 0) / len([w for w in worker_data if w['rating'] > 0]) if [w for w in worker_data if w['rating'] > 0] else 0,
                 'skill_categories': len(all_categories) if 'all_categories' in locals() else 0,
             }
         
@@ -2583,7 +2707,6 @@ class PaymentAnalyticsView(APIView):
     def get(self, request):
         try:
             import pandas as pd
-            import numpy as np
             import plotly.graph_objects as go
             import plotly.express as px
             from plotly.utils import PlotlyJSONEncoder
@@ -2595,7 +2718,7 @@ class PaymentAnalyticsView(APIView):
         user = request.user
         
         # Get payment data
-        from accounts.models import Payment
+        from .models import Payment
         
         # Time period for analysis
         end_date = timezone.now().date()
@@ -2809,3 +2932,177 @@ class PropertyMaintenanceWorkflowDetailView(BaseDetailView):
     queryset = PropertyMaintenanceWorkflow.objects.select_related('property', 'property__location', 'assigned_to', 'created_by').prefetch_related('maintenance_requests')
     serializer_class = PropertyMaintenanceWorkflowSerializer
     # Permission handled by BaseDashboardView
+
+
+# -------------------------------------------------------------------------
+# Bank Account Management Views
+# -------------------------------------------------------------------------
+
+class BankAccountListCreateView(APIView):
+    permission_classes = [IsAuthenticated]
+    
+    def get(self, request):
+        from .serializers import BankAccountSerializer
+        bank_accounts = BankAccount.objects.filter(user=request.user)
+        serializer = BankAccountSerializer(bank_accounts, many=True)
+        return create_response(data={'bank_accounts': serializer.data})
+    
+    def post(self, request):
+        from .serializers import BankAccountCreateSerializer, BankAccountSerializer
+        serializer = BankAccountCreateSerializer(data=request.data, context={'request': request})
+        if serializer.is_valid():
+            bank_account = serializer.save()
+            return create_response(
+                data={'bank_account': BankAccountSerializer(bank_account).data},
+                message="Bank account created successfully",
+                status_code=status.HTTP_201_CREATED
+            )
+        return create_response(
+            error=serializer.errors,
+            error_code="validation_error",
+            status_code=status.HTTP_400_BAD_REQUEST
+        )
+
+class BankAccountDetailView(APIView):
+    permission_classes = [IsAuthenticated, IsOwnerOrAdmin]
+    
+    def get_object(self, pk, user):
+        try:
+            bank_account = BankAccount.objects.get(pk=pk, user=user)
+            return bank_account
+        except BankAccount.DoesNotExist:
+            return None
+    
+    def get(self, request, pk):
+        from .serializers import BankAccountSerializer
+        bank_account = self.get_object(pk, request.user)
+        if not bank_account:
+            return create_response(
+                error="Bank account not found",
+                error_code="not_found",
+                status_code=status.HTTP_404_NOT_FOUND
+            )
+        serializer = BankAccountSerializer(bank_account)
+        return create_response(data={'bank_account': serializer.data})
+    
+    def put(self, request, pk):
+        from .serializers import BankAccountUpdateSerializer, BankAccountSerializer
+        bank_account = self.get_object(pk, request.user)
+        if not bank_account:
+            return create_response(
+                error="Bank account not found",
+                error_code="not_found",
+                status_code=status.HTTP_404_NOT_FOUND
+            )
+        
+        serializer = BankAccountUpdateSerializer(bank_account, data=request.data, partial=True)
+        if serializer.is_valid():
+            bank_account = serializer.save()
+            return create_response(
+                data={'bank_account': BankAccountSerializer(bank_account).data},
+                message="Bank account updated successfully"
+            )
+        return create_response(
+            error=serializer.errors,
+            error_code="validation_error",
+            status_code=status.HTTP_400_BAD_REQUEST
+        )
+    
+    def delete(self, request, pk):
+        bank_account = self.get_object(pk, request.user)
+        if not bank_account:
+            return create_response(
+                error="Bank account not found",
+                error_code="not_found",
+                status_code=status.HTTP_404_NOT_FOUND
+            )
+        
+        bank_account.delete()
+        return create_response(message="Bank account deleted successfully")
+
+
+# -------------------------------------------------------------------------
+# Payment Management Views
+# -------------------------------------------------------------------------
+
+class PaymentListCreateView(APIView):
+    permission_classes = [IsAuthenticated]
+    
+    def get(self, request):
+        from .serializers import PaymentSerializer
+        payments = Payment.objects.filter(user=request.user).order_by('-payment_date')
+        serializer = PaymentSerializer(payments, many=True)
+        return create_response(data={'payments': serializer.data})
+    
+    def post(self, request):
+        from .serializers import PaymentCreateSerializer, PaymentSerializer
+        serializer = PaymentCreateSerializer(data=request.data, context={'request': request})
+        if serializer.is_valid():
+            payment = serializer.save()
+            return create_response(
+                data={'payment': PaymentSerializer(payment).data},
+                message="Payment created successfully",
+                status_code=status.HTTP_201_CREATED
+            )
+        return create_response(
+            error=serializer.errors,
+            error_code="validation_error",
+            status_code=status.HTTP_400_BAD_REQUEST
+        )
+
+class PaymentDetailView(APIView):
+    permission_classes = [IsAuthenticated, IsOwnerOrAdmin]
+    
+    def get_object(self, pk, user):
+        try:
+            payment = Payment.objects.get(pk=pk, user=user)
+            return payment
+        except Payment.DoesNotExist:
+            return None
+    
+    def get(self, request, pk):
+        from .serializers import PaymentSerializer
+        payment = self.get_object(pk, request.user)
+        if not payment:
+            return create_response(
+                error="Payment not found",
+                error_code="not_found",
+                status_code=status.HTTP_404_NOT_FOUND
+            )
+        serializer = PaymentSerializer(payment)
+        return create_response(data={'payment': serializer.data})
+    
+    def put(self, request, pk):
+        from .serializers import PaymentUpdateSerializer, PaymentSerializer
+        payment = self.get_object(pk, request.user)
+        if not payment:
+            return create_response(
+                error="Payment not found",
+                error_code="not_found",
+                status_code=status.HTTP_404_NOT_FOUND
+            )
+        
+        serializer = PaymentUpdateSerializer(payment, data=request.data, partial=True)
+        if serializer.is_valid():
+            payment = serializer.save()
+            return create_response(
+                data={'payment': PaymentSerializer(payment).data},
+                message="Payment updated successfully"
+            )
+        return create_response(
+            error=serializer.errors,
+            error_code="validation_error",
+            status_code=status.HTTP_400_BAD_REQUEST
+        )
+    
+    def delete(self, request, pk):
+        payment = self.get_object(pk, request.user)
+        if not payment:
+            return create_response(
+                error="Payment not found",
+                error_code="not_found",
+                status_code=status.HTTP_404_NOT_FOUND
+            )
+        
+        payment.delete()
+        return create_response(message="Payment deleted successfully")

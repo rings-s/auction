@@ -4,7 +4,7 @@
 	import { goto } from '$app/navigation';
 	import { fetchUserProfile, updateUserProfile, changePassword, logout } from '$lib/api/auth';
 	import { t } from '$lib/i18n';
-	import { user } from '$lib/stores/user';
+	import { user } from '$lib/stores/user.svelte.js';
 
 	let loading = true;
 	let savingProfile = false;

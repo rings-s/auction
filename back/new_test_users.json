@@ -1,0 +1,12 @@
+[
+  {
+    "email": "test.admin@auction.com",
+    "password": "TestAdmin123!",
+    "role": "administrator"
+  },
+  {
+    "email": "test.auctioneer@auction.com",
+    "password": "TestAuctioneer123!",
+    "role": "auctioneer"
+  }
+]

@@ -4,7 +4,6 @@ from django.utils.html import format_html
 from django.contrib.contenttypes.admin import GenericTabularInline
 from django.db.models import Count
 from .models import *
-from accounts.models import BankAccount, Payment
 
 class MediaInline(GenericTabularInline):
     model = Media
@@ -188,12 +187,12 @@ class MaintenanceCategoryAdmin(admin.ModelAdmin):
 class MaintenanceRequestAdmin(admin.ModelAdmin):
     list_display = ('title', 'base_property_title', 'priority', 'status', 'reported_date', 'due_date', 'assigned_to', 'assigned_worker_name')
     list_filter = ('priority', 'status', 'reported_date', 'due_date', 'assigned_worker__categories')
-    search_fields = ('title', 'description', 'base_property__title', 'assigned_worker__first_name', 'assigned_worker__last_name', 'assigned_worker__employee_id')
+    search_fields = ('title', 'description', 'maintenance_property__title', 'assigned_worker__first_name', 'assigned_worker__last_name', 'assigned_worker__employee_id')
     readonly_fields = ('reported_date', 'created_at', 'updated_at')
     actions = ['mark_as_completed', 'assign_to_me']
     
     def base_property_title(self, obj):
-        return obj.base_property.title if obj.base_property else '-'
+        return obj.maintenance_property.title if obj.maintenance_property else '-'
     base_property_title.short_description = 'Property'
     
     def assigned_worker_name(self, obj):

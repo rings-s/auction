@@ -3,51 +3,74 @@
 	import { page } from '$app/stores';
 	import { goto } from '$app/navigation';
 	import { t } from '$lib/i18n';
-	import { user } from '$lib/stores/user';
+	import { user } from '$lib/stores/user.svelte.js';
 	import { getPropertyBySlug } from '$lib/api/property';
+	import { formatCurrency } from '$lib/utils/currency';
 
 	// Import the new components
 	import PropertyHeader from '$lib/components/properties/detail/PropertyHeader.svelte';
 	import PropertyContentTabs from '$lib/components/properties/detail/PropertyContentTabs.svelte';
 	import PropertyGalleryModal from '$lib/components/properties/detail/PropertyGalleryModal.svelte';
 
-	// State variables
-	let property = null;
-	let loading = true;
-	let error = null;
-	let activeImageIndex = 0;
-	let showFullScreenGallery = false;
-	let mapInitialized = false;
+	// State variables using Svelte 5 runes
+	let property = $state(null);
+	let loading = $state(true);
+	let error = $state(null);
+	let activeImageIndex = $state(0);
+	let showFullScreenGallery = $state(false);
+	let mapInitialized = $state(false);
 	let mapElement;
 	let map;
 	let marker;
-	let activeMediaType = 'image';
-	let touchStartX = 0;
-	let touchEndX = 0;
-	let isImagesLoading = true;
-	let imagesLoaded = 0;
+	let activeMediaType = $state('image');
+	let touchStartX = $state(0);
+	let touchEndX = $state(0);
+	let isImagesLoading = $state(true);
+	let imagesLoaded = $state(0);
 	let thumbnailsContainer;
 
 	// Filter media by type
-	$: filteredMedia = property?.media?.filter((item) => item.media_type === activeMediaType) || [];
-	$: images = property?.media?.filter((item) => item.media_type === 'image') || [];
-	$: videos = property?.media?.filter((item) => item.media_type === 'video') || [];
-	$: documents = property?.media?.filter((item) => item.media_type === 'document') || [];
-	$: otherFiles = property?.media?.filter((item) => item.media_type === 'other') || [];
+	let filteredMedia = $derived(
+		property?.media?.filter((item) => item.media_type === activeMediaType) || []
+	);
+	let images = $derived(property?.media?.filter((item) => item.media_type === 'image') || []);
+	let videos = $derived(property?.media?.filter((item) => item.media_type === 'video') || []);
+	let documents = $derived(property?.media?.filter((item) => item.media_type === 'document') || []);
+	let otherFiles = $derived(property?.media?.filter((item) => item.media_type === 'other') || []);
 
 	// Get main image
-	$: mainImage =
+	let mainImage = $derived(
 		property?.main_image ||
-		(images.length > 0 ? images.find((img) => img.is_primary) || images[0] : null);
+			(images.length > 0 ? images.find((img) => img.is_primary) || images[0] : null)
+	);
 
-	// Tabs management
-	let activeTab = 'overview';
-	const tabs = [
+	// Tabs management using Svelte 5 runes
+	let activeTab = $state('overview');
+
+	// Permission-based tabs with Svelte 5 runes
+	const baseTabs = [
 		{ id: 'overview', label: $t('property.tab.overview'), icon: 'home' },
 		{ id: 'rooms', label: $t('property.tab.rooms'), icon: 'layout' },
 		{ id: 'location', label: $t('property.tab.location'), icon: 'map-pin' },
 		{ id: 'gallery', label: $t('property.tab.gallery'), icon: 'image' }
 	];
+
+	// Derived state for permission-based tabs
+	const tabs = $derived(() => {
+		const availableTabs = [...baseTabs];
+
+		// Add Property Management tab for authorized users
+		if (canManageProperty) {
+			availableTabs.push({
+				id: 'management',
+				label: $t('property.tab.management'),
+				icon: 'settings',
+				requiresAuth: true
+			});
+		}
+
+		return availableTabs;
+	});
 
 	// Gallery tabs
 	const mediaTabs = [
@@ -61,15 +84,36 @@
 	let scrollY = 0;
 	let headerHeight = 0;
 	let headerElement;
-	let isHeaderSticky = false;
-	$: isHeaderSticky = scrollY > headerHeight;
+	let isHeaderSticky = $derived(scrollY > headerHeight);
 
 	// Get slug from URL and ensure it's properly decoded
-	$: slug = decodeURIComponent($page.params.slug);
+	let slug = $derived(decodeURIComponent($page.params.slug));
 
-	// Check edit permissions
-	$: canEdit =
-		$user && ($user.is_staff || $user.role === 'appraiser' || property?.owner?.id === $user.id);
+	// Permission checks using Svelte 5 runes
+	const canEdit = $derived(
+		() =>
+			$user && ($user.is_staff || $user.role === 'appraiser' || property?.owner?.id === $user.id)
+	);
+
+	const canManageProperty = $derived(
+		() =>
+			$user &&
+			($user.is_staff ||
+				$user.role === 'admin' ||
+				$user.role === 'appraiser' ||
+				$user.role === 'property_manager' ||
+				property?.owner?.id === $user.id)
+	);
+
+	const canCreateRental = $derived(
+		() =>
+			$user &&
+			($user.is_staff ||
+				$user.role === 'admin' ||
+				$user.role === 'appraiser' ||
+				property?.owner?.id === $user.id) &&
+			!property?.rental_info
+	);
 
 	// Track image loading progress
 	function handleImageLoad() {
@@ -111,7 +155,7 @@
 		}
 	}
 
-	// Switch tabs with smooth transitions
+	// Switch tabs with smooth transitions (Svelte 5 compatible)
 	async function setActiveTab(tabId) {
 		if (activeTab === tabId) return;
 		activeTab = tabId;
@@ -295,16 +339,6 @@
 		}
 	}
 
-	// Format currency
-	function formatCurrency(value) {
-		if (!value) return '$0';
-		return new Intl.NumberFormat('en-US', {
-			style: 'currency',
-			currency: 'USD',
-			maximumFractionDigits: 0
-		}).format(value);
-	}
-
 	// Keyboard shortcuts for gallery
 	function handleKeydown(event) {
 		if (showFullScreenGallery) {
@@ -320,9 +354,11 @@
 	}
 
 	// Load property on mount and when slug changes
-	$: if (slug) {
-		loadProperty();
-	}
+	$effect(() => {
+		if (slug) {
+			loadProperty();
+		}
+	});
 
 	onMount(() => {
 		loadProperty();
@@ -440,10 +476,10 @@
 			<PropertyHeader
 				bind:this={headerElement}
 				{property}
-				{canEdit}
+				canEdit={canEdit()}
 				{isHeaderSticky}
 				{activeTab}
-				{tabs}
+				tabs={tabs()}
 				onSetActiveTab={setActiveTab}
 				onContactOwner={contactOwner}
 			/>
@@ -464,6 +500,9 @@
 				{activeMediaType}
 				{mediaTabs}
 				{mainImage}
+				canManageProperty={canManageProperty()}
+				canCreateRental={canCreateRental()}
+				canEdit={canEdit()}
 				onToggleGallery={toggleGallery}
 				onHandleImageLoad={handleImageLoad}
 				onSetActiveMediaType={setActiveMediaType}

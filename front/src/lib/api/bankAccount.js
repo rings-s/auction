@@ -2,7 +2,7 @@
 import { API_BASE_URL } from '$lib/constants';
 import { refreshToken } from './auth';
 
-const BANK_ACCOUNT_URL = `${API_BASE_URL}/accounts/bank-accounts`;
+const BANK_ACCOUNT_URL = `${API_BASE_URL}/bank-accounts`;
 
 /**
  * Enhanced API request handler with authentication and error handling
@@ -174,19 +174,20 @@ export function validateIBAN(iban) {
 
 	// Basic format validation (starts with 2 letters, followed by 2 digits, then alphanumeric)
 	const ibanRegex = /^[A-Z]{2}[0-9]{2}[A-Z0-9]{1,30}$/;
-	
+
 	if (!ibanRegex.test(cleanIban)) {
-		return { 
-			valid: false, 
-			error: 'Invalid IBAN format. Must start with 2 letters, followed by 2 digits and alphanumeric characters.' 
+		return {
+			valid: false,
+			error:
+				'Invalid IBAN format. Must start with 2 letters, followed by 2 digits and alphanumeric characters.'
 		};
 	}
 
 	// Length validation (most IBANs are between 15-34 characters)
 	if (cleanIban.length < 15 || cleanIban.length > 34) {
-		return { 
-			valid: false, 
-			error: 'IBAN length must be between 15 and 34 characters.' 
+		return {
+			valid: false,
+			error: 'IBAN length must be between 15 and 34 characters.'
 		};
 	}
 
@@ -198,7 +199,7 @@ export function validateIBAN(iban) {
  */
 export function formatIBAN(iban) {
 	if (!iban) return '';
-	
+
 	const cleanIban = iban.replace(/\s/g, '').toUpperCase();
 	return cleanIban.replace(/(.{4})/g, '$1 ').trim();
 }
@@ -243,7 +244,7 @@ export function validateBankAccountData(data) {
 	}
 
 	// Validate SWIFT code (optional but if provided, must be 8 or 11 characters)
-	if (data.swift_code && (data.swift_code.length !== 8 && data.swift_code.length !== 11)) {
+	if (data.swift_code && data.swift_code.length !== 8 && data.swift_code.length !== 11) {
 		errors.swift_code = 'SWIFT code must be 8 or 11 characters';
 	}
 
@@ -259,14 +260,14 @@ export function validateBankAccountData(data) {
 export async function getBankAccountSummary() {
 	try {
 		const accounts = await getBankAccounts();
-		
+
 		return {
 			total: accounts.length,
-			primary: accounts.filter(account => account.is_primary).length,
-			verified: accounts.filter(account => account.is_verified).length,
-			unverified: accounts.filter(account => !account.is_verified).length,
-			business: accounts.filter(account => account.account_type === 'business').length,
-			personal: accounts.filter(account => account.account_type !== 'business').length
+			primary: accounts.filter((account) => account.is_primary).length,
+			verified: accounts.filter((account) => account.is_verified).length,
+			unverified: accounts.filter((account) => !account.is_verified).length,
+			business: accounts.filter((account) => account.account_type === 'business').length,
+			personal: accounts.filter((account) => account.account_type !== 'business').length
 		};
 	} catch (error) {
 		throw error;

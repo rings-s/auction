@@ -18,10 +18,10 @@
 	<meta name="description" content={$t('bankAccount.listDescription')} />
 </svelte:head>
 
-<div class="p-6 space-y-6">
+<div class="space-y-6 p-6">
 	<!-- Breadcrumb -->
 	<Breadcrumb items={breadcrumbItems} />
-	
+
 	<!-- Bank Account List -->
 	<BankAccountList />
 </div>

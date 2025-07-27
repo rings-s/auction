@@ -15,7 +15,7 @@
 	/** @type {boolean} */
 	export let loading = false;
 
-		$: user = tenant?.user;
+	$: user = tenant?.user;
 	$: activeLease = tenant?.active_lease;
 	$: status = tenant?.status || 'active';
 

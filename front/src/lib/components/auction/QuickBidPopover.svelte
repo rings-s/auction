@@ -2,7 +2,7 @@
 <script>
 	import { createEventDispatcher } from 'svelte';
 	import { t } from '$lib/i18n';
-	import { user } from '$lib/stores/user';
+	import { user } from '$lib/stores/user.svelte.js';
 	import { placeBid } from '$lib/api/auction';
 	import Button from '$lib/components/ui/Button.svelte';
 

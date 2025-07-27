@@ -9,7 +9,6 @@
 	/** @type {Object} */
 	export let activeFilters = {};
 
-
 	// Filter state
 	let occupancyFilter = activeFilters.occupancy_status || '';
 	let propertyTypeFilter = activeFilters.property_type || '';

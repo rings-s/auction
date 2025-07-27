@@ -2,8 +2,8 @@
 	import { onMount } from 'svelte';
 	import { goto } from '$app/navigation';
 	import { t } from '$lib/i18n';
-	import { userStore } from '$lib/stores/user.js';
-	import RentalPropertyList from '$lib/components/property-management/RentalPropertyList.svelte';
+	import { userStore } from '$lib/stores/user.svelte.js';
+	import PropertyList from '$lib/components/property-management/PropertyList.svelte';
 	import Alert from '$lib/components/ui/Alert.svelte';
 
 	$: user = $userStore;
@@ -46,8 +46,12 @@
 </script>
 
 <svelte:head>
-	<title>{$t('rental.title')} | {$t('propertyManagement.title')} | {$t('app.name')}</title>
-	<meta name="description" content={$t('rental.description')} />
+	<title
+		>{$t('propertyManagement.properties')} | {$t('propertyManagement.title')} | {$t(
+			'app.name'
+		)}</title
+	>
+	<meta name="description" content={$t('propertyManagement.propertiesDescription')} />
 </svelte:head>
 
 <!-- Access Control -->
@@ -73,18 +77,15 @@
 							clip-rule="evenodd"
 						/>
 					</svg>
-					<span class="font-medium text-gray-900">{$t('rental.title')}</span>
+					<span class="font-medium text-gray-900">{$t('propertyManagement.properties')}</span>
 				</li>
 			</ol>
 		</nav>
 
-		<!-- Rental Properties List Component -->
-		<RentalPropertyList
+		<!-- Property Management List Component -->
+		<PropertyList
 			on:viewProperty={handleViewProperty}
 			on:editProperty={handleEditProperty}
-			on:viewTenants={handleViewTenants}
-			on:viewMaintenance={handleViewMaintenance}
-			on:viewExpenses={handleViewExpenses}
 			on:createProperty={handleCreateProperty}
 		/>
 	</div>

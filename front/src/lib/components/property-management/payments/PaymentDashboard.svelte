@@ -2,8 +2,8 @@
 <script>
 	import { onMount } from 'svelte';
 	import { t } from '$lib/i18n';
-	import { 
-		getPayments, 
+	import {
+		getPayments,
 		generatePaymentReport,
 		getOverduePayments,
 		getUpcomingPayments,
@@ -16,6 +16,14 @@
 	import LoadingSkeleton from '$lib/components/ui/LoadingSkeleton.svelte';
 	import Alert from '$lib/components/ui/Alert.svelte';
 	import StatCard from '$lib/components/dashboard/StatCard.svelte';
+
+	// Icon definitions for StatCard components
+	const icons = {
+		creditCard: `<svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20"><path d="M4 4a2 2 0 00-2 2v1h16V6a2 2 0 00-2-2H4z"></path><path fill-rule="evenodd" d="M18 9H2v5a2 2 0 002 2h12a2 2 0 002-2V9zM4 13a1 1 0 011-1h1a1 1 0 110 2H5a1 1 0 01-1-1zm5-1a1 1 0 100 2h1a1 1 0 100-2H9z" clip-rule="evenodd"></path></svg>`,
+		dollar: `<svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20"><path d="M8.433 7.418c.155-.103.346-.196.567-.267v1.698a2.305 2.305 0 01-.567-.267C8.07 8.34 8 8.114 8 8c0-.114.07-.34.433-.582zM11 12.849v-1.698c.22.071.412.164.567.267.364.243.433.468.433.582 0 .114-.07.34-.433.582a2.305 2.305 0 01-.567.267z"></path><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-13a1 1 0 10-2 0v.092a4.535 4.535 0 00-1.676.662C6.602 6.234 6 7.009 6 8c0 .99.602 1.765 1.324 2.246.48.32 1.054.545 1.676.662v1.941c-.391-.127-.68-.317-.843-.504a1 1 0 10-1.51 1.31c.562.649 1.413 1.076 2.353 1.253V15a1 1 0 102 0v-.092a4.535 4.535 0 001.676-.662C13.398 13.766 14 12.991 14 12c0-.99-.602-1.765-1.324-2.246A4.535 4.535 0 0011 9.092V7.151c.391.127.68.317.843.504a1 1 0 101.511-1.31c-.563-.649-1.413-1.076-2.354-1.253V5z" clip-rule="evenodd"></path></svg>`,
+		checkCircle: `<svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path></svg>`,
+		clock: `<svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z" clip-rule="evenodd"></path></svg>`
+	};
 
 	// Svelte 5 runes for reactive state
 	let payments = $state([]);
@@ -30,17 +38,17 @@
 
 	// Derived state for statistics
 	let totalPayments = $derived(payments.length);
-	let completedPayments = $derived(payments.filter(p => p.status === 'completed').length);
-	let pendingPayments = $derived(payments.filter(p => p.status === 'pending').length);
+	let completedPayments = $derived(payments.filter((p) => p.status === 'completed').length);
+	let pendingPayments = $derived(payments.filter((p) => p.status === 'pending').length);
 	let totalAmount = $derived(payments.reduce((sum, p) => sum + parseFloat(p.amount || 0), 0));
 	let completedAmount = $derived(
 		payments
-			.filter(p => p.status === 'completed')
+			.filter((p) => p.status === 'completed')
 			.reduce((sum, p) => sum + parseFloat(p.amount || 0), 0)
 	);
 	let pendingAmount = $derived(
 		payments
-			.filter(p => p.status === 'pending')
+			.filter((p) => p.status === 'pending')
 			.reduce((sum, p) => sum + parseFloat(p.amount || 0), 0)
 	);
 	let overdueAmount = $derived(
@@ -90,7 +98,7 @@
 			error = null;
 
 			const filters = buildFilters();
-			
+
 			const [allPayments, overdue, upcoming] = await Promise.all([
 				getPayments(filters),
 				getOverduePayments(),
@@ -155,10 +163,10 @@
 			reportLoading = true;
 			const filters = buildFilters();
 			const report = await generatePaymentReport(filters);
-			
+
 			// Create and download file
-			const blob = new Blob([JSON.stringify(report, null, 2)], { 
-				type: 'application/json' 
+			const blob = new Blob([JSON.stringify(report, null, 2)], {
+				type: 'application/json'
 			});
 			const url = URL.createObjectURL(blob);
 			const a = document.createElement('a');
@@ -168,7 +176,7 @@
 			a.click();
 			document.body.removeChild(a);
 			URL.revokeObjectURL(url);
-			
+
 			toast.success($t('payment.reportGenerated'));
 		} catch (err) {
 			toast.error($t('payment.reportError'));
@@ -206,25 +214,28 @@
 				{$t('payment.dashboardDescription')}
 			</p>
 		</div>
-		
-		<div class="mt-4 sm:mt-0 flex space-x-3">
-			<Button 
-				onClick={generateReport}
-				variant="outline"
-				loading={reportLoading}
-			>
+
+		<div class="mt-4 flex space-x-3 sm:mt-0">
+			<Button onClick={generateReport} variant="outline" loading={reportLoading}>
 				<svg class="mr-2 h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-					<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+					<path
+						stroke-linecap="round"
+						stroke-linejoin="round"
+						stroke-width="2"
+						d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+					/>
 				</svg>
 				{$t('payment.generateReport')}
 			</Button>
-			
-			<Button 
-				href="/create/payment" 
-				variant="primary"
-			>
+
+			<Button href="/create/payment" variant="primary">
 				<svg class="mr-2 h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-					<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+					<path
+						stroke-linecap="round"
+						stroke-linejoin="round"
+						stroke-width="2"
+						d="M12 4v16m8-8H4"
+					/>
 				</svg>
 				{$t('payment.add')}
 			</Button>
@@ -232,7 +243,9 @@
 	</div>
 
 	<!-- Filters -->
-	<div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-4">
+	<div
+		class="rounded-lg border border-gray-200 bg-white p-4 shadow-sm dark:border-gray-700 dark:bg-gray-800"
+	>
 		<div class="grid grid-cols-1 gap-4 sm:grid-cols-3">
 			<!-- Time Range Filter -->
 			<div>
@@ -242,7 +255,7 @@
 				<select
 					id="timeRange"
 					bind:value={selectedTimeRange}
-					class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white sm:text-sm"
+					class="focus:border-primary-500 focus:ring-primary-500 mt-1 block w-full rounded-md border-gray-300 shadow-sm sm:text-sm dark:border-gray-600 dark:bg-gray-700 dark:text-white"
 				>
 					{#each timeRangeOptions as option}
 						<option value={option.value}>{option.label}</option>
@@ -258,7 +271,7 @@
 				<select
 					id="paymentType"
 					bind:value={selectedPaymentType}
-					class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white sm:text-sm"
+					class="focus:border-primary-500 focus:ring-primary-500 mt-1 block w-full rounded-md border-gray-300 shadow-sm sm:text-sm dark:border-gray-600 dark:bg-gray-700 dark:text-white"
 				>
 					{#each paymentTypeOptions as option}
 						<option value={option.value}>{option.label}</option>
@@ -274,7 +287,7 @@
 				<select
 					id="status"
 					bind:value={selectedStatus}
-					class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white sm:text-sm"
+					class="focus:border-primary-500 focus:ring-primary-500 mt-1 block w-full rounded-md border-gray-300 shadow-sm sm:text-sm dark:border-gray-600 dark:bg-gray-700 dark:text-white"
 				>
 					{#each statusOptions as option}
 						<option value={option.value}>{option.label}</option>
@@ -296,15 +309,15 @@
 				<LoadingSkeleton type="rect" height="120px" />
 			{/each}
 		</div>
-	
-	<!-- Statistics Overview -->
+
+		<!-- Statistics Overview -->
 	{:else}
 		<div class="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
 			<!-- Total Payments -->
 			<StatCard
 				title={$t('payment.totalPayments')}
 				value={totalPayments}
-				icon='<svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20"><path d="M4 4a2 2 0 00-2 2v1h16V6a2 2 0 00-2-2H4z"></path><path fill-rule="evenodd" d="M18 9H2v5a2 2 0 002 2h12a2 2 0 002-2V9zM4 13a1 1 0 011-1h1a1 1 0 110 2H5a1 1 0 01-1-1zm5-1a1 1 0 100 2h1a1 1 0 100-2H9z" clip-rule="evenodd"></path></svg>'
+				icon={icons.creditCard}
 				color="primary"
 				href="/dashboard/payments"
 			/>
@@ -313,7 +326,7 @@
 			<StatCard
 				title={$t('payment.totalAmount')}
 				value={formatCurrency(totalAmount)}
-				icon='<svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20"><path d="M8.433 7.418c.155-.103.346-.196.567-.267v1.698a2.305 2.305 0 01-.567-.267C8.07 8.34 8 8.114 8 8c0-.114.07-.34.433-.582zM11 12.849v-1.698c.22.071.412.164.567.267.364.243.433.468.433.582 0 .114-.07.34-.433.582a2.305 2.305 0 01-.567.267z"></path><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-13a1 1 0 10-2 0v.092a4.535 4.535 0 00-1.676.662C6.602 6.234 6 7.009 6 8c0 .99.602 1.765 1.324 2.246.48.32 1.054.545 1.676.662v1.941c-.391-.127-.68-.317-.843-.504a1 1 0 10-1.51 1.31c.562.649 1.413 1.076 2.353 1.253V15a1 1 0 102 0v-.092a4.535 4.535 0 001.676-.662C13.398 13.766 14 12.991 14 12c0-.99-.602-1.765-1.324-2.246A4.535 4.535 0 0011 9.092V7.151c.391.127.68.317.843.504a1 1 0 101.511-1.31c-.563-.649-1.413-1.076-2.354-1.253V5z" clip-rule="evenodd"></path></svg>'
+				icon={icons.dollar}
 				color="success"
 			/>
 
@@ -321,15 +334,19 @@
 			<StatCard
 				title={$t('payment.completionRate')}
 				value={`${completionRate}%`}
-				icon='<svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path></svg>'
-				color={parseFloat(completionRate) >= 80 ? 'success' : parseFloat(completionRate) >= 60 ? 'warning' : 'error'}
+				icon={icons.checkCircle}
+				color={parseFloat(completionRate) >= 80
+					? 'success'
+					: parseFloat(completionRate) >= 60
+						? 'warning'
+						: 'error'}
 			/>
 
 			<!-- Overdue Amount -->
 			<StatCard
 				title={$t('payment.overdueAmount')}
 				value={formatCurrency(overdueAmount)}
-				icon='<svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z" clip-rule="evenodd"></path></svg>'
+				icon={icons.clock}
 				color={overdueAmount > 0 ? 'error' : 'success'}
 			/>
 		</div>
@@ -339,15 +356,19 @@
 	<div class="grid grid-cols-1 gap-6 lg:grid-cols-2">
 		<!-- Overdue Payments -->
 		{#if overduePayments.length > 0}
-			<div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700">
+			<div
+				class="rounded-lg border border-gray-200 bg-white shadow-sm dark:border-gray-700 dark:bg-gray-800"
+			>
 				<div class="p-6">
-					<h3 class="text-lg font-medium text-gray-900 dark:text-white mb-4">
+					<h3 class="mb-4 text-lg font-medium text-gray-900 dark:text-white">
 						{$t('payment.overduePayments')} ({overduePayments.length})
 					</h3>
-					
+
 					<div class="space-y-3">
 						{#each overduePayments.slice(0, 5) as payment}
-							<div class="flex items-center justify-between p-3 bg-red-50 dark:bg-red-900/20 rounded-md">
+							<div
+								class="flex items-center justify-between rounded-md bg-red-50 p-3 dark:bg-red-900/20"
+							>
 								<div>
 									<p class="text-sm font-medium text-gray-900 dark:text-white">
 										{payment.payment_id}
@@ -366,9 +387,9 @@
 								</div>
 							</div>
 						{/each}
-						
+
 						{#if overduePayments.length > 5}
-							<Button 
+							<Button
 								href="/dashboard/payments?filter=overdue"
 								variant="outline"
 								size="compact"
@@ -384,15 +405,19 @@
 
 		<!-- Upcoming Payments -->
 		{#if upcomingPayments.length > 0}
-			<div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700">
+			<div
+				class="rounded-lg border border-gray-200 bg-white shadow-sm dark:border-gray-700 dark:bg-gray-800"
+			>
 				<div class="p-6">
-					<h3 class="text-lg font-medium text-gray-900 dark:text-white mb-4">
+					<h3 class="mb-4 text-lg font-medium text-gray-900 dark:text-white">
 						{$t('payment.upcomingPayments')} ({upcomingPayments.length})
 					</h3>
-					
+
 					<div class="space-y-3">
 						{#each upcomingPayments.slice(0, 5) as payment}
-							<div class="flex items-center justify-between p-3 bg-yellow-50 dark:bg-yellow-900/20 rounded-md">
+							<div
+								class="flex items-center justify-between rounded-md bg-yellow-50 p-3 dark:bg-yellow-900/20"
+							>
 								<div>
 									<p class="text-sm font-medium text-gray-900 dark:text-white">
 										{payment.payment_id}
@@ -411,9 +436,9 @@
 								</div>
 							</div>
 						{/each}
-						
+
 						{#if upcomingPayments.length > 5}
-							<Button 
+							<Button
 								href="/dashboard/payments?filter=upcoming"
 								variant="outline"
 								size="compact"
@@ -430,61 +455,79 @@
 
 	<!-- Recent Payments -->
 	{#if !loading && payments.length > 0}
-		<div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700">
+		<div
+			class="rounded-lg border border-gray-200 bg-white shadow-sm dark:border-gray-700 dark:bg-gray-800"
+		>
 			<div class="p-6">
-				<div class="flex items-center justify-between mb-4">
+				<div class="mb-4 flex items-center justify-between">
 					<h3 class="text-lg font-medium text-gray-900 dark:text-white">
 						{$t('payment.recentPayments')}
 					</h3>
-					<Button 
-						href="/dashboard/payments"
-						variant="outline"
-						size="compact"
-					>
+					<Button href="/dashboard/payments" variant="outline" size="compact">
 						{$t('common.viewAll')}
 					</Button>
 				</div>
-				
+
 				<div class="overflow-x-auto">
 					<table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
 						<thead class="bg-gray-50 dark:bg-gray-700">
 							<tr>
-								<th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+								<th
+									class="px-6 py-3 text-left text-xs font-medium tracking-wider text-gray-500 uppercase dark:text-gray-300"
+								>
 									{$t('payment.id')}
 								</th>
-								<th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+								<th
+									class="px-6 py-3 text-left text-xs font-medium tracking-wider text-gray-500 uppercase dark:text-gray-300"
+								>
 									{$t('payment.type')}
 								</th>
-								<th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+								<th
+									class="px-6 py-3 text-left text-xs font-medium tracking-wider text-gray-500 uppercase dark:text-gray-300"
+								>
 									{$t('common.amount')}
 								</th>
-								<th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+								<th
+									class="px-6 py-3 text-left text-xs font-medium tracking-wider text-gray-500 uppercase dark:text-gray-300"
+								>
 									{$t('common.status')}
 								</th>
-								<th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+								<th
+									class="px-6 py-3 text-left text-xs font-medium tracking-wider text-gray-500 uppercase dark:text-gray-300"
+								>
 									{$t('payment.date')}
 								</th>
 							</tr>
 						</thead>
-						<tbody class="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
+						<tbody class="divide-y divide-gray-200 bg-white dark:divide-gray-700 dark:bg-gray-800">
 							{#each payments.slice(0, 10) as payment}
 								<tr class="hover:bg-gray-50 dark:hover:bg-gray-700">
-									<td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-white">
+									<td
+										class="px-6 py-4 text-sm font-medium whitespace-nowrap text-gray-900 dark:text-white"
+									>
 										{payment.payment_id}
 									</td>
-									<td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
+									<td class="px-6 py-4 text-sm whitespace-nowrap text-gray-500 dark:text-gray-400">
 										{payment.payment_type}
 									</td>
-									<td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white">
+									<td class="px-6 py-4 text-sm whitespace-nowrap text-gray-900 dark:text-white">
 										{formatCurrency(payment.amount)}
 									</td>
 									<td class="px-6 py-4 whitespace-nowrap">
-										<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-{getStatusColor(payment.status)}-100 text-{getStatusColor(payment.status)}-800 dark:bg-{getStatusColor(payment.status)}-900 dark:text-{getStatusColor(payment.status)}-200">
+										<span
+											class="inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium bg-{getStatusColor(
+												payment.status
+											)}-100 text-{getStatusColor(payment.status)}-800 dark:bg-{getStatusColor(
+												payment.status
+											)}-900 dark:text-{getStatusColor(payment.status)}-200"
+										>
 											{payment.status}
 										</span>
 									</td>
-									<td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
-										{payment.payment_date ? new Date(payment.payment_date).toLocaleDateString() : $t('common.pending')}
+									<td class="px-6 py-4 text-sm whitespace-nowrap text-gray-500 dark:text-gray-400">
+										{payment.payment_date
+											? new Date(payment.payment_date).toLocaleDateString()
+											: $t('common.pending')}
 									</td>
 								</tr>
 							{/each}

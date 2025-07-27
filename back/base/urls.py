@@ -32,6 +32,7 @@ urlpatterns = [
     path('properties/<int:pk>/', views.PropertyDetailView.as_view(), name='property'),
     path('properties/<arabicslug:slug>/', views.PropertySlugDetailView.as_view(), name='property-by-slug'),
     path('properties/<int:property_id>/contact/', views.PropertyOwnerContactView.as_view(), name='property-contact'),
+    path('property-stats/', views.PropertyStatsView.as_view(), name='property-stats'),
 
     
     # Rooms
@@ -42,6 +43,8 @@ urlpatterns = [
     path('auctions/', views.AuctionListCreateView.as_view(), name='auctions'),
     path('auctions/<int:pk>/', views.AuctionDetailView.as_view(), name='auction'),
     path('auctions/<int:auction_id>/status/', views.AuctionStatusView.as_view(), name='auction-status'),
+    path('auctions/<int:auction_id>/register/', views.AuctionRegistrationView.as_view(), name='auction-register'),
+    path('auctions/<int:auction_id>/watch/', views.AuctionWatchView.as_view(), name='auction-watch'),
     path('auctions/<arabicslug:slug>/', views.AuctionSlugDetailView.as_view(), name='auction-by-slug'),
     
     # Bids
@@ -132,5 +135,11 @@ urlpatterns = [
     # Lease attachments and documents
     # TODO: Implement LeaseDocumentListView
     # path('leases/<int:lease_id>/documents/', views.LeaseDocumentListView.as_view(), name='lease-documents'),
+    
+    # Payment and Bank Account Management
+    path('bank-accounts/', views.BankAccountListCreateView.as_view(), name='bank-accounts'),
+    path('bank-accounts/<int:pk>/', views.BankAccountDetailView.as_view(), name='bank-account'),
+    path('payments/', views.PaymentListCreateView.as_view(), name='payments'),
+    path('payments/<int:pk>/', views.PaymentDetailView.as_view(), name='payment'),
     
 ]

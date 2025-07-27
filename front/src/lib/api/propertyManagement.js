@@ -114,6 +114,57 @@ export const leasesAPI = {
 };
 
 // ===========================
+// Workers API
+// ===========================
+
+export const workersAPI = {
+	// Get all workers with filtering and pagination
+	getAll: async (params = {}) => {
+		return await api.get('/workers/', { params });
+	},
+
+	// Get specific worker by ID
+	getById: async (id) => {
+		return await api.get(`/workers/${id}/`);
+	},
+
+	// Create new worker
+	create: async (data) => {
+		return await api.post('/workers/', data);
+	},
+
+	// Update worker
+	update: async (id, data) => {
+		return await api.put(`/workers/${id}/`, data);
+	},
+
+	// Partially update worker
+	patch: async (id, data) => {
+		return await api.patch(`/workers/${id}/`, data);
+	},
+
+	// Delete worker
+	delete: async (id) => {
+		return await api.delete(`/workers/${id}/`);
+	},
+
+	// Get worker performance metrics
+	getPerformanceMetrics: async (id) => {
+		return await api.get(`/workers/${id}/performance/`);
+	},
+
+	// Get worker schedule
+	getSchedule: async (id, params = {}) => {
+		return await api.get(`/workers/${id}/schedule/`, { params });
+	},
+
+	// Update worker schedule
+	updateSchedule: async (id, data) => {
+		return await api.put(`/workers/${id}/schedule/`, data);
+	}
+};
+
+// ===========================
 // Maintenance API
 // ===========================
 
@@ -242,6 +293,7 @@ export const propertyManagementAPI = {
 	rentalProperties: rentalPropertyAPI,
 	tenants: tenantsAPI,
 	leases: leasesAPI,
+	workers: workersAPI,
 	maintenance: maintenanceAPI,
 	expenses: expensesAPI,
 	analytics: analyticsAPI

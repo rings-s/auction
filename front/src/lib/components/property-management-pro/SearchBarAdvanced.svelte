@@ -12,7 +12,6 @@
 	/** @type {boolean} */
 	export let showSuggestions = true;
 
-
 	let searchInput = '';
 	let searchInputElement;
 	let showDropdown = false;

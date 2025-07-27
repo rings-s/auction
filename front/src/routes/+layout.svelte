@@ -2,24 +2,27 @@
 	import '../app.css';
 	import { onMount } from 'svelte';
 	import { page } from '$app/stores';
-	import { theme } from '$lib/stores/theme';
+	import { theme } from '$lib/stores/theme.svelte.js';
 	import { locale } from '$lib/i18n';
-	import { user } from '$lib/stores/user';
+	import { user } from '$lib/stores/user.svelte.js';
 	import { fetchUserProfile } from '$lib/api/auth';
 	import { goto } from '$app/navigation';
 	import { browser } from '$app/environment';
+
+	// Define children as a snippet prop
+	let { children } = $props();
 
 	import Navbar from '$lib/components/layout/Navbar.svelte';
 	import Footer from '$lib/components/layout/Footer.svelte';
 	import ToastContainer from '$lib/components/ToastContainer.svelte';
 
-	// Reactive variables
-	$: currentLocale = $locale;
-	$: isArabic = currentLocale === 'ar';
-	$: isDashboardPage = $page.url.pathname.startsWith('/dashboard');
+	// Reactive variables using $derived
+	let currentLocale = $derived($locale);
+	let isArabic = $derived(currentLocale === 'ar');
+	let isDashboardPage = $derived($page.url.pathname.startsWith('/dashboard'));
 
-	let loading = true;
-	let error = null;
+	let loading = $state(true);
+	let error = $state(null);
 
 	onMount(async () => {
 		try {
@@ -57,16 +60,18 @@
 		}
 	});
 
-	// Apply theme and direction classes to document
-	$: if (browser) {
-		document.documentElement.classList.remove('light', 'dark', 'rtl', 'ltr');
-		document.documentElement.classList.add($locale === 'ar' ? 'rtl' : 'ltr');
-		document.documentElement.classList.add($theme);
-		document.documentElement.style.colorScheme = $theme;
-		document.documentElement.lang = $locale;
-		document.documentElement.dir = $locale === 'ar' ? 'rtl' : 'ltr';
-		document.body.className = isArabic ? 'font-cairo' : 'font-inter';
-	}
+	// Apply theme and direction classes to document using $effect
+	$effect(() => {
+		if (browser) {
+			document.documentElement.classList.remove('light', 'dark', 'rtl', 'ltr');
+			document.documentElement.classList.add($locale === 'ar' ? 'rtl' : 'ltr');
+			document.documentElement.classList.add($theme);
+			document.documentElement.style.colorScheme = $theme;
+			document.documentElement.lang = $locale;
+			document.documentElement.dir = $locale === 'ar' ? 'rtl' : 'ltr';
+			document.body.className = isArabic ? 'font-cairo' : 'font-inter';
+		}
+	});
 
 	function reloadPage() {
 		if (browser) window.location.reload();
@@ -77,7 +82,11 @@
 	<title>Real Estate Auction Platform</title>
 </svelte:head>
 
-<div class="{isDashboardPage ? 'min-h-screen transition-colors duration-200 dark:bg-gray-800' : 'flex min-h-screen flex-col transition-colors duration-200 dark:bg-gray-800'}">
+<div
+	class={isDashboardPage
+		? 'min-h-screen transition-colors duration-200 dark:bg-gray-800'
+		: 'flex min-h-screen flex-col transition-colors duration-200 dark:bg-gray-800'}
+>
 	{#if error}
 		<div class="flex min-h-screen items-center justify-center bg-red-50 dark:bg-red-900/20">
 			<div class="p-8 text-center">
@@ -86,7 +95,7 @@
 					{error}
 				</p>
 				<button
-					on:click={reloadPage}
+					onclick={reloadPage}
 					class="rounded bg-red-600 px-4 py-2 text-white transition-colors hover:bg-red-700"
 				>
 					Reload Page
@@ -105,7 +114,7 @@
 		{/if}
 
 		<main class="flex-grow {isDashboardPage ? '' : ''}">
-			<slot />
+			{@render children()}
 		</main>
 
 		{#if !isDashboardPage}

@@ -3,9 +3,9 @@
 	import { onMount, onDestroy } from 'svelte';
 	import { fade, slide, fly } from 'svelte/transition';
 	import { t, locale } from '$lib/i18n';
-	import { user } from '$lib/stores/user';
+	import { user } from '$lib/stores/user.svelte.js';
 	import { fetchAuctions } from '$lib/api/auction';
-	import { auctions as auctionsStore } from '$lib/stores/auctions';
+	import { auctions as auctionsStore } from '$lib/stores/auctions.svelte.js';
 
 	// Components
 	import AuctionCard from '$lib/components/auction/AuctionCard.svelte';
@@ -308,7 +308,7 @@
 		class="from-primary-600 via-primary-700 to-secondary-700 relative bg-gradient-to-br text-white"
 	>
 		<div class="absolute inset-0 bg-black/20"></div>
-		<div class="relative mx-auto max-w-7xl px-4 py-8 sm:px-6 md:py-12 lg:px-8">
+		<div class="relative mx-auto max-w-screen-2xl px-4 py-8 sm:px-6 md:py-12 lg:px-8">
 			<div class="md:flex md:items-center md:justify-between">
 				<div>
 					<h1 class="flex items-center text-3xl font-bold md:text-4xl">
@@ -766,7 +766,7 @@
 	</div>
 
 	<!-- Main Content Area -->
-	<div class="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
+	<div class="mx-auto max-w-screen-2xl px-4 py-8 sm:px-6 lg:px-8">
 		<!-- Active Filters Summary -->
 		{#if !loading && !error && activeFiltersCount > 0}
 			<div
@@ -943,7 +943,7 @@
 				{#if loading && !auctions.length}
 					<!-- Loading Skeleton -->
 					<div in:fade={{ duration: 200 }} out:fade={{ duration: 150 }}>
-						<div class="grid grid-cols-1 gap-6 sm:grid-cols-2">
+						<div class="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
 							{#each Array(6) as _, i}
 								<div
 									class="animate-pulse overflow-hidden rounded-xl bg-white shadow-md dark:bg-gray-800"
@@ -1115,10 +1115,10 @@
 					</div>
 				{:else}
 					<!-- Auctions Grid -->
-					<div class="grid grid-cols-1 gap-6 sm:grid-cols-2">
+					<div class="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
 						{#each auctions as auction, index (auction.id)}
 							<div
-								in:fly={{ y: 20, duration: 300, delay: 50 * (index % 6) }}
+								in:fly={{ y: 20, duration: 300, delay: 50 * (index % 8) }}
 								out:fade={{ duration: 200 }}
 								class="group relative"
 							>

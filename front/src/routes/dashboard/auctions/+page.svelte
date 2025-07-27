@@ -3,8 +3,8 @@
 	import { onMount } from 'svelte';
 	import { page } from '$app/stores';
 	import { t } from '$lib/i18n';
-	import { user } from '$lib/stores/user';
-	import { dashboardAuctions, dashboardLoading } from '$lib/stores/dashboard';
+	import { user } from '$lib/stores/user.svelte.js';
+	import { dashboardAuctions, dashboardLoading } from '$lib/stores/dashboard.svelte.js';
 	import { getDashboardAuctions } from '$lib/api/dashboard';
 	import { toast } from '$lib/stores/toastStore.svelte.js';
 
@@ -112,243 +112,243 @@
 </svelte:head>
 
 <div class="p-6">
-		<!-- Header -->
-		<div class="mb-6">
-			<Breadcrumb items={breadcrumbItems} class="mb-4" />
+	<!-- Header -->
+	<div class="mb-6">
+		<Breadcrumb items={breadcrumbItems} class="mb-4" />
 
-			<div class="flex flex-col sm:flex-row sm:items-center sm:justify-between">
-				<div>
-					<h1 class="text-xl font-semibold text-gray-900">
-						{$t('dashboard.auctions')}
-					</h1>
-					<p class="mt-1 text-sm text-gray-600">
-						{$t('dashboard.manageAuctions')}
-					</p>
-				</div>
-
-				<div class="mt-4 sm:mt-0">
-					<Button variant="primary" size="compact" href="/auctions/create">
-						{$t('dashboard.createAuction')}
-					</Button>
-				</div>
+		<div class="flex flex-col sm:flex-row sm:items-center sm:justify-between">
+			<div>
+				<h1 class="text-xl font-semibold text-gray-900">
+					{$t('dashboard.auctions')}
+				</h1>
+				<p class="mt-1 text-sm text-gray-600">
+					{$t('dashboard.manageAuctions')}
+				</p>
 			</div>
-		</div>
 
-		<!-- Filters -->
-		<div class="mb-6 rounded-lg border border-gray-200 bg-white p-4">
-			<div class="grid grid-cols-1 gap-4 md:grid-cols-4">
-				<FormField
-					type="text"
-					placeholder={$t('common.search')}
-					bind:value={searchQuery}
-					on:input={handleSearch}
-				/>
-
-				<FormField
-					type="select"
-					options={statusOptions}
-					bind:value={statusFilter}
-					on:change={handleFilterChange}
-				/>
-
-				<div class="flex items-center">
-					<input
-						type="checkbox"
-						id="activeOnly"
-						bind:checked={activeOnly}
-						on:change={handleFilterChange}
-						class="text-primary-600 focus:ring-primary-500 h-4 w-4 rounded border-gray-300"
-					/>
-					<label for="activeOnly" class="ml-2 text-sm text-gray-700">
-						{$t('auction.activeOnly')}
-					</label>
-				</div>
-
-				<Button
-					variant="outline"
-					size="default"
-					onClick={() => {
-						searchQuery = '';
-						statusFilter = '';
-						activeOnly = false;
-						handleFilterChange();
-					}}
-				>
-					{$t('search.clear')}
+			<div class="mt-4 sm:mt-0">
+				<Button variant="primary" size="compact" href="/auctions/create">
+					{$t('dashboard.createAuction')}
 				</Button>
 			</div>
 		</div>
+	</div>
 
-		<!-- Auctions List -->
-		{#if isLoading}
-			<div class="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
-				{#each Array(6) as _}
-					<LoadingSkeleton type="auctionCard" />
-				{/each}
-			</div>
-		{:else if auctions.length === 0}
-			<EmptyState
-				icon="auction"
-				title={$t('dashboard.noAuctions')}
-				description={$t('dashboard.noAuctionsDesc')}
-				actionLabel={$t('dashboard.createAuction')}
-				actionUrl="/auctions/create"
+	<!-- Filters -->
+	<div class="mb-6 rounded-lg border border-gray-200 bg-white p-4">
+		<div class="grid grid-cols-1 gap-4 md:grid-cols-4">
+			<FormField
+				type="text"
+				placeholder={$t('common.search')}
+				bind:value={searchQuery}
+				on:input={handleSearch}
 			/>
-		{:else}
-			<div class="space-y-4">
-				<!-- Auctions Grid -->
-				<div class="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
-					{#each auctions as auction (auction.id)}
-						<div
-							class="overflow-hidden rounded-lg border border-gray-200 bg-white transition-shadow hover:shadow-md"
-						>
-							<!-- Auction Image -->
-							<div class="aspect-w-16 aspect-h-9 relative bg-gray-200">
-								{#if auction.property_title}
-									<div class="absolute top-2 left-2 z-10">
+
+			<FormField
+				type="select"
+				options={statusOptions}
+				bind:value={statusFilter}
+				on:change={handleFilterChange}
+			/>
+
+			<div class="flex items-center">
+				<input
+					type="checkbox"
+					id="activeOnly"
+					bind:checked={activeOnly}
+					on:change={handleFilterChange}
+					class="text-primary-600 focus:ring-primary-500 h-4 w-4 rounded border-gray-300"
+				/>
+				<label for="activeOnly" class="ml-2 text-sm text-gray-700">
+					{$t('auction.activeOnly')}
+				</label>
+			</div>
+
+			<Button
+				variant="outline"
+				size="default"
+				onClick={() => {
+					searchQuery = '';
+					statusFilter = '';
+					activeOnly = false;
+					handleFilterChange();
+				}}
+			>
+				{$t('search.clear')}
+			</Button>
+		</div>
+	</div>
+
+	<!-- Auctions List -->
+	{#if isLoading}
+		<div class="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
+			{#each Array(6) as _}
+				<LoadingSkeleton type="auctionCard" />
+			{/each}
+		</div>
+	{:else if auctions.length === 0}
+		<EmptyState
+			icon="auction"
+			title={$t('dashboard.noAuctions')}
+			description={$t('dashboard.noAuctionsDesc')}
+			actionLabel={$t('dashboard.createAuction')}
+			actionUrl="/auctions/create"
+		/>
+	{:else}
+		<div class="space-y-4">
+			<!-- Auctions Grid -->
+			<div class="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
+				{#each auctions as auction (auction.id)}
+					<div
+						class="overflow-hidden rounded-lg border border-gray-200 bg-white transition-shadow hover:shadow-md"
+					>
+						<!-- Auction Image -->
+						<div class="aspect-w-16 aspect-h-9 relative bg-gray-200">
+							{#if auction.property_title}
+								<div class="absolute top-2 left-2 z-10">
+									<span
+										class="inline-flex items-center rounded px-2 py-1 text-xs font-medium {auction.status ===
+										'live'
+											? 'bg-green-100 text-green-800'
+											: auction.status === 'scheduled'
+												? 'bg-blue-100 text-blue-800'
+												: auction.status === 'ended'
+													? 'bg-gray-100 text-gray-800'
+													: 'bg-yellow-100 text-yellow-800'}"
+									>
+										{auction.status_display}
+									</span>
+								</div>
+							{/if}
+
+							<div class="flex items-center justify-center">
+								<svg
+									class="h-12 w-12 text-gray-400"
+									fill="none"
+									stroke="currentColor"
+									viewBox="0 0 24 24"
+								>
+									<path
+										stroke-linecap="round"
+										stroke-linejoin="round"
+										stroke-width="2"
+										d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"
+									/>
+								</svg>
+							</div>
+						</div>
+
+						<!-- Auction Info -->
+						<div class="p-4">
+							<div class="mb-2 flex items-start justify-between">
+								<h3 class="flex-1 truncate text-sm font-medium text-gray-900">
+									{auction.title}
+								</h3>
+
+								<div class="ml-2 flex items-center space-x-1">
+									{#if auction.is_featured}
 										<span
-											class="inline-flex items-center rounded px-2 py-1 text-xs font-medium {auction.status ===
-											'live'
-												? 'bg-green-100 text-green-800'
-												: auction.status === 'scheduled'
-													? 'bg-blue-100 text-blue-800'
-													: auction.status === 'ended'
-														? 'bg-gray-100 text-gray-800'
-														: 'bg-yellow-100 text-yellow-800'}"
+											class="inline-flex items-center rounded bg-yellow-100 px-2 py-0.5 text-xs font-medium text-yellow-800"
 										>
-											{auction.status_display}
+											{$t('auction.featured')}
+										</span>
+									{/if}
+								</div>
+							</div>
+
+							<p class="mb-2 text-xs text-gray-600">
+								{auction.property_title || $t('auction.noProperty')}
+							</p>
+
+							<div class="mb-3 space-y-2">
+								<div class="flex items-center justify-between text-xs">
+									<span class="text-gray-500">{$t('auction.currentBid')}</span>
+									<span class="font-medium text-gray-900">
+										${(auction.current_bid || auction.starting_bid)?.toLocaleString() || 0}
+									</span>
+								</div>
+
+								<div class="flex items-center justify-between text-xs">
+									<span class="text-gray-500">{$t('auction.totalBids')}</span>
+									<span class="font-medium text-gray-900">
+										{auction.bid_count || 0}
+									</span>
+								</div>
+
+								{#if auction.is_active}
+									<div class="flex items-center justify-between text-xs">
+										<span class="text-gray-500">{$t('auction.timeRemaining')}</span>
+										<span class="text-primary-600 font-medium">
+											{formatTimeRemaining(auction.time_remaining)}
 										</span>
 									</div>
 								{/if}
-
-								<div class="flex items-center justify-center">
-									<svg
-										class="h-12 w-12 text-gray-400"
-										fill="none"
-										stroke="currentColor"
-										viewBox="0 0 24 24"
-									>
-										<path
-											stroke-linecap="round"
-											stroke-linejoin="round"
-											stroke-width="2"
-											d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"
-										/>
-									</svg>
-								</div>
 							</div>
 
-							<!-- Auction Info -->
-							<div class="p-4">
-								<div class="mb-2 flex items-start justify-between">
-									<h3 class="flex-1 truncate text-sm font-medium text-gray-900">
-										{auction.title}
-									</h3>
-
-									<div class="ml-2 flex items-center space-x-1">
-										{#if auction.is_featured}
-											<span
-												class="inline-flex items-center rounded bg-yellow-100 px-2 py-0.5 text-xs font-medium text-yellow-800"
-											>
-												{$t('auction.featured')}
-											</span>
-										{/if}
-									</div>
+							<div class="flex items-center justify-between">
+								<div class="text-xs text-gray-500">
+									{auction.days_until_start > 0
+										? `${$t('auction.startsIn')} ${auction.days_until_start} ${$t('auction.days')}`
+										: formatTimeRemaining(auction.time_remaining)}
 								</div>
 
-								<p class="mb-2 text-xs text-gray-600">
-									{auction.property_title || $t('auction.noProperty')}
-								</p>
+								<div class="flex items-center space-x-2">
+									<Button variant="outline" size="compact" href="/auctions/{auction.slug}">
+										{$t('common.view')}
+									</Button>
 
-								<div class="mb-3 space-y-2">
-									<div class="flex items-center justify-between text-xs">
-										<span class="text-gray-500">{$t('auction.currentBid')}</span>
-										<span class="font-medium text-gray-900">
-											${(auction.current_bid || auction.starting_bid)?.toLocaleString() || 0}
-										</span>
-									</div>
-
-									<div class="flex items-center justify-between text-xs">
-										<span class="text-gray-500">{$t('auction.totalBids')}</span>
-										<span class="font-medium text-gray-900">
-											{auction.bid_count || 0}
-										</span>
-									</div>
-
-									{#if auction.is_active}
-										<div class="flex items-center justify-between text-xs">
-											<span class="text-gray-500">{$t('auction.timeRemaining')}</span>
-											<span class="text-primary-600 font-medium">
-												{formatTimeRemaining(auction.time_remaining)}
-											</span>
-										</div>
-									{/if}
-								</div>
-
-								<div class="flex items-center justify-between">
-									<div class="text-xs text-gray-500">
-										{auction.days_until_start > 0
-											? `${$t('auction.startsIn')} ${auction.days_until_start} ${$t('auction.days')}`
-											: formatTimeRemaining(auction.time_remaining)}
-									</div>
-
-									<div class="flex items-center space-x-2">
-										<Button variant="outline" size="compact" href="/auctions/{auction.slug}">
-											{$t('common.view')}
-										</Button>
-
-										<Button variant="ghost" size="compact" href="/auctions/{auction.id}/edit">
-											{$t('common.edit')}
-										</Button>
-									</div>
+									<Button variant="ghost" size="compact" href="/auctions/{auction.id}/edit">
+										{$t('common.edit')}
+									</Button>
 								</div>
 							</div>
-						</div>
-					{/each}
-				</div>
-
-				<!-- Pagination -->
-				{#if totalPages > 1}
-					<div
-						class="flex items-center justify-between rounded-lg border border-gray-200 bg-white px-4 py-3"
-					>
-						<div class="flex items-center">
-							<p class="text-sm text-gray-700">
-								{$t('dashboard.showing')}
-								<span class="font-medium">{(currentPage - 1) * 10 + 1}</span>
-								{$t('common.to')}
-								<span class="font-medium">{Math.min(currentPage * 10, totalAuctions)}</span>
-								{$t('common.of')}
-								<span class="font-medium">{totalAuctions}</span>
-								{$t('dashboard.auctions')}
-							</p>
-						</div>
-
-						<div class="flex items-center space-x-2">
-							<Button
-								variant="outline"
-								size="compact"
-								disabled={currentPage === 1}
-								onClick={() => handlePageChange(currentPage - 1)}
-							>
-								{$t('common.previous')}
-							</Button>
-
-							<span class="text-sm text-gray-700">
-								{currentPage} / {totalPages}
-							</span>
-
-							<Button
-								variant="outline"
-								size="compact"
-								disabled={currentPage === totalPages}
-								onClick={() => handlePageChange(currentPage + 1)}
-							>
-								{$t('common.next')}
-							</Button>
 						</div>
 					</div>
-				{/if}
+				{/each}
 			</div>
-		{/if}
+
+			<!-- Pagination -->
+			{#if totalPages > 1}
+				<div
+					class="flex items-center justify-between rounded-lg border border-gray-200 bg-white px-4 py-3"
+				>
+					<div class="flex items-center">
+						<p class="text-sm text-gray-700">
+							{$t('dashboard.showing')}
+							<span class="font-medium">{(currentPage - 1) * 10 + 1}</span>
+							{$t('common.to')}
+							<span class="font-medium">{Math.min(currentPage * 10, totalAuctions)}</span>
+							{$t('common.of')}
+							<span class="font-medium">{totalAuctions}</span>
+							{$t('dashboard.auctions')}
+						</p>
+					</div>
+
+					<div class="flex items-center space-x-2">
+						<Button
+							variant="outline"
+							size="compact"
+							disabled={currentPage === 1}
+							onClick={() => handlePageChange(currentPage - 1)}
+						>
+							{$t('common.previous')}
+						</Button>
+
+						<span class="text-sm text-gray-700">
+							{currentPage} / {totalPages}
+						</span>
+
+						<Button
+							variant="outline"
+							size="compact"
+							disabled={currentPage === totalPages}
+							onClick={() => handlePageChange(currentPage + 1)}
+						>
+							{$t('common.next')}
+						</Button>
+					</div>
+				</div>
+			{/if}
+		</div>
+	{/if}
 </div>

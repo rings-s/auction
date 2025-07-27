@@ -1,10 +1,17 @@
 <!-- src/lib/components/Modal.svelte -->
 <script lang="ts">
-	import { onMount, onDestroy, createEventDispatcher } from 'svelte';
+	import { onMount, onDestroy } from 'svelte';
 	import { fade, fly } from 'svelte/transition';
 
-	export let show: boolean = false;
-	export let title: string | null = null;
+	let {
+		show = $bindable(false),
+		title = null,
+		maxWidth = 'md',
+		closeOnEscape = true,
+		closeOnClickOutside = true,
+		onClose = () => {},
+		children
+	} = $props();
 
 	type MaxWidthKey =
 		| 'sm'
@@ -18,18 +25,12 @@
 		| '6xl'
 		| '7xl'
 		| 'full';
-	export let maxWidth: MaxWidthKey = 'md';
 
-	export let closeOnEscape: boolean = true;
-	export let closeOnClickOutside: boolean = true;
-
-	let modal: HTMLDivElement | null = null;
-
-	const dispatch = createEventDispatcher<{ close: void }>();
+	let modal = $state<HTMLDivElement | null>(null);
 
 	function close() {
 		show = false;
-		dispatch('close');
+		onClose();
 	}
 
 	// Tailwind classes for different max-widths
@@ -47,7 +48,9 @@
 		full: 'max-w-full'
 	};
 
-	$: modalClass = `w-full ${maxWidthClasses[maxWidth] || maxWidthClasses.md} mx-auto`;
+	let modalClass = $derived(
+		`w-full ${maxWidthClasses[maxWidth as MaxWidthKey] || maxWidthClasses.md} mx-auto`
+	);
 
 	function handleKeydown(e: KeyboardEvent) {
 		if (closeOnEscape && e.key === 'Escape' && show) {
@@ -83,7 +86,15 @@
 		<!-- Background overlay -->
 		<div
 			class="bg-opacity-75 dark:bg-opacity-75 fixed inset-0 bg-gray-700 transition-opacity dark:bg-gray-900"
-			on:click={handleClickOutside}
+			onclick={handleClickOutside}
+			role="button"
+			tabindex="-1"
+			onkeydown={(e) => {
+				if (e.key === 'Enter' || e.key === ' ') {
+					e.preventDefault();
+					if (closeOnClickOutside) close();
+				}
+			}}
 		></div>
 
 		<!-- Modal container -->
@@ -107,13 +118,13 @@
 					{/if}
 
 					<!-- Modal content -->
-					<slot></slot>
+					{@render children?.()}
 
 					<!-- Close button in top right corner -->
 					<button
 						type="button"
 						class="absolute top-3 right-3 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
-						on:click={close}
+						onclick={close}
 						aria-label="Close"
 					>
 						<svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">

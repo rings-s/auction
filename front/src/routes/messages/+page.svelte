@@ -2,7 +2,7 @@
 	import { onMount } from 'svelte';
 	import { fade, slide, fly } from 'svelte/transition';
 	import { t, locale } from '$lib/i18n';
-	import { user } from '$lib/stores/user';
+	import { user } from '$lib/stores/user.svelte.js';
 	import {
 		getMessages,
 		getMessageStats,

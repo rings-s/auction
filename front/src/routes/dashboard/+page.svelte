@@ -4,15 +4,15 @@
 	import { page } from '$app/stores';
 	import { goto } from '$app/navigation';
 	import { t } from '$lib/i18n';
-	import { user } from '$lib/stores/user';
+	import { user } from '$lib/stores/user.svelte.js';
 	import {
 		dashboardStats,
 		dashboardActivity,
 		dashboardLoading,
 		dashboardError,
-		userPriority,
-		canAccessSystemDashboard
-	} from '$lib/stores/dashboard';
+		getUserPriority,
+		getCanAccessSystemDashboard
+	} from '$lib/stores/dashboard.svelte.js';
 	import {
 		getUserDashboardStats,
 		getRecentActivity,
@@ -89,7 +89,7 @@
 	async function loadPropertyManagementData() {
 		try {
 			pmLoading = true;
-			
+
 			const [analytics, payments, workers, accounts] = await Promise.all([
 				getComprehensiveAnalytics({ timeRange: '30d' }),
 				getPayments({ limit: 5 }),
@@ -120,7 +120,7 @@
 
 		try {
 			const [stats, activity] = await Promise.all([
-				getUserDashboardStats(), 
+				getUserDashboardStats(),
 				getRecentActivity(10),
 				loadPropertyManagementData() // Load property management data in parallel
 			]);
@@ -198,7 +198,7 @@
 			</div>
 
 			<div class="mt-4 flex items-center space-x-3 sm:mt-0">
-				{#if $canAccessSystemDashboard}
+				{#if getCanAccessSystemDashboard()}
 					<Button variant="outline" size="compact" href="/dashboard/system">
 						{$t('dashboard.systemDashboard')}
 					</Button>
@@ -218,385 +218,436 @@
 
 	<!-- Main Dashboard Content -->
 	<div class="grid grid-cols-1 gap-6 lg:grid-cols-4">
-			<!-- Stats Overview -->
-			<div class="space-y-6 lg:col-span-3">
-				<!-- Key Metrics -->
-				<div class="grid grid-cols-2 gap-4 md:grid-cols-4 lg:grid-cols-6">
-					{#if isLoading}
-						{#each Array(6) as _, i}
-							<LoadingSkeleton type="rect" height="80px" />
-						{/each}
-					{:else if stats}
-						<!-- Auction Platform Metrics -->
+		<!-- Stats Overview -->
+		<div class="space-y-6 lg:col-span-3">
+			<!-- Key Metrics -->
+			<div class="grid grid-cols-2 gap-4 md:grid-cols-4 lg:grid-cols-6">
+				{#if isLoading}
+					{#each Array(6) as _, i}
+						<LoadingSkeleton type="rect" height="80px" />
+					{/each}
+				{:else if stats}
+					<!-- Auction Platform Metrics -->
+					<StatCard
+						title={$t('dashboard.totalProperties')}
+						value={stats.total_properties || 0}
+						icon={propertyIcon}
+						color="primary"
+						href="/dashboard/properties"
+					/>
+
+					<StatCard
+						title={$t('dashboard.totalAuctions')}
+						value={stats.total_auctions || 0}
+						icon={auctionIcon}
+						color="success"
+						href="/dashboard/auctions"
+					/>
+
+					<StatCard
+						title={$t('dashboard.totalBids')}
+						value={stats.total_bids || 0}
+						icon={bidIcon}
+						color="warning"
+						href="/dashboard/bids"
+					/>
+
+					<!-- Property Management Metrics -->
+					{#if propertyManagementStats}
 						<StatCard
-							title={$t('dashboard.totalProperties')}
-							value={stats.total_properties || 0}
-							icon={propertyIcon}
-							color="primary"
-							href="/dashboard/properties"
+							title={$t('dashboard.totalPayments')}
+							value={propertyManagementStats.totalPayments || 0}
+							icon={paymentIcon}
+							color="info"
+							href="/dashboard/payments"
 						/>
 
 						<StatCard
-							title={$t('dashboard.totalAuctions')}
-							value={stats.total_auctions || 0}
-							icon={auctionIcon}
+							title={$t('dashboard.activeWorkers')}
+							value={propertyManagementStats.activeWorkers || 0}
+							icon={workerIcon}
 							color="success"
-							href="/dashboard/auctions"
+							href="/dashboard/workers"
 						/>
 
 						<StatCard
-							title={$t('dashboard.totalBids')}
-							value={stats.total_bids || 0}
-							icon={bidIcon}
-							color="warning"
-							href="/dashboard/bids"
+							title={$t('dashboard.bankAccounts')}
+							value={bankAccounts.length || 0}
+							icon={bankIcon}
+							color="primary"
+							href="/dashboard/bank-accounts"
 						/>
-
-						<!-- Property Management Metrics -->
-						{#if propertyManagementStats}
-							<StatCard
-								title={$t('dashboard.totalPayments')}
-								value={propertyManagementStats.totalPayments || 0}
-								icon={paymentIcon}
-								color="info"
-								href="/dashboard/payments"
-							/>
-
-							<StatCard
-								title={$t('dashboard.activeWorkers')}
-								value={propertyManagementStats.activeWorkers || 0}
-								icon={workerIcon}
-								color="success"
-								href="/dashboard/workers"
-							/>
-
-							<StatCard
-								title={$t('dashboard.bankAccounts')}
-								value={bankAccounts.length || 0}
-								icon={bankIcon}
-								color="primary"
-								href="/dashboard/bank-accounts"
-							/>
-						{:else}
-							<StatCard
-								title={$t('dashboard.unreadMessages')}
-								value={stats.messages_unread || 0}
-								icon={messageIcon}
-								color="info"
-								href="/dashboard/messages?filter=unread"
-							/>
-						{/if}
+					{:else}
+						<StatCard
+							title={$t('dashboard.unreadMessages')}
+							value={stats.messages_unread || 0}
+							icon={messageIcon}
+							color="info"
+							href="/dashboard/messages?filter=unread"
+						/>
 					{/if}
+				{/if}
+			</div>
+
+			<!-- Additional Stats for Advanced Users -->
+			{#if stats && getUserPriority() >= 3}
+				<div class="grid grid-cols-1 gap-4 md:grid-cols-3">
+					<StatCard
+						title={$t('dashboard.publishedProperties')}
+						value={stats.published_properties || 0}
+						color="success"
+						compact
+					/>
+
+					<StatCard
+						title={$t('dashboard.activeAuctions')}
+						value={stats.active_auctions || 0}
+						color="primary"
+						compact
+					/>
+
+					<StatCard
+						title={$t('dashboard.winningBids')}
+						value={stats.winning_bids || 0}
+						color="warning"
+						compact
+					/>
+				</div>
+			{/if}
+
+			<!-- Property Management Analytics -->
+			{#if propertyManagementStats}
+				<div class="grid grid-cols-1 gap-4 md:grid-cols-4">
+					<StatCard
+						title={$t('dashboard.totalRevenue')}
+						value="${propertyManagementStats.totalRevenue?.toLocaleString() || '0'}"
+						color="success"
+						compact
+					/>
+
+					<StatCard
+						title={$t('dashboard.occupancyRate')}
+						value="{propertyManagementStats.occupancyRate?.toFixed(1) || '0'}%"
+						color={propertyManagementStats.occupancyRate >= 80
+							? 'success'
+							: propertyManagementStats.occupancyRate >= 60
+								? 'warning'
+								: 'error'}
+						compact
+					/>
+
+					<StatCard
+						title={$t('dashboard.pendingPayments')}
+						value={propertyManagementStats.pendingPayments || 0}
+						color={propertyManagementStats.pendingPayments > 0 ? 'warning' : 'success'}
+						compact
+					/>
+
+					<StatCard
+						title={$t('dashboard.utilizationRate')}
+						value="{propertyManagementStats.workerUtilization?.toFixed(1) || '0'}%"
+						color={propertyManagementStats.workerUtilization >= 80
+							? 'success'
+							: propertyManagementStats.workerUtilization >= 60
+								? 'warning'
+								: 'error'}
+						compact
+					/>
 				</div>
 
-				<!-- Additional Stats for Advanced Users -->
-				{#if stats && $userPriority >= 3}
-					<div class="grid grid-cols-1 gap-4 md:grid-cols-3">
-						<StatCard
-							title={$t('dashboard.publishedProperties')}
-							value={stats.published_properties || 0}
-							color="success"
-							compact
-						/>
+				<!-- Quick Access Cards -->
+				<div class="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
+					<!-- Recent Payments -->
+					<div
+						class="rounded-lg border border-gray-200 bg-white p-4 dark:border-gray-700 dark:bg-gray-800"
+					>
+						<div class="mb-4 flex items-center justify-between">
+							<h3 class="text-sm font-medium text-gray-900 dark:text-white">
+								{$t('dashboard.recentPayments')}
+							</h3>
+							<Button variant="outline" size="compact" href="/dashboard/payments">
+								{$t('common.viewAll')}
+							</Button>
+						</div>
 
-						<StatCard
-							title={$t('dashboard.activeAuctions')}
-							value={stats.active_auctions || 0}
-							color="primary"
-							compact
-						/>
-
-						<StatCard
-							title={$t('dashboard.winningBids')}
-							value={stats.winning_bids || 0}
-							color="warning"
-							compact
-						/>
-					</div>
-				{/if}
-
-				<!-- Property Management Analytics -->
-				{#if propertyManagementStats}
-					<div class="grid grid-cols-1 gap-4 md:grid-cols-4">
-						<StatCard
-							title={$t('dashboard.totalRevenue')}
-							value="${propertyManagementStats.totalRevenue?.toLocaleString() || '0'}"
-							color="success"
-							compact
-						/>
-
-						<StatCard
-							title={$t('dashboard.occupancyRate')}
-							value="{propertyManagementStats.occupancyRate?.toFixed(1) || '0'}%"
-							color={propertyManagementStats.occupancyRate >= 80 ? 'success' : propertyManagementStats.occupancyRate >= 60 ? 'warning' : 'error'}
-							compact
-						/>
-
-						<StatCard
-							title={$t('dashboard.pendingPayments')}
-							value={propertyManagementStats.pendingPayments || 0}
-							color={propertyManagementStats.pendingPayments > 0 ? 'warning' : 'success'}
-							compact
-						/>
-
-						<StatCard
-							title={$t('dashboard.utilizationRate')}
-							value="{propertyManagementStats.workerUtilization?.toFixed(1) || '0'}%"
-							color={propertyManagementStats.workerUtilization >= 80 ? 'success' : propertyManagementStats.workerUtilization >= 60 ? 'warning' : 'error'}
-							compact
-						/>
-					</div>
-
-					<!-- Quick Access Cards -->
-					<div class="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
-						<!-- Recent Payments -->
-						<div class="rounded-lg border border-gray-200 bg-white p-4 dark:bg-gray-800 dark:border-gray-700">
-							<div class="flex items-center justify-between mb-4">
-								<h3 class="text-sm font-medium text-gray-900 dark:text-white">
-									{$t('dashboard.recentPayments')}
-								</h3>
-								<Button variant="outline" size="compact" href="/dashboard/payments">
-									{$t('common.viewAll')}
-								</Button>
+						{#if pmLoading}
+							<div class="space-y-2">
+								{#each Array(3) as _}
+									<LoadingSkeleton type="rect" height="40px" />
+								{/each}
 							</div>
-							
-							{#if pmLoading}
-								<div class="space-y-2">
-									{#each Array(3) as _}
-										<LoadingSkeleton type="rect" height="40px" />
-									{/each}
-								</div>
-							{:else if recentPayments.length > 0}
-								<div class="space-y-3">
-									{#each recentPayments.slice(0, 3) as payment}
-										<div class="flex items-center justify-between">
-											<div class="min-w-0 flex-1">
-												<p class="text-sm font-medium text-gray-900 dark:text-white font-mono">
-													{payment.payment_id}
+						{:else if recentPayments.length > 0}
+							<div class="space-y-3">
+								{#each recentPayments.slice(0, 3) as payment}
+									<div class="flex items-center justify-between">
+										<div class="min-w-0 flex-1">
+											<p class="font-mono text-sm font-medium text-gray-900 dark:text-white">
+												{payment.payment_id}
+											</p>
+											<p class="text-xs text-gray-500 dark:text-gray-400">
+												{payment.payment_type} • {new Date(
+													payment.due_date || payment.created_at
+												).toLocaleDateString()}
+											</p>
+										</div>
+										<div class="text-right">
+											<p class="text-sm font-medium text-gray-900 dark:text-white">
+												${payment.amount}
+											</p>
+											<span
+												class="inline-flex items-center rounded-full px-1.5 py-0.5 text-xs font-medium bg-{payment.status ===
+												'completed'
+													? 'green'
+													: payment.status === 'pending'
+														? 'yellow'
+														: 'red'}-100 text-{payment.status === 'completed'
+													? 'green'
+													: payment.status === 'pending'
+														? 'yellow'
+														: 'red'}-800"
+											>
+												{payment.status}
+											</span>
+										</div>
+									</div>
+								{/each}
+							</div>
+						{:else}
+							<p class="text-sm text-gray-500 dark:text-gray-400">{$t('payment.noPayments')}</p>
+						{/if}
+
+						<div class="mt-4 border-t border-gray-200 pt-3 dark:border-gray-600">
+							<Button
+								variant="primary"
+								size="compact"
+								href="/dashboard/payments/create"
+								class="w-full"
+							>
+								{$t('payment.add')}
+							</Button>
+						</div>
+					</div>
+
+					<!-- Recent Workers -->
+					<div
+						class="rounded-lg border border-gray-200 bg-white p-4 dark:border-gray-700 dark:bg-gray-800"
+					>
+						<div class="mb-4 flex items-center justify-between">
+							<h3 class="text-sm font-medium text-gray-900 dark:text-white">
+								{$t('dashboard.recentWorkers')}
+							</h3>
+							<Button variant="outline" size="compact" href="/dashboard/workers">
+								{$t('common.viewAll')}
+							</Button>
+						</div>
+
+						{#if pmLoading}
+							<div class="space-y-2">
+								{#each Array(3) as _}
+									<LoadingSkeleton type="rect" height="40px" />
+								{/each}
+							</div>
+						{:else if recentWorkers.length > 0}
+							<div class="space-y-3">
+								{#each recentWorkers.slice(0, 3) as worker}
+									<div class="flex items-center justify-between">
+										<div class="flex min-w-0 flex-1 items-center">
+											<div
+												class="bg-primary-100 dark:bg-primary-800 flex h-8 w-8 items-center justify-center rounded-full"
+											>
+												<span class="text-primary-600 dark:text-primary-200 text-xs font-medium">
+													{worker.first_name?.[0] || 'W'}
+												</span>
+											</div>
+											<div class="ml-3 min-w-0 flex-1">
+												<p class="text-sm font-medium text-gray-900 dark:text-white">
+													{worker.first_name}
+													{worker.last_name}
 												</p>
 												<p class="text-xs text-gray-500 dark:text-gray-400">
-													{payment.payment_type} • {new Date(payment.due_date || payment.created_at).toLocaleDateString()}
+													{worker.categories?.map((c) => c.name).join(', ') ||
+														$t('worker.noCategories')}
 												</p>
 											</div>
-											<div class="text-right">
-												<p class="text-sm font-medium text-gray-900 dark:text-white">
-													${payment.amount}
+										</div>
+										<div class="text-right">
+											<span
+												class="inline-flex items-center rounded-full px-1.5 py-0.5 text-xs font-medium bg-{worker.status ===
+												'active'
+													? 'green'
+													: 'gray'}-100 text-{worker.status === 'active' ? 'green' : 'gray'}-800"
+											>
+												{worker.status}
+											</span>
+											{#if worker.is_available}
+												<p class="mt-1 text-xs text-green-600 dark:text-green-400">
+													{$t('worker.available')}
 												</p>
-												<span class="inline-flex items-center px-1.5 py-0.5 rounded-full text-xs font-medium bg-{payment.status === 'completed' ? 'green' : payment.status === 'pending' ? 'yellow' : 'red'}-100 text-{payment.status === 'completed' ? 'green' : payment.status === 'pending' ? 'yellow' : 'red'}-800">
-													{payment.status}
-												</span>
-											</div>
+											{/if}
 										</div>
-									{/each}
-								</div>
-							{:else}
-								<p class="text-sm text-gray-500 dark:text-gray-400">{$t('payment.noPayments')}</p>
-							{/if}
-							
-							<div class="mt-4 pt-3 border-t border-gray-200 dark:border-gray-600">
-								<Button variant="primary" size="compact" href="/dashboard/payments/create" class="w-full">
-									{$t('payment.add')}
-								</Button>
+									</div>
+								{/each}
 							</div>
-						</div>
+						{:else}
+							<p class="text-sm text-gray-500 dark:text-gray-400">{$t('worker.noWorkers')}</p>
+						{/if}
 
-						<!-- Recent Workers -->
-						<div class="rounded-lg border border-gray-200 bg-white p-4 dark:bg-gray-800 dark:border-gray-700">
-							<div class="flex items-center justify-between mb-4">
-								<h3 class="text-sm font-medium text-gray-900 dark:text-white">
-									{$t('dashboard.recentWorkers')}
-								</h3>
-								<Button variant="outline" size="compact" href="/dashboard/workers">
-									{$t('common.viewAll')}
-								</Button>
-							</div>
-							
-							{#if pmLoading}
-								<div class="space-y-2">
-									{#each Array(3) as _}
-										<LoadingSkeleton type="rect" height="40px" />
-									{/each}
-								</div>
-							{:else if recentWorkers.length > 0}
-								<div class="space-y-3">
-									{#each recentWorkers.slice(0, 3) as worker}
-										<div class="flex items-center justify-between">
-											<div class="flex items-center min-w-0 flex-1">
-												<div class="bg-primary-100 dark:bg-primary-800 flex h-8 w-8 items-center justify-center rounded-full">
-													<span class="text-primary-600 dark:text-primary-200 text-xs font-medium">
-														{worker.first_name?.[0] || 'W'}
-													</span>
-												</div>
-												<div class="ml-3 min-w-0 flex-1">
-													<p class="text-sm font-medium text-gray-900 dark:text-white">
-														{worker.first_name} {worker.last_name}
-													</p>
-													<p class="text-xs text-gray-500 dark:text-gray-400">
-														{worker.categories?.map(c => c.name).join(', ') || $t('worker.noCategories')}
-													</p>
-												</div>
-											</div>
-											<div class="text-right">
-												<span class="inline-flex items-center px-1.5 py-0.5 rounded-full text-xs font-medium bg-{worker.status === 'active' ? 'green' : 'gray'}-100 text-{worker.status === 'active' ? 'green' : 'gray'}-800">
-													{worker.status}
-												</span>
-												{#if worker.is_available}
-													<p class="text-xs text-green-600 dark:text-green-400 mt-1">
-														{$t('worker.available')}
-													</p>
-												{/if}
-											</div>
-										</div>
-									{/each}
-								</div>
-							{:else}
-								<p class="text-sm text-gray-500 dark:text-gray-400">{$t('worker.noWorkers')}</p>
-							{/if}
-							
-							<div class="mt-4 pt-3 border-t border-gray-200 dark:border-gray-600">
-								<Button variant="primary" size="compact" href="/dashboard/workers/create" class="w-full">
-									{$t('worker.add')}
-								</Button>
-							</div>
-						</div>
-
-						<!-- Analytics Quick Access -->
-						<div class="rounded-lg border border-gray-200 bg-white p-4 dark:bg-gray-800 dark:border-gray-700">
-							<div class="flex items-center justify-between mb-4">
-								<h3 class="text-sm font-medium text-gray-900 dark:text-white">
-									{$t('dashboard.analytics')}
-								</h3>
-								<Button variant="outline" size="compact" href="/dashboard/analytics">
-									{$t('common.viewAll')}
-								</Button>
-							</div>
-							
-							<div class="space-y-4">
-								<div class="flex items-center">
-									<div class="flex-shrink-0">
-										{@html analyticsIcon}
-									</div>
-									<div class="ml-3">
-										<p class="text-sm font-medium text-gray-900 dark:text-white">
-											{$t('dashboard.comprehensiveAnalytics')}
-										</p>
-										<p class="text-xs text-gray-500 dark:text-gray-400">
-											{$t('dashboard.analyticsDescription')}
-										</p>
-									</div>
-								</div>
-								
-								{#if propertyManagementStats?.insights}
-									<div class="text-xs text-gray-600 dark:text-gray-400">
-										{propertyManagementStats.insights.length} {$t('dashboard.activeInsights')}
-									</div>
-								{/if}
-							</div>
-							
-							<div class="mt-4 pt-3 border-t border-gray-200 dark:border-gray-600">
-								<Button variant="primary" size="compact" href="/dashboard/analytics" class="w-full">
-									{$t('dashboard.viewAnalytics')}
-								</Button>
-							</div>
+						<div class="mt-4 border-t border-gray-200 pt-3 dark:border-gray-600">
+							<Button
+								variant="primary"
+								size="compact"
+								href="/dashboard/workers/create"
+								class="w-full"
+							>
+								{$t('worker.add')}
+							</Button>
 						</div>
 					</div>
-				{/if}
 
-				<!-- Performance Metrics (for appraisers/data entry) -->
-				{#if stats && ($user?.role === 'appraiser' || $user?.role === 'data_entry')}
-					<div class="rounded-lg border border-gray-200 bg-white p-4 dark:bg-gray-800 dark:border-gray-700">
-						<h3 class="mb-4 text-sm font-medium text-gray-900 dark:text-white">
-							{$t('dashboard.performanceMetrics')}
-						</h3>
+					<!-- Analytics Quick Access -->
+					<div
+						class="rounded-lg border border-gray-200 bg-white p-4 dark:border-gray-700 dark:bg-gray-800"
+					>
+						<div class="mb-4 flex items-center justify-between">
+							<h3 class="text-sm font-medium text-gray-900 dark:text-white">
+								{$t('dashboard.analytics')}
+							</h3>
+							<Button variant="outline" size="compact" href="/dashboard/analytics">
+								{$t('common.viewAll')}
+							</Button>
+						</div>
 
-						<div class="grid grid-cols-1 gap-4 md:grid-cols-3">
-							<div class="text-center">
-								<p class="text-lg font-semibold text-gray-900 dark:text-white">
-									{stats.properties_this_month || 0}
-								</p>
-								<p class="text-xs text-gray-600 dark:text-gray-400">
-									{$t('dashboard.propertiesThisMonth')}
-								</p>
+						<div class="space-y-4">
+							<div class="flex items-center">
+								<div class="flex-shrink-0">
+									{@html analyticsIcon}
+								</div>
+								<div class="ml-3">
+									<p class="text-sm font-medium text-gray-900 dark:text-white">
+										{$t('dashboard.comprehensiveAnalytics')}
+									</p>
+									<p class="text-xs text-gray-500 dark:text-gray-400">
+										{$t('dashboard.analyticsDescription')}
+									</p>
+								</div>
 							</div>
 
-							<div class="text-center">
-								<p class="text-lg font-semibold text-gray-900 dark:text-white">
-									{stats.auctions_this_month || 0}
-								</p>
-								<p class="text-xs text-gray-600 dark:text-gray-400">
-									{$t('dashboard.auctionsThisMonth')}
-								</p>
-							</div>
+							{#if propertyManagementStats?.insights}
+								<div class="text-xs text-gray-600 dark:text-gray-400">
+									{propertyManagementStats.insights.length}
+									{$t('dashboard.activeInsights')}
+								</div>
+							{/if}
+						</div>
 
-							<div class="text-center">
-								<p class="text-lg font-semibold text-gray-900 dark:text-white">
-									{stats.avg_property_value
-										? `$${stats.avg_property_value.toLocaleString()}`
-										: '$0'}
-								</p>
-								<p class="text-xs text-gray-600 dark:text-gray-400">
-									{$t('dashboard.avgPropertyValue')}
-								</p>
-							</div>
+						<div class="mt-4 border-t border-gray-200 pt-3 dark:border-gray-600">
+							<Button variant="primary" size="compact" href="/dashboard/analytics" class="w-full">
+								{$t('dashboard.viewAnalytics')}
+							</Button>
 						</div>
 					</div>
-				{/if}
-
-				<!-- Recent Activity -->
-				<div class="lg:hidden">
-					<ActivityFeed {activities} loading={isLoading} maxItems={5} compact />
 				</div>
-			</div>
+			{/if}
 
-			<!-- Sidebar -->
-			<div class="space-y-6 lg:col-span-1">
-				<!-- Quick Actions -->
-				<QuickActions />
+			<!-- Performance Metrics (for appraisers/data entry) -->
+			{#if stats && ($user?.role === 'appraiser' || $user?.role === 'data_entry')}
+				<div
+					class="rounded-lg border border-gray-200 bg-white p-4 dark:border-gray-700 dark:bg-gray-800"
+				>
+					<h3 class="mb-4 text-sm font-medium text-gray-900 dark:text-white">
+						{$t('dashboard.performanceMetrics')}
+					</h3>
 
-				<!-- Recent Activity (Desktop) -->
-				<div class="hidden lg:block">
-					<ActivityFeed {activities} loading={isLoading} maxItems={8} />
-				</div>
-
-				<!-- User Info Card -->
-				<div class="rounded-lg border border-gray-200 bg-white p-4 dark:bg-gray-800 dark:border-gray-700">
-					<div class="flex items-center space-x-3">
-						<div class="bg-primary-100 dark:bg-primary-800 flex h-10 w-10 items-center justify-center rounded-full">
-							<span class="text-primary-600 dark:text-primary-200 text-sm font-medium">
-								{$user?.first_name?.[0] || $user?.email?.[0] || 'U'}
-							</span>
-						</div>
-
-						<div class="min-w-0 flex-1">
-							<p class="truncate text-sm font-medium text-gray-900 dark:text-white">
-								{$user?.first_name}
-								{$user?.last_name}
+					<div class="grid grid-cols-1 gap-4 md:grid-cols-3">
+						<div class="text-center">
+							<p class="text-lg font-semibold text-gray-900 dark:text-white">
+								{stats.properties_this_month || 0}
 							</p>
 							<p class="text-xs text-gray-600 dark:text-gray-400">
-								{$t(`auth.role${$user?.role?.charAt(0)?.toUpperCase()}${$user?.role?.slice(1)}`)}
+								{$t('dashboard.propertiesThisMonth')}
+							</p>
+						</div>
+
+						<div class="text-center">
+							<p class="text-lg font-semibold text-gray-900 dark:text-white">
+								{stats.auctions_this_month || 0}
+							</p>
+							<p class="text-xs text-gray-600 dark:text-gray-400">
+								{$t('dashboard.auctionsThisMonth')}
+							</p>
+						</div>
+
+						<div class="text-center">
+							<p class="text-lg font-semibold text-gray-900 dark:text-white">
+								{stats.avg_property_value ? `$${stats.avg_property_value.toLocaleString()}` : '$0'}
+							</p>
+							<p class="text-xs text-gray-600 dark:text-gray-400">
+								{$t('dashboard.avgPropertyValue')}
 							</p>
 						</div>
 					</div>
-
-					{#if $userPriority > 1}
-						<div class="mt-3 border-t border-gray-200 dark:border-gray-600 pt-3">
-							<div class="flex items-center justify-between">
-								<span class="text-xs text-gray-600 dark:text-gray-400">
-									{$t('dashboard.userPriority')}
-								</span>
-								<div class="flex items-center space-x-1">
-									{#each Array(5) as _, i}
-										<div
-											class="h-2 w-2 rounded-full {i < $userPriority
-												? 'bg-primary-500'
-												: 'bg-gray-200 dark:bg-gray-600'}"
-										></div>
-									{/each}
-								</div>
-							</div>
-						</div>
-					{/if}
 				</div>
+			{/if}
+
+			<!-- Recent Activity -->
+			<div class="lg:hidden">
+				<ActivityFeed {activities} loading={isLoading} maxItems={5} compact />
 			</div>
 		</div>
+
+		<!-- Sidebar -->
+		<div class="space-y-6 lg:col-span-1">
+			<!-- Quick Actions -->
+			<QuickActions />
+
+			<!-- Recent Activity (Desktop) -->
+			<div class="hidden lg:block">
+				<ActivityFeed {activities} loading={isLoading} maxItems={8} />
+			</div>
+
+			<!-- User Info Card -->
+			<div
+				class="rounded-lg border border-gray-200 bg-white p-4 dark:border-gray-700 dark:bg-gray-800"
+			>
+				<div class="flex items-center space-x-3">
+					<div
+						class="bg-primary-100 dark:bg-primary-800 flex h-10 w-10 items-center justify-center rounded-full"
+					>
+						<span class="text-primary-600 dark:text-primary-200 text-sm font-medium">
+							{$user?.first_name?.[0] || $user?.email?.[0] || 'U'}
+						</span>
+					</div>
+
+					<div class="min-w-0 flex-1">
+						<p class="truncate text-sm font-medium text-gray-900 dark:text-white">
+							{$user?.first_name}
+							{$user?.last_name}
+						</p>
+						<p class="text-xs text-gray-600 dark:text-gray-400">
+							{$t(`auth.role${$user?.role?.charAt(0)?.toUpperCase()}${$user?.role?.slice(1)}`)}
+						</p>
+					</div>
+				</div>
+
+				{#if getUserPriority() > 1}
+					<div class="mt-3 border-t border-gray-200 pt-3 dark:border-gray-600">
+						<div class="flex items-center justify-between">
+							<span class="text-xs text-gray-600 dark:text-gray-400">
+								{$t('dashboard.userPriority')}
+							</span>
+							<div class="flex items-center space-x-1">
+								{#each Array(5) as _, i}
+									<div
+										class="h-2 w-2 rounded-full {i < getUserPriority()
+											? 'bg-primary-500'
+											: 'bg-gray-200 dark:bg-gray-600'}"
+									></div>
+								{/each}
+							</div>
+						</div>
+					</div>
+				{/if}
+			</div>
+		</div>
+	</div>
 </div>

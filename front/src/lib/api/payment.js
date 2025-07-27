@@ -2,7 +2,7 @@
 import { API_BASE_URL } from '$lib/constants';
 import { refreshToken } from './auth';
 
-const PAYMENT_URL = `${API_BASE_URL}/accounts/payments`;
+const PAYMENT_URL = `${API_BASE_URL}/payments`;
 
 /**
  * Enhanced API request handler with authentication and error handling
@@ -206,7 +206,7 @@ export function validatePaymentData(data) {
 	}
 
 	// Validate payment type
-	const validTypes = getPaymentTypes().map(type => type.value);
+	const validTypes = getPaymentTypes().map((type) => type.value);
 	if (!data.payment_type || !validTypes.includes(data.payment_type)) {
 		errors.payment_type = 'Please select a valid payment type';
 	}
@@ -245,8 +245,8 @@ export function calculatePaymentStats(payments) {
 	};
 
 	const today = new Date();
-	
-	payments.forEach(payment => {
+
+	payments.forEach((payment) => {
 		const amount = parseFloat(payment.amount) || 0;
 		stats.totalAmount += amount;
 
@@ -257,7 +257,7 @@ export function calculatePaymentStats(payments) {
 		} else if (payment.status === 'pending') {
 			stats.pending++;
 			stats.pendingAmount += amount;
-			
+
 			// Check if overdue
 			if (payment.due_date && new Date(payment.due_date) < today) {
 				stats.overdue++;
@@ -273,10 +273,10 @@ export function calculatePaymentStats(payments) {
 		stats.byType[payment.payment_type].amount += amount;
 
 		// Count by month
-		const monthKey = payment.payment_date ? 
-			new Date(payment.payment_date).toISOString().slice(0, 7) :
-			new Date().toISOString().slice(0, 7);
-		
+		const monthKey = payment.payment_date
+			? new Date(payment.payment_date).toISOString().slice(0, 7)
+			: new Date().toISOString().slice(0, 7);
+
 		if (!stats.byMonth[monthKey]) {
 			stats.byMonth[monthKey] = { count: 0, amount: 0 };
 		}
@@ -294,15 +294,15 @@ export async function generatePaymentReport(filters = {}) {
 	try {
 		const payments = await getPayments(filters);
 		const stats = calculatePaymentStats(payments);
-		
+
 		return {
 			payments,
 			statistics: stats,
 			summary: {
 				totalPayments: stats.total,
 				totalAmount: stats.totalAmount,
-				completionRate: stats.total > 0 ? (stats.completed / stats.total * 100).toFixed(1) : 0,
-				overdueRate: stats.total > 0 ? (stats.overdue / stats.total * 100).toFixed(1) : 0,
+				completionRate: stats.total > 0 ? ((stats.completed / stats.total) * 100).toFixed(1) : 0,
+				overdueRate: stats.total > 0 ? ((stats.overdue / stats.total) * 100).toFixed(1) : 0,
 				averageAmount: stats.total > 0 ? (stats.totalAmount / stats.total).toFixed(2) : 0
 			},
 			generatedAt: new Date().toISOString()
@@ -329,7 +329,7 @@ export async function getOverduePayments() {
 export async function getUpcomingPayments() {
 	const today = new Date();
 	const nextWeek = new Date(today.getTime() + 7 * 24 * 60 * 60 * 1000);
-	
+
 	return await getPayments({
 		status: 'pending',
 		due_date__gte: today.toISOString().split('T')[0],
@@ -352,7 +352,7 @@ export function formatCurrency(amount, currency = 'USD') {
  */
 export function formatPaymentDate(dateString) {
 	if (!dateString) return 'N/A';
-	
+
 	return new Intl.DateTimeFormat('en-US', {
 		year: 'numeric',
 		month: 'short',
@@ -372,6 +372,6 @@ export function getPaymentStatusColor(status) {
 		cancelled: 'gray',
 		refunded: 'purple'
 	};
-	
+
 	return statusColors[status] || 'gray';
 }

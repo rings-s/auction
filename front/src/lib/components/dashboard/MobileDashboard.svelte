@@ -1,7 +1,7 @@
 <!-- src/lib/components/dashboard/MobileDashboard.svelte -->
 <script>
 	import { t } from '$lib/i18n';
-	import { dashboardSummary, userPriority } from '$lib/stores/dashboard';
+	import { getDashboardSummary, getUserPriority } from '$lib/stores/dashboard.svelte.js';
 	import StatCard from './StatCard.svelte';
 	import Button from '$lib/components/ui/Button.svelte';
 
@@ -24,7 +24,7 @@
 			</h1>
 
 			<div class="flex items-center space-x-2">
-				{#if $dashboardSummary?.messages > 0}
+				{#if getDashboardSummary()?.messages > 0}
 					<div class="relative">
 						<button class="p-2 text-gray-400 hover:text-gray-600">
 							{@html notificationIcon}
@@ -33,7 +33,7 @@
 							class="absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-red-500"
 						>
 							<span class="text-xs font-medium text-white">
-								{$dashboardSummary.messages > 9 ? '9+' : $dashboardSummary.messages}
+								{getDashboardSummary().messages > 9 ? '9+' : getDashboardSummary().messages}
 							</span>
 						</div>
 					</div>
@@ -47,12 +47,12 @@
 	</div>
 
 	<!-- Quick Stats -->
-	{#if $dashboardSummary}
+	{#if getDashboardSummary()}
 		<div class="px-4 pb-4">
 			<div class="grid grid-cols-2 gap-3">
 				<StatCard
 					title={$t('dashboard.properties')}
-					value={$dashboardSummary.properties}
+					value={getDashboardSummary().properties}
 					color="primary"
 					compact
 					href="/dashboard/properties"
@@ -60,7 +60,7 @@
 
 				<StatCard
 					title={$t('dashboard.auctions')}
-					value={$dashboardSummary.auctions}
+					value={getDashboardSummary().auctions}
 					color="success"
 					compact
 					href="/dashboard/auctions"
@@ -68,7 +68,7 @@
 
 				<StatCard
 					title={$t('dashboard.bids')}
-					value={$dashboardSummary.bids}
+					value={getDashboardSummary().bids}
 					color="warning"
 					compact
 					href="/dashboard/bids"
@@ -76,7 +76,7 @@
 
 				<StatCard
 					title={$t('nav.messages')}
-					value={$dashboardSummary.messages}
+					value={getDashboardSummary().messages}
 					color="info"
 					compact
 					href="/messages"
@@ -100,7 +100,7 @@
 				{$t('nav.messages')}
 			</Button>
 
-			{#if $userPriority >= 3}
+			{#if getUserPriority() >= 3}
 				<Button variant="primary" size="compact" href="/properties/create" class="flex-shrink-0">
 					{$t('dashboard.addProperty')}
 				</Button>

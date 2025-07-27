@@ -1,14 +1,17 @@
 <script>
-	/** @type {string} */
-	let size = $props('md'); // 'sm', 'md', 'lg', 'xl'
-	/** @type {string} */
-	let color = $props('blue'); // 'blue', 'white', 'gray', 'green', 'red'
-	/** @type {string} */
-	let variant = $props('spinner'); // 'spinner', 'dots', 'pulse', 'bars'
-	/** @type {string} */
-	let className = $props('');
-	/** @type {boolean} */
-	let overlay = $props(false);
+	/** @type {Object} */
+	let {
+		/** @type {string} */
+		size = 'md', // 'sm', 'md', 'lg', 'xl'
+		/** @type {string} */
+		color = 'blue', // 'blue', 'white', 'gray', 'green', 'red'
+		/** @type {string} */
+		variant = 'spinner', // 'spinner', 'dots', 'pulse', 'bars'
+		/** @type {string} */
+		className = '',
+		/** @type {boolean} */
+		overlay = false
+	} = $props();
 
 	const sizeClasses = {
 		sm: 'w-4 h-4',

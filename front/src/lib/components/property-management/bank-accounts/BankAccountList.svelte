@@ -2,9 +2,9 @@
 <script>
 	import { onMount } from 'svelte';
 	import { t } from '$lib/i18n';
-	import { 
-		getBankAccounts, 
-		deleteBankAccount, 
+	import {
+		getBankAccounts,
+		deleteBankAccount,
 		setPrimaryBankAccount,
 		formatIBAN
 	} from '$lib/api/bankAccount';
@@ -25,7 +25,7 @@
 
 	// Derived state
 	let hasAccounts = $derived(accounts.length > 0);
-	let primaryAccount = $derived(accounts.find(acc => acc.is_primary));
+	let primaryAccount = $derived(accounts.find((acc) => acc.is_primary));
 	let sortedAccounts = $derived(
 		accounts.sort((a, b) => {
 			if (a.is_primary && !b.is_primary) return -1;
@@ -58,13 +58,13 @@
 		try {
 			primaryLoading = true;
 			await setPrimaryBankAccount(accountId);
-			
+
 			// Update local state
-			accounts = accounts.map(acc => ({
+			accounts = accounts.map((acc) => ({
 				...acc,
 				is_primary: acc.id === accountId
 			}));
-			
+
 			toast.success($t('bankAccount.primarySet'));
 		} catch (err) {
 			toast.error($t('bankAccount.primaryError'));
@@ -80,10 +80,10 @@
 		try {
 			deleteLoading = true;
 			await deleteBankAccount(selectedAccount.id);
-			
+
 			// Update local state
-			accounts = accounts.filter(acc => acc.id !== selectedAccount.id);
-			
+			accounts = accounts.filter((acc) => acc.id !== selectedAccount.id);
+
 			toast.success($t('bankAccount.deleteSuccess'));
 			showDeleteModal = false;
 			selectedAccount = null;
@@ -134,15 +134,16 @@
 				{$t('bankAccount.listDescription')}
 			</p>
 		</div>
-		
+
 		<div class="mt-4 sm:mt-0">
-			<Button 
-				href="/create/bank-account" 
-				variant="primary"
-				class="w-full sm:w-auto"
-			>
+			<Button href="/create/bank-account" variant="primary" class="w-full sm:w-auto">
 				<svg class="mr-2 h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-					<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+					<path
+						stroke-linecap="round"
+						stroke-linejoin="round"
+						stroke-width="2"
+						d="M12 4v16m8-8H4"
+					/>
 				</svg>
 				{$t('bankAccount.add')}
 			</Button>
@@ -161,13 +162,22 @@
 				<LoadingSkeleton type="rect" height="120px" />
 			{/each}
 		</div>
-	
-	<!-- Empty State -->
+
+		<!-- Empty State -->
 	{:else if !hasAccounts}
-		<div class="text-center py-12">
-			<svg class="mx-auto h-12 w-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-				<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
-					d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
+		<div class="py-12 text-center">
+			<svg
+				class="mx-auto h-12 w-12 text-gray-400"
+				fill="none"
+				stroke="currentColor"
+				viewBox="0 0 24 24"
+			>
+				<path
+					stroke-linecap="round"
+					stroke-linejoin="round"
+					stroke-width="2"
+					d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"
+				/>
 			</svg>
 			<h3 class="mt-2 text-sm font-medium text-gray-900 dark:text-white">
 				{$t('bankAccount.noAccounts')}
@@ -181,16 +191,20 @@
 				</Button>
 			</div>
 		</div>
-	
-	<!-- Account List -->
+
+		<!-- Account List -->
 	{:else}
 		<div class="grid gap-6 sm:grid-cols-1 lg:grid-cols-2">
 			{#each sortedAccounts as account (account.id)}
-				<div class="relative rounded-lg border border-gray-200 bg-white p-6 shadow-sm dark:border-gray-700 dark:bg-gray-800 hover:shadow-md transition-shadow">
+				<div
+					class="relative rounded-lg border border-gray-200 bg-white p-6 shadow-sm transition-shadow hover:shadow-md dark:border-gray-700 dark:bg-gray-800"
+				>
 					<!-- Primary Badge -->
 					{#if account.is_primary}
 						<div class="absolute top-4 right-4">
-							<span class="inline-flex items-center rounded-full bg-primary-100 px-2.5 py-0.5 text-xs font-medium text-primary-800 dark:bg-primary-900 dark:text-primary-200">
+							<span
+								class="bg-primary-100 text-primary-800 dark:bg-primary-900 dark:text-primary-200 inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium"
+							>
 								{$t('bankAccount.primary')}
 							</span>
 						</div>
@@ -210,7 +224,9 @@
 
 						<!-- IBAN -->
 						<div>
-							<span class="block text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide">
+							<span
+								class="block text-xs font-medium tracking-wide text-gray-500 uppercase dark:text-gray-400"
+							>
 								{$t('bankAccount.iban')}
 							</span>
 							<p class="mt-1 font-mono text-sm text-gray-900 dark:text-white">
@@ -221,7 +237,9 @@
 						<!-- Account Number (if available) -->
 						{#if account.account_number}
 							<div>
-								<span class="block text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide">
+								<span
+									class="block text-xs font-medium tracking-wide text-gray-500 uppercase dark:text-gray-400"
+								>
 									{$t('bankAccount.accountNumber')}
 								</span>
 								<p class="mt-1 font-mono text-sm text-gray-900 dark:text-white">
@@ -239,11 +257,11 @@
 						</div>
 
 						<!-- Actions -->
-						<div class="flex space-x-3 pt-4 border-t border-gray-200 dark:border-gray-700">
+						<div class="flex space-x-3 border-t border-gray-200 pt-4 dark:border-gray-700">
 							<!-- Edit Button -->
-							<Button 
-								href="/bank-accounts/{account.id}/edit" 
-								variant="outline" 
+							<Button
+								href="/bank-accounts/{account.id}/edit"
+								variant="outline"
 								size="compact"
 								class="flex-1"
 							>
@@ -252,9 +270,9 @@
 
 							<!-- Set Primary Button -->
 							{#if !account.is_primary}
-								<Button 
+								<Button
 									onClick={() => setPrimary(account.id)}
-									variant="outline" 
+									variant="outline"
 									size="compact"
 									loading={primaryLoading}
 									class="flex-1"
@@ -264,22 +282,27 @@
 							{/if}
 
 							<!-- Delete Button -->
-							<Button 
+							<Button
 								onClick={() => showDeleteConfirm(account)}
 								variant="outline"
 								size="compact"
-								class="text-red-600 hover:text-red-700 hover:border-red-300"
+								class="text-red-600 hover:border-red-300 hover:text-red-700"
 							>
 								<svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-									<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
-										d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+									<path
+										stroke-linecap="round"
+										stroke-linejoin="round"
+										stroke-width="2"
+										d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+									/>
 								</svg>
 							</Button>
 						</div>
 
 						<!-- Additional Info -->
 						<div class="text-xs text-gray-500 dark:text-gray-400">
-							{$t('bankAccount.addedOn')} {new Date(account.created_at).toLocaleDateString()}
+							{$t('bankAccount.addedOn')}
+							{new Date(account.created_at).toLocaleDateString()}
 						</div>
 					</div>
 				</div>
@@ -289,16 +312,12 @@
 </div>
 
 <!-- Delete Confirmation Modal -->
-<Modal 
-	show={showDeleteModal} 
-	title={$t('bankAccount.deleteConfirm')}
-	onClose={cancelDelete}
->
+<Modal show={showDeleteModal} title={$t('bankAccount.deleteConfirm')} onClose={cancelDelete}>
 	<div class="space-y-4">
 		<p class="text-sm text-gray-600 dark:text-gray-400">
 			{$t('bankAccount.deleteWarning')}
 		</p>
-		
+
 		{#if selectedAccount}
 			<div class="rounded-md bg-gray-50 p-4 dark:bg-gray-700">
 				<div class="space-y-2">
@@ -316,14 +335,10 @@
 		{/if}
 
 		<div class="flex space-x-3 pt-4">
-			<Button 
-				onClick={cancelDelete}
-				variant="outline" 
-				class="flex-1"
-			>
+			<Button onClick={cancelDelete} variant="outline" class="flex-1">
 				{$t('common.cancel')}
 			</Button>
-			<Button 
+			<Button
 				onClick={handleDelete}
 				variant="primary"
 				loading={deleteLoading}

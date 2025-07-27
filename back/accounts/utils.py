@@ -8,6 +8,7 @@ from rest_framework import status
 from rest_framework.response import Response
 import logging
 from functools import wraps
+from decimal import Decimal
 
 logger = logging.getLogger(__name__)
 
@@ -23,16 +24,32 @@ class EmailRateLimitExceeded(Exception):
         message = f"Too many attempts. Please wait {wait_minutes} minutes before trying again." if wait_minutes else "Too many attempts. Please try again later."
         super().__init__(message)
 
+def _convert_decimals_to_floats(data):
+    """Recursively convert Decimal and datetime objects for JSON serialization"""
+    from datetime import datetime, date
+    if isinstance(data, dict):
+        return {key: _convert_decimals_to_floats(value) for key, value in data.items()}
+    elif isinstance(data, list):
+        return [_convert_decimals_to_floats(item) for item in data]
+    elif isinstance(data, Decimal):
+        return float(data)
+    elif isinstance(data, datetime):
+        return data.isoformat()
+    elif isinstance(data, date):
+        return data.isoformat()
+    else:
+        return data
+
 def create_response(data=None, message=None, error=None, error_code=None, status_code=status.HTTP_200_OK):
     response_data = {"status": "error" if error else "success"}
 
     if data is not None:
-        response_data["data"] = data
+        response_data["data"] = _convert_decimals_to_floats(data)
     if message:
         response_data["message"] = message
     if error:
         if isinstance(error, dict) and any(isinstance(v, list) for v in error.values()):
-            response_data["error"] = error
+            response_data["error"] = _convert_decimals_to_floats(error)
         else:
             response_data["error"] = {"message": error}
             if error_code:

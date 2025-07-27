@@ -90,12 +90,18 @@
 		<div
 			class="aspect-w-16 aspect-h-9 relative overflow-hidden rounded-lg bg-gray-200 dark:bg-gray-700"
 		>
-			<img
-				src={displayImages[currentIndex].url}
-				alt={displayImages[currentIndex].alt || alt}
-				class="h-full w-full cursor-pointer object-cover transition-transform duration-300 hover:scale-105"
+			<button
+				type="button"
+				class="h-full w-full cursor-pointer focus:ring-2 focus:ring-blue-500 focus:outline-none"
 				on:click={() => openModal(currentIndex)}
-			/>
+				aria-label="View full-size image"
+			>
+				<img
+					src={displayImages[currentIndex].url}
+					alt={displayImages[currentIndex].alt || alt}
+					class="h-full w-full object-cover transition-transform duration-300 hover:scale-105"
+				/>
+			</button>
 
 			<!-- Navigation Arrows (only show if multiple images) -->
 			{#if displayImages.length > 1}

@@ -26,7 +26,7 @@
 	let occupancyChart;
 	let roiChart;
 
-		$: pageTitle =
+	$: pageTitle =
 		title || (propertyId ? $t('analytics.propertyAnalytics') : $t('analytics.portfolioAnalytics'));
 
 	onMount(() => {

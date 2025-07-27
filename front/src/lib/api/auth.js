@@ -1,6 +1,6 @@
 // src/lib/api/auth.js
 import { API_BASE_URL } from '$lib/constants';
-import { user } from '$lib/stores/user';
+import { user } from '$lib/stores/user.svelte.js';
 
 const AUTH_URL = `${API_BASE_URL}/accounts`;
 

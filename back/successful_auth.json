@@ -1,0 +1,9 @@
+{
+  "email": "admin@email.com",
+  "password": "admin12345",
+  "user_info": {
+    "id": 1,
+    "role": "user",
+    "name": "admin user"
+  }
+}

@@ -8,7 +8,6 @@
 	// Event handlers
 	let onremove = $props();
 
-
 	let toastElement = $state();
 	let isVisible = $state(false);
 	let isRemoving = $state(false);

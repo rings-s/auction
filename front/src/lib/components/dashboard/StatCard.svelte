@@ -20,7 +20,8 @@
 	const colorSchemes = {
 		primary: {
 			gradient: 'from-blue-500 to-indigo-600',
-			background: 'bg-gradient-to-br from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20',
+			background:
+				'bg-gradient-to-br from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20',
 			border: 'border-blue-200 dark:border-blue-700',
 			iconBg: 'bg-gradient-to-br from-blue-500 to-indigo-600',
 			iconText: 'text-white',
@@ -28,7 +29,8 @@
 		},
 		success: {
 			gradient: 'from-emerald-500 to-green-600',
-			background: 'bg-gradient-to-br from-emerald-50 to-green-50 dark:from-emerald-900/20 dark:to-green-900/20',
+			background:
+				'bg-gradient-to-br from-emerald-50 to-green-50 dark:from-emerald-900/20 dark:to-green-900/20',
 			border: 'border-emerald-200 dark:border-emerald-700',
 			iconBg: 'bg-gradient-to-br from-emerald-500 to-green-600',
 			iconText: 'text-white',
@@ -36,7 +38,8 @@
 		},
 		warning: {
 			gradient: 'from-amber-500 to-orange-600',
-			background: 'bg-gradient-to-br from-amber-50 to-orange-50 dark:from-amber-900/20 dark:to-orange-900/20',
+			background:
+				'bg-gradient-to-br from-amber-50 to-orange-50 dark:from-amber-900/20 dark:to-orange-900/20',
 			border: 'border-amber-200 dark:border-amber-700',
 			iconBg: 'bg-gradient-to-br from-amber-500 to-orange-600',
 			iconText: 'text-white',
@@ -44,7 +47,8 @@
 		},
 		error: {
 			gradient: 'from-red-500 to-rose-600',
-			background: 'bg-gradient-to-br from-red-50 to-rose-50 dark:from-red-900/20 dark:to-rose-900/20',
+			background:
+				'bg-gradient-to-br from-red-50 to-rose-50 dark:from-red-900/20 dark:to-rose-900/20',
 			border: 'border-red-200 dark:border-red-700',
 			iconBg: 'bg-gradient-to-br from-red-500 to-rose-600',
 			iconText: 'text-white',
@@ -52,7 +56,8 @@
 		},
 		info: {
 			gradient: 'from-cyan-500 to-blue-600',
-			background: 'bg-gradient-to-br from-cyan-50 to-blue-50 dark:from-cyan-900/20 dark:to-blue-900/20',
+			background:
+				'bg-gradient-to-br from-cyan-50 to-blue-50 dark:from-cyan-900/20 dark:to-blue-900/20',
 			border: 'border-cyan-200 dark:border-cyan-700',
 			iconBg: 'bg-gradient-to-br from-cyan-500 to-blue-600',
 			iconText: 'text-white',
@@ -96,9 +101,10 @@
 	}
 
 	// Determine interactive classes
-	$: interactiveClasses = (href || clickable) 
-		? `transform transition-all duration-300 hover:scale-[1.02] hover:shadow-xl ${currentScheme.hoverShadow} cursor-pointer` 
-		: 'transition-shadow duration-200';
+	$: interactiveClasses =
+		href || clickable
+			? `transform transition-all duration-300 hover:scale-[1.02] hover:shadow-xl ${currentScheme.hoverShadow} cursor-pointer`
+			: 'transition-shadow duration-200';
 
 	$: baseCardClasses = `
 		relative overflow-hidden rounded-xl border bg-white dark:bg-gray-800 
@@ -111,23 +117,27 @@
 
 <!-- Enhanced Modern StatCard Template -->
 {#if href}
-	<a 
-		{href} 
-		class={baseCardClasses}
-		in:scale={{ duration: 200, delay: 100 }}
-	>
+	<a {href} class={baseCardClasses} in:scale={{ duration: 200, delay: 100 }}>
 		<div class="relative z-10">
 			<!-- Decorative gradient element -->
-			<div class="absolute -top-1 -right-1 h-16 w-16 bg-gradient-to-br {currentScheme.gradient} opacity-5 rounded-full blur-xl"></div>
-			
+			<div
+				class="absolute -top-1 -right-1 h-16 w-16 bg-gradient-to-br {currentScheme.gradient} rounded-full opacity-5 blur-xl"
+			></div>
+
 			<div class="flex items-start justify-between">
 				<div class="flex-1">
-					<div class="flex items-center justify-between mb-3">
-						<h3 class="text-sm font-medium text-gray-600 dark:text-gray-400 truncate">
+					<div class="mb-3 flex items-center justify-between">
+						<h3 class="truncate text-sm font-medium text-gray-600 dark:text-gray-400">
 							{title}
 						</h3>
 						{#if trend && trendIcons[trend]}
-							<div class="flex items-center space-x-1 text-{trend === 'up' ? 'emerald' : trend === 'down' ? 'red' : 'gray'}-500">
+							<div
+								class="flex items-center space-x-1 text-{trend === 'up'
+									? 'emerald'
+									: trend === 'down'
+										? 'red'
+										: 'gray'}-500"
+							>
 								{@html trendIcons[trend]}
 							</div>
 						{/if}
@@ -135,8 +145,8 @@
 
 					{#if loading}
 						<div class="space-y-2">
-							<div class="h-8 bg-gray-200 dark:bg-gray-700 rounded animate-pulse"></div>
-							<div class="h-4 bg-gray-200 dark:bg-gray-700 rounded animate-pulse w-2/3"></div>
+							<div class="h-8 animate-pulse rounded bg-gray-200 dark:bg-gray-700"></div>
+							<div class="h-4 w-2/3 animate-pulse rounded bg-gray-200 dark:bg-gray-700"></div>
 						</div>
 					{:else}
 						<div class="space-y-1">
@@ -145,11 +155,12 @@
 									{formatValue(value)}
 								</span>
 								{#if change}
-									<span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium {
-										change.type === 'increase' 
-											? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/20 dark:text-emerald-400' 
-											: 'bg-red-100 text-red-800 dark:bg-red-900/20 dark:text-red-400'
-									}">
+									<span
+										class="inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium {change.type ===
+										'increase'
+											? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/20 dark:text-emerald-400'
+											: 'bg-red-100 text-red-800 dark:bg-red-900/20 dark:text-red-400'}"
+									>
 										{change.type === 'increase' ? '+' : ''}{change.value}%
 									</span>
 								{/if}
@@ -159,8 +170,10 @@
 				</div>
 
 				{#if icon}
-					<div class="flex-shrink-0 ml-4">
-						<div class="h-12 w-12 rounded-xl {currentScheme.iconBg} {currentScheme.iconText} flex items-center justify-center shadow-lg">
+					<div class="ml-4 flex-shrink-0">
+						<div
+							class="h-12 w-12 rounded-xl {currentScheme.iconBg} {currentScheme.iconText} flex items-center justify-center shadow-lg"
+						>
 							{@html icon}
 						</div>
 					</div>
@@ -180,16 +193,24 @@
 	>
 		<div class="relative z-10 text-left">
 			<!-- Decorative gradient element -->
-			<div class="absolute -top-1 -right-1 h-16 w-16 bg-gradient-to-br {currentScheme.gradient} opacity-5 rounded-full blur-xl"></div>
-			
+			<div
+				class="absolute -top-1 -right-1 h-16 w-16 bg-gradient-to-br {currentScheme.gradient} rounded-full opacity-5 blur-xl"
+			></div>
+
 			<div class="flex items-start justify-between">
 				<div class="flex-1">
-					<div class="flex items-center justify-between mb-3">
-						<h3 class="text-sm font-medium text-gray-600 dark:text-gray-400 truncate">
+					<div class="mb-3 flex items-center justify-between">
+						<h3 class="truncate text-sm font-medium text-gray-600 dark:text-gray-400">
 							{title}
 						</h3>
 						{#if trend && trendIcons[trend]}
-							<div class="flex items-center space-x-1 text-{trend === 'up' ? 'emerald' : trend === 'down' ? 'red' : 'gray'}-500">
+							<div
+								class="flex items-center space-x-1 text-{trend === 'up'
+									? 'emerald'
+									: trend === 'down'
+										? 'red'
+										: 'gray'}-500"
+							>
 								{@html trendIcons[trend]}
 							</div>
 						{/if}
@@ -197,8 +218,8 @@
 
 					{#if loading}
 						<div class="space-y-2">
-							<div class="h-8 bg-gray-200 dark:bg-gray-700 rounded animate-pulse"></div>
-							<div class="h-4 bg-gray-200 dark:bg-gray-700 rounded animate-pulse w-2/3"></div>
+							<div class="h-8 animate-pulse rounded bg-gray-200 dark:bg-gray-700"></div>
+							<div class="h-4 w-2/3 animate-pulse rounded bg-gray-200 dark:bg-gray-700"></div>
 						</div>
 					{:else}
 						<div class="space-y-1">
@@ -207,11 +228,12 @@
 									{formatValue(value)}
 								</span>
 								{#if change}
-									<span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium {
-										change.type === 'increase' 
-											? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/20 dark:text-emerald-400' 
-											: 'bg-red-100 text-red-800 dark:bg-red-900/20 dark:text-red-400'
-									}">
+									<span
+										class="inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium {change.type ===
+										'increase'
+											? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/20 dark:text-emerald-400'
+											: 'bg-red-100 text-red-800 dark:bg-red-900/20 dark:text-red-400'}"
+									>
 										{change.type === 'increase' ? '+' : ''}{change.value}%
 									</span>
 								{/if}
@@ -221,8 +243,10 @@
 				</div>
 
 				{#if icon}
-					<div class="flex-shrink-0 ml-4">
-						<div class="h-12 w-12 rounded-xl {currentScheme.iconBg} {currentScheme.iconText} flex items-center justify-center shadow-lg">
+					<div class="ml-4 flex-shrink-0">
+						<div
+							class="h-12 w-12 rounded-xl {currentScheme.iconBg} {currentScheme.iconText} flex items-center justify-center shadow-lg"
+						>
 							{@html icon}
 						</div>
 					</div>
@@ -231,23 +255,27 @@
 		</div>
 	</button>
 {:else}
-	<div 
-		class={baseCardClasses} 
-		role="presentation"
-		in:scale={{ duration: 200, delay: 100 }}
-	>
+	<div class={baseCardClasses} role="presentation" in:scale={{ duration: 200, delay: 100 }}>
 		<div class="relative z-10">
 			<!-- Decorative gradient element -->
-			<div class="absolute -top-1 -right-1 h-16 w-16 bg-gradient-to-br {currentScheme.gradient} opacity-5 rounded-full blur-xl"></div>
-			
+			<div
+				class="absolute -top-1 -right-1 h-16 w-16 bg-gradient-to-br {currentScheme.gradient} rounded-full opacity-5 blur-xl"
+			></div>
+
 			<div class="flex items-start justify-between">
 				<div class="flex-1">
-					<div class="flex items-center justify-between mb-3">
-						<h3 class="text-sm font-medium text-gray-600 dark:text-gray-400 truncate">
+					<div class="mb-3 flex items-center justify-between">
+						<h3 class="truncate text-sm font-medium text-gray-600 dark:text-gray-400">
 							{title}
 						</h3>
 						{#if trend && trendIcons[trend]}
-							<div class="flex items-center space-x-1 text-{trend === 'up' ? 'emerald' : trend === 'down' ? 'red' : 'gray'}-500">
+							<div
+								class="flex items-center space-x-1 text-{trend === 'up'
+									? 'emerald'
+									: trend === 'down'
+										? 'red'
+										: 'gray'}-500"
+							>
 								{@html trendIcons[trend]}
 							</div>
 						{/if}
@@ -255,8 +283,8 @@
 
 					{#if loading}
 						<div class="space-y-2">
-							<div class="h-8 bg-gray-200 dark:bg-gray-700 rounded animate-pulse"></div>
-							<div class="h-4 bg-gray-200 dark:bg-gray-700 rounded animate-pulse w-2/3"></div>
+							<div class="h-8 animate-pulse rounded bg-gray-200 dark:bg-gray-700"></div>
+							<div class="h-4 w-2/3 animate-pulse rounded bg-gray-200 dark:bg-gray-700"></div>
 						</div>
 					{:else}
 						<div class="space-y-1">
@@ -265,11 +293,12 @@
 									{formatValue(value)}
 								</span>
 								{#if change}
-									<span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium {
-										change.type === 'increase' 
-											? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/20 dark:text-emerald-400' 
-											: 'bg-red-100 text-red-800 dark:bg-red-900/20 dark:text-red-400'
-									}">
+									<span
+										class="inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium {change.type ===
+										'increase'
+											? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/20 dark:text-emerald-400'
+											: 'bg-red-100 text-red-800 dark:bg-red-900/20 dark:text-red-400'}"
+									>
 										{change.type === 'increase' ? '+' : ''}{change.value}%
 									</span>
 								{/if}
@@ -279,8 +308,10 @@
 				</div>
 
 				{#if icon}
-					<div class="flex-shrink-0 ml-4">
-						<div class="h-12 w-12 rounded-xl {currentScheme.iconBg} {currentScheme.iconText} flex items-center justify-center shadow-lg">
+					<div class="ml-4 flex-shrink-0">
+						<div
+							class="h-12 w-12 rounded-xl {currentScheme.iconBg} {currentScheme.iconText} flex items-center justify-center shadow-lg"
+						>
 							{@html icon}
 						</div>
 					</div>

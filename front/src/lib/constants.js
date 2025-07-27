@@ -46,6 +46,22 @@ export const PROPERTY_ENDPOINTS = {
 	STATS: `${API_BASE_URL}/property-stats/`
 };
 
+// Rental Property endpoints
+export const RENTAL_ENDPOINTS = {
+	BASE: `${API_BASE_URL}/rentals/`,
+	LIST: `${API_BASE_URL}/rentals/`,
+	CREATE: `${API_BASE_URL}/rentals/`,
+	DETAIL: function (id) {
+		return `${API_BASE_URL}/rentals/${id}/`;
+	},
+	UPDATE: function (id) {
+		return `${API_BASE_URL}/rentals/${id}/`;
+	},
+	DELETE: function (id) {
+		return `${API_BASE_URL}/rentals/${id}/`;
+	}
+};
+
 // Auction endpoints
 export const AUCTION_ENDPOINTS = {
 	BASE: `${API_BASE_URL}/auctions/`,

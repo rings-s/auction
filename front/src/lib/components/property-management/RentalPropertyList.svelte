@@ -1,6 +1,6 @@
 <script>
 	import { onMount, createEventDispatcher } from 'svelte';
-	import { rentalPropertyAPI } from '$lib/api/propertyManagement.js';
+	import { getProperties } from '$lib/api/property.js';
 	import { t } from '$lib/i18n';
 	import RentalPropertyCard from './RentalPropertyCard.svelte';
 	import LoadingSkeleton from '$lib/components/ui/LoadingSkeleton.svelte';
@@ -26,10 +26,10 @@
 	let searchQuery = '';
 	let occupancyFilter = '';
 	let propertyTypeFilter = '';
-	let minRent = '';
-	let maxRent = '';
-	let sortBy = 'title';
-	let sortOrder = 'asc';
+	let minPrice = '';
+	let maxPrice = '';
+	let sortBy = 'created_at';
+	let sortOrder = 'desc';
 
 	// Pagination
 	let currentPage = 1;
@@ -37,7 +37,7 @@
 	let totalCount = 0;
 	let totalPages = 0;
 
-		$: hasFilters = searchQuery || occupancyFilter || propertyTypeFilter || minRent || maxRent;
+	$: hasFilters = searchQuery || occupancyFilter || propertyTypeFilter || minPrice || maxPrice;
 
 	onMount(() => {
 		loadProperties();
@@ -52,10 +52,9 @@
 				page: currentPage,
 				page_size: pageSize,
 				search: searchQuery || undefined,
-				occupancy_status: occupancyFilter || undefined,
-				property__property_type: propertyTypeFilter || undefined,
-				monthly_rent__gte: minRent || undefined,
-				monthly_rent__lte: maxRent || undefined,
+				property_type: propertyTypeFilter || undefined,
+				min_price: minPrice || undefined,
+				max_price: maxPrice || undefined,
 				ordering: sortOrder === 'desc' ? `-${sortBy}` : sortBy
 			};
 
@@ -66,10 +65,23 @@
 				}
 			});
 
-			const response = await rentalPropertyAPI.getAll(params);
-			properties = response.data.results || [];
-			totalCount = response.data.count || 0;
-			totalPages = Math.ceil(totalCount / pageSize);
+			const response = await getProperties(params);
+
+			// Handle different response formats
+			if (response.results) {
+				properties = response.results;
+				totalCount = response.count || 0;
+				totalPages = Math.ceil(totalCount / pageSize);
+			} else if (Array.isArray(response)) {
+				properties = response;
+				totalCount = response.length;
+				totalPages = 1;
+			} else {
+				const results = response.data?.results || [];
+				properties = results;
+				totalCount = response.data?.count || results.length;
+				totalPages = Math.ceil(totalCount / pageSize);
+			}
 		} catch (err) {
 			error = err.message || $t('errors.loadingFailed');
 			console.error('Failed to load rental properties:', err);
@@ -87,8 +99,8 @@
 		searchQuery = '';
 		occupancyFilter = '';
 		propertyTypeFilter = '';
-		minRent = '';
-		maxRent = '';
+		minPrice = '';
+		maxPrice = '';
 		currentPage = 1;
 		loadProperties();
 	}
@@ -211,26 +223,26 @@
 				</select>
 			</FormField>
 
-			<!-- Min Rent -->
-			<FormField label={$t('rental.minRent')}>
+			<!-- Min Price -->
+			<FormField label={$t('property.minPrice')}>
 				<input
 					type="number"
-					bind:value={minRent}
+					bind:value={minPrice}
 					placeholder="0"
 					min="0"
-					step="100"
+					step="10000"
 					class="w-full rounded-md border border-gray-300 px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:outline-none"
 				/>
 			</FormField>
 
-			<!-- Max Rent -->
-			<FormField label={$t('rental.maxRent')}>
+			<!-- Max Price -->
+			<FormField label={$t('property.maxPrice')}>
 				<input
 					type="number"
-					bind:value={maxRent}
-					placeholder="999999"
+					bind:value={maxPrice}
+					placeholder="9999999"
 					min="0"
-					step="100"
+					step="10000"
 					class="w-full rounded-md border border-gray-300 px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:outline-none"
 				/>
 			</FormField>
@@ -265,23 +277,23 @@
 		</button>
 
 		<button
-			class="rounded px-3 py-1 {sortBy === 'monthly_rent'
+			class="rounded px-3 py-1 {sortBy === 'market_value'
 				? 'bg-blue-100 text-blue-800'
 				: 'bg-gray-100 text-gray-700'} hover:bg-blue-50"
-			on:click={() => handleSortChange('monthly_rent')}
+			on:click={() => handleSortChange('market_value')}
 		>
-			{$t('rental.monthlyRent')}
-			{sortBy === 'monthly_rent' ? (sortOrder === 'asc' ? '↑' : '↓') : ''}
+			{$t('property.marketValue')}
+			{sortBy === 'market_value' ? (sortOrder === 'asc' ? '↑' : '↓') : ''}
 		</button>
 
 		<button
-			class="rounded px-3 py-1 {sortBy === 'occupancy_rate'
+			class="rounded px-3 py-1 {sortBy === 'size_sqm'
 				? 'bg-blue-100 text-blue-800'
 				: 'bg-gray-100 text-gray-700'} hover:bg-blue-50"
-			on:click={() => handleSortChange('occupancy_rate')}
+			on:click={() => handleSortChange('size_sqm')}
 		>
-			{$t('rental.occupancy')}
-			{sortBy === 'occupancy_rate' ? (sortOrder === 'asc' ? '↑' : '↓') : ''}
+			{$t('property.area')}
+			{sortBy === 'size_sqm' ? (sortOrder === 'asc' ? '↑' : '↓') : ''}
 		</button>
 
 		<button

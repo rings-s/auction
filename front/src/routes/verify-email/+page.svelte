@@ -5,9 +5,10 @@
 	import { verifyEmail } from '$lib/api/auth';
 	import { API_BASE_URL } from '$lib/constants';
 	import { t } from '$lib/i18n';
-	import { user } from '$lib/stores/user';
+	import { user } from '$lib/stores/user.svelte.js';
 	import { onMount } from 'svelte';
 	import VerifyEmailForm from '$lib/components/auth/VerifyEmailForm.svelte';
+	import { getErrorMessage, getErrorStack, errorContains } from '$lib/utils/api';
 
 	let email = '';
 	let loading = false;
@@ -148,17 +149,17 @@
 			// console.error('[VerifyEmail] Verification error:', err);
 
 			// Handle specific error types
-			if (err.message?.includes('expired')) {
+			if (errorContains(err, 'expired')) {
 				error = 'Verification code has expired. Please request a new one.';
-			} else if (err.message?.includes('invalid')) {
+			} else if (errorContains(err, 'invalid')) {
 				error = 'Invalid verification code. Please check and try again.';
-			} else if (err.message?.includes('network') || err.message?.includes('fetch')) {
+			} else if (errorContains(err, 'network') || errorContains(err, 'fetch')) {
 				error = 'Network error. Please check your connection and try again.';
 			} else {
-				error = err.message || $t('error.verificationFailed');
+				error = getErrorMessage(err, $t('error.verificationFailed'));
 			}
 
-			debugLog('Error details:', { message: err.message, stack: err.stack });
+			debugLog('Error details:', { message: getErrorMessage(err), stack: getErrorStack(err) });
 		} finally {
 			loading = false;
 			debugLog('Verification attempt completed');
@@ -231,17 +232,20 @@
 			console.error('[VerifyEmail] Resend verification error:', err);
 
 			// Handle specific error types
-			if (err.message?.includes('rate') || err.message?.includes('limit')) {
+			if (errorContains(err, 'rate') || errorContains(err, 'limit')) {
 				error = 'Too many requests. Please wait a few minutes before trying again.';
-			} else if (err.message?.includes('not found') || err.message?.includes('404')) {
+			} else if (errorContains(err, 'not found') || errorContains(err, '404')) {
 				error = 'User not found. Please check your email address.';
-			} else if (err.message?.includes('network') || err.message?.includes('fetch')) {
+			} else if (errorContains(err, 'network') || errorContains(err, 'fetch')) {
 				error = 'Network error. Please check your connection and try again.';
 			} else {
-				error = err.message || $t('error.resendVerificationFailed');
+				error = getErrorMessage(err, $t('error.resendVerificationFailed'));
 			}
 
-			debugLog('Resend error details:', { message: err.message, stack: err.stack });
+			debugLog('Resend error details:', {
+				message: getErrorMessage(err),
+				stack: getErrorStack(err)
+			});
 		} finally {
 			resendLoading = false;
 			debugLog('Resend attempt completed');

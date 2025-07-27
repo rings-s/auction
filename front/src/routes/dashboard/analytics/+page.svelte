@@ -18,10 +18,10 @@
 	<meta name="description" content={$t('analytics.dashboardDescription')} />
 </svelte:head>
 
-<div class="p-6 space-y-6">
+<div class="space-y-6 p-6">
 	<!-- Breadcrumb -->
 	<Breadcrumb items={breadcrumbItems} />
-	
+
 	<!-- Analytics Dashboard -->
 	<AnalyticsDashboard />
 </div>

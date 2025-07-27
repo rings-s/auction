@@ -4,7 +4,7 @@
 	import { register } from '$lib/api/auth';
 	import { t } from '$lib/i18n';
 	import { onMount } from 'svelte';
-	import { user } from '$lib/stores/user';
+	import { user } from '$lib/stores/user.svelte.js';
 	import RegisterForm from '$lib/components/auth/RegisterForm.svelte';
 
 	let loading = false;

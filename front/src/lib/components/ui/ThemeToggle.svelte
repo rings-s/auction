@@ -1,6 +1,6 @@
 <!-- src/lib/components/ui/ThemeToggle.svelte -->
 <script>
-	import { theme } from '$lib/stores/theme';
+	import { theme } from '$lib/stores/theme.svelte.js';
 	import { fade } from 'svelte/transition';
 
 	function toggleTheme() {

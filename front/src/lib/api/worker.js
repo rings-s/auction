@@ -160,7 +160,7 @@ export async function getWorkers(filters = {}) {
 	Object.entries(filters).forEach(([key, value]) => {
 		if (value !== undefined && value !== null && value !== '') {
 			if (Array.isArray(value)) {
-				value.forEach(item => queryParams.append(key, item));
+				value.forEach((item) => queryParams.append(key, item));
 			} else {
 				queryParams.append(key, value);
 			}
@@ -308,7 +308,7 @@ export function validateWorkerData(data) {
 	}
 
 	// Validate employment information
-	const validEmploymentTypes = getEmploymentTypes().map(type => type.value);
+	const validEmploymentTypes = getEmploymentTypes().map((type) => type.value);
 	if (!data.employment_type || !validEmploymentTypes.includes(data.employment_type)) {
 		errors.employment_type = 'Please select a valid employment type';
 	}
@@ -337,7 +337,10 @@ export function validateWorkerData(data) {
 	}
 
 	// Validate numeric fields
-	if (data.max_concurrent_jobs && (parseFloat(data.max_concurrent_jobs) < 1 || parseFloat(data.max_concurrent_jobs) > 10)) {
+	if (
+		data.max_concurrent_jobs &&
+		(parseFloat(data.max_concurrent_jobs) < 1 || parseFloat(data.max_concurrent_jobs) > 10)
+	) {
 		errors.max_concurrent_jobs = 'Max concurrent jobs must be between 1 and 10';
 	}
 
@@ -363,12 +366,15 @@ export function calculateWorkerPerformance(worker) {
 
 	// Calculate completion rate
 	if (metrics.totalJobs > 0) {
-		metrics.completionRate = (metrics.completedJobs / metrics.totalJobs * 100).toFixed(1);
+		metrics.completionRate = ((metrics.completedJobs / metrics.totalJobs) * 100).toFixed(1);
 	}
 
 	// Calculate efficiency based on jobs completed vs capacity
 	if (worker.max_concurrent_jobs && worker.max_concurrent_jobs > 0) {
-		metrics.efficiency = Math.min(100, (metrics.activeJobs / worker.max_concurrent_jobs * 100)).toFixed(1);
+		metrics.efficiency = Math.min(
+			100,
+			(metrics.activeJobs / worker.max_concurrent_jobs) * 100
+		).toFixed(1);
 	}
 
 	return metrics;
@@ -381,11 +387,11 @@ export async function getWorkerAnalytics() {
 	try {
 		const workers = await getWorkers();
 		const categories = await getWorkerCategories();
-		
+
 		const analytics = {
 			total: workers.length,
-			active: workers.filter(w => w.status === 'active').length,
-			available: workers.filter(w => w.is_available && w.status === 'active').length,
+			active: workers.filter((w) => w.status === 'active').length,
+			available: workers.filter((w) => w.is_available && w.status === 'active').length,
 			totalCapacity: workers.reduce((sum, w) => sum + (w.max_concurrent_jobs || 0), 0),
 			utilizationRate: 0,
 			averageRating: 0,
@@ -397,39 +403,46 @@ export async function getWorkerAnalytics() {
 		// Calculate utilization rate
 		const totalActiveJobs = workers.reduce((sum, w) => sum + (w.active_jobs_count || 0), 0);
 		if (analytics.totalCapacity > 0) {
-			analytics.utilizationRate = (totalActiveJobs / analytics.totalCapacity * 100).toFixed(1);
+			analytics.utilizationRate = ((totalActiveJobs / analytics.totalCapacity) * 100).toFixed(1);
 		}
 
 		// Calculate average rating
-		const workersWithRating = workers.filter(w => w.rating && w.rating > 0);
+		const workersWithRating = workers.filter((w) => w.rating && w.rating > 0);
 		if (workersWithRating.length > 0) {
-			analytics.averageRating = (workersWithRating.reduce((sum, w) => sum + w.rating, 0) / workersWithRating.length).toFixed(1);
+			analytics.averageRating = (
+				workersWithRating.reduce((sum, w) => sum + w.rating, 0) / workersWithRating.length
+			).toFixed(1);
 		}
 
 		// Group by category
-		categories.forEach(category => {
-			const categoryWorkers = workers.filter(w => 
-				w.categories && w.categories.some(c => c.id === category.id)
+		categories.forEach((category) => {
+			const categoryWorkers = workers.filter(
+				(w) => w.categories && w.categories.some((c) => c.id === category.id)
 			);
 			analytics.byCategory[category.name] = {
 				count: categoryWorkers.length,
-				active: categoryWorkers.filter(w => w.status === 'active').length,
-				averageRate: categoryWorkers.length > 0 ? 
-					(categoryWorkers.reduce((sum, w) => sum + (w.hourly_rate || 0), 0) / categoryWorkers.length).toFixed(2) : 0
+				active: categoryWorkers.filter((w) => w.status === 'active').length,
+				averageRate:
+					categoryWorkers.length > 0
+						? (
+								categoryWorkers.reduce((sum, w) => sum + (w.hourly_rate || 0), 0) /
+								categoryWorkers.length
+							).toFixed(2)
+						: 0
 			};
 		});
 
 		// Group by employment type
-		getEmploymentTypes().forEach(type => {
-			const typeWorkers = workers.filter(w => w.employment_type === type.value);
+		getEmploymentTypes().forEach((type) => {
+			const typeWorkers = workers.filter((w) => w.employment_type === type.value);
 			analytics.byEmploymentType[type.label] = {
 				count: typeWorkers.length,
-				active: typeWorkers.filter(w => w.status === 'active').length
+				active: typeWorkers.filter((w) => w.status === 'active').length
 			};
 		});
 
 		// Calculate individual performance
-		analytics.performance = workers.map(worker => ({
+		analytics.performance = workers.map((worker) => ({
 			id: worker.id,
 			name: `${worker.first_name} ${worker.last_name}`,
 			...calculateWorkerPerformance(worker)
@@ -458,7 +471,7 @@ export function getWorkerStatusColor(status) {
 		suspended: 'red',
 		on_leave: 'yellow'
 	};
-	
+
 	return statusColors[status] || 'gray';
 }
 

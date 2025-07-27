@@ -3,8 +3,8 @@
 	import { onMount } from 'svelte';
 	import { goto } from '$app/navigation';
 	import { t } from '$lib/i18n';
-	import { user } from '$lib/stores/user';
-	import { canAccessSystemDashboard } from '$lib/stores/dashboard';
+	import { user } from '$lib/stores/user.svelte.js';
+	import { getCanAccessSystemDashboard } from '$lib/stores/dashboard.svelte.js';
 	import { getSystemDashboardStats } from '$lib/api/dashboard';
 	import { toast } from '$lib/stores/toastStore.svelte.js';
 
@@ -49,7 +49,7 @@
 
 	// Check permissions and load data
 	async function loadSystemStats() {
-		if (!$canAccessSystemDashboard) {
+		if (!getCanAccessSystemDashboard()) {
 			goto('/dashboard');
 			return;
 		}
@@ -78,243 +78,243 @@
 </svelte:head>
 
 <div class="p-6">
-		<!-- Header -->
-		<div class="mb-6">
-			<Breadcrumb items={breadcrumbItems} class="mb-4" />
+	<!-- Header -->
+	<div class="mb-6">
+		<Breadcrumb items={breadcrumbItems} class="mb-4" />
 
-			<div class="flex flex-col sm:flex-row sm:items-center sm:justify-between">
-				<div>
-					<h1 class="text-xl font-semibold text-gray-900">
-						{$t('dashboard.systemDashboard')}
-					</h1>
-					<p class="mt-1 text-sm text-gray-600">
-						{$t('dashboard.systemOverview')}
-					</p>
-				</div>
+		<div class="flex flex-col sm:flex-row sm:items-center sm:justify-between">
+			<div>
+				<h1 class="text-xl font-semibold text-gray-900">
+					{$t('dashboard.systemDashboard')}
+				</h1>
+				<p class="mt-1 text-sm text-gray-600">
+					{$t('dashboard.systemOverview')}
+				</p>
+			</div>
 
-				<div class="mt-4 sm:mt-0">
-					<Button variant="outline" size="compact" onClick={loadSystemStats} {loading}>
-						{$t('common.refresh')}
-					</Button>
-				</div>
+			<div class="mt-4 sm:mt-0">
+				<Button variant="outline" size="compact" onClick={loadSystemStats} {loading}>
+					{$t('common.refresh')}
+				</Button>
+			</div>
+		</div>
+	</div>
+
+	<!-- Error Alert -->
+	{#if error}
+		<Alert type="error" title={$t('error.title')} message={error} dismissible class="mb-6" />
+	{/if}
+
+	<!-- System Stats -->
+	{#if loading}
+		<div class="mb-8 grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-4">
+			{#each Array(8) as _}
+				<LoadingSkeleton type="rect" height="100px" />
+			{/each}
+		</div>
+	{:else if systemStats}
+		<!-- User Statistics -->
+		<div class="mb-8">
+			<h2 class="mb-4 text-lg font-medium text-gray-900">
+				{$t('dashboard.userStatistics')}
+			</h2>
+			<div class="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4">
+				<StatCard
+					title={$t('dashboard.totalUsers')}
+					value={systemStats.total_users}
+					icon={userIcon}
+					color="primary"
+				/>
+
+				<StatCard
+					title={$t('dashboard.verifiedUsers')}
+					value={systemStats.verified_users}
+					icon={userIcon}
+					color="success"
+				/>
+
+				<StatCard
+					title={$t('dashboard.activeToday')}
+					value={systemStats.active_users_today}
+					icon={userIcon}
+					color="info"
+				/>
+
+				<StatCard
+					title={$t('dashboard.newThisWeek')}
+					value={systemStats.new_users_this_week}
+					icon={userIcon}
+					color="warning"
+				/>
 			</div>
 		</div>
 
-		<!-- Error Alert -->
-		{#if error}
-			<Alert type="error" title={$t('error.title')} message={error} dismissible class="mb-6" />
-		{/if}
+		<!-- Property Statistics -->
+		<div class="mb-8">
+			<h2 class="mb-4 text-lg font-medium text-gray-900">
+				{$t('dashboard.propertyStatistics')}
+			</h2>
+			<div class="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4">
+				<StatCard
+					title={$t('dashboard.totalProperties')}
+					value={systemStats.total_properties}
+					icon={propertyIcon}
+					color="primary"
+				/>
 
-		<!-- System Stats -->
-		{#if loading}
-			<div class="mb-8 grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-4">
-				{#each Array(8) as _}
-					<LoadingSkeleton type="rect" height="100px" />
-				{/each}
+				<StatCard
+					title={$t('dashboard.publishedProperties')}
+					value={systemStats.published_properties}
+					icon={propertyIcon}
+					color="success"
+				/>
+
+				<StatCard
+					title={$t('dashboard.propertiesThisMonth')}
+					value={systemStats.properties_this_month}
+					icon={propertyIcon}
+					color="info"
+				/>
+
+				<StatCard
+					title={$t('dashboard.avgPropertyValue')}
+					value={`$${systemStats.avg_property_value?.toLocaleString() || 0}`}
+					icon={propertyIcon}
+					color="secondary"
+				/>
 			</div>
-		{:else if systemStats}
-			<!-- User Statistics -->
-			<div class="mb-8">
-				<h2 class="mb-4 text-lg font-medium text-gray-900">
-					{$t('dashboard.userStatistics')}
-				</h2>
-				<div class="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4">
-					<StatCard
-						title={$t('dashboard.totalUsers')}
-						value={systemStats.total_users}
-						icon={userIcon}
-						color="primary"
-					/>
+		</div>
 
-					<StatCard
-						title={$t('dashboard.verifiedUsers')}
-						value={systemStats.verified_users}
-						icon={userIcon}
-						color="success"
-					/>
+		<!-- Auction Statistics -->
+		<div class="mb-8">
+			<h2 class="mb-4 text-lg font-medium text-gray-900">
+				{$t('dashboard.auctionStatistics')}
+			</h2>
+			<div class="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4">
+				<StatCard
+					title={$t('dashboard.totalAuctions')}
+					value={systemStats.total_auctions}
+					icon={auctionIcon}
+					color="primary"
+				/>
 
-					<StatCard
-						title={$t('dashboard.activeToday')}
-						value={systemStats.active_users_today}
-						icon={userIcon}
-						color="info"
-					/>
+				<StatCard
+					title={$t('dashboard.activeAuctions')}
+					value={systemStats.active_auctions}
+					icon={auctionIcon}
+					color="success"
+				/>
 
-					<StatCard
-						title={$t('dashboard.newThisWeek')}
-						value={systemStats.new_users_this_week}
-						icon={userIcon}
-						color="warning"
-					/>
-				</div>
+				<StatCard
+					title={$t('dashboard.completedAuctions')}
+					value={systemStats.completed_auctions}
+					icon={auctionIcon}
+					color="info"
+				/>
+
+				<StatCard
+					title={$t('dashboard.totalAuctionValue')}
+					value={`$${systemStats.total_auction_value?.toLocaleString() || 0}`}
+					icon={auctionIcon}
+					color="secondary"
+				/>
 			</div>
+		</div>
 
-			<!-- Property Statistics -->
-			<div class="mb-8">
-				<h2 class="mb-4 text-lg font-medium text-gray-900">
-					{$t('dashboard.propertyStatistics')}
-				</h2>
-				<div class="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4">
-					<StatCard
-						title={$t('dashboard.totalProperties')}
-						value={systemStats.total_properties}
-						icon={propertyIcon}
-						color="primary"
-					/>
+		<!-- Bidding Statistics -->
+		<div class="mb-8">
+			<h2 class="mb-4 text-lg font-medium text-gray-900">
+				{$t('dashboard.biddingStatistics')}
+			</h2>
+			<div class="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4">
+				<StatCard
+					title={$t('dashboard.totalBids')}
+					value={systemStats.total_bids}
+					icon={bidIcon}
+					color="primary"
+				/>
 
-					<StatCard
-						title={$t('dashboard.publishedProperties')}
-						value={systemStats.published_properties}
-						icon={propertyIcon}
-						color="success"
-					/>
+				<StatCard
+					title={$t('dashboard.uniqueBidders')}
+					value={systemStats.unique_bidders}
+					icon={bidIcon}
+					color="success"
+				/>
 
-					<StatCard
-						title={$t('dashboard.propertiesThisMonth')}
-						value={systemStats.properties_this_month}
-						icon={propertyIcon}
-						color="info"
-					/>
+				<StatCard
+					title={$t('dashboard.totalBidValue')}
+					value={`$${systemStats.total_bid_value?.toLocaleString() || 0}`}
+					icon={bidIcon}
+					color="warning"
+				/>
 
-					<StatCard
-						title={$t('dashboard.avgPropertyValue')}
-						value={`$${systemStats.avg_property_value?.toLocaleString() || 0}`}
-						icon={propertyIcon}
-						color="secondary"
-					/>
-				</div>
+				<StatCard
+					title={$t('dashboard.avgBidAmount')}
+					value={`$${systemStats.avg_bid_amount?.toLocaleString() || 0}`}
+					icon={bidIcon}
+					color="info"
+				/>
 			</div>
+		</div>
 
-			<!-- Auction Statistics -->
-			<div class="mb-8">
-				<h2 class="mb-4 text-lg font-medium text-gray-900">
-					{$t('dashboard.auctionStatistics')}
-				</h2>
-				<div class="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4">
-					<StatCard
-						title={$t('dashboard.totalAuctions')}
-						value={systemStats.total_auctions}
-						icon={auctionIcon}
-						color="primary"
-					/>
+		<!-- Activity & Alerts -->
+		<div class="grid grid-cols-1 gap-6 lg:grid-cols-2">
+			<!-- Recent Activity -->
+			<div class="rounded-lg border border-gray-200 bg-white p-4">
+				<h3 class="mb-4 text-sm font-medium text-gray-900">
+					{$t('dashboard.todayActivity')}
+				</h3>
 
-					<StatCard
-						title={$t('dashboard.activeAuctions')}
-						value={systemStats.active_auctions}
-						icon={auctionIcon}
-						color="success"
-					/>
+				<div class="space-y-3">
+					<div class="flex items-center justify-between">
+						<span class="text-sm text-gray-600">{$t('dashboard.bidsToday')}</span>
+						<span class="text-sm font-medium text-gray-900">
+							{systemStats.bids_today}
+						</span>
+					</div>
 
-					<StatCard
-						title={$t('dashboard.completedAuctions')}
-						value={systemStats.completed_auctions}
-						icon={auctionIcon}
-						color="info"
-					/>
+					<div class="flex items-center justify-between">
+						<span class="text-sm text-gray-600">{$t('dashboard.auctionsEndingSoon')}</span>
+						<span class="text-sm font-medium text-gray-900">
+							{systemStats.auctions_ending_soon}
+						</span>
+					</div>
 
-					<StatCard
-						title={$t('dashboard.totalAuctionValue')}
-						value={`$${systemStats.total_auction_value?.toLocaleString() || 0}`}
-						icon={auctionIcon}
-						color="secondary"
-					/>
-				</div>
-			</div>
-
-			<!-- Bidding Statistics -->
-			<div class="mb-8">
-				<h2 class="mb-4 text-lg font-medium text-gray-900">
-					{$t('dashboard.biddingStatistics')}
-				</h2>
-				<div class="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4">
-					<StatCard
-						title={$t('dashboard.totalBids')}
-						value={systemStats.total_bids}
-						icon={bidIcon}
-						color="primary"
-					/>
-
-					<StatCard
-						title={$t('dashboard.uniqueBidders')}
-						value={systemStats.unique_bidders}
-						icon={bidIcon}
-						color="success"
-					/>
-
-					<StatCard
-						title={$t('dashboard.totalBidValue')}
-						value={`$${systemStats.total_bid_value?.toLocaleString() || 0}`}
-						icon={bidIcon}
-						color="warning"
-					/>
-
-					<StatCard
-						title={$t('dashboard.avgBidAmount')}
-						value={`$${systemStats.avg_bid_amount?.toLocaleString() || 0}`}
-						icon={bidIcon}
-						color="info"
-					/>
-				</div>
-			</div>
-
-			<!-- Activity & Alerts -->
-			<div class="grid grid-cols-1 gap-6 lg:grid-cols-2">
-				<!-- Recent Activity -->
-				<div class="rounded-lg border border-gray-200 bg-white p-4">
-					<h3 class="mb-4 text-sm font-medium text-gray-900">
-						{$t('dashboard.todayActivity')}
-					</h3>
-
-					<div class="space-y-3">
-						<div class="flex items-center justify-between">
-							<span class="text-sm text-gray-600">{$t('dashboard.bidsToday')}</span>
-							<span class="text-sm font-medium text-gray-900">
-								{systemStats.bids_today}
-							</span>
-						</div>
-
-						<div class="flex items-center justify-between">
-							<span class="text-sm text-gray-600">{$t('dashboard.auctionsEndingSoon')}</span>
-							<span class="text-sm font-medium text-gray-900">
-								{systemStats.auctions_ending_soon}
-							</span>
-						</div>
-
-						<div class="flex items-center justify-between">
-							<span class="text-sm text-gray-600">{$t('dashboard.pendingVerifications')}</span>
-							<span class="text-sm font-medium text-gray-900">
-								{systemStats.pending_verifications}
-							</span>
-						</div>
+					<div class="flex items-center justify-between">
+						<span class="text-sm text-gray-600">{$t('dashboard.pendingVerifications')}</span>
+						<span class="text-sm font-medium text-gray-900">
+							{systemStats.pending_verifications}
+						</span>
 					</div>
 				</div>
-
-				<!-- Top Cities -->
-				<div class="rounded-lg border border-gray-200 bg-white p-4">
-					<h3 class="mb-4 text-sm font-medium text-gray-900">
-						{$t('dashboard.topCities')}
-					</h3>
-
-					{#if systemStats.top_cities && systemStats.top_cities.length > 0}
-						<div class="space-y-2">
-							{#each systemStats.top_cities as city}
-								<div class="flex items-center justify-between">
-									<span class="text-sm text-gray-600">
-										{city.city}, {city.state}
-									</span>
-									<span class="text-sm font-medium text-gray-900">
-										{city.count}
-										{$t('dashboard.properties')}
-									</span>
-								</div>
-							{/each}
-						</div>
-					{:else}
-						<p class="text-sm text-gray-500">
-							{$t('dashboard.noData')}
-						</p>
-					{/if}
-				</div>
 			</div>
-		{/if}
+
+			<!-- Top Cities -->
+			<div class="rounded-lg border border-gray-200 bg-white p-4">
+				<h3 class="mb-4 text-sm font-medium text-gray-900">
+					{$t('dashboard.topCities')}
+				</h3>
+
+				{#if systemStats.top_cities && systemStats.top_cities.length > 0}
+					<div class="space-y-2">
+						{#each systemStats.top_cities as city}
+							<div class="flex items-center justify-between">
+								<span class="text-sm text-gray-600">
+									{city.city}, {city.state}
+								</span>
+								<span class="text-sm font-medium text-gray-900">
+									{city.count}
+									{$t('dashboard.properties')}
+								</span>
+							</div>
+						{/each}
+					</div>
+				{:else}
+					<p class="text-sm text-gray-500">
+						{$t('dashboard.noData')}
+					</p>
+				{/if}
+			</div>
+		</div>
+	{/if}
 </div>

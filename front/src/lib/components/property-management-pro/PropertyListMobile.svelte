@@ -7,7 +7,11 @@
 	// Responsive components
 	import ResponsiveGrid from '$lib/components/responsive/ResponsiveGrid.svelte';
 	import MobileDrawer from '$lib/components/responsive/MobileDrawer.svelte';
-	import { isMobile, isTablet, isDesktop } from '$lib/components/responsive/BreakpointHelper.svelte';
+	import {
+		isMobile,
+		isTablet,
+		isDesktop
+	} from '$lib/components/responsive/BreakpointHelper.svelte';
 
 	// Enhanced components
 	import PropertyCardAdvanced from './PropertyCardAdvanced.svelte';
